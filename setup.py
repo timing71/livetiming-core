@@ -23,7 +23,7 @@ setup(
     packages=find_packages('src', exclude=["*.tests"]),
     package_dir = {'':'src'},
       long_description="Live timing aggregator and web service for motorsport timing feeds.",
-    install_requires=[],
+    install_requires=["autobahn[twisted]"],
     entry_points={
         'console_scripts': [
             ],
