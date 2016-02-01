@@ -1,0 +1,7 @@
+crossbar:
+  build: ./crossbar
+  ports:
+   - "5080:8080"
+  volumes:
+   - ./crossbar:/app
+  command: crossbar start --cbdir /app/.crossbar
