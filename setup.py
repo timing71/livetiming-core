@@ -26,6 +26,7 @@ setup(
     install_requires=["autobahn[twisted]"],
     entry_points={
         'console_scripts': [
+                'livetiming-server = livetiming.server:main'
             ],
         }
       )

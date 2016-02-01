@@ -2,10 +2,19 @@ crossbar:
   build: ./crossbar
   ports:
    - "5080:8080"
+  expose:
+   - "8080"
   volumes:
    - ./crossbar:/app
+  environment:
+    - PYTHONUNBUFFERED=1
   command: crossbar start --cbdir /app/.crossbar
 python:
   build: .
   volumes:
    - .:/app
+  links:
+   - crossbar
+  environment:
+    - PYTHONUNBUFFERED=1
+  command: ./scripts/startServer.sh 

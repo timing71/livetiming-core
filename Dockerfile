@@ -4,4 +4,4 @@ RUN mkdir /app
 WORKDIR /app
 ADD . /app
 
-RUN python setup.py install
+RUN pip install --upgrade pip
