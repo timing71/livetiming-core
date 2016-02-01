@@ -26,19 +26,10 @@
          ],
          "transports": [
             {
-               "type": "web",
+               "type": "websocket",
                "endpoint": {
                   "type": "tcp",
                   "port": 8080
-               },
-               "paths": {
-                  "/": {
-                     "type": "static",
-                     "directory": ".."
-                  },
-                  "ws": {
-                     "type": "websocket"
-                  }
                }
             }
          ]
