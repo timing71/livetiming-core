@@ -5,3 +5,7 @@ crossbar:
   volumes:
    - ./crossbar:/app
   command: crossbar start --cbdir /app/.crossbar
+python:
+  build: .
+  volumes:
+   - .:/app
