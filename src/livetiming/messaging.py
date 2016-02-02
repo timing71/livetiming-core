@@ -9,6 +9,10 @@ class Channel:
     CONTROL = u'livetiming.control'
 
 
+class RPC:
+    DIRECTORY_LISTING = u"livetiming.directory.listServices"
+
+
 class MessageClass(Enum):
     INITIALISE_DIRECTORY = 1
     SERVICE_REGISTRATION = 2

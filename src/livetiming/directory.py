@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming.messaging import Channel, Message, MessageClass, Realm
+from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
@@ -23,7 +23,7 @@ class Directory(ApplicationSession):
         self.log.debug("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.INITIALISE_DIRECTORY).serialise())
         self.log.debug("Published init message")
-        yield self.register(self.listServices, u"livetiming.directory.listServices")
+        yield self.register(self.listServices, RPC.DIRECTORY_LISTING)
         self.log.debug("Registered service listing RPC")
 
     def onControlMessage(self, message):
