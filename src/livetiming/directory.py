@@ -2,7 +2,6 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming.messaging import Channel, Message, MessageClass, Realm
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
-from twisted.internet.error import ConnectionRefusedError
 from twisted.logger import Logger
 
 
@@ -38,12 +37,8 @@ class Directory(ApplicationSession):
 
 def main():
     Logger().info("Starting directory service...")
-    while True:
-        try:
-            runner = ApplicationRunner(url=u"ws://localhost:5080/ws", realm=Realm.TIMING)
-            runner.run(Directory)
-        except ConnectionRefusedError:
-            pass
+    runner = ApplicationRunner(url=u"ws://localhost:5080/ws", realm=Realm.TIMING)
+    runner.run(Directory)
 
 
 if __name__ == '__main__':
