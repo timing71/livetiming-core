@@ -18,7 +18,7 @@ class MyComponent(ApplicationSession):
 
 def main():
     print "Starting..."
-    runner = ApplicationRunner(url=u"ws://crossbar:8080/ws", realm=u"realm1")
+    runner = ApplicationRunner(url=u"ws://crossbar:8080/ws", realm=u"timing")
     runner.run(MyComponent)
 
 
