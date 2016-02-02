@@ -23,7 +23,7 @@ setup(
     packages=find_packages('src', exclude=["*.tests"]),
     package_dir = {'':'src'},
       long_description="Live timing aggregator and web service for motorsport timing feeds.",
-    install_requires=["autobahn[twisted]"],
+    install_requires=["autobahn[twisted]", "enum34"],
     entry_points={
         'console_scripts': [
                 'livetiming-directory = livetiming.directory:main'
