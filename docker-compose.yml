@@ -9,7 +9,7 @@ crossbar:
   environment:
     - PYTHONUNBUFFERED=1
   command: crossbar start --cbdir /app/.crossbar
-python:
+directory:
   build: .
   volumes:
    - .:/app
@@ -17,4 +17,4 @@ python:
    - crossbar
   environment:
     - PYTHONUNBUFFERED=1
-  command: ./scripts/startServer.sh 
+  command: ./scripts/startDirectory.sh 
