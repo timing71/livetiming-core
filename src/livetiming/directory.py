@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
+from os import environ
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
@@ -37,7 +38,8 @@ class Directory(ApplicationSession):
 
 def main():
     Logger().info("Starting directory service...")
-    runner = ApplicationRunner(url=u"ws://localhost:5080/ws", realm=Realm.TIMING)
+    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
+    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
     runner.run(Directory)
 
 
