@@ -17,6 +17,7 @@ class MessageClass(Enum):
     INITIALISE_DIRECTORY = 1
     SERVICE_REGISTRATION = 2
     SERVICE_DEREGISTRATION = 3
+    SERVICE_DATA = 4
 
 
 class Message(object):

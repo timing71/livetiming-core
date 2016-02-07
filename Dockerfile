@@ -5,3 +5,4 @@ WORKDIR /app
 ADD . /app
 
 RUN pip install --upgrade pip
+RUN python setup.py develop

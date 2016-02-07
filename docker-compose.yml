@@ -18,3 +18,13 @@ directory:
   environment:
     - PYTHONUNBUFFERED=1
   command: ./scripts/startDirectory.sh 
+generic-service:
+  build: .
+  volumes:
+   - .:/app
+  links:
+   - crossbar
+   - directory
+  environment:
+    - PYTHONUNBUFFERED=1
+  command: livetiming-generic-service

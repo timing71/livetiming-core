@@ -26,7 +26,8 @@ setup(
     install_requires=["autobahn[twisted]", "enum34"],
     entry_points={
         'console_scripts': [
-                'livetiming-directory = livetiming.directory:main'
+                'livetiming-directory = livetiming.directory:main',
+                'livetiming-generic-service = livetiming.service:main',
             ],
         }
       )
