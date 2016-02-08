@@ -17,6 +17,7 @@ export default class App extends React.Component {
     connection.onopen = (session, details) => {
       session.call("livetiming.directory.listServices").then((result) => {
         this.setState({"services": result});
+        console.log(result);
       });
     };
     connection.open();
