@@ -23,11 +23,12 @@ const common = {
   module: {
    loaders: [
       {
-        // Test expects a RegExp! Note the slashes!
         test: /\.css$/,
-        loaders: ['style', 'css'],
-        // Include accepts either a path or an array of paths.
-        include: PATHS.app
+        loader: "style!css?sourceMap"
+      },
+      {
+        test: /\.scss$/,
+        loader: "style!css?sourceMap!sass?sourceMap"
       },
       {
         test: /\.jsx$/,
