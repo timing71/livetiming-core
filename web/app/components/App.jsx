@@ -1,6 +1,8 @@
 import React from 'react';
 import autobahn from '../lib/autobahn';
 
+import ServiceList from './ServiceList';
+
 export default class App extends React.Component {
 
   constructor(props) {
@@ -24,7 +26,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    return <p>Hello, World!</p>;
+    return <ServiceList services={this.state.services} />;
   }
 
 }
