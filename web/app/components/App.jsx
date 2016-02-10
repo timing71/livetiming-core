@@ -2,7 +2,7 @@ import React from 'react';
 import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
-import ServiceList from './ServiceList';
+import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
 
 export default class App extends React.Component {
 
@@ -41,7 +41,7 @@ export default class App extends React.Component {
 
   render() {
     if (this.state.chosenService == null) {
-      return <ServiceList services={this.state.services} onChooseService={this.setChosenService} />
+      return <ServiceSelectionScreen services={this.state.services} onChooseService={this.setChosenService} />
     }
     const service = _(this.state.services).find((svc) => svc.uuid === this.state.chosenService);
     return <p>{service.description}</p>;
