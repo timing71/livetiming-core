@@ -3,6 +3,26 @@ import React from 'react';
 import { Grid, Row, Col } from 'react-bootstrap';
 
 export default class TimingScreen extends React.Component {
+  componentWillMount() {
+    const {session, service} = this.props;
+    session.subscribe(service.uuid, this.handleData).then(
+      (sub) => {
+        this.subscription = sub;
+        session.log ("Established subscription to " + service.uuid);
+      },
+      (error) => {}
+    );
+  }
+
+  componentWillUnmount() {
+    const {session, service} = this.props;
+    session.unsubscribe(service.uuid);
+  }
+  
+  handleData(data) {
+    console.log(data);
+  }
+  
   render() {
     return (
       <Grid fluid={true} className="timingScreen">
