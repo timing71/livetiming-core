@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Panel } from 'react-bootstrap';
 
 class ServiceListEntry extends React.Component {
   render() {
@@ -15,12 +16,11 @@ export default class ServiceList extends React.Component {
       return <p>No services available.</p>;
     }
     return (
-        <div>
-          <h3>Available Timing Services</h3>
+        <Panel header="Available Timing Services">
           <ul>
             {services.map((svc) => <ServiceListEntry key={svc.uuid} service={svc} onChooseService={() => onChooseService(svc.uuid)} />)}
           </ul>
-        </div>
+        </Panel>
         );
   }
 }
