@@ -2,6 +2,8 @@ import React from 'react';
 
 import { Grid, Row, Col } from 'react-bootstrap';
 
+import TimingTable from '../components/TimingTable';
+
 export default class TimingScreen extends React.Component {
   componentWillMount() {
     const {session, service} = this.props;
@@ -25,7 +27,7 @@ export default class TimingScreen extends React.Component {
   
   render() {
     return (
-      <Grid fluid={true} className="timingScreen">
+      <Grid fluid={true} className="screen timing-screen">
         <Row>
           <Col md={3}>
             <p>00:00:00</p>
@@ -37,9 +39,9 @@ export default class TimingScreen extends React.Component {
             <p>00:00:00</p>
           </Col>
         </Row>
-        <Row>
-          <Col md={12}>
-            <p>Timing Table</p>
+        <Row className="timing-table-container">
+          <Col md={12} className="full-height">
+            <TimingTable />
           </Col>
         </Row>
         <Row>
