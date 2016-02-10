@@ -3,6 +3,7 @@ import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
 import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
+import TimingScreen from '../screens/TimingScreen';
 
 export default class App extends React.Component {
 
@@ -10,7 +11,8 @@ export default class App extends React.Component {
     super(props);
     this.state = {
       "services": {},
-      "chosenService": null
+      "chosenService": null,
+      "session": null
     };
     this.setChosenService = this.setChosenService.bind(this);
   }
@@ -22,10 +24,11 @@ export default class App extends React.Component {
       realm: "timing"
     });
     connection.onopen = (session, details) => {
+      this.setState({...this.state, "session": session});
       session.call("livetiming.directory.listServices").then((result) => {
-        this.setState(
+        this.setState({
           ...this.state,
-          {"services": result}
+          "services": result}
         );
       });
     };
@@ -44,7 +47,7 @@ export default class App extends React.Component {
       return <ServiceSelectionScreen services={this.state.services} onChooseService={this.setChosenService} />
     }
     const service = _(this.state.services).find((svc) => svc.uuid === this.state.chosenService);
-    return <p>{service.description}</p>;
+    return <TimingScreen session={this.state.session} service={service} />;
   }
 
 }
