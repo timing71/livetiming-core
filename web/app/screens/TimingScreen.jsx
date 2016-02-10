@@ -5,6 +5,20 @@ import { Grid, Row, Col } from 'react-bootstrap';
 import TimingTable from '../components/TimingTable';
 
 export default class TimingScreen extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      "cars": [],
+      "messages": [],
+      "session": {
+        "flagState": "green",
+        "timeElapsed": 0,
+        "timeRemain": 0
+      }
+    };
+  }
+
   componentWillMount() {
     const {session, service} = this.props;
     session.subscribe(service.uuid, this.handleData).then(
@@ -29,19 +43,19 @@ export default class TimingScreen extends React.Component {
     return (
       <Grid fluid={true} className="screen timing-screen">
         <Row>
-          <Col md={3}>
-            <p>00:00:00</p>
+          <Col md={2}>
+            <p>{this.state.session.timeElapsed}</p>
           </Col>
-          <Col md={6}>
+          <Col md={8}>
             <p>{this.props.service.description}</p>
           </Col>
-          <Col md={3}>
-            <p>00:00:00</p>
+          <Col md={2}>
+            <p>{this.state.session.timeRemain}</p>
           </Col>
         </Row>
         <Row className="timing-table-container">
           <Col md={12} className="full-height">
-            <TimingTable />
+            <TimingTable cars={this.state.cars} />
           </Col>
         </Row>
         <Row>
