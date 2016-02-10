@@ -9,3 +9,27 @@ $panel-default-border: #808080;
 $panel-default-text: #FFF;
 
 $font-family-base: Verdana, Monospace;
+
+/* Non-Bootstrap below */
+
+$color-system: #54FFFF;
+$color-personal-best: #00FF00;
+$color-overall-best: #FF53E3;
+$color-purple: $color-overall-best;
+
+$color-state-run: #00FF00;
+$color-state-out: #FF6418;
+$color-state-pit: #DC291E;
+
+$color-class-gtam: #FF4F00;
+$color-class-lmgte: $color-class-gtam;
+$color-class-gtpro: #00FF00;
+$color-class-gtc: #A0A0A0;
+$color-class-lmp1: #FF0000;
+$color-class-lmp2: #77AAFF;
+$color-class-lmp3: #AA00AA;
+
+$color-course-green: #009900;
+$color-course-yellow: #DDDD00;
+$color-course-red: #990000;
+$color-course-purple: $color-purple;

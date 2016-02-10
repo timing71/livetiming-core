@@ -1,10 +1,11 @@
 .timing-table-container {
   height: 75%;
   overflow-y: auto;
+  border-bottom: 2px solid $color-system;
 }
 
 .timing-table-header td {
-  color: #54FFFF;
+  color: $color-system;
   text-transform: uppercase;
-  border-bottom: 2px solid #54FFFF;
+  border-bottom: 2px solid $color-system;
 }
