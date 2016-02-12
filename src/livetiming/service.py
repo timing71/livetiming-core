@@ -43,6 +43,14 @@ class Service(ApplicationSession):
     def isAlive(self):
         return True
 
+    def getTimingMessage(self):
+        return {
+            "cars": [
+                ["7", "DriverName", 7, 0, 0, 92.546, 1],
+                ["8", "Driver Two", 7, 0.123, 0.123, 91.946, 1]
+            ]
+        }
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready for service {}".format(self.uuid))
@@ -53,7 +61,7 @@ class Service(ApplicationSession):
         self.log.info("Published init message")
         while True:
             self.log.info("Publishing timing data for {}".format(self.uuid))
-            self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA).serialise())
+            self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
             yield sleep(1)
 
     def onControlMessage(self, message):
