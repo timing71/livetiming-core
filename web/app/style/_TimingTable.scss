@@ -9,3 +9,10 @@
   text-transform: uppercase;
   border-bottom: 2px solid $color-system;
 }
+
+td.timing-row-position {
+  text-align: right;
+  border-right: 1px solid black;
+  color: $color-system;
+  width: 2em;
+}
