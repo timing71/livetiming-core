@@ -2,6 +2,7 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
 from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
 from os import environ
+from random import randint
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
@@ -31,23 +32,25 @@ class Service(ApplicationSession):
 
     def getColumnSpec(self):
         return [
-            ("Num", "numeric"),
+            ("Num", "text"),
             ("Driver", "text"),
             ("Laps", "numeric"),
             ("Gap", "time"),
             ("Int", "time"),
             ("Last", "time"),
-            ("Pits", "time")
+            ("Pits", "numeric")
         ]
 
     def isAlive(self):
         return True
 
     def getTimingMessage(self):
+        time1 = randint(90000, 95000) / 1000.0
+        time2 = randint(90000, 95000) / 1000.0
         return {
             "cars": [
-                ["7", "DriverName", 7, 0, 0, 92.546, 1],
-                ["8", "Driver Two", 7, 0.123, 0.123, 91.946, 1]
+                ["7", "DriverName", 7, 0, 0, time1, 1],
+                ["8", "Driver Two", 7, 0.123, 0.123, time2, 1]
             ]
         }
 
