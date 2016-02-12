@@ -18,8 +18,12 @@ class Service(ApplicationSession):
     def createServiceRegistration(self):
         return {
             "uuid": self.uuid,
-            "description": self.getDescription()
+            "name": self.getName(),
+            "description": self.getDescription(),
         }
+
+    def getName(self):
+        return "Generic Service"
 
     def getDescription(self):
         return "A generic service that has no purpose other than as a base class"
