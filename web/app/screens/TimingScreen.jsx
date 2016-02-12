@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { Grid, Row, Col } from 'react-bootstrap';
 
 import Clock from '../components/Clock';
+import FlagStatusPanel from '../components/FlagStatusPanel';
 import TimingTable from '../components/TimingTable';
 
 export default class TimingScreen extends React.Component {
@@ -56,7 +57,7 @@ export default class TimingScreen extends React.Component {
             <Clock seconds={this.state.session.timeElapsed} />
           </Col>
           <Col md={8}>
-            <p>{this.props.service.description}</p>
+            <FlagStatusPanel flag={this.state.session.flagState} text={this.props.service.name} />
           </Col>
           <Col md={2}>
             <Clock seconds={this.state.session.timeRemain} />

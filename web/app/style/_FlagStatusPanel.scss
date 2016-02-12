@@ -1,5 +1,9 @@
-.clock {
+.flag-status {
   text-align: center;
   padding-top: $table-cell-padding;
   padding-bottom: $table-cell-padding;
+}
+
+.flag-status-green {
+  background-color: $color-course-green;
 }
