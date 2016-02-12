@@ -1,7 +1,7 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
 from os import environ
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 
@@ -16,6 +16,15 @@ class Directory(ApplicationSession):
     def listServices(self):
         return self.services.values()
 
+    def removeService(self, errorArgs, serviceUUID):
+        self.log.info("Removing dead service {}".format(serviceUUID))
+        self.services.pop(serviceUUID)
+
+    def checkLiveness(self):
+        self.log.info("Checking liveness of {} service(s)".format(len(self.services)))
+        for service in self.services.keys():
+            _ = self.call(RPC.LIVENESS_CHECK.format(service)).addErrback(self.removeService, serviceUUID=service)
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready")
@@ -26,6 +35,9 @@ class Directory(ApplicationSession):
         self.log.debug("Published init message")
         yield self.register(self.listServices, RPC.DIRECTORY_LISTING)
         self.log.debug("Registered service listing RPC")
+
+        liveness = task.LoopingCall(self.checkLiveness)
+        liveness.start(10)
 
     def onControlMessage(self, message):
         msg = Message.parse(message)

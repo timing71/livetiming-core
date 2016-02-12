@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
-from livetiming.messaging import Channel, Message, MessageClass, Realm
+from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
 from os import environ
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -40,10 +40,13 @@ class Service(ApplicationSession):
             ("Pits", "time")
         ]
 
+    def isAlive(self):
+        return True
+
     @inlineCallbacks
     def onJoin(self, details):
-        self.log.info("Session ready")
-
+        self.log.info("Session ready for service {}".format(self.uuid))
+        yield self.register(self.isAlive, RPC.LIVENESS_CHECK.format(self.uuid))
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.info("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
