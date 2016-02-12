@@ -1,4 +1,5 @@
 import React from 'react';
+import _ from 'lodash';
 
 import { Grid, Row, Col } from 'react-bootstrap';
 
@@ -17,6 +18,7 @@ export default class TimingScreen extends React.Component {
         "timeRemain": 0
       }
     };
+    this.handleData = this.handleData.bind(this);
   }
 
   componentWillMount() {
@@ -36,10 +38,16 @@ export default class TimingScreen extends React.Component {
   }
   
   handleData(data) {
-    console.log(data);
+    _(data).forEach((message) => {
+      if (message.msgClass == 4) {
+        console.log(message.payload.cars);
+        this.setState({cars: message.payload.cars});
+      }
+    })
   }
   
   render() {
+    console.log(this.state.cars);
     return (
       <Grid fluid={true} className="screen timing-screen">
         <Row>
