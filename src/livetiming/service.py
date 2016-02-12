@@ -20,6 +20,7 @@ class Service(ApplicationSession):
             "uuid": self.uuid,
             "name": self.getName(),
             "description": self.getDescription(),
+            "colSpec": self.getColumnSpec()
         }
 
     def getName(self):
@@ -27,6 +28,17 @@ class Service(ApplicationSession):
 
     def getDescription(self):
         return "A generic service that has no purpose other than as a base class"
+
+    def getColumnSpec(self):
+        return [
+            ("Num", "numeric"),
+            ("Driver", "text"),
+            ("Laps", "numeric"),
+            ("Gap", "time"),
+            ("Int", "time"),
+            ("Last", "time"),
+            ("Pits", "time")
+        ]
 
     @inlineCallbacks
     def onJoin(self, details):
