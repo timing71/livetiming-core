@@ -31,7 +31,7 @@ const common = {
         loader: "style!css?sourceMap!sass?sourceMap"
       },
       {
-        test: /\.jsx$/,
+        test: /\.jsx?$/,
         loaders: ['babel?cacheDirectory'],
         include: PATHS.app
       },

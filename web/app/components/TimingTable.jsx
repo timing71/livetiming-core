@@ -3,12 +3,14 @@ import _ from 'lodash';
 
 import { Table } from 'react-bootstrap';
 
+import { format } from '../utils/formats';
+
 class TimingRow extends React.Component {
   render() {
     const {position, car, columnSpec} = this.props;
-    const cols = [<td>{position}</td>];
+    const cols = [<td key={0}>{position}</td>];
     _(columnSpec).forEach((col, index) => {
-      cols.push(<td>{car[index]}, {col[1]}</td>);
+      cols.push(<td key={index + 1}>{format(car[index], col[1])}</td>);
     })
     return (
       <tr>
