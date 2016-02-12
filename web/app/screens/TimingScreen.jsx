@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import { Grid, Row, Col } from 'react-bootstrap';
 
+import Clock from '../components/Clock';
 import TimingTable from '../components/TimingTable';
 
 export default class TimingScreen extends React.Component {
@@ -52,13 +53,13 @@ export default class TimingScreen extends React.Component {
       <Grid fluid={true} className="screen timing-screen">
         <Row>
           <Col md={2}>
-            <p>{this.state.session.timeElapsed}</p>
+            <Clock seconds={this.state.session.timeElapsed} />
           </Col>
           <Col md={8}>
             <p>{this.props.service.description}</p>
           </Col>
           <Col md={2}>
-            <p>{this.state.session.timeRemain}</p>
+            <Clock seconds={this.state.session.timeRemain} />
           </Col>
         </Row>
         <Row className="timing-table-container">
