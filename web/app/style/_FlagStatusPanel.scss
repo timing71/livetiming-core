@@ -7,3 +7,31 @@
 .flag-status-green {
   background-color: $color-course-green;
 }
+
+.flag-status-yellow, .flag_status-fcy, .flag-status-sc {
+  background-color: $color-course-yellow;
+  color: black;
+}
+
+@keyframes sc-yellow-anim {
+  from { background-color: $color-course-yellow; color: black; }
+  to { background-color: black; color: white; }
+}
+
+.flag-status-fcy, .flag-status-sc {
+  animation: sc-yellow-anim 0.5s alternate infinite;
+}
+
+.flag-status-red {
+  background-color: $color-course-red;
+}
+
+.flag-status-code_60 {
+  background-color: $color-course-purple;
+  color: black;
+}
+
+.flag-status-chequered {
+  background-image: url('chequer.png');
+  color: transparent;
+}

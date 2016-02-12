@@ -43,7 +43,10 @@ export default class TimingScreen extends React.Component {
     _(data).forEach((message) => {
       if (message.msgClass == 4) {
         console.log(message.payload.cars);
-        this.setState({cars: message.payload.cars});
+        this.setState({
+          cars: message.payload.cars,
+          session: message.payload.session
+        });
       }
     })
   }
