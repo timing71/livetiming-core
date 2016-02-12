@@ -55,7 +55,7 @@ export default class TimingScreen extends React.Component {
         </Row>
         <Row className="timing-table-container">
           <Col md={12} className="full-height">
-            <TimingTable cars={this.state.cars} />
+            <TimingTable columnSpec={this.props.service.colSpec} cars={this.state.cars} />
           </Col>
         </Row>
         <Row>

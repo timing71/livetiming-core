@@ -9,20 +9,7 @@ export default class TimingTable extends React.Component {
         <thead>
           <tr className="timing-table-header">
             <td>Pos</td>
-            <td>Num</td>
-            <td>State</td>
-            <td>Cat</td>
-            <td>Team</td>
-            <td>Driver</td>
-            <td>Car</td>
-            <td>T</td>
-            <td>Laps</td>
-            <td>Gap</td>
-            <td>Int</td>
-            <td>Last</td>
-            <td>Best</td>
-            <td>Spd</td>
-            <td>Pits</td>
+            {this.props.columnSpec.map(spec => <td>{spec[0]}</td>)}
           </tr>
         </thead>
       </Table>
