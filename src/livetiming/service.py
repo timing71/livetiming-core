@@ -3,7 +3,7 @@ from autobahn.twisted.util import sleep
 from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
 from os import environ
 from random import randint
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
@@ -16,6 +16,7 @@ class Service(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.uuid = uuid4().hex
+        self.state = {}
 
     def createServiceRegistration(self):
         return {
@@ -45,11 +46,11 @@ class Service(ApplicationSession):
     def isAlive(self):
         return True
 
-    def getTimingMessage(self):
+    def updateRaceState(self):
         time1 = randint(90000, 95000) / 1000.0
         time2 = randint(90000, 95000) / 1000.0
         flag = FlagStatus(randint(0, 6)).name.lower()
-        return {
+        self.state = {
             "cars": [
                 ["7", "DriverName", 7, 0, 0, time1, 1],
                 ["8", "Driver Two", 7, 0.123, 0.123, time2, 1]
@@ -61,6 +62,9 @@ class Service(ApplicationSession):
             }
         }
 
+    def getTimingMessage(self):
+        return self.state
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready for service {}".format(self.uuid))
@@ -69,10 +73,15 @@ class Service(ApplicationSession):
         self.log.info("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
         self.log.info("Published init message")
+
+        # Update race state (randomly) every 10 seconds
+        updater = task.LoopingCall(self.updateRaceState)
+        updater.start(10)
+
         while True:
             self.log.info("Publishing timing data for {}".format(self.uuid))
             self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
-            yield sleep(1)
+            yield sleep(10)  # No point in sleeping for less time than we wait between updates!
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
