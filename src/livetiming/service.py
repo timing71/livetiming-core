@@ -7,6 +7,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
+from livetiming.racing import FlagStatus
 
 
 class Service(ApplicationSession):
@@ -47,11 +48,17 @@ class Service(ApplicationSession):
     def getTimingMessage(self):
         time1 = randint(90000, 95000) / 1000.0
         time2 = randint(90000, 95000) / 1000.0
+        flag = FlagStatus(randint(0, 6)).name.lower()
         return {
             "cars": [
                 ["7", "DriverName", 7, 0, 0, time1, 1],
                 ["8", "Driver Two", 7, 0.123, 0.123, time2, 1]
-            ]
+            ],
+            "session": {
+                "flagState": flag,
+                "timeElapsed": 0,
+                "timeRemain": 0
+            }
         }
 
     @inlineCallbacks
