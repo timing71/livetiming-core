@@ -46,11 +46,14 @@ class Service(ApplicationSession):
     def isAlive(self):
         return True
 
-    def updateRaceState(self):
+    def _updateRaceState(self):
+        self.state = self.getRaceState()
+
+    def getRaceState(self):
         time1 = randint(90000, 95000) / 1000.0
         time2 = randint(90000, 95000) / 1000.0
         flag = FlagStatus(randint(0, 6)).name.lower()
-        self.state = {
+        return {
             "cars": [
                 ["7", "DriverName", 7, 0, 0, time1, 1],
                 ["8", "Driver Two", 7, 0.123, 0.123, time2, 1]
@@ -75,7 +78,7 @@ class Service(ApplicationSession):
         self.log.info("Published init message")
 
         # Update race state (randomly) every 10 seconds
-        updater = task.LoopingCall(self.updateRaceState)
+        updater = task.LoopingCall(self._updateRaceState)
         updater.start(10)
 
         while True:
