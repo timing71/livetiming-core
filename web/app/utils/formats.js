@@ -2,6 +2,13 @@ export function format(value, type) {
   switch (type) {
   case 'time':
     return timeInSeconds(value);
+  case 'delta':
+    if (isNaN(value)) {
+      return value;
+    }
+    else {
+      return parseFloat(value).toFixed(3);
+    }
   default:
     return value;
   }
