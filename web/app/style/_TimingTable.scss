@@ -16,3 +16,31 @@ td.timing-row-position {
   color: $color-system;
   width: 2em;
 }
+
+tr.car_state_PIT {
+  background-color: #550000;
+}
+
+.table-striped > tbody > tr.car_state_PIT:nth-of-type(odd) {
+  background-color: #5C0000;
+}
+
+tr.car_state_OUT {
+  background-color: #553300;
+}
+
+.table-striped > tbody > tr.car_state_OUT:nth-of-type(odd) {
+  background-color: #603F00;
+}
+
+tr.car_state_RUN td.column_State {
+  color: $color-state-run;
+}
+
+tr.car_state_PIT td.column_State {
+  color: $color-state-pit;
+}
+
+tr.car_state_OUT td.column_State {
+  color: $color-state-out;
+}
