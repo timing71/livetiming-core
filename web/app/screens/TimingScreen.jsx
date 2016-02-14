@@ -42,7 +42,6 @@ export default class TimingScreen extends React.Component {
   handleData(data) {
     _(data).forEach((message) => {
       if (message.msgClass == 4) {
-        console.log(message.payload.cars);
         this.setState({
           cars: message.payload.cars,
           session: message.payload.session
@@ -52,7 +51,6 @@ export default class TimingScreen extends React.Component {
   }
   
   render() {
-    console.log(this.state.cars);
     return (
       <Grid fluid={true} className="screen timing-screen">
         <Row>
