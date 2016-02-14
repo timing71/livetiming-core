@@ -47,7 +47,9 @@ class Service(ApplicationSession):
         return True
 
     def _updateRaceState(self):
-        self.state = self.getRaceState()
+        newState = self.getRaceState()
+        self.state["cars"] = newState["cars"]
+        self.state["session"] = newState["session"]
 
     def getRaceState(self):
         time1 = randint(90000, 95000) / 1000.0

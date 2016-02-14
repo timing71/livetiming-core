@@ -8,4 +8,5 @@ class FlagStatus(Enum):
     CODE_60 = 3
     SC = 4
     RED = 5
-    CHEQUERED = 6
+    CHEQUERED = 6,
+    WHITE = 7
