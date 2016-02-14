@@ -41,7 +41,7 @@ export default class TimingTable extends React.Component {
         <thead>
           <tr className="timing-table-header">
             <td>Pos</td>
-            {this.props.columnSpec.map(spec => <td>{spec[0]}</td>)}
+            {this.props.columnSpec.map((spec, idx) => <td key={idx}>{spec[0]}</td>)}
           </tr>
         </thead>
         <tbody>
