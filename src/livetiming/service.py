@@ -43,6 +43,9 @@ class Service(ApplicationSession):
             ("Pits", "numeric")
         ]
 
+    def getPollInterval(self):
+        return 10
+
     def isAlive(self):
         return True
 
@@ -81,12 +84,12 @@ class Service(ApplicationSession):
 
         # Update race state (randomly) every 10 seconds
         updater = task.LoopingCall(self._updateRaceState)
-        updater.start(10)
+        updater.start(self.getPollInterval())
 
         while True:
             self.log.info("Publishing timing data for {}".format(self.uuid))
             self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
-            yield sleep(10)  # No point in sleeping for less time than we wait between updates!
+            yield sleep(self.getPollInterval())  # No point in sleeping for less time than we wait between updates!
 
     def onControlMessage(self, message):
         msg = Message.parse(message)

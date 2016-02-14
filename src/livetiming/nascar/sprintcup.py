@@ -18,7 +18,9 @@ def mapFlagStates(rawState):
         5: FlagStatus.WHITE,
         10: FlagStatus.WHITE
     }
-    return flagMap[rawState].name.lower()
+    if rawState in flagMap:
+        return flagMap[rawState].name.lower()
+    return "none"
 
 
 class SprintCup(Service):
@@ -43,6 +45,9 @@ class SprintCup(Service):
             ("Best", "time"),
             ("Pits", "numeric")
         ]
+
+    def getPollInterval(self):
+        return 20
 
     def getRaceState(self):
         raw = self.getRawFeedData()
