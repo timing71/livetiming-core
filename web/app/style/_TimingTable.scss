@@ -17,6 +17,10 @@ td.timing-row-position {
   width: 2em;
 }
 
+td.column_Class {
+  text-align: center;
+}
+
 tr.car_state_PIT {
   background-color: #550000;
 }
@@ -43,4 +47,20 @@ tr.car_state_PIT td.column_State {
 
 tr.car_state_OUT td.column_State {
   color: $color-state-out;
+}
+
+tr.car_class_P td.column_Class {
+  color: $color-class-p;
+}
+
+tr.car_class_PC td.column_Class {
+  color: $color-class-pc;
+}
+
+tr.car_class_GTLM td.column_Class {
+  color: $color-class-gtlm;
+}
+
+tr.car_class_GTD td.column_Class {
+  color: $color-class-gtd;
 }

@@ -14,6 +14,15 @@ function findStateIndex(columnSpec) {
   return -1;
 }
 
+function findClassIndex(columnSpec) {
+  for (var i=0; i < columnSpec.length; i++) {
+    if (columnSpec[i][0] == "Class") {
+      return i;
+    }
+  }
+  return -1;
+}
+
 class TimingRow extends React.Component {
   render() {
     const {position, car, columnSpec} = this.props;
@@ -21,9 +30,10 @@ class TimingRow extends React.Component {
     _(columnSpec).forEach((col, index) => {
       cols.push(<td key={index + 1} className={"column_" + col[0]}>{format(car[index], col[1])}</td>);
     })
-    const stateCol = findStateIndex(columnSpec)
+    const stateCol = findStateIndex(columnSpec);
+    const classCol = findClassIndex(columnSpec);
     return (
-      <tr className={"car_state_" + car[stateCol]} >
+      <tr className={`car_state_${car[stateCol]} car_class_${car[classCol]}`} >
         {cols}
       </tr>
     );
