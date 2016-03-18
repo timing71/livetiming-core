@@ -99,8 +99,26 @@ class IMSA(Service):
 
     def parseTiming(self, raw):
         cars = []
+        fastLapsPerClass = {}
         carList = [car for car in raw['B'] if car["C"] != ""]
+        for car in carList:
+            lastLap = parseTime(car["BL"])
+            carClass = car["C"]
+            if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
+                fastLapsPerClass[carClass] = lastLap
+
+        def getFlags(carClass, last, best):
+            if carClass in fastLapsPerClass and last == fastLapsPerClass[carClass]:
+                if last == best:
+                    return "sb-new"
+                return "sb"
+            elif last == best and last > 0:
+                return "pb"
+            return ""
+
         for car in sorted(carList, key=lambda car: car["A"]):
+            lastLap = parseTime(car["LL"])
+            bestLap = parseTime(car["BL"])
             cars.append([
                 car["N"],
                 "PIT" if car["P"] == 1 else "RUN",
@@ -110,8 +128,8 @@ class IMSA(Service):
                 car["L"],
                 car["D"],
                 car["G"],
-                [parseTime(car["LL"]), "pb" if car["LL"] == car['BL'] else ""],
-                parseTime(car["BL"]),
+                [lastLap, getFlags(car["C"], lastLap, bestLap)],
+                [bestLap, getFlags(car["C"], bestLap, -1)],
                 car["PS"]
             ])
 
