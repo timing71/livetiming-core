@@ -51,8 +51,11 @@ class IMSAFetcher(Thread):
 
     def run(self):
         while True:
-            feed = urllib2.urlopen(self.url)
-            self.callback(simplejson.load(feed))
+            try:
+                feed = urllib2.urlopen(self.url)
+                self.callback(simplejson.load(feed))
+            except:
+                pass  # Bad data feed :(
             sleep(self.interval)
 
 
