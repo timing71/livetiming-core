@@ -95,9 +95,7 @@ class IMSA(Service):
         return 5
 
     def getRaceState(self):
-        result = {"cars": self.carsState, "session": self.sessionState}
-        print result
-        return result
+        return {"cars": self.carsState, "session": self.sessionState}
 
     def parseTiming(self, raw):
         cars = []
@@ -112,7 +110,7 @@ class IMSA(Service):
                 car["L"],
                 car["D"],
                 car["G"],
-                parseTime(car["LL"]),
+                [parseTime(car["LL"]), "pb" if car["LL"] == car['BL'] else ""],
                 parseTime(car["BL"]),
                 car["PS"]
             ])

@@ -28,7 +28,17 @@ class TimingRow extends React.Component {
     const {position, car, columnSpec} = this.props;
     const cols = [<td key={0} className="timing-row-position">{position}</td>];
     _(columnSpec).forEach((col, index) => {
-      cols.push(<td key={index + 1} className={"column_" + col[0]}>{format(car[index], col[1])}</td>);
+      const valTuple = car[index];
+      let value, flags;
+      if (typeof(valTuple) == "object") {
+        value = valTuple[0];
+        flags = valTuple[1];
+      }
+      else {
+        value = valTuple;
+        flags = "";
+      }
+      cols.push(<td key={index + 1} className={`column_${col[0]} ${flags}`}>{format(value, col[1])}</td>);
     })
     const stateCol = findStateIndex(columnSpec);
     const classCol = findClassIndex(columnSpec);
