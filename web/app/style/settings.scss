@@ -15,6 +15,8 @@ $table-border-color: transparent;
 
 $font-family-base: Verdana, Monospace;
 
+$table-condensed-cell-padding: 2px;
+
 /* Non-Bootstrap below */
 
 $color-system: #54FFFF;
@@ -34,9 +36,9 @@ $color-class-lmp1: #FF0000;
 $color-class-lmp2: #77AAFF;
 $color-class-lmp3: #AA00AA;
 $color-class-p: #FF0000;
-$color-class-pc: #77AAFF;
+$color-class-pc: #00FF00;
 $color-class-gtlm: $color-class-lmgte;
-$color-class-gtd: $color-class-gtpro;
+$color-class-gtd: #FFFF00;
 
 $color-course-green: #009900;
 $color-course-yellow: #DDDD00;
