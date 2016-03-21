@@ -2,6 +2,8 @@ import React from 'react';
 import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
+import { ROUTER_URL } from '../config/settings';
+
 import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
 import TimingScreen from '../screens/TimingScreen';
 
@@ -20,7 +22,7 @@ export default class App extends React.Component {
   componentWillMount() {
     console.log("Ok, Autobahn loaded", autobahn.version);
     const connection = new autobahn.Connection({
-      url: "ws://127.0.0.1:5080/ws",
+      url: ROUTER_URL,
       realm: "timing"
     });
     connection.onopen = (session, details) => {
