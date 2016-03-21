@@ -6,6 +6,7 @@ import { Grid, Row, Col } from 'react-bootstrap';
 import Clock from '../components/Clock';
 import FlagStatusPanel from '../components/FlagStatusPanel';
 import TimingTable from '../components/TimingTable';
+import Messages from '../components/Messages';
 
 export default class TimingScreen extends React.Component {
 
@@ -71,7 +72,7 @@ export default class TimingScreen extends React.Component {
         </Row>
         <Row>
           <Col md={8}>
-            <p>Messages</p>
+            <Messages messages={this.state.messages} />
           </Col>
           <Col md={4}>
             <p>Track Data</p>
