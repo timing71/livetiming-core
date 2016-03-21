@@ -42,3 +42,7 @@ export function timeWithHours(seconds) {
   
   return hours + ":" + minutes + ":" + seconds;
 }
+
+export function classNameFromCategory(cat) {
+  return cat.replace(/ /g, "").toLowerCase();
+}

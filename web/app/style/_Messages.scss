@@ -1,0 +1,67 @@
+table.messagesTable {
+  width: 100%;
+  td.time, td.category {
+    width: 6em;
+  }
+
+}
+
+td.time, .system {
+  color: $color-system;
+}
+
+.pit {
+  background-color: #550000;
+}
+
+.out {
+  background-color: #553300;
+}
+
+.category-lmp1 {
+  color: $color-class-lmp1;
+}
+
+.category-lmp2 {
+  color: $color-class-lmp2;
+}
+
+.category-lmp3 {
+  color: $color-class-lmp3;
+}
+
+.category-p {
+  color: $color-class-p;
+}
+
+.category-pc {
+  color: $color-class-pc;
+}
+
+.category-gtam {
+  color: $color-class-gtam;
+}
+
+.category-lmgte {
+  color: $color-class-lmgte;
+}
+
+.category-gtpro {
+  color: $color-class-gtpro;
+}
+
+.category-gtc {
+  color: $color-class-gtc;
+}
+
+.category-gtlm {
+  color: $color-class-gtlm;
+}
+
+.category-gtd {
+  color: $color-class-gtd;
+}
+
+.category-track {
+  color: $color-course-yellow;
+}
