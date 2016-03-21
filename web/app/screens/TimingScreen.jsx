@@ -55,13 +55,13 @@ export default class TimingScreen extends React.Component {
       <Grid fluid={true} className="screen timing-screen">
         <Row>
           <Col md={2}>
-            <Clock seconds={this.state.session.timeElapsed} />
+            <Clock seconds={this.state.session.timeElapsed} caption="elapsed" />
           </Col>
           <Col md={8}>
             <FlagStatusPanel flag={this.state.session.flagState} text={this.props.service.name} />
           </Col>
           <Col md={2}>
-            <Clock seconds={this.state.session.timeRemain} />
+            <Clock seconds={this.state.session.timeRemain} caption="remaining" />
           </Col>
         </Row>
         <Row className="timing-table-container">
