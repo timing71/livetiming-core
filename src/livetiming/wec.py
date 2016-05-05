@@ -49,7 +49,7 @@ def mapClasses(rawClass):
 
 def parseTime(formattedTime):
     if formattedTime == "":
-        return ""
+        return 0
     ttime = datetime.strptime(formattedTime, "%M:%S.%f")
     return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
@@ -116,8 +116,24 @@ class WEC(Service):
     def getRaceState(self):
         raw = self.getRawFeedData()
         cars = []
-
+        fastLapsPerClass = {}
         rawCarData = raw[0]
+
+        for car in rawCarData.values():
+            lastLap = parseTime(car["8"])
+            carClass = self.staticData["tabEngages"][car["2"]]["categorie"]
+            if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
+                fastLapsPerClass[carClass] = lastLap
+
+        def getFlags(carClass, last, best):
+            if carClass in fastLapsPerClass and last == fastLapsPerClass[carClass]:
+                if last == best:
+                    return "sb-new"
+                return "sb"
+            elif last == best and last > 0:
+                return "pb"
+            return ""
+
         for pos in sorted(rawCarData.iterkeys(), key=lambda i: int(i)):
             car = rawCarData[pos]
             engage = self.staticData["tabEngages"][car["2"]]
@@ -126,6 +142,9 @@ class WEC(Service):
             driver = self.staticData["tabPilotes"][car["5"]]
             team = self.staticData["tabTeams"][engage["team"]]
             classe = engage["categorie"]
+
+            lastLap = parseTime(car["12"])
+            bestLap = parseTime(car["8"])
 
             cars.append([
                 engage["num"],
@@ -138,8 +157,8 @@ class WEC(Service):
                 car["13"],
                 car["4"],  # gap
                 car["16"],  # int
-                parseTime(car["12"]),  # last lap
-                parseTime(car["8"]),  # best lap
+                [lastLap, getFlags(classe, lastLap, bestLap)],
+                [bestLap, getFlags(classe, bestLap, -1)],
                 car["1"],  # ave speed
                 car["20"]  # pits
             ])
