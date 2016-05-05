@@ -13,12 +13,12 @@ from livetiming.racing import FlagStatus
 
 def mapFlagStates(rawState):
     flagMap = {
-        1: FlagStatus.GREEN,
-        2: FlagStatus.YELLOW,
+        1: FlagStatus.YELLOW,
+        2: FlagStatus.GREEN,
         3: FlagStatus.RED,
         4: FlagStatus.CHEQUERED,
-        5: FlagStatus.WHITE,
-        10: FlagStatus.WHITE
+        5: FlagStatus.YELLOW,
+        6: FlagStatus.FCY
     }
     if rawState in flagMap:
         return flagMap[rawState].name.lower()
@@ -48,8 +48,15 @@ def mapClasses(rawClass):
 
 
 def parseTime(formattedTime):
+    if formattedTime == "":
+        return ""
     ttime = datetime.strptime(formattedTime, "%M:%S.%f")
     return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+
+
+def parseSessionTime(formattedTime):
+    ttime = datetime.strptime(formattedTime, "%H : %M : %S")
+    return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
 
 
 def hackDataFromJSONP(data, var):
@@ -89,7 +96,7 @@ class WEC(Service):
         return [
             ("Num", "text"),
             ("State", "text"),
-            ("Cat", "text"),
+            ("Class", "text"),
             ("Team", "text"),
             ("Driver", "text"),
             ("Car", "text"),
@@ -137,7 +144,13 @@ class WEC(Service):
                 car["20"]  # pits
             ])
 
-        state = {}
+        course = raw[1]
+
+        state = {
+            "flagState": mapFlagStates(course["6"]),
+            "timeElapsed": parseSessionTime(course["4"]),
+            "timeRemain": parseSessionTime(course["7"])
+        }
 
         return {"cars": cars, "session": state}
 
