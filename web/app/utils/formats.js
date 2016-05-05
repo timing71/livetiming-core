@@ -1,4 +1,7 @@
 export function format(value, type) {
+  if (value == "") {
+    return "";
+  }
   switch (type) {
   case 'time':
     return timeInSeconds(value);
