@@ -166,7 +166,7 @@ class WEC(Service):
         course = raw[1]
 
         state = {
-            "flagState": mapFlagStates(course["6"]),
+            "flagState": FlagStatus.SC.name.lower() if course["9"] == 1 else mapFlagStates(course["6"]),
             "timeElapsed": parseSessionTime(course["4"]),
             "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"])
         }
