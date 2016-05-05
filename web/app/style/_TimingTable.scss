@@ -4,6 +4,10 @@
   border-bottom: 2px solid $color-system;
 }
 
+.timing-table-container > div.col-md-12 {
+  padding: 0;
+}
+
 .timing-table-header td {
   color: $color-system;
   text-transform: uppercase;
@@ -17,7 +21,7 @@ td.timing-row-position {
   width: 2em;
 }
 
-td.column_Num {
+td.column_Num, td.column_Laps, td.column_Pits {
   text-align: center;
 }
 
