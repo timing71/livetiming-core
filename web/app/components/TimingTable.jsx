@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { Table } from 'react-bootstrap';
 
-import { format } from '../utils/formats';
+import { format, classNameFromCategory } from '../utils/formats';
 
 function findStateIndex(columnSpec) {
   for (var i=0; i < columnSpec.length; i++) {
@@ -42,8 +42,9 @@ class TimingRow extends React.Component {
     })
     const stateCol = findStateIndex(columnSpec);
     const classCol = findClassIndex(columnSpec);
+    const carClass = classNameFromCategory(car[classCol]);
     return (
-      <tr className={`car_state_${car[stateCol]} car_class_${car[classCol]}`} >
+      <tr className={`car_state_${car[stateCol]} car_class_${carClass}`} >
         {cols}
       </tr>
     );

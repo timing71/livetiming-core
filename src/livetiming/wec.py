@@ -39,10 +39,10 @@ def mapCarState(rawState):
 
 def mapClasses(rawClass):
     classMap = {
-        "1": "lmp1",
-        "2": "gtpro",
-        "3": "lmp2",
-        "4": "gtam"
+        "1": "LM P1",
+        "2": "LM GTE Pro",
+        "3": "LM P2",
+        "4": "LM GTE Am"
     }
     return classMap[rawClass]
 
@@ -96,7 +96,7 @@ class WEC(Service):
         return [
             ("Num", "text"),
             ("State", "text"),
-            ("Class", "text"),
+            ("Class", "class"),
             ("Team", "text"),
             ("Driver", "text"),
             ("Car", "text"),
