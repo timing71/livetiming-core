@@ -168,7 +168,7 @@ class WEC(Service):
         state = {
             "flagState": mapFlagStates(course["6"]),
             "timeElapsed": parseSessionTime(course["4"]),
-            "timeRemain": parseSessionTime(course["7"])
+            "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"])
         }
 
         return {"cars": cars, "session": state}
