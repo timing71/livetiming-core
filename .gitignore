@@ -37,3 +37,4 @@ nosetests.xml
 # Project-specific
 venv/
 crossbar/.crossbar/node.key
+/*.json
