@@ -1,7 +1,7 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
 from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
-from os import environ
+from os import environ, path
 from random import randint
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
@@ -9,6 +9,7 @@ from twisted.logger import Logger
 from uuid import uuid4
 from livetiming.racing import FlagStatus
 import simplejson
+import sys
 
 
 class Service(ApplicationSession):
@@ -16,11 +17,19 @@ class Service(ApplicationSession):
 
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
-        self.uuid = uuid4().hex
+        self.uuid = path.splitext(sys.argv[1])[0] if len(sys.argv) == 2 else uuid4().hex
         self.state = self.getInitialState()
 
     def getInitialState(self):
-        return {}
+        if len(sys.argv) == 2:
+            try:
+                stateFile = open(sys.argv[1], 'r')
+                return simplejson.load(stateFile)
+            except Exception as e:
+                self.log.error("Exception trying to load saved state: {}".format(e))
+            finally:
+                stateFile.close()
+            return {}
 
     def saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
