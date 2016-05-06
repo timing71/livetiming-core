@@ -38,6 +38,10 @@ td.column_Num, td.column_Laps, td.column_Pits {
   color: black;
 }
 
+.slow {
+  color: red;
+}
+
 tr.car_state_PIT {
   background-color: #550000;
 }
