@@ -132,6 +132,8 @@ class WEC(Service):
                 return "sb"
             elif last == best and last > 0:
                 return "pb"
+            elif best > 0 and last > best * 1.6:
+                return "slow"
             return ""
 
         for pos in sorted(rawCarData.iterkeys(), key=lambda i: int(i)):
