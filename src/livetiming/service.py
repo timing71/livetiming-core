@@ -8,6 +8,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
 from livetiming.racing import FlagStatus
+import simplejson
 
 
 class Service(ApplicationSession):
@@ -16,7 +17,20 @@ class Service(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.uuid = uuid4().hex
-        self.state = {}
+        self.state = self.getInitialState()
+
+    def getInitialState(self):
+        return {}
+
+    def saveState(self):
+        self.log.debug("Saving state of {}".format(self.uuid))
+        try:
+            stateFile = open("{}.json".format(self.uuid), 'w')
+            simplejson.dump(self.state, stateFile)
+        except Exception as e:
+            self.log.error(e)
+        finally:
+            stateFile.close()
 
     def createServiceRegistration(self):
         return {
@@ -54,6 +68,7 @@ class Service(ApplicationSession):
             newState = self.getRaceState()
             self.state["cars"] = newState["cars"]
             self.state["session"] = newState["session"]
+            self.saveState()
         except Exception as e:
             self.log.error(e)
 
