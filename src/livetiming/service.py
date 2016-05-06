@@ -29,7 +29,7 @@ class Service(ApplicationSession):
                 self.log.error("Exception trying to load saved state: {}".format(e))
             finally:
                 stateFile.close()
-            return {}
+            return {"messages": []}
 
     def saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
@@ -75,6 +75,7 @@ class Service(ApplicationSession):
     def _updateRaceState(self):
         try:
             newState = self.getRaceState()
+            self.state["messages"].append(self.createMessages(self.state, newState))
             self.state["cars"] = newState["cars"]
             self.state["session"] = newState["session"]
             self.saveState()
@@ -96,6 +97,9 @@ class Service(ApplicationSession):
                 "timeRemain": 0
             }
         }
+
+    def createMessages(self, oldState, newState):
+        return []
 
     def getTimingMessage(self):
         return self.state
