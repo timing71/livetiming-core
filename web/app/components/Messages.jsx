@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { classNameFromCategory } from '../utils/formats';
+import { timestamp, classNameFromCategory } from '../utils/formats';
 
 export default class Messages extends React.Component {
   render() {
@@ -24,7 +24,7 @@ class Message extends React.Component {
     const [ time, category, text, messageType ] = this.props.message;
     return (
       <tr>
-        <td className="time">{time}</td>
+        <td className="time">{timestamp(time)}</td>
         <td className={`category category-${classNameFromCategory(category)}`}>{category}</td>
         <td className={`text ${messageType}`}>{text}</td>
       </tr>

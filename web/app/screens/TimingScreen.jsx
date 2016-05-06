@@ -50,7 +50,8 @@ export default class TimingScreen extends React.Component {
       if (message.msgClass == 4) {
         this.setState({
           cars: message.payload.cars,
-          session: message.payload.session
+          session: message.payload.session,
+          messages: message.payload.messages
         });
       }
     })

@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export function format(value, type) {
   if (value == "") {
     return "";
@@ -44,6 +46,10 @@ export function timeWithHours(seconds) {
   }
   
   return hours + ":" + minutes + ":" + seconds;
+}
+
+export function timestamp(unix) {
+  return moment(unix * 1000).format("HH:mm:ss");
 }
 
 export function classNameFromCategory(cat) {

@@ -10,3 +10,7 @@ class FlagStatus(Enum):
     RED = 5
     CHEQUERED = 6,
     WHITE = 7
+
+    @classmethod
+    def fromString(fs, string):
+        return FlagStatus[string.upper()]
