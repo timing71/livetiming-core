@@ -196,6 +196,8 @@ class WEC(Service):
                         messages.append([int(time.time()), newCar[2], u"#{} ({}) has left the pits".format(newCar[0], newCar[4]), "out", newCar[0]])
                     elif newCar[1] == "RET":
                         messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), "", newCar[0]])
+                if newCar[4] != oldCar[4]:
+                    messages.append([int(time.time()), newCar[2], u"#{} Driver change ({} to {})".format(newCar[0], oldCar[4], newCar[4]), "", newCar[0]])
         return messages
 
 
