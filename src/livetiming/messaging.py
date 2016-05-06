@@ -12,6 +12,7 @@ class Channel:
 class RPC:
     DIRECTORY_LISTING = u"livetiming.directory.listServices"
     LIVENESS_CHECK = u"livetiming.service.isAlive.{}"
+    REQUEST_STATE = u"livetiming.service.requestState.{}"
 
 
 class MessageClass(Enum):

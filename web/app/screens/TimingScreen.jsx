@@ -26,6 +26,11 @@ export default class TimingScreen extends React.Component {
 
   componentWillMount() {
     const {session, service} = this.props;
+
+    session.call("livetiming.service.requestState." + service.uuid).then((result) => {
+      this.handleData([result]);
+      });
+
     session.subscribe(service.uuid, this.handleData).then(
       (sub) => {
         this.subscription = sub;

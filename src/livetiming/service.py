@@ -100,10 +100,14 @@ class Service(ApplicationSession):
     def getTimingMessage(self):
         return self.state
 
+    def requestCurrentState(self):
+        return Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise()
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready for service {}".format(self.uuid))
         yield self.register(self.isAlive, RPC.LIVENESS_CHECK.format(self.uuid))
+        yield self.register(self.requestCurrentState, RPC.REQUEST_STATE.format(self.uuid))
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.info("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
