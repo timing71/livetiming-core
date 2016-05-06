@@ -1,3 +1,11 @@
+.messages-container {
+  height: 21%;
+}
+
+.messages-container > div {
+  overflow-y: auto;
+}
+
 table.messagesTable {
   width: 100%;
   td.time, td.category {
