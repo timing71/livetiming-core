@@ -183,6 +183,21 @@ class WEC(Service):
         feed = urllib2.urlopen(feed_url)
         return simplejson.loads(feed.read())
 
+    def createMessages(self, oldState, newState):
+        messages = super(WEC, self).createMessages(oldState, newState)
+        for newCar in newState["cars"]:
+            oldCars = [c for c in oldState["cars"] if c[0] == newCar[0]]
+            if oldCars:
+                oldCar = oldCars[0]
+                if newCar[1] != oldCar[1]:  # Change state
+                    if newCar[1] == "PIT":
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has entered the pits".format(newCar[0], newCar[4]), "pit"])
+                    elif newCar[1] == "OUT":
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has left the pits".format(newCar[0], newCar[4]), "out"])
+                    elif newCar[1] == "RET":
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), ""])
+        return messages
+
 
 def main():
     Logger().info("Starting WEC timing service...")
