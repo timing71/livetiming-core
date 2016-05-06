@@ -191,11 +191,11 @@ class WEC(Service):
                 oldCar = oldCars[0]
                 if newCar[1] != oldCar[1]:  # Change state
                     if newCar[1] == "PIT":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has entered the pits".format(newCar[0], newCar[4]), "pit"])
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has entered the pits".format(newCar[0], newCar[4]), "pit", newCar[0]])
                     elif newCar[1] == "OUT":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has left the pits".format(newCar[0], newCar[4]), "out"])
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has left the pits".format(newCar[0], newCar[4]), "out", newCar[0]])
                     elif newCar[1] == "RET":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), ""])
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), "", newCar[0]])
         return messages
 
 
