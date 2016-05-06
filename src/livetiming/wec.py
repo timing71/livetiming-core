@@ -65,7 +65,7 @@ def hackDataFromJSONP(data, var):
 
 def getStaticData():
     Logger().info("Retrieving WEC static data...")
-    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_470.js"
+    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_472.js"
     feed = urllib2.urlopen(static_data_url)
     raw = feed.read()
     return {
