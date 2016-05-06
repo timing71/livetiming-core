@@ -50,9 +50,12 @@ class Service(ApplicationSession):
         return True
 
     def _updateRaceState(self):
-        newState = self.getRaceState()
-        self.state["cars"] = newState["cars"]
-        self.state["session"] = newState["session"]
+        try:
+            newState = self.getRaceState()
+            self.state["cars"] = newState["cars"]
+            self.state["session"] = newState["session"]
+        except Exception as e:
+            self.log.error(e)
 
     def getRaceState(self):
         time1 = randint(90000, 95000) / 1000.0
