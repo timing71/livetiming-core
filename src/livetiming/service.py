@@ -30,7 +30,14 @@ class Service(ApplicationSession):
                 self.log.error("Exception trying to load saved state: {}".format(e))
             finally:
                 stateFile.close()
-            return {"messages": []}
+        return {
+            "messages": [],
+            "session": {
+                "flagState": "green",
+                "timeElapsed": 0,
+                "timeRemain": 0},
+            "cars": []
+        }
 
     def saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
