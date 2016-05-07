@@ -59,6 +59,11 @@ def parseSessionTime(formattedTime):
     return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
 
 
+def formatTime(seconds):
+    m, s = divmod(seconds, 60)
+    return "{}:{}".format(int(m), s)
+
+
 def hackDataFromJSONP(data, var):
     return simplejson.loads(re.search(r'(?:%s = jQuery\.parseJSON\(\')([^\;]+)(?:\'\)\;)' % var, data).group(1))
 
@@ -197,6 +202,12 @@ class WEC(Service):
                         messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), "", newCar[0]])
                 if newCar[4] != oldCar[4]:
                     messages.append([int(time.time()), newCar[2], u"#{} Driver change ({} to {})".format(newCar[0], oldCar[4], newCar[4]), "", newCar[0]])
+                if newCar[10][1] != oldCar[10][1]:
+                    newFlags = newCar[10][1]
+                    if newFlags == "pb":
+                        messages.append([int(time.time()), newCar[2], u"New personal best for car #{} ({})".format(newCar[0], formatTime(newCar[10][0])), "pb", newCar[0]])
+                    if newFlags == "sb-new":
+                        messages.append([int(time.time()), newCar[2], u"New overall best for car #{} ({})".format(newCar[0], formatTime(newCar[10][0])), "sb", newCar[0]])
         return messages
 
 
