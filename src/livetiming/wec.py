@@ -121,7 +121,10 @@ class WEC(Service):
         return [
             "Track Temp",
             "Air Temp",
-            "Humidity"
+            "Humidity",
+            "Wind Speed",
+            "Wind Direction",
+            "Forecast"
         ]
 
     def getPollInterval(self):
@@ -189,7 +192,10 @@ class WEC(Service):
             "trackData": [
                 u"{}°C".format(trackData["3"]),
                 u"{}°C".format(trackData["6"]),
-                "{}%".format(trackData["2"])
+                "{}%".format(trackData["2"]),
+                "{}kph".format(trackData["8"]),
+                u"{}°".format(trackData["0"]),
+                trackData["1"].title()
             ]
         }
 
