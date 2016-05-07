@@ -227,9 +227,9 @@ class WEC(Service):
                 if newCar[10][1] != oldCar[10][1]:
                     newFlags = newCar[10][1]
                     if newFlags == "pb":
-                        messages.append([int(time.time()), newCar[2], u"New personal best for car #{} ({})".format(newCar[0], formatTime(newCar[10][0])), "pb", newCar[0]])
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) set a new personal best: {}".format(newCar[0], newCar[4], formatTime(newCar[10][0])), "pb", newCar[0]])
                     if newFlags == "sb-new":
-                        messages.append([int(time.time()), newCar[2], u"New overall best for car #{} ({})".format(newCar[0], formatTime(newCar[10][0])), "sb", newCar[0]])
+                        messages.append([int(time.time()), newCar[2], u"#{} ({}) set a new overall best: {}".format(newCar[0], newCar[4], formatTime(newCar[10][0])), "sb", newCar[0]])
         return messages
 
 
