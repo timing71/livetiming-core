@@ -55,7 +55,7 @@ class Service(ApplicationSession):
             "name": self.getName(),
             "description": self.getDescription(),
             "colSpec": self.getColumnSpec(),
-            "trackData": self.getTrackDataSpec()
+            "trackDataSpec": self.getTrackDataSpec()
         }
 
     def getName(self):
