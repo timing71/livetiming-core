@@ -10,8 +10,8 @@ export default class TrackData extends React.Component {
       const data = [];
 
       for (var i = 0; i < spec.length; i++) {
-        data.push(<Col sm="3" className="trackdata-key">{spec[i]}</Col>);
-        data.push(<Col sm="3" className="trackdata-value">{dataset[i]}</Col>);
+        data.push(<Col sm={3} className="trackdata-key" key={spec[i]}>{spec[i]}</Col>);
+        data.push(<Col sm={3} className="trackdata-value" key={spec[i] + "_value"}>{dataset[i]}</Col>);
       }
 
       return (
