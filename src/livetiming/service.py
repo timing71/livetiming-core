@@ -54,7 +54,8 @@ class Service(ApplicationSession):
             "uuid": self.uuid,
             "name": self.getName(),
             "description": self.getDescription(),
-            "colSpec": self.getColumnSpec()
+            "colSpec": self.getColumnSpec(),
+            "trackData": self.getTrackDataSpec()
         }
 
     def getName(self):
@@ -73,6 +74,9 @@ class Service(ApplicationSession):
             ("Last", "time"),
             ("Pits", "numeric")
         ]
+
+    def getTrackDataSpec(self):
+        return []
 
     def getPollInterval(self):
         return 10

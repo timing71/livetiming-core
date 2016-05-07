@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from livetiming.service import Service
 import urllib2
 import re
@@ -115,6 +117,13 @@ class WEC(Service):
             ("Pits", "numeric")
         ]
 
+    def getTrackDataSpec(self):
+        return [
+            "Track Temp",
+            "Air Temp",
+            "Humidity"
+        ]
+
     def getPollInterval(self):
         return 20
 
@@ -171,10 +180,17 @@ class WEC(Service):
 
         course = raw[1]
 
+        trackData = course["11"][0]
+
         state = {
             "flagState": FlagStatus.SC.name.lower() if course["9"] == 1 else mapFlagStates(course["6"]),
             "timeElapsed": parseSessionTime(course["4"]),
-            "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"])
+            "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"]),
+            "trackData": [
+                u"{}°C".format(trackData["3"]),
+                u"{}°C".format(trackData["6"]),
+                "{}%".format(trackData["2"])
+            ]
         }
 
         return {"cars": cars, "session": state}
