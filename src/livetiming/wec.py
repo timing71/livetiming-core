@@ -65,7 +65,7 @@ def hackDataFromJSONP(data, var):
 
 def getStaticData():
     Logger().info("Retrieving WEC static data...")
-    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_472.js"
+    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_480.js"
     feed = urllib2.urlopen(static_data_url)
     raw = feed.read()
     return {
@@ -144,7 +144,6 @@ class WEC(Service):
             driver = self.staticData["tabPilotes"][car["5"]]
             team = self.staticData["tabTeams"][engage["team"]]
             classe = engage["categorie"]
-
             lastLap = parseTime(car["12"])
             bestLap = parseTime(car["8"])
 
