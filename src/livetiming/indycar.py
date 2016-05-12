@@ -70,7 +70,7 @@ class IndyCar(Service):
         raw = self.getRawFeedData()
         cars = []
         timingResults = raw['timing_results']
-        for car in sorted(timingResults["Item"], key=lambda car: car["overallRank"]):
+        for car in sorted(timingResults["Item"], key=lambda car: int(car["overallRank"])):
             cars.append([
                 car["no"],
                 "PIT" if car["status"] == "In Pit" else "RUN",
