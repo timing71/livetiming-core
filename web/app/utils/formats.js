@@ -53,5 +53,8 @@ export function timestamp(unix) {
 }
 
 export function classNameFromCategory(cat) {
-  return cat.replace(/ /g, "").toLowerCase();
+  if (cat) {
+    return cat.replace(/ /g, "").toLowerCase();
+  }
+  return undefined;
 }
