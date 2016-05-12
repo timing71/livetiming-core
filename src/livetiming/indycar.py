@@ -36,8 +36,11 @@ def parseSessionTime(formattedTime):
         ttime = datetime.strptime(formattedTime, "%H:%M:%S")
         return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
     except ValueError:
-        ttime = datetime.strptime(formattedTime, "%M:%S")
-        return (60 * ttime.minute) + ttime.second
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S")
+            return (60 * ttime.minute) + ttime.second
+        except ValueError:
+            return formattedTime
 
 
 class IndyCar(Service):
@@ -87,7 +90,7 @@ class IndyCar(Service):
         state = {
             "flagState": mapFlagStates(heartbeat["currentFlag"]),
             "timeElapsed": parseSessionTime(heartbeat["elapsedTime"]),
-            "timeRemain": parseSessionTime(heartbeat["overallTimeToGo"]),
+            "timeRemain": parseSessionTime(heartbeat["overallTimeToGo"]) if "overallTimeToGo" in heartbeat else 0,
         }
         return {"cars": cars, "session": state}
 
