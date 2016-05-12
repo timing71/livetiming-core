@@ -9,7 +9,8 @@ class FlagStatus(Enum):
     SC = 4
     RED = 5
     CHEQUERED = 6,
-    WHITE = 7
+    WHITE = 7,
+    NONE = 999
 
     @classmethod
     def fromString(fs, string):

@@ -11,12 +11,11 @@ from livetiming.racing import FlagStatus
 
 def mapFlagStates(rawState):
     flagMap = {
-        1: FlagStatus.GREEN,
-        2: FlagStatus.YELLOW,
-        3: FlagStatus.RED,
-        4: FlagStatus.CHEQUERED,
-        5: FlagStatus.WHITE,
-        10: FlagStatus.WHITE
+        "GREEN": FlagStatus.GREEN,
+        "YELLOW": FlagStatus.YELLOW,
+        "RED": FlagStatus.RED,
+        "CHECKERED": FlagStatus.CHEQUERED,
+        "COLD": FlagStatus.WHITE
     }
     if rawState in flagMap:
         return flagMap[rawState].name.lower()
@@ -24,8 +23,21 @@ def mapFlagStates(rawState):
 
 
 def parseTime(formattedTime):
-    ttime = datetime.strptime(formattedTime, "%M:%S.%f")
-    return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+    try:
+        ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+        return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+    except ValueError:
+        ttime = datetime.strptime(formattedTime, "%S.%f")
+        return ttime.second + (ttime.microsecond / 1000000.0)
+
+
+def parseSessionTime(formattedTime):
+    try:
+        ttime = datetime.strptime(formattedTime, "%H:%M:%S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        ttime = datetime.strptime(formattedTime, "%M:%S")
+        return (60 * ttime.minute) + ttime.second
 
 
 class IndyCar(Service):
@@ -61,21 +73,21 @@ class IndyCar(Service):
         for car in sorted(timingResults["Item"], key=lambda car: car["overallRank"]):
             cars.append([
                 car["no"],
-                "PIT" if car["status"] == "In Pit" else "OUT",
+                "PIT" if car["status"] == "In Pit" else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
                 car["gap"],
                 car["diff"],
                 parseTime(car["lastLapTime"]),
-                car["LastSpeed"],
+                car["LastSpeed"] if "LastSpeed" in car else "",
                 parseTime(car["bestLapTime"]),
                 car["pitStops"]
             ])
         heartbeat = timingResults['heartbeat']
         state = {
             "flagState": mapFlagStates(heartbeat["currentFlag"]),
-            "timeElapsed": heartbeat["elapsedTime"],
-            "timeRemain": -1
+            "timeElapsed": parseSessionTime(heartbeat["elapsedTime"]),
+            "timeRemain": parseSessionTime(heartbeat["overallTimeToGo"]),
         }
         return {"cars": cars, "session": state}
 
