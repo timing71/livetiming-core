@@ -29,9 +29,9 @@ export default class Clock extends React.Component {
 
   updateTimer() {
     if (this.props.seconds != null) {
-      const delta = (Date.now() - this.state.refTime) / 1000;
+      const delta = Math.ceil((Date.now() - this.state.refTime) / 1000);
       if (this.props.countdown) {
-        this.setState({...this.state, seconds : this.props.seconds - delta});
+        this.setState({...this.state, seconds : Math.max(this.props.seconds - delta, 0)});
       }
       else {
         this.setState({...this.state, seconds : this.props.seconds + delta});
