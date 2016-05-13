@@ -69,7 +69,7 @@ export default class TimingScreen extends React.Component {
             <FlagStatusPanel flag={this.state.session.flagState} text={this.props.service.name} />
           </Col>
           <Col md={2}>
-            <Clock seconds={this.state.session.timeRemain} caption="remaining" />
+            <Clock seconds={this.state.session.timeRemain} countdown={true} caption="remaining" />
           </Col>
         </Row>
         <Row className="timing-table-container">
