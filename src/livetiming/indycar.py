@@ -84,9 +84,15 @@ class IndyCar(Service):
                 car["gap"],
                 [parseTime(car["lastLapTime"]), "pb" if car["lastLapTime"] == car["bestLapTime"] else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
-                parseTime(car["bestLapTime"]),
+                [parseTime(car["bestLapTime"]), ""],
                 car["pitStops"]
             ])
+
+        byFastestLap = sorted(cars, key=lambda c: float(c[8][0]) if c[8][0] != 0 else 9999)
+        purpleCar = byFastestLap[0]
+        purpleCar[8][1] = "sb"
+        purpleCar[6][1] = "sb-new" if purpleCar[6][0] == purpleCar[8][0] else ""
+
         heartbeat = timingResults['heartbeat']
         state = {
             "flagState": mapFlagStates(heartbeat["currentFlag"]),
