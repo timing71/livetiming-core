@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from autobahn.twisted.wamp import ApplicationRunner
 from livetiming.messaging import Realm
 from livetiming.racing import FlagStatus
+from twisted.internet.test.test_gireactor import GApplicationRegistrationTests
 
 
 class Fetcher(Thread):
@@ -88,6 +89,8 @@ class F1(Service):
             ("S3", "time"),
             ("BS3", "time"),
             ("Last", "time"),
+            ("Gap", "time"),
+            ("Int", "time"),
             ("Best", "time"),
         ]
 
@@ -115,6 +118,7 @@ class F1(Service):
             timeLine = bestTimes[idx]["B"].split(",")
             latestTimeLine = latestTimes[idx]["O"].split(",")
             colorFlags = latestTimeLine[2]
+
             cars.append([
                 driver["Num"],
                 driver["FullName"],
@@ -125,10 +129,25 @@ class F1(Service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 timeLine[10],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
+                0,
+                0,
                 timeLine[1]
             ])
 
-        return {"cars": sorted(cars, key=lambda c: float(c[9]) if c[9] != "" else 9999), "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0}}
+            cars.sort(key=lambda c: float(c[-1]) if c[-1] != "" else 9999)
+            gap = 0
+            for idx, car in enumerate(cars):
+                if idx == 0:
+                    car[9] = 0
+                    car[10] = 0
+                else:
+                    prevCarTime = float(cars[idx - 1][-1])
+                    interval = float(car[-1]) - prevCarTime
+                    gap += interval
+                    car[9] = gap
+                    car[10] = interval
+
+        return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0}}
 
 
 def main():
