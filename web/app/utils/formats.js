@@ -20,6 +20,10 @@ export function format(value, type) {
 }
 
 export function timeInSeconds(seconds) {
+  seconds = Number.parseFloat(seconds);
+  if (seconds < 60) {
+    return seconds.toFixed(3);
+  }
   var minutes = Math.floor(seconds / 60);
   seconds = (seconds - (60 * minutes)).toFixed(3);
 
