@@ -92,6 +92,8 @@ class IndyCar(Service):
             "timeElapsed": parseSessionTime(heartbeat["elapsedTime"]),
             "timeRemain": parseSessionTime(heartbeat["overallTimeToGo"]) if "overallTimeToGo" in heartbeat else 0,
         }
+        if "totalLaps" in heartbeat:
+            state["lapsRemain"] = int(heartbeat["totalLaps"]) - int(heartbeat["lapNumber"])
         return {"cars": cars, "session": state}
 
     def getRawFeedData(self):
