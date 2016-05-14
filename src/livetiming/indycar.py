@@ -15,7 +15,8 @@ def mapFlagStates(rawState):
         "YELLOW": FlagStatus.YELLOW,
         "RED": FlagStatus.RED,
         "CHECKERED": FlagStatus.CHEQUERED,
-        "COLD": FlagStatus.WHITE
+        "WHITE": FlagStatus.WHITE,
+        "COLD": FlagStatus.NONE
     }
     if rawState in flagMap:
         return flagMap[rawState].name.lower()
