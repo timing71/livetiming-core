@@ -81,7 +81,7 @@ class IndyCar(Service):
                 car["laps"],
                 car["diff"],
                 car["gap"],
-                parseTime(car["lastLapTime"]),
+                [parseTime(car["lastLapTime"]), "pb" if car["lastLapTime"] == car["bestLapTime"] else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
                 parseTime(car["bestLapTime"]),
                 car["pitStops"]
