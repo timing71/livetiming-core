@@ -59,6 +59,13 @@ export default class TimingScreen extends React.Component {
   }
   
   render() {
+    let remaining;
+    if (this.state.session.lapsRemain) {
+      remaining = <div className="clock">{this.state.session.lapsRemain} laps remaining</div>
+    }
+    else {
+      remaining = <Clock seconds={this.state.session.timeRemain} countdown={true} caption="remaining" />
+    }
     return (
       <Grid fluid={true} className="screen timing-screen">
         <Row>
@@ -69,7 +76,7 @@ export default class TimingScreen extends React.Component {
             <FlagStatusPanel flag={this.state.session.flagState} text={this.props.service.name} />
           </Col>
           <Col md={2}>
-            <Clock seconds={this.state.session.timeRemain} countdown={true} caption="remaining" />
+            {remaining}
           </Col>
         </Row>
         <Row className="timing-table-container">
