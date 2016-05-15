@@ -92,6 +92,7 @@ class F1(Service):
             ("Gap", "time"),
             ("Int", "time"),
             ("Best", "time"),
+            ("Pits", "num")
         ]
 
     def getPollInterval(self):
@@ -148,7 +149,8 @@ class F1(Service):
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
                 latestTimeLine[9],
                 latestTimeLine[14],
-                timeLine[1]
+                timeLine[1],
+                math.floor(float(latestTimeLine[3]))
             ])
 
         return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0}}
