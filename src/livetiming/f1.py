@@ -179,7 +179,7 @@ class F1(Service):
             currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
             currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
             cars.append([
-                latestTimeLine[4], #driver["Num"],
+                driver["Num"],
                 driver["FullName"],
                 math.floor(float(sq[0])),
                 currentTyre,
