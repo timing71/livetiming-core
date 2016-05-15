@@ -45,7 +45,7 @@ def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
     race = "Catalunya"  # servers.getroot().attrib['race']
-    session = "Practice3"  # servers.getroot().attrib['session']
+    session = "Race"  # servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
 
@@ -112,13 +112,23 @@ class F1(Service):
             if key != "T" and key != "TY":
                 latestTimes = val["DR"]
 
-        for idx, driver in enumerate(drivers):
-            timeLine = bestTimes[idx]["B"].split(",")
-            latestTimeLine = latestTimes[idx]["O"].split(",")
-            colorFlags = latestTimeLine[2]
+        denormalised = []
 
+        for idx, driver in enumerate(drivers):
+            dnd = {}
+            dnd["driver"] = driver
+            dnd["timeLine"] = bestTimes[idx]["B"].split(",")
+            dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
+            denormalised.append(dnd)
+        
+
+        for dnd in sorted(denormalised, key=lambda d: int(d["latestTimeLine"][4])):
+            driver = dnd["driver"]
+            latestTimeLine = dnd["latestTimeLine"]
+            timeLine = dnd["timeLine"]
+            colorFlags = dnd["latestTimeLine"][2]
             cars.append([
-                driver["Num"],
+                latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
                 timeLine[4],
@@ -127,23 +137,10 @@ class F1(Service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 timeLine[10],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
-                0,
-                0,
+                latestTimeLine[9],
+                latestTimeLine[14],
                 timeLine[1]
             ])
-
-            cars.sort(key=lambda c: float(c[-1]) if c[-1] != "" else 9999)
-            gap = 0
-            for idx, car in enumerate(cars):
-                if idx == 0:
-                    car[9] = 0
-                    car[10] = 0
-                else:
-                    prevCarTime = float(cars[idx - 1][-1])
-                    interval = float(car[-1]) - prevCarTime
-                    gap += interval
-                    car[9] = gap
-                    car[10] = interval
 
         return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0}}
 
