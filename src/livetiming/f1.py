@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 from twisted.logger import Logger
 from os import environ
+import math
 import simplejson
 import random
 import re
@@ -80,6 +81,7 @@ class F1(Service):
         return [
             ("Num", "text"),
             ("Driver", "text"),
+            ("Lap", "num"),
             ("S1", "time"),
             ("BS1", "time"),
             ("S2", "time"),
@@ -112,6 +114,10 @@ class F1(Service):
             if key != "T" and key != "TY":
                 latestTimes = val["DR"]
 
+        for key, val in self.dataMap["sq"].iteritems():
+            if key != "T" and key != "TY":
+                sq = val["DR"]
+
         denormalised = []
 
         for idx, driver in enumerate(drivers):
@@ -119,6 +125,7 @@ class F1(Service):
             dnd["driver"] = driver
             dnd["timeLine"] = bestTimes[idx]["B"].split(",")
             dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
+            dnd["sq"] = sq[idx]["G"].split(",")
             denormalised.append(dnd)
         
 
@@ -127,9 +134,11 @@ class F1(Service):
             latestTimeLine = dnd["latestTimeLine"]
             timeLine = dnd["timeLine"]
             colorFlags = dnd["latestTimeLine"][2]
+            sq = dnd["sq"]
             cars.append([
                 latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
+                math.floor(float(sq[0])),
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
                 timeLine[4],
                 [latestTimeLine[6], mapTimeFlag(colorFlags[2])],
