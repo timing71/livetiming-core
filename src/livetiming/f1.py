@@ -103,6 +103,9 @@ class F1(Service):
         drivers = []
         bestTimes = []
         latestTimes = []
+        sq = []
+        comms = {}
+
         for key, val in self.dataMap["init"].iteritems():
             if key != "T" and key != "TY":
                 drivers = val["Drivers"]
@@ -118,6 +121,10 @@ class F1(Service):
         for key, val in self.dataMap["sq"].iteritems():
             if key != "T" and key != "TY":
                 sq = val["DR"]
+
+        for key, val in self.dataMap["c"].iteritems():
+            if key != "T" and key != "TY":
+                comms = val
 
         denormalised = []
 
@@ -153,7 +160,12 @@ class F1(Service):
                 math.floor(float(latestTimeLine[3]))
             ])
 
-        return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0}}
+        currentLap = cars[0][2]
+        totalLaps = comms["TL"] if "TL" in comms else 0
+
+        lapsRemain = totalLaps - currentLap
+
+        return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0, "lapsRemain": math.floor(lapsRemain) if lapsRemain >= 0 else None}}
 
 
 def main():
