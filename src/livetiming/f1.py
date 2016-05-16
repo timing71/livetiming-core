@@ -195,7 +195,7 @@ class F1(Service):
                 [timeLine[10], 'old'],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
                 [timeLine[1], fastestLapFlag],
-                math.floor(float(latestTimeLine[3]))
+                latestTimeLine[3][0]
             ])
 
         currentLap = cars[0][2]
