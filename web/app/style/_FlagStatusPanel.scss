@@ -8,7 +8,7 @@
   background-color: $color-course-green;
 }
 
-.flag-status-yellow, .flag_status-fcy, .flag-status-sc {
+.flag-status-yellow, .flag_status-fcy, .flag-status-sc, .flag-status-vsc {
   background-color: $color-course-yellow;
   color: black;
 }
@@ -18,7 +18,7 @@
   to { background-color: black; color: white; }
 }
 
-.flag-status-fcy, .flag-status-sc {
+.flag-status-fcy, .flag-status-sc, .flag-status-vsc {
   animation: sc-yellow-anim 0.5s alternate infinite;
 }
 

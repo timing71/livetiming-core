@@ -11,6 +11,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 from autobahn.twisted.wamp import ApplicationRunner
 from livetiming.messaging import Realm
+from livetiming.racing import FlagStatus
 
 
 class Fetcher(Thread):
@@ -60,6 +61,19 @@ def parseTyre(tyreChar):
         "W": ("W", "tyre-wet"),
     }
     return tyreMap[tyreChar]
+
+
+def parseFlagState(flagChar):
+    flagMap = {
+        "C": FlagStatus.CHEQUERED,
+        "Y": FlagStatus.YELLOW,
+        "V": FlagStatus.VSC,
+        "S": FlagStatus.SC,
+        "R": FlagStatus.RED
+    }
+    if flagChar in flagMap:
+        return flagMap[flagChar].name.lower()
+    return "green"
 
 
 def getServerConfig():
@@ -128,7 +142,7 @@ class F1(Service):
         bestTimes = []
         latestTimes = []
         sq = []
-        comms = {}
+#        comms = {}
         extra = []
 
         for key, val in self.dataMap["init"].iteritems():
@@ -147,13 +161,15 @@ class F1(Service):
             if key != "T" and key != "TY":
                 sq = val["DR"]
 
-        for key, val in self.dataMap["c"].iteritems():
-            if key != "T" and key != "TY":
-                comms = val
+#         for key, val in self.dataMap["c"].iteritems():
+#             if key != "T" and key != "TY":
+#                 comms = val
 
         for key, val in self.dataMap["x"].iteritems():
             if key != "T" and key != "TY":
                 extra = val["DR"]
+
+        free = self.dataMap["f"]["free"]
 
         denormalised = []
 
@@ -207,12 +223,20 @@ class F1(Service):
                 latestTimeLine[3][0]
             ])
 
-        currentLap = cars[0][3]
-        totalLaps = comms["TL"] if "TL" in comms else 0
+        currentLap = free["L"]
+        totalLaps = free["TL"]
 
-        lapsRemain = totalLaps - currentLap
+        lapsRemain = max(totalLaps - currentLap, 0)
 
-        return {"cars": cars, "session": {"flagState": "none", "timeElapsed": 0, "timeRemaining": 0, "lapsRemain": math.floor(lapsRemain) if lapsRemain >= 0 else None}}
+        return {
+            "cars": cars,
+            "session": {
+                "flagState": parseFlagState(free["FL"]),
+                "timeElapsed": 0,
+                "timeRemaining": 0,
+                "lapsRemain": math.floor(lapsRemain) if lapsRemain >= 0 else None
+            }
+        }
 
 
 def main():
