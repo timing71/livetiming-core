@@ -135,7 +135,8 @@ class F1(Service):
             dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
             dnd["sq"] = sq[idx]["G"].split(",")
             denormalised.append(dnd)
-        
+
+        fastestLap = min(map(lambda d: float(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999, denormalised))
 
         for dnd in sorted(denormalised, key=lambda d: int(d["latestTimeLine"][4])):
             driver = dnd["driver"]
@@ -143,20 +144,23 @@ class F1(Service):
             timeLine = dnd["timeLine"]
             colorFlags = dnd["latestTimeLine"][2]
             sq = dnd["sq"]
+            fastestLapFlag = ""
+            if timeLine[1] != "" and fastestLap == float(timeLine[1]):
+                fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
             cars.append([
                 latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
                 math.floor(float(sq[0])),
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
-                timeLine[4],
+                [timeLine[4], 'old'],
                 [latestTimeLine[6], mapTimeFlag(colorFlags[2])],
-                timeLine[7],
+                [timeLine[7], 'old'],
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
-                timeLine[10],
+                [timeLine[10], 'old'],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
                 latestTimeLine[9],
                 latestTimeLine[14],
-                timeLine[1],
+                [timeLine[1], fastestLapFlag],
                 math.floor(float(latestTimeLine[3]))
             ])
 
