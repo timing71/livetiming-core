@@ -103,6 +103,8 @@ class F1(Service):
             ("Driver", "text"),
             ("Lap", "num"),
             ("T", "text"),
+            ("TS", "text"),
+            ("TA", "text"),
             ("Gap", "time"),
             ("Int", "time"),
             ("S1", "time"),
@@ -175,11 +177,14 @@ class F1(Service):
             if timeLine[1] != "" and fastestLap == float(timeLine[1]):
                 fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
             currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
+            currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
             cars.append([
                 latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
                 math.floor(float(sq[0])),
                 currentTyre,
+                currentTyreStats[1],
+                currentTyreStats[2],
                 renderGapOrLaps(latestTimeLine[9]),
                 renderGapOrLaps(latestTimeLine[14]),
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
