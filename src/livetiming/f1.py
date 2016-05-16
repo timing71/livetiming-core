@@ -100,6 +100,7 @@ class F1(Service):
     def getColumnSpec(self):
         return [
             ("Num", "text"),
+            ("State", "text"),
             ("Driver", "text"),
             ("Lap", "num"),
             ("T", "text"),
@@ -160,6 +161,8 @@ class F1(Service):
             dnd = {}
             dnd["driver"] = driver
             dnd["timeLine"] = bestTimes[idx]["B"].split(",")
+            if "STOP" in bestTimes[idx]:
+                dnd["stop"] = bestTimes[idx]["STOP"]
             dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
             dnd["sq"] = sq[idx]["G"].split(",")
             dnd["extra"] = extra[idx]
@@ -178,8 +181,14 @@ class F1(Service):
                 fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
             currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
             currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
+            state = "RUN"
+            if latestTimeLine[3][2] == 1 or latestTimeLine[3][2] == 3:
+                state = "PIT"
+            elif "stop" in dnd:
+                state = "RET"
             cars.append([
                 driver["Num"],
+                state,
                 driver["FullName"],
                 math.floor(float(sq[0])),
                 currentTyre,
@@ -198,7 +207,7 @@ class F1(Service):
                 latestTimeLine[3][0]
             ])
 
-        currentLap = cars[0][2]
+        currentLap = cars[0][3]
         totalLaps = comms["TL"] if "TL" in comms else 0
 
         lapsRemain = totalLaps - currentLap
