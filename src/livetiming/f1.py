@@ -198,10 +198,10 @@ class F1(Service):
             currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
             currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
             state = "RUN"
-            if latestTimeLine[3][2] == 1 or latestTimeLine[3][2] == 3:
-                state = "PIT"
-            elif "stop" in dnd:
+            if "stop" in dnd:
                 state = "RET"
+            elif latestTimeLine[3][2] == "1" or latestTimeLine[3][2] == "3":
+                state = "PIT"
             cars.append([
                 driver["Num"],
                 state,
