@@ -20,6 +20,9 @@ export function format(value, type) {
 }
 
 export function timeInSeconds(seconds) {
+  if (isNaN(seconds)) {
+    return seconds;
+  }
   seconds = Number.parseFloat(seconds);
   if (seconds < 60) {
     return seconds.toFixed(3);
