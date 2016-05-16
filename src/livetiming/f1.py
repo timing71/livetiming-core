@@ -42,6 +42,13 @@ def mapTimeFlag(color):
     return ""
 
 
+def renderGapOrLaps(raw):
+    if raw != "" and raw[0] == "-":
+      laps = -1 * int(raw)
+      return "{} lap{}".format(laps, "s" if laps > 1 else "")
+    return raw
+
+
 def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
@@ -158,8 +165,8 @@ class F1(Service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
-                latestTimeLine[9],
-                latestTimeLine[14],
+                renderGapOrLaps(latestTimeLine[9]),
+                renderGapOrLaps(latestTimeLine[14]),
                 [timeLine[1], fastestLapFlag],
                 math.floor(float(latestTimeLine[3]))
             ])
