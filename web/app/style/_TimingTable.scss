@@ -106,6 +106,11 @@ tr.car_state_OUT td.column_State {
   color: $color-state-out;
 }
 
+tr.car_state_RET td {
+  color: grey;
+  font-style: italic;
+}
+
 tr.car_class_P td.column_Class {
   color: $color-class-p;
 }
