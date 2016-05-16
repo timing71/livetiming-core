@@ -205,7 +205,7 @@ class F1(Service):
             cars.append([
                 driver["Num"],
                 state,
-                driver["FullName"],
+                driver["FullName"].title(),
                 math.floor(float(sq[0])),
                 currentTyre,
                 currentTyreStats[1],
