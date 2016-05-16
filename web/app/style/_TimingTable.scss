@@ -50,6 +50,34 @@ td.column_Num, td.column_Laps, td.column_Pits {
   color: yellow;
 }
 
+.tyre-hard {
+  color: #FE6F29;
+}
+
+.tyre-medium {
+  color: white;
+}
+
+.tyre-soft {
+  color: yellow;
+}
+
+.tyre-ssoft {
+  color: red;
+}
+
+.tyre-usoft {
+  color: #D70AD5;
+}
+
+.tyre-inter {
+  color: #029405;
+}
+
+.tyre-wet {
+  color: #078CD1;
+}
+
 tr.car_state_PIT {
   background-color: #550000;
 }

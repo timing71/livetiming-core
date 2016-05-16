@@ -44,9 +44,22 @@ def mapTimeFlag(color):
 
 def renderGapOrLaps(raw):
     if raw != "" and raw[0] == "-":
-      laps = -1 * int(raw)
-      return "{} lap{}".format(laps, "s" if laps > 1 else "")
+        laps = -1 * int(raw)
+        return "{} lap{}".format(laps, "s" if laps > 1 else "")
     return raw
+
+
+def parseTyre(tyreChar):
+    tyreMap = {
+        "H": ("H", "tyre-hard"),
+        "M": ("M", "tyre-med"),
+        "S": ("S", "tyre-soft"),
+        "V": ("SS", "tyre-ssoft"),
+        "E": ("US", "tyre-usoft"),
+        "I": ("I", "tyre-inter"),
+        "W": ("W", "tyre-wet"),
+    }
+    return tyreMap[tyreChar]
 
 
 def getServerConfig():
@@ -89,6 +102,7 @@ class F1(Service):
             ("Num", "text"),
             ("Driver", "text"),
             ("Lap", "num"),
+            ("T", "text"),
             ("Gap", "time"),
             ("Int", "time"),
             ("S1", "time"),
@@ -112,6 +126,7 @@ class F1(Service):
         latestTimes = []
         sq = []
         comms = {}
+        extra = []
 
         for key, val in self.dataMap["init"].iteritems():
             if key != "T" and key != "TY":
@@ -133,6 +148,10 @@ class F1(Service):
             if key != "T" and key != "TY":
                 comms = val
 
+        for key, val in self.dataMap["x"].iteritems():
+            if key != "T" and key != "TY":
+                extra = val["DR"]
+
         denormalised = []
 
         for idx, driver in enumerate(drivers):
@@ -141,6 +160,7 @@ class F1(Service):
             dnd["timeLine"] = bestTimes[idx]["B"].split(",")
             dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
             dnd["sq"] = sq[idx]["G"].split(",")
+            dnd["extra"] = extra[idx]
             denormalised.append(dnd)
 
         fastestLap = min(map(lambda d: float(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999, denormalised))
@@ -154,10 +174,12 @@ class F1(Service):
             fastestLapFlag = ""
             if timeLine[1] != "" and fastestLap == float(timeLine[1]):
                 fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
+            currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
             cars.append([
                 latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
                 math.floor(float(sq[0])),
+                currentTyre,
                 renderGapOrLaps(latestTimeLine[9]),
                 renderGapOrLaps(latestTimeLine[14]),
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
