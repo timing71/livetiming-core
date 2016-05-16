@@ -130,6 +130,8 @@ class Service(ApplicationSession):
                 messages.append([int(time.time()), "Track", "Chequered flag", "track"])
             elif newFlag == FlagStatus.CODE_60:
                 messages.append([int(time.time()), "Track", "Code 60", "code60"])
+            elif newFlag == FlagStatus.VSC:
+                messages.append([int(time.time()), "Track", "Virtual safety car deployed", "yellow"])
         return messages
 
     def getTimingMessage(self):

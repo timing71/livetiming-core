@@ -10,6 +10,7 @@ class FlagStatus(Enum):
     RED = 5
     CHEQUERED = 6,
     WHITE = 7,
+    VSC = 8,
     NONE = 999
 
     @classmethod
