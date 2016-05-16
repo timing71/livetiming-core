@@ -89,6 +89,8 @@ class F1(Service):
             ("Num", "text"),
             ("Driver", "text"),
             ("Lap", "num"),
+            ("Gap", "time"),
+            ("Int", "time"),
             ("S1", "time"),
             ("BS1", "time"),
             ("S2", "time"),
@@ -96,8 +98,6 @@ class F1(Service):
             ("S3", "time"),
             ("BS3", "time"),
             ("Last", "time"),
-            ("Gap", "time"),
-            ("Int", "time"),
             ("Best", "time"),
             ("Pits", "num")
         ]
@@ -158,6 +158,8 @@ class F1(Service):
                 latestTimeLine[4], #driver["Num"],
                 driver["FullName"],
                 math.floor(float(sq[0])),
+                renderGapOrLaps(latestTimeLine[9]),
+                renderGapOrLaps(latestTimeLine[14]),
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
                 [timeLine[4], 'old'],
                 [latestTimeLine[6], mapTimeFlag(colorFlags[2])],
@@ -165,8 +167,6 @@ class F1(Service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
                 [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
-                renderGapOrLaps(latestTimeLine[9]),
-                renderGapOrLaps(latestTimeLine[14]),
                 [timeLine[1], fastestLapFlag],
                 math.floor(float(latestTimeLine[3]))
             ])
