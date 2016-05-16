@@ -60,8 +60,8 @@ export default class TimingScreen extends React.Component {
   
   render() {
     let remaining;
-    if (this.state.session.lapsRemain) {
-      remaining = <div className="clock">{this.state.session.lapsRemain} laps remaining</div>
+    if (this.state.session.lapsRemain !== undefined) {
+      remaining = <div className="clock">{this.state.session.lapsRemain} lap{this.state.session.lapsRemain == 1 ? "" : "s"} remaining</div>
     }
     else {
       remaining = <Clock seconds={this.state.session.timeRemain} countdown={true} caption="remaining" />
