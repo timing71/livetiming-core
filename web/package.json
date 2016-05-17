@@ -15,9 +15,9 @@
   "dependencies": {
     "lodash": "^4.3.0",
     "moment": "^2.13.0",
-    "react": "^0.14.7",
-    "react-bootstrap": "^0.28.2",
-    "react-dom": "^0.14.7",
+    "react": "^15.0.0",
+    "react-bootstrap": "^0.29.4",
+    "react-dom": "^15.0.2",
     "react-router": "^2.4.0"
   },
   "devDependencies": {
@@ -31,14 +31,14 @@
     "extract-text-webpack-plugin": "^1.0.1",
     "file-loader": "^0.8.5",
     "html-webpack-plugin": "^2.12.0",
-    "html-webpack-template": "^4.0.0",
+    "html-webpack-template": "^5.0.0",
     "node-sass": "^3.4.2",
     "sass-loader": "^3.1.2",
     "style-loader": "^0.13.0",
     "url-loader": "^0.5.7",
     "webpack": "^1.12.13",
     "webpack-dev-server": "^1.14.1",
-    "webpack-merge": "^0.7.3"
+    "webpack-merge": "^0.12.0"
   },
   "babel": {
     "presets": [
