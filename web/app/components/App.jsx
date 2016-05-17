@@ -13,10 +13,8 @@ class App extends React.Component {
     super(props);
     this.state = {
       "services": [],
-      "chosenService": null,
       "session": null
     };
-    this.setChosenService = this.setChosenService.bind(this);
   }
 
   getChildContext() {
@@ -42,13 +40,6 @@ class App extends React.Component {
       });
     };
     connection.open();
-  }
-
-  setChosenService(serviceUUID) {
-    this.setState({
-      ...this.state,
-      "chosenService": serviceUUID
-    });
   }
 
   render() {
