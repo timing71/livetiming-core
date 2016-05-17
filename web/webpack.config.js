@@ -115,7 +115,7 @@ if(TARGET === 'build') {
     },
     output: {
       path: PATHS.build,
-      filename: '[name].[chunkhash].js',
+      filename: '/[name].[chunkhash].js',
       chunkFilename: '[chunkhash].js'
     },
     plugins: [
@@ -131,7 +131,7 @@ if(TARGET === 'build') {
         }
       }),
       new webpack.optimize.DedupePlugin(),
-      new ExtractTextPlugin('[name].[chunkhash].css')
+      new ExtractTextPlugin('/[name].[chunkhash].css')
     ]
   });
 }
