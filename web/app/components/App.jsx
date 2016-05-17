@@ -38,8 +38,32 @@ class App extends React.Component {
           "services": result}
         );
       });
+
+      session.subscribe("livetiming.control", this.handleControlMessage.bind(this)).then(
+          (sub) => {
+            this.subscription = sub;
+            session.log ("Established subscription to control channel");
+          },
+          (error) => {}
+        );
     };
     connection.open();
+  }
+
+  componentWillUnmount() {
+    this.state.session.unsubscribe(this.subscription);
+  }
+  
+  handleControlMessage(data) {
+    _(data).forEach((message) => {
+      console.log(message);
+      if (message.msgClass == 5) {
+        this.setState({
+          ...this.state,
+          "services": message.payload
+        });
+      }
+    })
   }
 
   render() {

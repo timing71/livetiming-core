@@ -20,6 +20,7 @@ class MessageClass(Enum):
     SERVICE_REGISTRATION = 2
     SERVICE_DEREGISTRATION = 3
     SERVICE_DATA = 4
+    DIRECTORY_LISTING = 5
 
 
 class Message(object):

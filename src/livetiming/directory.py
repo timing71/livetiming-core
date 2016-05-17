@@ -19,11 +19,15 @@ class Directory(ApplicationSession):
     def removeService(self, errorArgs, serviceUUID):
         self.log.info("Removing dead service {}".format(serviceUUID))
         self.services.pop(serviceUUID)
+        self.broadcastServicesList()
 
     def checkLiveness(self):
         self.log.info("Checking liveness of {} service(s)".format(len(self.services)))
         for service in self.services.keys():
             _ = self.call(RPC.LIVENESS_CHECK.format(service)).addErrback(self.removeService, serviceUUID=service)
+
+    def broadcastServicesList(self):
+        self.publish(Channel.CONTROL, Message(MessageClass.DIRECTORY_LISTING, self.services.values()).serialise())
 
     @inlineCallbacks
     def onJoin(self, details):
@@ -46,6 +50,7 @@ class Directory(ApplicationSession):
             reg = msg.payload
             if reg["uuid"] not in self.services.keys():
                 self.services[reg["uuid"]] = reg
+                self.broadcastServicesList()
 
     def onDisconnect(self):
         self.log.info("Disconnected")
