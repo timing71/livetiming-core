@@ -20,14 +20,15 @@ class TimingScreen extends React.Component {
         "flagState": "green",
         "timeElapsed": 0,
         "timeRemain": 0
-      }
+      },
+      "disconnected": true
     };
     this.handleData = this.handleData.bind(this);
   }
 
   componentWillMount() {
     const {session} = this.context;
-    this.service = _(this.context.services).find((svc) => svc.uuid === this.props.params.serviceUUID);
+    this.service = this.findServiceFromContext(this.context);
     session.call("livetiming.service.requestState." + this.service.uuid).then((result) => {
       this.handleData([result]);
       });
@@ -36,13 +37,22 @@ class TimingScreen extends React.Component {
       (sub) => {
         this.subscription = sub;
         session.log ("Established subscription to " + this.service.uuid);
+        this.setState({
+          ...this.state,
+          "disconnected": false
+        });
       },
       (error) => {}
     );
   }
+  
 
   componentWillUnmount() {
     this.context.session.unsubscribe(this.subscription);
+  }
+  
+  findServiceFromContext(context) {
+    return _(context.services).find((svc) => svc.uuid === this.props.params.serviceUUID);
   }
   
   handleData(data) {
@@ -55,6 +65,26 @@ class TimingScreen extends React.Component {
         });
       }
     })
+  }
+  
+  componentWillReceiveProps(nextProps, nextContext) {
+    const disconnected = !this.findServiceFromContext(nextContext);
+    if (disconnected != this.state.disconnected) {
+      if (disconnected) {
+        this.setState({
+          ...this.state,
+          "messages": [[Date.now() / 1000, "System", "Service no longer available", "system"]].concat(this.state.messages),
+          "disconnected": disconnected
+        });
+      }
+      else {
+        this.setState({
+          ...this.state,
+          "messages": [[Date.now() / 1000, "System", "Service now available", "system"]].concat(this.state.messages),
+          "disconnected": disconnected
+        });
+      }
+    }
   }
   
   render() {
