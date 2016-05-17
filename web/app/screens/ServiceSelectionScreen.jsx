@@ -4,7 +4,7 @@ import { Grid, Row, Col, PageHeader } from 'react-bootstrap';
 
 import ServiceList from '../components/ServiceList';
 
-export default class ServiceSelectionScreen extends React.Component {
+class ServiceSelectionScreen extends React.Component {
   render() {
     return (
       <Grid>
@@ -15,7 +15,7 @@ export default class ServiceSelectionScreen extends React.Component {
         </Row>
         <Row>
           <Col md={12}>
-            <ServiceList services={this.props.services} onChooseService={this.props.onChooseService} />
+            <ServiceList services={this.context.services} onChooseService={this.props.onChooseService} />
           </Col>
         </Row>
         <Row>
@@ -27,3 +27,9 @@ export default class ServiceSelectionScreen extends React.Component {
     );
   }
 }
+
+ServiceSelectionScreen.contextTypes = {
+  services: React.PropTypes.array
+};
+
+export default ServiceSelectionScreen;

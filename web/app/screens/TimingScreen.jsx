@@ -9,7 +9,7 @@ import TimingTable from '../components/TimingTable';
 import Messages from '../components/Messages';
 import TrackData from '../components/TrackData';
 
-export default class TimingScreen extends React.Component {
+class TimingScreen extends React.Component {
 
   constructor(props) {
     super(props);
@@ -26,7 +26,8 @@ export default class TimingScreen extends React.Component {
   }
 
   componentWillMount() {
-    const {session, service} = this.props;
+    const {service} = this.props;
+    const {session} = this.context;
 
     session.call("livetiming.service.requestState." + service.uuid).then((result) => {
       this.handleData([result]);
@@ -96,3 +97,9 @@ export default class TimingScreen extends React.Component {
     );
   }
 }
+
+TimingScreen.contextTypes = {
+  session: React.PropTypes.object
+};
+
+export default TimingScreen;

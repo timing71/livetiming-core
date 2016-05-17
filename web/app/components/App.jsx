@@ -7,16 +7,23 @@ import { ROUTER_URL } from '../config/settings';
 import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
 import TimingScreen from '../screens/TimingScreen';
 
-export default class App extends React.Component {
+class App extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      "services": {},
+      "services": [],
       "chosenService": null,
       "session": null
     };
     this.setChosenService = this.setChosenService.bind(this);
+  }
+
+  getChildContext() {
+    return {
+      services: this.state.services,
+      session: this.state.session
+    }
   }
 
   componentWillMount() {
@@ -46,10 +53,17 @@ export default class App extends React.Component {
 
   render() {
     if (this.state.chosenService == null) {
-      return <ServiceSelectionScreen services={this.state.services} onChooseService={this.setChosenService} />
+      return <ServiceSelectionScreen onChooseService={this.setChosenService} />
     }
     const service = _(this.state.services).find((svc) => svc.uuid === this.state.chosenService);
-    return <TimingScreen session={this.state.session} service={service} />;
+    return <TimingScreen service={service} />;
   }
 
 }
+
+App.childContextTypes = {
+  session: React.PropTypes.object,
+  services: React.PropTypes.array
+};
+
+export default App;
