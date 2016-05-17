@@ -1,11 +1,11 @@
 import React from 'react';
-
+import { Link } from 'react-router';
 import { Panel } from 'react-bootstrap';
 
 class ServiceListEntry extends React.Component {
   render() {
-    const {service, onChooseService} = this.props;
-    return <li onClick={onChooseService}>{service.description}</li>
+    const {service} = this.props;
+    return <li><Link to={`/timing/${service.uuid}`}>{service.description}</Link></li>
   }
 }
 

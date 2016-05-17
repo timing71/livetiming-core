@@ -17,7 +17,8 @@
     "moment": "^2.13.0",
     "react": "^0.14.7",
     "react-bootstrap": "^0.28.2",
-    "react-dom": "^0.14.7"
+    "react-dom": "^0.14.7",
+    "react-router": "^2.4.0"
   },
   "devDependencies": {
     "babel-core": "^6.5.0",

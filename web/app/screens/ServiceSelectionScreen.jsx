@@ -15,7 +15,7 @@ class ServiceSelectionScreen extends React.Component {
         </Row>
         <Row>
           <Col md={12}>
-            <ServiceList services={this.context.services} onChooseService={this.props.onChooseService} />
+            <ServiceList services={this.context.services} />
           </Col>
         </Row>
         <Row>

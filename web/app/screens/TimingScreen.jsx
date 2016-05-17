@@ -26,25 +26,23 @@ class TimingScreen extends React.Component {
   }
 
   componentWillMount() {
-    const {service} = this.props;
     const {session} = this.context;
-
-    session.call("livetiming.service.requestState." + service.uuid).then((result) => {
+    this.service = _(this.context.services).find((svc) => svc.uuid === this.props.params.serviceUUID);
+    session.call("livetiming.service.requestState." + this.service.uuid).then((result) => {
       this.handleData([result]);
       });
 
-    session.subscribe(service.uuid, this.handleData).then(
+    session.subscribe(this.service.uuid, this.handleData).then(
       (sub) => {
         this.subscription = sub;
-        session.log ("Established subscription to " + service.uuid);
+        session.log ("Established subscription to " + this.service.uuid);
       },
       (error) => {}
     );
   }
 
   componentWillUnmount() {
-    const {session, service} = this.props;
-    session.unsubscribe(service.uuid);
+    this.context.session.unsubscribe(this.subscription);
   }
   
   handleData(data) {
@@ -74,7 +72,7 @@ class TimingScreen extends React.Component {
             <Clock seconds={this.state.session.timeElapsed} caption="elapsed" />
           </Col>
           <Col md={8}>
-            <FlagStatusPanel flag={this.state.session.flagState} text={this.props.service.name} />
+            <FlagStatusPanel flag={this.state.session.flagState} text={this.service.name} />
           </Col>
           <Col md={2}>
             {remaining}
@@ -82,7 +80,7 @@ class TimingScreen extends React.Component {
         </Row>
         <Row className="timing-table-container">
           <Col md={12} className="full-height">
-            <TimingTable columnSpec={this.props.service.colSpec} cars={this.state.cars} />
+            <TimingTable columnSpec={this.service.colSpec} cars={this.state.cars} />
           </Col>
         </Row>
         <Row className="messages-container">
@@ -90,7 +88,7 @@ class TimingScreen extends React.Component {
             <Messages messages={this.state.messages} />
           </Col>
           <Col md={4}>
-            <TrackData spec={this.props.service.trackDataSpec} dataset={this.state.session.trackData} />
+            <TrackData spec={this.service.trackDataSpec} dataset={this.state.session.trackData} />
           </Col>
         </Row>
       </Grid>
@@ -99,7 +97,8 @@ class TimingScreen extends React.Component {
 }
 
 TimingScreen.contextTypes = {
-  session: React.PropTypes.object
+  session: React.PropTypes.object,
+  services: React.PropTypes.array
 };
 
 export default TimingScreen;

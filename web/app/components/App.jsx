@@ -52,11 +52,9 @@ class App extends React.Component {
   }
 
   render() {
-    if (this.state.chosenService == null) {
-      return <ServiceSelectionScreen onChooseService={this.setChosenService} />
-    }
-    const service = _(this.state.services).find((svc) => svc.uuid === this.state.chosenService);
-    return <TimingScreen service={service} />;
+    return (
+      <div>{this.props.children}</div>
+    );
   }
 
 }
