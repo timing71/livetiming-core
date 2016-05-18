@@ -1,3 +1,4 @@
+from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.service import Service
 import urllib2
 import simplejson
@@ -137,6 +138,13 @@ class IMSA(Service):
             ])
 
         self.carsState = cars
+
+    def getMessageGenerators(self):
+        return super(IMSA, self).getMessageGenerators() + [
+            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
+            DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
+            FastLapMessage(lambda c: c[8], lambda c: c[2], lambda c: c[4])
+        ]
 
     def parseSession(self, raw):
         self.sessionState["timeElapsed"] = parseSessionTime(raw["TT"])
