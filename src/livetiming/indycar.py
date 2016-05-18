@@ -60,6 +60,7 @@ class IndyCar(Service):
             ("State", "text"),
             ("Driver", "text"),
             ("Laps", "numeric"),
+            ("T", "text"),
             ("PTP", "numeric"),
             ("Gap", "delta"),
             ("Int", "delta"),
@@ -86,6 +87,7 @@ class IndyCar(Service):
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
+                ["P", "tyre-medium"] if car["Tire"] == "P" else ["O", "tyre-ssoft"],
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"],
                 car["gap"],
@@ -95,10 +97,10 @@ class IndyCar(Service):
                 car["pitStops"]
             ])
 
-        byFastestLap = sorted(cars, key=lambda c: float(c[9][0]) if c[9][0] != 0 else 9999)
+        byFastestLap = sorted(cars, key=lambda c: float(c[10][0]) if c[10][0] != 0 else 9999)
         purpleCar = byFastestLap[0]
-        purpleCar[9][1] = "sb"
-        purpleCar[7][1] = "sb-new" if purpleCar[7][0] == purpleCar[9][0] and purpleCar[1] != "PIT" else ""
+        purpleCar[10][1] = "sb"
+        purpleCar[8][1] = "sb-new" if purpleCar[8][0] == purpleCar[10][0] and purpleCar[1] != "PIT" else ""
 
         heartbeat = timingResults['heartbeat']
         state = {
