@@ -87,7 +87,7 @@ class IndyCar(Service):
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
-                ["P", "tyre-medium"] if car["Tire"] == "P" else ["O", "tyre-ssoft"],
+                (["P", "tyre-medium"] if car["Tire"] == "P" else ["O", "tyre-ssoft"]) if "Tire" in car else "",
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"],
                 car["gap"],
