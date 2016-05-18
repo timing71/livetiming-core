@@ -81,7 +81,7 @@ class IndyCar(Service):
             bestLapTime = parseTime(car["bestLapTime"])
             cars.append([
                 car["no"],
-                "PIT" if car["status"] == "In Pit" else "RUN",
+                "PIT" if car["status"] == "In Pit" or car["onTrack"] == "False" else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
