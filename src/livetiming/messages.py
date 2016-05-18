@@ -39,7 +39,6 @@ class FlagChangeMessage(TimingMessage):
     def _consider(self, oldState, newState):
         oldFlag = self.getFlag(oldState)
         newFlag = self.getFlag(newState)
-        print "Comparing {} to {}".format(oldFlag, newFlag)
         if oldFlag != newFlag:
             if newFlag == FlagStatus.GREEN:
                 return ["Track", "Green flag - track clear", "green"]
