@@ -4,7 +4,7 @@ import time
 
 def formatTime(seconds):
     m, s = divmod(seconds, 60)
-    return "{}:{}".format(int(m), s)
+    return "{}:{:0>6.3f}".format(int(m), s)
 
 
 class TimingMessage(object):
