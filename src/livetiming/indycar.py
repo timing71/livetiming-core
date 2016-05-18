@@ -76,12 +76,14 @@ class IndyCar(Service):
         raw = self.getRawFeedData()
         cars = []
         timingResults = raw['timing_results']
-        for car in sorted(timingResults["Item"], key=lambda car: int(car["overallRank"])):
+        seen = set()
+        filtered = [seen.add(car["no"]) or car for car in timingResults["Item"] if car["no"] not in seen]
+        for car in sorted(filtered, key=lambda car: int(car["overallRank"])):
             lastLapTime = parseTime(car["lastLapTime"])
             bestLapTime = parseTime(car["bestLapTime"])
             cars.append([
                 car["no"],
-                "PIT" if car["status"] == "In Pit" or car["onTrack"] == "False" else "RUN",
+                "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
