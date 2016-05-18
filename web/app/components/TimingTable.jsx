@@ -42,11 +42,13 @@ class TimingRow extends React.Component {
       }
       cols.push(<td key={index + 1} className={`column_${col[0]} ${flags}`}>{format(value, col[1])}</td>);
     })
+
+    const hasSetSB = _(car).find((c) => (typeof(c) == "object" && c[1] == "sb-new"));
     const stateCol = findStateIndex(columnSpec);
     const classCol = findClassIndex(columnSpec);
     const carClass = classNameFromCategory(car[classCol]);
     return (
-      <tr className={`car_state_${car[stateCol]} car_class_${carClass}`} >
+      <tr className={`car_state_${car[stateCol]} car_class_${carClass} ${hasSetSB? "sb-new" : ""}`} >
         {cols}
       </tr>
     );

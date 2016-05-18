@@ -38,7 +38,11 @@ td.column_Num, td.column_Laps, td.column_Pits {
 }
 
 .sb-new {
-  background-color: $color-purple;
+  background-color: $color-purple !important;
+  color: black;
+}
+
+.sb-new .sb {
   color: black;
 }
 
