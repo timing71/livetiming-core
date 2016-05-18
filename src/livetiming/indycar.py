@@ -60,6 +60,7 @@ class IndyCar(Service):
             ("State", "text"),
             ("Driver", "text"),
             ("Laps", "numeric"),
+            ("PTP", "numeric"),
             ("Gap", "delta"),
             ("Int", "delta"),
             ("Last", "time"),
@@ -81,6 +82,7 @@ class IndyCar(Service):
                 "PIT" if car["status"] == "In Pit" else "RUN",
                 "{0} {1}".format(car["firstName"], car["lastName"]),
                 car["laps"],
+                [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"],
                 car["gap"],
                 [parseTime(car["lastLapTime"]), "pb" if car["lastLapTime"] == car["bestLapTime"] else ""],
@@ -89,10 +91,10 @@ class IndyCar(Service):
                 car["pitStops"]
             ])
 
-        byFastestLap = sorted(cars, key=lambda c: float(c[8][0]) if c[8][0] != 0 else 9999)
+        byFastestLap = sorted(cars, key=lambda c: float(c[9][0]) if c[9][0] != 0 else 9999)
         purpleCar = byFastestLap[0]
-        purpleCar[8][1] = "sb"
-        purpleCar[6][1] = "sb-new" if purpleCar[6][0] == purpleCar[8][0] else ""
+        purpleCar[9][1] = "sb"
+        purpleCar[7][1] = "sb-new" if purpleCar[7][0] == purpleCar[9][0] else ""
 
         heartbeat = timingResults['heartbeat']
         state = {
@@ -107,7 +109,7 @@ class IndyCar(Service):
     def getMessageGenerators(self):
         return super(IndyCar, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
-            FastLapMessage(lambda c: c[6], lambda c: "Timing", lambda c: c[2])
+            FastLapMessage(lambda c: c[7], lambda c: "Timing", lambda c: c[2])
         ]
 
     def getRawFeedData(self):
