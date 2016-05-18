@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from livetiming.messages import CarPitMessage
+from livetiming.messages import CarPitMessage, DriverChangeMessage
 from livetiming.service import Service
 import urllib2
 import re
@@ -212,7 +212,8 @@ class WEC(Service):
 
     def getMessageGenerators(self):
         return super(WEC, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4])
+            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
+            DriverChangeMessage(lambda c: c[2], lambda c: c[4])
         ]
 
     def createMessages(self, oldState, newState):
@@ -221,8 +222,6 @@ class WEC(Service):
             oldCars = [c for c in oldState["cars"] if c[0] == newCar[0]]
             if oldCars:
                 oldCar = oldCars[0]
-                if newCar[4] != oldCar[4]:
-                    messages.append([int(time.time()), newCar[2], u"#{} Driver change ({} to {})".format(newCar[0], oldCar[4], newCar[4]), "", newCar[0]])
                 if newCar[10][1] != oldCar[10][1]:
                     newFlags = newCar[10][1]
                     if newFlags == "pb":
