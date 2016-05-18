@@ -71,3 +71,16 @@ class CarPitMessage(PerCarMessage):
                 return [self.getClass(newCar), u"#{} ({}) has entered the pits".format(newCar[0], self.getDriver(newCar)), "pit"]
             elif newStatus == "RET":
                 return [self.getClass(newCar), u"#{} ({}) has retired".format(newCar[0], self.getDriver(newCar)), ""]
+
+
+# Emits a message if the driver of a car changes.
+class DriverChangeMessage(PerCarMessage):
+    def __init__(self, getClass, getDriver):
+        self.getClass = getClass
+        self.getDriver = getDriver
+
+    def _consider(self, oldCar, newCar):
+        oldDriver = self.getDriver(oldCar)
+        newDriver = self.getDriver(newCar)
+        if oldDriver != newDriver:
+            return [self.getClass(newCar), u"#{} Driver change ({} to {})".format(newCar[0], oldDriver, newDriver)]
