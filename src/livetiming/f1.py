@@ -10,7 +10,7 @@ import re
 import urllib2
 import xml.etree.ElementTree as ET
 from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.messaging import Realm
+from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
 
