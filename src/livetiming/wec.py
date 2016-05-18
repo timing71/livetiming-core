@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from livetiming.messages import CarPitMessage
 from livetiming.service import Service
 import urllib2
 import re
@@ -209,19 +209,18 @@ class WEC(Service):
         feed = urllib2.urlopen(feed_url)
         return simplejson.loads(feed.read())
 
+
+    def getMessageGenerators(self):
+        return super(WEC, self).getMessageGenerators() + [
+            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4])
+        ]
+
     def createMessages(self, oldState, newState):
         messages = super(WEC, self).createMessages(oldState, newState)
         for newCar in newState["cars"]:
             oldCars = [c for c in oldState["cars"] if c[0] == newCar[0]]
             if oldCars:
                 oldCar = oldCars[0]
-                if newCar[1] != oldCar[1]:  # Change state
-                    if newCar[1] == "PIT":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has entered the pits".format(newCar[0], newCar[4]), "pit", newCar[0]])
-                    elif newCar[1] == "OUT":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has left the pits".format(newCar[0], newCar[4]), "out", newCar[0]])
-                    elif newCar[1] == "RET":
-                        messages.append([int(time.time()), newCar[2], u"#{} ({}) has retired".format(newCar[0], newCar[4]), "", newCar[0]])
                 if newCar[4] != oldCar[4]:
                     messages.append([int(time.time()), newCar[2], u"#{} Driver change ({} to {})".format(newCar[0], oldCar[4], newCar[4]), "", newCar[0]])
                 if newCar[10][1] != oldCar[10][1]:

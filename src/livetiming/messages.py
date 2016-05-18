@@ -13,6 +13,19 @@ class TimingMessage(object):
         return []
 
 
+class PerCarMessage(TimingMessage):
+    def process(self, oldState, newState):
+        messages = []
+        for newCar in newState["cars"]:
+            oldCars = [c for c in oldState["cars"] if c[0] == newCar[0]]
+            if oldCars:
+                oldCar = oldCars[0]
+                msg = self._consider(oldCar, newCar)
+                if msg:
+                    messages += [[int(time.time())] + msg + [newCar[0]]]
+        return messages
+
+
 # Emits a message if the flag status of the state has changed.
 class FlagChangeMessage(TimingMessage):
     def __init__(self, getFlag):
@@ -39,3 +52,22 @@ class FlagChangeMessage(TimingMessage):
                 return ["Track", "Code 60", "code60"]
             elif newFlag == FlagStatus.VSC:
                 return ["Track", "Virtual safety car deployed", "yellow"]
+
+
+# Emits a message if a car enters or leaves the pits, or retires.
+class CarPitMessage(PerCarMessage):
+    def __init__(self, getPitStatus, getClass, getDriver):
+        self.getPitStatus = getPitStatus
+        self.getClass = getClass
+        self.getDriver = getDriver
+
+    def _consider(self, oldCar, newCar):
+        oldStatus = self.getPitStatus(oldCar)
+        newStatus = self.getPitStatus(newCar)
+        if oldStatus != newStatus:
+            if newStatus == "OUT" or (newStatus == "RUN" and oldStatus == "PIT"):
+                return [self.getClass(newCar), u"#{} ({}) has left the pits".format(newCar[0], self.getDriver(newCar)), "out"]
+            elif newStatus == "PIT":
+                return [self.getClass(newCar), u"#{} ({}) has entered the pits".format(newCar[0], self.getDriver(newCar)), "pit"]
+            elif newStatus == "RET":
+                return [self.getClass(newCar), u"#{} ({}) has retired".format(newCar[0], self.getDriver(newCar)), ""]
