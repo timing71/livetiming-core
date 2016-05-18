@@ -29,8 +29,11 @@ def parseTime(formattedTime):
         ttime = datetime.strptime(formattedTime, "%M:%S.%f")
         return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
     except ValueError:
-        ttime = datetime.strptime(formattedTime, "%S.%f")
-        return ttime.second + (ttime.microsecond / 1000000.0)
+        try:
+            ttime = datetime.strptime(formattedTime, "%S.%f")
+            return ttime.second + (ttime.microsecond / 1000000.0)
+        except ValueError:
+            return formattedTime
 
 
 def parseSessionTime(formattedTime):
