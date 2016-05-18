@@ -77,6 +77,8 @@ class IndyCar(Service):
         cars = []
         timingResults = raw['timing_results']
         for car in sorted(timingResults["Item"], key=lambda car: int(car["overallRank"])):
+            lastLapTime = parseTime(car["lastLapTime"])
+            bestLapTime = parseTime(car["bestLapTime"])
             cars.append([
                 car["no"],
                 "PIT" if car["status"] == "In Pit" else "RUN",
@@ -85,9 +87,9 @@ class IndyCar(Service):
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"],
                 car["gap"],
-                [parseTime(car["lastLapTime"]), "pb" if car["lastLapTime"] == car["bestLapTime"] else ""],
+                [lastLapTime, "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
-                [parseTime(car["bestLapTime"]), ""],
+                [bestLapTime, ""],
                 car["pitStops"]
             ])
 
