@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
+from livetiming.messages import FlagChangeMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
 from os import environ, path
 from random import randint
@@ -110,28 +111,16 @@ class Service(ApplicationSession):
             }
         }
 
+    def getMessageGenerators(self):
+        return [
+            FlagChangeMessage(lambda s: FlagStatus.fromString(s["session"]["flagState"]))
+        ]
+
     def createMessages(self, oldState, newState):
         # Messages are of the form [time, category, text, messageType]
         messages = []
-        oldFlag = FlagStatus.fromString(oldState["session"]["flagState"])
-        newFlag = FlagStatus.fromString(newState["session"]["flagState"])
-        if oldFlag != newFlag:
-            if newFlag == FlagStatus.GREEN:
-                messages.append([int(time.time()), "Track", "Green flag - track clear", "green"])
-            elif newFlag == FlagStatus.SC:
-                messages.append([int(time.time()), "Track", "Safety car deployed", "yellow"])
-            elif newFlag == FlagStatus.FCY:
-                messages.append([int(time.time()), "Track", "Full course yellow", "yellow"])
-            elif newFlag == FlagStatus.YELLOW:
-                messages.append([int(time.time()), "Track", "Yellow flags shown", "yellow"])
-            elif newFlag == FlagStatus.RED:
-                messages.append([int(time.time()), "Track", "Red flag", "red"])
-            elif newFlag == FlagStatus.CHEQUERED:
-                messages.append([int(time.time()), "Track", "Chequered flag", "track"])
-            elif newFlag == FlagStatus.CODE_60:
-                messages.append([int(time.time()), "Track", "Code 60", "code60"])
-            elif newFlag == FlagStatus.VSC:
-                messages.append([int(time.time()), "Track", "Virtual safety car deployed", "yellow"])
+        for mg in self.getMessageGenerators():
+            messages += mg.process(oldState, newState)
         return messages
 
     def getTimingMessage(self):
