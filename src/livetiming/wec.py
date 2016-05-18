@@ -9,7 +9,7 @@ from datetime import datetime
 from twisted.logger import Logger
 from os import environ
 from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.messaging import Realm
+from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
 

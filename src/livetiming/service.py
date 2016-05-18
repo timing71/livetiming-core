@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
-from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
+from livetiming.network import Channel, Message, MessageClass, Realm, RPC
 from os import environ, path
 from random import randint
 from twisted.internet import reactor, task

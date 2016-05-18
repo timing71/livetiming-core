@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming.messaging import Channel, Message, MessageClass, Realm, RPC
+from livetiming.network import Channel, Message, MessageClass, Realm, RPC
 from os import environ
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
