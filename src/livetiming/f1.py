@@ -10,7 +10,7 @@ import re
 import urllib2
 import xml.etree.ElementTree as ET
 from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.messages import CarPitMessage
+from livetiming.messages import CarPitMessage, FastLapMessage
 from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
@@ -241,7 +241,8 @@ class F1(Service):
 
     def getMessageGenerators(self):
         return super(F1, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2])
+            CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
+            FastLapMessage(lambda c: c[15], lambda c: "Timing", lambda c: c[2])
         ]
 
 def main():

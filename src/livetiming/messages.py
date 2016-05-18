@@ -2,6 +2,11 @@ from racing import FlagStatus
 import time
 
 
+def formatTime(seconds):
+    m, s = divmod(seconds, 60)
+    return "{}:{}".format(int(m), s)
+
+
 class TimingMessage(object):
     def _consider(self, oldState, newState):
         pass
@@ -84,3 +89,20 @@ class DriverChangeMessage(PerCarMessage):
         newDriver = self.getDriver(newCar)
         if oldDriver != newDriver:
             return [self.getClass(newCar), u"#{} Driver change ({} to {})".format(newCar[0], oldDriver, newDriver)]
+
+
+# Emits a message if a car sets a personal or overall best.
+class FastLapMessage(PerCarMessage):
+    def __init__(self, getTime, getClass, getDriver):
+        self.getTime = getTime
+        self.getClass = getClass
+        self.getDriver = getDriver
+
+    def _consider(self, oldCar, newCar):
+        oldFlags = self.getTime(oldCar)[1]
+        newFlags = self.getTime(newCar)[1]
+        if oldFlags != newFlags:
+            if newFlags == "pb":
+                return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(self.getTime(newCar)[0])), "pb"]
+            elif newFlags == "sb-new":
+                return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(newCar[0], self.getDriver(newCar), formatTime(self.getTime(newCar)[0])), "sb"]
