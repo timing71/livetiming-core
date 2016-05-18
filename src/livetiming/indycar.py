@@ -118,7 +118,7 @@ class IndyCar(Service):
     def getMessageGenerators(self):
         return super(IndyCar, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
-            FastLapMessage(lambda c: c[7], lambda c: "Timing", lambda c: c[2])
+            FastLapMessage(lambda c: c[8], lambda c: "Timing", lambda c: c[2])
         ]
 
     def getRawFeedData(self):
