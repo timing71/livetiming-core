@@ -103,7 +103,7 @@ class IndyCar(Service):
         byFastestLap = sorted(cars, key=lambda c: float(c[10][0]) if c[10][0] != 0 else 9999)
         purpleCar = byFastestLap[0]
         purpleCar[10][1] = "sb"
-        purpleCar[8][1] = "sb-new" if purpleCar[8][0] == purpleCar[10][0] and purpleCar[1] != "PIT" else ""
+        purpleCar[8][1] = "sb-new" if purpleCar[8][0] == purpleCar[10][0] and purpleCar[10][0] > 0 and purpleCar[1] != "PIT" else ""
 
         heartbeat = timingResults['heartbeat']
         state = {
