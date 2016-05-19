@@ -1,7 +1,9 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { Grid, Row, Col } from 'react-bootstrap';
+import { browserHistory } from 'react-router';
+
+import { Glyphicon, Grid, Row, Col, Nav, NavDropdown, MenuItem} from 'react-bootstrap';
 
 import Clock from '../components/Clock';
 import FlagStatusPanel from '../components/FlagStatusPanel';
@@ -127,11 +129,18 @@ class TimingScreen extends React.Component {
           <Col sm={2}>
             <Clock seconds={this.state.session.timeElapsed} caption="elapsed" />
           </Col>
-          <Col sm={8}>
+          <Col sm={7}>
             <FlagStatusPanel flag={this.state.session.flagState} text={this.state.service.name} />
           </Col>
           <Col sm={2}>
             {remaining}
+          </Col>
+          <Col sm={1}>
+            <Nav pullRight={true}>
+              <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
+                <MenuItem eventKey="1.1" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
+              </NavDropdown>
+            </Nav>
           </Col>
         </Row>
         <Row className="timing-table-container">

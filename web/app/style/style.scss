@@ -9,6 +9,22 @@ a {
   text-decoration: underline;
 }
 
+.nav a {
+  text-decoration: none;
+}
+
+.nav {
+  position: fixed;
+  right: 0;
+  z-index: 1000;
+}
+
+.dropdown-menu {
+  left: inherit;
+  right: 0;
+  min-width: 250px;
+}
+
 @import './Clock';
 @import './FlagStatusPanel';
 @import './TimingModal';
