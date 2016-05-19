@@ -8,6 +8,7 @@ import FlagStatusPanel from '../components/FlagStatusPanel';
 import TimingTable from '../components/TimingTable';
 import Messages from '../components/Messages';
 import TrackData from '../components/TrackData';
+import {ServiceNotAvailable} from '../components/Modals';
 
 class TimingScreen extends React.Component {
 
@@ -65,7 +66,9 @@ class TimingScreen extends React.Component {
 
 
   componentWillUnmount() {
-    this.props.session.unsubscribe(this.subscription);
+    if (this.subscription) {
+      this.props.session.unsubscribe(this.subscription);
+    }
   }
 
   findServiceFromContext(context) {
@@ -109,7 +112,7 @@ class TimingScreen extends React.Component {
   
   render() {
     if (!this.state.service) {
-      return <p>Service not found</p>;
+      return <ServiceNotAvailable />;
     }
     let remaining;
     if (this.state.session.lapsRemain !== undefined) {
