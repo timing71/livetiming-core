@@ -2,7 +2,7 @@ import React, {Children, cloneElement} from 'react';
 import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
-import Loading from './Loading';
+import Loading from './Modals';
 
 import { ROUTER_URL } from '../config/settings';
 
