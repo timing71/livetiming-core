@@ -90,6 +90,9 @@ if(TARGET === 'start' || !TARGET) {
         }
       ]
     },
+    output: {
+      publicPath: "http://localhost:8080/"
+    },
     plugins: [
       new webpack.HotModuleReplacementPlugin()
     ]
