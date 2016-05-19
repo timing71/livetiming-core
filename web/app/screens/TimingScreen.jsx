@@ -123,14 +123,14 @@ class TimingScreen extends React.Component {
     }
     return (
       <Grid fluid={true} className="screen timing-screen">
-        <Row>
-          <Col md={2}>
+        <Row className="timing-screen-header">
+          <Col sm={2}>
             <Clock seconds={this.state.session.timeElapsed} caption="elapsed" />
           </Col>
-          <Col md={8}>
+          <Col sm={8}>
             <FlagStatusPanel flag={this.state.session.flagState} text={this.state.service.name} />
           </Col>
-          <Col md={2}>
+          <Col sm={2}>
             {remaining}
           </Col>
         </Row>
