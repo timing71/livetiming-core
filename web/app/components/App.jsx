@@ -1,11 +1,8 @@
-import React from 'react';
+import React, {Children, cloneElement} from 'react';
 import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
 import { ROUTER_URL } from '../config/settings';
-
-import ServiceSelectionScreen from '../screens/ServiceSelectionScreen';
-import TimingScreen from '../screens/TimingScreen';
 
 class App extends React.Component {
 
@@ -15,13 +12,6 @@ class App extends React.Component {
       "services": [],
       "session": null
     };
-  }
-
-  getChildContext() {
-    return {
-      services: this.state.services,
-      session: this.state.session
-    }
   }
 
   componentWillMount() {
@@ -67,14 +57,21 @@ class App extends React.Component {
   }
 
   render() {
-    return this.props.children;
+    if (!this.state.session) {
+      return <p>loading</p>;
+    }
+    const {children} = this.props;
+    const newProps = {
+      session: this.state.session,
+      services: this.state.services
+    };
+    const childrenWithProps = Children.map(
+      children,
+      (child) => cloneElement(children, newProps)
+    );
+    return <div className="full-height">{childrenWithProps}</div>;
   }
 
 }
-
-App.childContextTypes = {
-  session: React.PropTypes.object,
-  services: React.PropTypes.array
-};
 
 export default App;

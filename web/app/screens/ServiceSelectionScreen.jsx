@@ -15,7 +15,7 @@ class ServiceSelectionScreen extends React.Component {
         </Row>
         <Row>
           <Col md={12}>
-            <ServiceList services={this.context.services} />
+            <ServiceList services={this.props.services} />
           </Col>
         </Row>
         <Row>
@@ -27,9 +27,5 @@ class ServiceSelectionScreen extends React.Component {
     );
   }
 }
-
-ServiceSelectionScreen.contextTypes = {
-  services: React.PropTypes.array
-};
 
 export default ServiceSelectionScreen;

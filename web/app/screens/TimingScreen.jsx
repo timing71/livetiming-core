@@ -27,34 +27,51 @@ class TimingScreen extends React.Component {
   }
 
   componentWillMount() {
-    const {session} = this.context;
-    this.service = this.findServiceFromContext(this.context);
-    session.call("livetiming.service.requestState." + this.service.uuid).then((result) => {
-      this.handleData([result]);
-      });
+    const {session} = this.props;
 
-    session.subscribe(this.service.uuid, this.handleData).then(
-      (sub) => {
-        this.subscription = sub;
-        session.log ("Established subscription to " + this.service.uuid);
-        this.setState({
-          ...this.state,
-          "disconnected": false
-        });
-      },
-      (error) => {}
-    );
+    const service = this.findServiceFromContext(this.props);
+
+    if (service) {
+      this.setState({...this.state, service: service});
+      this.subscribeToService(service);
+    }
   }
-  
+
+  subscribeToService(service) {
+    const {session} = this.props;
+    if (session && service) {
+      session.call("livetiming.service.requestState." + service.uuid).then(
+        (result) => {
+          this.handleData([result]);
+        },
+        (error) => {
+          console.log("Error");
+        }
+      );
+      session.subscribe(service.uuid, this.handleData).then(
+        (sub) => {
+          this.subscription = sub;
+          session.log("Established subscription to " + service.uuid);
+          this.setState({
+            ...this.state,
+            "disconnected": false
+          });
+        },
+        (error) => {
+        }
+      );
+    }
+  }
+
 
   componentWillUnmount() {
-    this.context.session.unsubscribe(this.subscription);
+    this.props.session.unsubscribe(this.subscription);
   }
-  
+
   findServiceFromContext(context) {
     return _(context.services).find((svc) => svc.uuid === this.props.params.serviceUUID);
   }
-  
+
   handleData(data) {
     _(data).forEach((message) => {
       if (message.msgClass == 4) {
@@ -66,9 +83,10 @@ class TimingScreen extends React.Component {
       }
     })
   }
-  
-  componentWillReceiveProps(nextProps, nextContext) {
-    const disconnected = !this.findServiceFromContext(nextContext);
+
+  componentWillReceiveProps(nextProps) {
+    const service = this.findServiceFromContext(nextProps);
+    const disconnected = !service
     if (disconnected != this.state.disconnected) {
       if (disconnected) {
         this.setState({
@@ -78,8 +96,10 @@ class TimingScreen extends React.Component {
         });
       }
       else {
+        this.subscribeToService(service);
         this.setState({
           ...this.state,
+          service: service,
           "messages": [[Date.now() / 1000, "System", "Service now available", "system"]].concat(this.state.messages),
           "disconnected": disconnected
         });
@@ -88,6 +108,9 @@ class TimingScreen extends React.Component {
   }
   
   render() {
+    if (!this.state.service) {
+      return <p>Service not found</p>;
+    }
     let remaining;
     if (this.state.session.lapsRemain !== undefined) {
       remaining = <div className="clock">{this.state.session.lapsRemain} lap{this.state.session.lapsRemain == 1 ? "" : "s"} remaining</div>
@@ -102,7 +125,7 @@ class TimingScreen extends React.Component {
             <Clock seconds={this.state.session.timeElapsed} caption="elapsed" />
           </Col>
           <Col md={8}>
-            <FlagStatusPanel flag={this.state.session.flagState} text={this.service.name} />
+            <FlagStatusPanel flag={this.state.session.flagState} text={this.state.service.name} />
           </Col>
           <Col md={2}>
             {remaining}
@@ -110,7 +133,7 @@ class TimingScreen extends React.Component {
         </Row>
         <Row className="timing-table-container">
           <Col md={12} className="full-height">
-            <TimingTable columnSpec={this.service.colSpec} cars={this.state.cars} />
+            <TimingTable columnSpec={this.state.service.colSpec} cars={this.state.cars} />
           </Col>
         </Row>
         <Row className="messages-container">
@@ -118,17 +141,12 @@ class TimingScreen extends React.Component {
             <Messages messages={this.state.messages} />
           </Col>
           <Col md={4}>
-            <TrackData spec={this.service.trackDataSpec} dataset={this.state.session.trackData} />
+            <TrackData spec={this.state.service.trackDataSpec} dataset={this.state.session.trackData} />
           </Col>
         </Row>
       </Grid>
     );
   }
 }
-
-TimingScreen.contextTypes = {
-  session: React.PropTypes.object,
-  services: React.PropTypes.array
-};
 
 export default TimingScreen;
