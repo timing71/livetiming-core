@@ -25,6 +25,19 @@ a {
   min-width: 250px;
 }
 
+::-webkit-scrollbar-track {
+  background-color: $table-bg-accent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: $color-system;
+  border-radius: 5px;
+}
+
 @import './Clock';
 @import './FlagStatusPanel';
 @import './TimingModal';
