@@ -1,23 +1,6 @@
 @import 'bootstrap/variables';
 
-$body-bg: #000;
-$text-color: #FFF;
-
-$font-size-base: 14pt;
-
-$panel-bg: #202020;
-$panel-default-heading-bg: #404040;
-$panel-default-border: #808080;
-$panel-default-text: #FFF;
-
-$table-bg-accent: #202020;
-$table-border-color: transparent;
-
-$font-family-base: Verdana, Monospace;
-
-$table-condensed-cell-padding: 3px;
-
-/* Non-Bootstrap below */
+/* Colours */
 
 $color-system: #54FFFF;
 $color-personal-best: #00FF00;
@@ -44,3 +27,25 @@ $color-course-green: #009900;
 $color-course-yellow: #DDDD00;
 $color-course-red: #990000;
 $color-course-purple: $color-purple;
+
+/* Bootstrap overrides */
+
+$body-bg: #000;
+$text-color: #FFF;
+
+$font-size-base: 14pt;
+
+$panel-bg: #202020;
+$panel-default-heading-bg: black;
+$panel-default-border: $color-system;
+$panel-default-text: $color-system;
+
+$table-bg-accent: #202020;
+$table-border-color: transparent;
+
+$font-family-base: Verdana, Monospace;
+
+$table-condensed-cell-padding: 3px;
+
+$link-color: white;
+$link-hover-color: $color-system;
