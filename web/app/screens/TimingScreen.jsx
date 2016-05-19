@@ -17,7 +17,7 @@ class TimingScreen extends React.Component {
       "cars": [],
       "messages": [],
       "session": {
-        "flagState": "green",
+        "flagState": "none",
         "timeElapsed": 0,
         "timeRemain": 0
       },
