@@ -98,10 +98,12 @@ class FastLapMessage(PerCarMessage):
         self.getDriver = getDriver
 
     def _consider(self, oldCar, newCar):
-        oldFlags = self.getTime(oldCar)[1]
-        newFlags = self.getTime(newCar)[1]
-        if oldFlags != newFlags:
+        oldTime = self.getTime(oldCar)
+        newTime = self.getTime(newCar)
+        oldFlags = oldTime[1]
+        newFlags = newTime[1]
+        if oldFlags != newFlags or oldTime[0] != newTime[0]:
             if newFlags == "pb":
-                return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(self.getTime(newCar)[0])), "pb"]
+                return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "pb"]
             elif newFlags == "sb-new":
-                return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(newCar[0], self.getDriver(newCar), formatTime(self.getTime(newCar)[0])), "sb"]
+                return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "sb"]
