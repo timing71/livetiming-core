@@ -88,7 +88,7 @@ class Service(ApplicationSession):
     def _updateRaceState(self):
         try:
             newState = self.getRaceState()
-            self.state["messages"] = self.createMessages(self.state, newState) + self.state["messages"]
+            self.state["messages"] = (self.createMessages(self.state, newState) + self.state["messages"])[0:100]
             self.state["cars"] = newState["cars"]
             self.state["session"] = newState["session"]
             self.saveState()
