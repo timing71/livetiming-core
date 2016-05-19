@@ -2,6 +2,8 @@ import React, {Children, cloneElement} from 'react';
 import autobahn from '../lib/autobahn';
 import _ from 'lodash';
 
+import Loading from './Loading';
+
 import { ROUTER_URL } from '../config/settings';
 
 class App extends React.Component {
@@ -58,7 +60,7 @@ class App extends React.Component {
 
   render() {
     if (!this.state.session) {
-      return <p>loading</p>;
+      return <Loading />;
     }
     const {children} = this.props;
     const newProps = {

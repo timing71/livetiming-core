@@ -1,0 +1,32 @@
+.loading.modal {
+  text-align: center;
+}
+
+@media screen and (min-width: 768px) {
+  .loading.modal:before {
+    display: inline-block;
+    vertical-align: middle;
+    content: " ";
+    height: 100%;
+  }
+}
+
+.loading .modal-dialog {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.loading .modal-content {
+  background: transparent;
+  border: 2px solid $color-system;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.loading .modal-body {
+  vertical-align: middle;
+  color: $color-system;
+  padding: 20% 0;
+  text-align: center;
+}
