@@ -1,6 +1,6 @@
 {
   "name": "livetiming",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Live timing aggregator front-end",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,7 @@
   "author": "James Muscat",
   "license": "ISC",
   "dependencies": {
+    "json-loader": "^0.5.4",
     "lodash": "^4.3.0",
     "moment": "^2.13.0",
     "react": "^15.0.0",
