@@ -80,8 +80,8 @@ def parseFlagState(flagChar):
 def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
-    race = "Catalunya"  # servers.getroot().attrib['race']
-    session = "Race"  # servers.getroot().attrib['session']
+    race = "MonteCarlo" # servers.getroot().attrib['race']
+    session = "Practice1"  # servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
 
@@ -112,6 +112,9 @@ class F1(Service):
     def getName(self):
         return "Formula 1"
 
+    def getDescription(self):
+        return "Formula 1"
+
     def getColumnSpec(self):
         return [
             ("Num", "text"),
@@ -121,8 +124,8 @@ class F1(Service):
             ("T", "text"),
             ("TS", "text"),
             ("TA", "text"),
-            ("Gap", "time"),
-            ("Int", "time"),
+            ("Gap", "delta"),
+            ("Int", "delta"),
             ("S1", "time"),
             ("BS1", "time"),
             ("S2", "time"),
@@ -203,6 +206,18 @@ class F1(Service):
                 state = "RET"
             elif latestTimeLine[3][2] == "1" or latestTimeLine[3][2] == "3":
                 state = "PIT"
+
+            gap = renderGapOrLaps(latestTimeLine[9])
+            interval = renderGapOrLaps(latestTimeLine[14])
+
+            if gap == "" and len(cars) > 0:
+                fasterCarTime = cars[-1][16][0]
+                fastestCarTime = cars[0][16][0]
+                ourBestTime = float(timeLine[1])
+                interval = ourBestTime - fasterCarTime
+                gap = ourBestTime - fastestCarTime
+
+
             cars.append([
                 driver["Num"],
                 state,
@@ -211,16 +226,16 @@ class F1(Service):
                 currentTyre,
                 currentTyreStats[1],
                 currentTyreStats[2],
-                renderGapOrLaps(latestTimeLine[9]),
-                renderGapOrLaps(latestTimeLine[14]),
+                gap,
+                interval,
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
                 [timeLine[4], 'old'],
                 [latestTimeLine[6], mapTimeFlag(colorFlags[2])],
                 [timeLine[7], 'old'],
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
-                [latestTimeLine[1], mapTimeFlag(colorFlags[0])],
-                [timeLine[1], fastestLapFlag],
+                [float(latestTimeLine[1]), mapTimeFlag(colorFlags[0])],
+                [float(timeLine[1]), fastestLapFlag],
                 latestTimeLine[3][0]
             ])
 
@@ -229,14 +244,18 @@ class F1(Service):
 
         lapsRemain = max(totalLaps - currentLap, 0)
 
+        session = {
+            "flagState": parseFlagState(free["FL"]),
+            "timeElapsed": 0,
+            "timeRemaining": free["QT"]
+        }
+
+        if "S" in free and free["S"] == "Race":
+            session["lapsRemain"] = math.floor(lapsRemain)
+
         return {
             "cars": cars,
-            "session": {
-                "flagState": parseFlagState(free["FL"]),
-                "timeElapsed": 0,
-                "timeRemaining": 0,
-                "lapsRemain": math.floor(lapsRemain) if lapsRemain >= 0 else None
-            }
+            "session": session
         }
 
     def getMessageGenerators(self):
