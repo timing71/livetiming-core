@@ -1,3 +1,4 @@
+from datetime import datetime
 from livetiming.service import Service
 from threading import Thread
 from time import sleep
@@ -111,12 +112,15 @@ class F1(Service):
         curFetcher = Fetcher(server_base_url + "cur.js", self.processData, 1)
         curFetcher.start()
         self.processData(urllib2.urlopen(allURL).readlines())
+        self.timestampLastUpdated = datetime.now()
 
     def processData(self, data):
         for dataline in data:
             matches = self.DATA_REGEX.match(dataline)
             if matches:
                 self.dataMap[matches.group(1)] = simplejson.loads(matches.group(2))
+                if matches.group(1) == "f":
+                    self.timestampLastUpdated = datetime.now()
 
     def getName(self):
         return "Formula 1"
@@ -157,6 +161,7 @@ class F1(Service):
         sq = []
         comms = {}
         extra = []
+        flag = None
 
         for key, val in self.dataMap["init"].iteritems():
             if key != "T" and key != "TY":
@@ -165,6 +170,7 @@ class F1(Service):
         for key, val in self.dataMap["b"].iteritems():
             if key != "T" and key != "TY":
                 bestTimes = val["DR"]
+                flag = val["F"]
 
         for key, val in self.dataMap["o"].iteritems():
             if key != "T" and key != "TY":
@@ -260,9 +266,9 @@ class F1(Service):
         lapsRemain = max(totalLaps - currentLap, 0)
 
         session = {
-            "flagState": parseFlagState(free["FL"]),
+            "flagState": parseFlagState(free["FL"] if flag is None else flag),
             "timeElapsed": 0,
-            "timeRemaining": free["QT"]
+            "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds()
         }
 
         if "S" in free and free["S"] == "Race":
