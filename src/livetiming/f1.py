@@ -255,7 +255,7 @@ class F1(Service):
                 [timeLine[7], 'old'],
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
-                [float(latestTimeLine[1]), mapTimeFlag(colorFlags[0])],
+                [float(latestTimeLine[1]), "sb-new" if fastestLapFlag == "sb-new" else mapTimeFlag(colorFlags[0])],
                 [float(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else [0.0, ""],
                 latestTimeLine[3][0]
             ])
