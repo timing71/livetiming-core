@@ -10,7 +10,7 @@ import re
 import urllib2
 import xml.etree.ElementTree as ET
 from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.messages import CarPitMessage, FastLapMessage
+from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
 from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
@@ -31,6 +31,13 @@ class Fetcher(Thread):
             except:
                 pass  # Bad data feed :(
             sleep(self.interval)
+
+
+class RaceControlMessage(TimingMessage):
+    def _consider(self, oldState, newState):
+        if newState["raceControlMessage"] is not None:
+            msg = newState["raceControlMessage"]
+            return ["Race Control", msg, "raceControl"]
 
 
 def mapTimeFlag(color):
@@ -96,6 +103,7 @@ class F1(Service):
         self.sessionState = {}
         server_base_url = getServerConfig()
         self.dataMap = {}
+        self.prevRaceControlMessage = ""
         allURL = server_base_url + "all.js"
         allFetcher = Fetcher(allURL, self.processData, 60)
         allFetcher.start()
@@ -146,7 +154,7 @@ class F1(Service):
         bestTimes = []
         latestTimes = []
         sq = []
-#        comms = {}
+        comms = {}
         extra = []
 
         for key, val in self.dataMap["init"].iteritems():
@@ -165,9 +173,9 @@ class F1(Service):
             if key != "T" and key != "TY":
                 sq = val["DR"]
 
-#         for key, val in self.dataMap["c"].iteritems():
-#             if key != "T" and key != "TY":
-#                 comms = val
+        for key, val in self.dataMap["c"].iteritems():
+            if key != "T" and key != "TY":
+                comms = val
 
         for key, val in self.dataMap["x"].iteritems():
             if key != "T" and key != "TY":
@@ -253,15 +261,22 @@ class F1(Service):
         if "S" in free and free["S"] == "Race":
             session["lapsRemain"] = math.floor(lapsRemain)
 
-        return {
+        state = {
             "cars": cars,
-            "session": session
+            "session": session,
+            "raceControlMessage": comms["M"] if "M" in comms and comms["M"] != self.prevRaceControlMessage else None
         }
+
+        self.prevRaceControlMessage = comms["M"]
+
+        return state
+
 
     def getMessageGenerators(self):
         return super(F1, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
-            FastLapMessage(lambda c: c[15], lambda c: "Timing", lambda c: c[2])
+            FastLapMessage(lambda c: c[15], lambda c: "Timing", lambda c: c[2]),
+            RaceControlMessage()
         ]
 
 def main():
