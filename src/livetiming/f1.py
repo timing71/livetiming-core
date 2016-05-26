@@ -88,8 +88,9 @@ def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
     race = "MonteCarlo" # servers.getroot().attrib['race']
-    session = "Practice1"  # servers.getroot().attrib['session']
+    session = "Practice2"  # servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
+    Logger().info("Using server {}".format(serverIP))
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
 
 
@@ -204,11 +205,18 @@ class F1(Service):
             timeLine = dnd["timeLine"]
             colorFlags = dnd["latestTimeLine"][2]
             sq = dnd["sq"]
+
             fastestLapFlag = ""
             if timeLine[1] != "" and fastestLap == float(timeLine[1]):
                 fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
-            currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
-            currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
+
+            if "X" in dnd["extra"] and dnd["extra"]["X"].split(",")[9] != "":
+                currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
+                currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
+            else:
+                currentTyre = ""
+                currentTyreStats = ("", "", "")
+
             state = "RUN"
             if "stop" in dnd:
                 state = "RET"
@@ -218,19 +226,18 @@ class F1(Service):
             gap = renderGapOrLaps(latestTimeLine[9])
             interval = renderGapOrLaps(latestTimeLine[14])
 
-            if gap == "" and len(cars) > 0:
+            if gap == "" and len(cars) > 0 and timeLine[1] != "":
                 fasterCarTime = cars[-1][16][0]
                 fastestCarTime = cars[0][16][0]
                 ourBestTime = float(timeLine[1])
                 interval = ourBestTime - fasterCarTime
                 gap = ourBestTime - fastestCarTime
 
-
             cars.append([
                 driver["Num"],
                 state,
                 driver["FullName"].title(),
-                math.floor(float(sq[0])),
+                math.floor(float(sq[0])) if sq[0] != "" else 0,
                 currentTyre,
                 currentTyreStats[1],
                 currentTyreStats[2],
@@ -243,7 +250,7 @@ class F1(Service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
                 [float(latestTimeLine[1]), mapTimeFlag(colorFlags[0])],
-                [float(timeLine[1]), fastestLapFlag],
+                [float(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else [0.0, ""],
                 latestTimeLine[3][0]
             ])
 
