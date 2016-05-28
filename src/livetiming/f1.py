@@ -88,7 +88,7 @@ def parseFlagState(flagChar):
 def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
-    race = "MonteCarlo" # servers.getroot().attrib['race']
+    race = "MonteCarlo"  # servers.getroot().attrib['race']
     session = "Qualifying"  # servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
     Logger().info("Using server {}".format(serverIP))
@@ -284,13 +284,13 @@ class F1(Service):
 
         return state
 
-
     def getMessageGenerators(self):
         return super(F1, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
             FastLapMessage(lambda c: c[15], lambda c: "Timing", lambda c: c[2]),
             RaceControlMessage()
         ]
+
 
 def main():
     Logger().info("Starting F1 timing service...")
