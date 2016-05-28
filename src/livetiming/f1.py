@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 from livetiming.service import Service
 from threading import Thread
@@ -150,6 +151,18 @@ class F1(Service):
             ("Pits", "num")
         ]
 
+    def getTrackDataSpec(self):
+        return [
+            "Track Temp",
+            "Air Temp",
+            "Wind Speed",
+            "Direction",
+            "Humidity",
+            "Pressure",
+            "Track",
+            "Forecast"
+        ]
+
     def getPollInterval(self):
         return 1
 
@@ -268,7 +281,8 @@ class F1(Service):
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
             "timeElapsed": 0,
-            "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds()
+            "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds(),
+            "trackData": self._getTrackData()
         }
 
         if "S" in free and free["S"] == "Race":
@@ -283,6 +297,26 @@ class F1(Service):
         self.prevRaceControlMessage = comms["M"] if "M" in comms else ""
 
         return state
+
+    def _getTrackData(self):
+        for key, val in self.dataMap["sq"].iteritems():
+            if key != "T" and key != "TY":
+                if "W" in val:
+                    w = val["W"].split(",")
+                    return [
+                        u"{}°C".format(w[0]),
+                        u"{}°C".format(w[1]),
+                        "{}kph".format(w[3]),
+                        u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
+                        "{}%".format(w[4]),
+                        "{}mbar".format(w[5]),
+                        "Wet" if w[2] == "1" else "Dry",
+                        w[7]
+                    ]
+        return []
+
+    def _getTrackRotationOffset(self):
+        return -45  # XXX this is Monaco's hardcoded value
 
     def getMessageGenerators(self):
         return super(F1, self).getMessageGenerators() + [
