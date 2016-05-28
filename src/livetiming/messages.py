@@ -102,7 +102,7 @@ class FastLapMessage(PerCarMessage):
         newTime = self.getTime(newCar)
         oldFlags = oldTime[1]
         newFlags = newTime[1]
-        if oldFlags != newFlags or oldTime[0] != newTime[0]:
+        if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
             if newFlags == "pb":
                 return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "pb"]
             elif newFlags == "sb-new":
