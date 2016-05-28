@@ -89,7 +89,7 @@ def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
     race = "MonteCarlo" # servers.getroot().attrib['race']
-    session = "Practice2"  # servers.getroot().attrib['session']
+    session = "Qualifying"  # servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
     Logger().info("Using server {}".format(serverIP))
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
@@ -212,10 +212,6 @@ class F1(Service):
             colorFlags = dnd["latestTimeLine"][2]
             sq = dnd["sq"]
 
-            fastestLapFlag = ""
-            if timeLine[1] != "" and fastestLap == float(timeLine[1]):
-                fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] else "sb"
-
             if "X" in dnd["extra"] and dnd["extra"]["X"].split(",")[9] != "":
                 currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
                 currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
@@ -228,6 +224,10 @@ class F1(Service):
                 state = "RET"
             elif latestTimeLine[3][2] == "1" or latestTimeLine[3][2] == "3":
                 state = "PIT"
+
+            fastestLapFlag = ""
+            if timeLine[1] != "" and fastestLap == float(timeLine[1]):
+                fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] and state == "RUN" else "sb"
 
             gap = renderGapOrLaps(latestTimeLine[9])
             interval = renderGapOrLaps(latestTimeLine[14])
@@ -277,10 +277,10 @@ class F1(Service):
         state = {
             "cars": cars,
             "session": session,
-            "raceControlMessage": comms["M"] if "M" in comms and comms["M"] != self.prevRaceControlMessage else None
+            "raceControlMessage": comms["M"] if ("M" in comms and comms["M"] != self.prevRaceControlMessage) else None
         }
 
-        self.prevRaceControlMessage = comms["M"]
+        self.prevRaceControlMessage = comms["M"] if "M" in comms else ""
 
         return state
 
