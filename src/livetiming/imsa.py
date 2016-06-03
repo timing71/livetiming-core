@@ -123,21 +123,16 @@ class IMSA(Service):
         for car in sorted(carList, key=lambda car: car["A"]):
             lastLap = parseTime(car["LL"])
             bestLap = parseTime(car["BL"])
-
-            maybePrev = [c for c in self.carsState if c[0] == car["N"]]
-            thisCarPrevious = maybePrev[0] if len(maybePrev) == 1 else [0, "PIT"]
-            reallyInPits = car["P"] == 1 and (car["PS"] > thisCarPrevious[-1]) or thisCarPrevious[1] == "PIT"
-
             cars.append([
                 car["N"],
-                "PIT" if reallyInPits else "RUN",
+                "PIT" if car["P"] == 1 else "RUN",
                 car["C"],
                 car["V"],
                 car["F"],
                 car["L"],
                 car["D"],
                 car["G"],
-                [lastLap, getFlags(car["C"], lastLap, bestLap) if not reallyInPits else ""],
+                [lastLap, getFlags(car["C"], lastLap, bestLap)],
                 [bestLap, getFlags(car["C"], bestLap, -1)],
                 car["PS"]
             ])
