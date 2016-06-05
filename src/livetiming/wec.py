@@ -44,7 +44,8 @@ def mapClasses(rawClass):
         "1": "LM P1",
         "2": "LM GTE Pro",
         "3": "LM P2",
-        "4": "LM GTE Am"
+        "4": "LM GTE Am",
+        "5": "Garage 56"
     }
     return classMap[rawClass]
 
@@ -67,12 +68,12 @@ def formatTime(seconds):
 
 
 def hackDataFromJSONP(data, var):
-    return simplejson.loads(re.search(r'(?:%s = jQuery\.parseJSON\(\')([^\;]+)(?:\'\)\;)' % var, data).group(1))
+    return simplejson.loads(re.search(r'(?:%s = jQuery\.parseJSON\(\')([^\;]+)(?:\'\)\;)' % var, data).group(1).replace("\\\'", "'"))
 
 
 def getStaticData():
     Logger().info("Retrieving WEC static data...")
-    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_480.js"
+    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_542.js"
     feed = urllib2.urlopen(static_data_url)
     raw = feed.read()
     return {
@@ -158,7 +159,7 @@ class WEC(Service):
             engage = self.staticData["tabEngages"][car["2"]]
             voiture = self.staticData["tabVehicules"][engage['voiture']]
             marque = self.staticData["tabMarques"][voiture['marque']]
-            driver = self.staticData["tabPilotes"][car["5"]]
+            driver = self.staticData["tabPilotes"][car["5"]] if car["5"] in self.staticData["tabPilotes"] else {"prenom": "Driver", "nom": car["5"]}
             team = self.staticData["tabTeams"][engage["team"]]
             classe = engage["categorie"]
             lastLap = parseTime(car["12"])
