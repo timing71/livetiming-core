@@ -25,6 +25,15 @@ function findClassIndex(columnSpec) {
   return -1;
 }
 
+function findRaceNumberIndex(columnSpec) {
+  for (var i=0; i < columnSpec.length; i++) {
+    if (columnSpec[i][0] == "Num") {
+      return i;
+    }
+  }
+  return -1;
+}
+
 class TimingRow extends React.Component {
   render() {
     const {position, car, columnSpec} = this.props;
@@ -47,8 +56,10 @@ class TimingRow extends React.Component {
     const stateCol = findStateIndex(columnSpec);
     const classCol = findClassIndex(columnSpec);
     const carClass = classNameFromCategory(car[classCol]);
+    const carNumIdx = findRaceNumberIndex(columnSpec);
+    const carNum = carNumIdx > -1 ? `car_${car[carNumIdx]}` : null;
     return (
-      <tr className={`car_state_${car[stateCol]} car_class_${carClass} ${hasSetSB? "sb-new" : ""}`} >
+      <tr id={carNum} className={`car_state_${car[stateCol]} car_class_${carClass} ${hasSetSB? "sb-new" : ""}`} >
         {cols}
       </tr>
     );
