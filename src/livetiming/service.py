@@ -19,13 +19,13 @@ class Service(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.args = config.extra
-        self.uuid = path.splitext(self.args["initialState"])[0] if "initialState" in self.args else uuid4().hex
+        self.uuid = path.splitext(self.args["initial_state"])[0] if "initial_state" in self.args else uuid4().hex
         self.state = self.getInitialState()
 
     def getInitialState(self):
-        if "initialState" in self.args:
+        if "initial_state" in self.args:
             try:
-                stateFile = open(self.args["initialState"], 'r')
+                stateFile = open(self.args["initial_state"], 'r')
                 return simplejson.load(stateFile)
             except Exception as e:
                 self.log.error("Exception trying to load saved state: {}".format(e))
@@ -163,7 +163,7 @@ class Service(ApplicationSession):
 def parse_args():
     parser = argparse.ArgumentParser(description='Run a Live Timing service.')
 
-    parser.add_argument('initialState', nargs='?', help='Initial state file')
+    parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
 
     return parser.parse_args()
 
