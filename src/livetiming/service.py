@@ -164,18 +164,30 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Run a Live Timing service.')
 
     parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
+    parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
 
     return parser.parse_args()
 
 
+def get_class(kls):
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    m = __import__(module)
+    for comp in parts[1:]:
+        m = getattr(m, comp)
+    return m
+
+
 def main():
-    Logger().info("Starting generic timing service...")
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
 
     args = parse_args()
 
+    service_class = get_class(args.service_class)
+    Logger().info("Starting timing service {}...".format(service_class.__module__))
+
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
-    runner.run(Service)
+    runner.run(service_class)
 
 if __name__ == '__main__':
     main()
