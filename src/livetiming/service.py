@@ -9,8 +9,8 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
 from livetiming.racing import FlagStatus
+import argparse
 import simplejson
-import sys
 
 
 class Service(ApplicationSession):
@@ -18,13 +18,14 @@ class Service(ApplicationSession):
 
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
-        self.uuid = path.splitext(sys.argv[1])[0] if len(sys.argv) == 2 else uuid4().hex
+        self.args = parse_args()
+        self.uuid = path.splitext(self.args.initialState)[0] if "initialState" in self.args else uuid4().hex
         self.state = self.getInitialState()
 
     def getInitialState(self):
-        if len(sys.argv) == 2:
+        if "initialState" in self.args:
             try:
-                stateFile = open(sys.argv[1], 'r')
+                stateFile = open(self.args.initialState, 'r')
                 return simplejson.load(stateFile)
             except Exception as e:
                 self.log.error("Exception trying to load saved state: {}".format(e))
@@ -157,6 +158,14 @@ class Service(ApplicationSession):
         self.log.info("Disconnected")
         if reactor.running:
             reactor.stop()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run a Live Timing service.')
+
+    parser.add_argument('initialState', nargs='?', help='Initial state file')
+
+    return parser.parse_args()
 
 
 def main():
