@@ -27,7 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
                 'livetiming-directory = livetiming.directory:main',
-                'livetiming-generic-service = livetiming.service:main',
+                'livetiming-service = livetiming.service:main',
             ],
         }
       )
