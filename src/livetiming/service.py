@@ -18,14 +18,14 @@ class Service(ApplicationSession):
 
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
-        self.args = parse_args()
-        self.uuid = path.splitext(self.args.initialState)[0] if "initialState" in self.args else uuid4().hex
+        self.args = config.extra
+        self.uuid = path.splitext(self.args["initialState"])[0] if "initialState" in self.args else uuid4().hex
         self.state = self.getInitialState()
 
     def getInitialState(self):
         if "initialState" in self.args:
             try:
-                stateFile = open(self.args.initialState, 'r')
+                stateFile = open(self.args["initialState"], 'r')
                 return simplejson.load(stateFile)
             except Exception as e:
                 self.log.error("Exception trying to load saved state: {}".format(e))
@@ -171,7 +171,10 @@ def parse_args():
 def main():
     Logger().info("Starting generic timing service...")
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+
+    args = parse_args()
+
+    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
     runner.run(Service)
 
 if __name__ == '__main__':
