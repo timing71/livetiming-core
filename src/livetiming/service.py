@@ -11,7 +11,6 @@ from uuid import uuid4
 from livetiming.racing import FlagStatus
 import simplejson
 import sys
-import time
 
 
 class Service(ApplicationSession):
