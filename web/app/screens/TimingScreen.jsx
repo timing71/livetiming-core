@@ -10,6 +10,7 @@ import FlagStatusPanel from '../components/FlagStatusPanel';
 import TimingTable from '../components/TimingTable';
 import Messages from '../components/Messages';
 import TrackData from '../components/TrackData';
+import Spinner from '../components/Spinner';
 import {ServiceNotAvailable} from '../components/Modals';
 
 class TimingScreen extends React.Component {
@@ -24,9 +25,11 @@ class TimingScreen extends React.Component {
         "timeElapsed": 0,
         "timeRemain": 0
       },
-      "disconnected": true
+      "disconnected": true,
+      "delay": 0
     };
     this.handleData = this.handleData.bind(this);
+    this.messageQueue = []
   }
 
   componentWillMount() {
@@ -71,6 +74,9 @@ class TimingScreen extends React.Component {
     if (this.subscription) {
       this.props.session.unsubscribe(this.subscription);
     }
+    if (this.delayedMessagesInterval) {
+      clearInterval(this.delayedMessagesInterval);
+    }
   }
 
   findServiceFromContext(context) {
@@ -80,13 +86,50 @@ class TimingScreen extends React.Component {
   handleData(data) {
     _(data).forEach((message) => {
       if (message.msgClass == 4) {
-        this.setState({
-          cars: message.payload.cars,
-          session: message.payload.session,
-          messages: message.payload.messages
-        });
+        this.delayMessage(message.payload);
       }
     })
+  }
+
+  delayMessage(payload) {
+    if (this.state.delay == 0) {
+      this.applyMessage(payload);
+    }
+    else {
+      const arrivedAt = Date.now();
+      this.messageQueue.push([arrivedAt, payload]);
+    }
+  }
+
+  applyMessage(payload) {
+    this.setState({
+      cars: payload.cars,
+      session: payload.session,
+      messages: payload.messages
+    });
+  }
+
+  setDelay(delay) {
+    this.setState(
+      {
+        ...this.state,
+        delay: delay
+      }
+    );
+    if (delay > 0 && !this.delayedMessagesInterval) {
+      this.delayedMessagesInterval = setInterval(this.processMessageQueue.bind(this), 1000);
+    }
+    else if (delay == 0) {
+      clearInterval(this.delayedMessagesInterval);
+      this.processMessageQueue();
+    }
+  }
+
+  processMessageQueue() {
+    while(this.messageQueue.length > 0 && this.messageQueue[0][0] < Date.now() + (1000 * this.state.delay)) {
+      const msg = this.messageQueue.shift();
+      this.applyMessage(msg[1]);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -111,7 +154,7 @@ class TimingScreen extends React.Component {
       }
     }
   }
-  
+
   render() {
     if (!this.state.service) {
       return <ServiceNotAvailable />;
@@ -138,7 +181,9 @@ class TimingScreen extends React.Component {
           <Col sm={1}>
             <Nav pullRight={true}>
               <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
-                <MenuItem eventKey="1.1" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
+                <span>Delay: <Spinner value={this.state.delay} onChange={this.setDelay.bind(this)}/></span>
+                <MenuItem divider />
+                <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
               </NavDropdown>
             </Nav>
           </Col>

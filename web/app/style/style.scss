@@ -23,6 +23,24 @@ a {
   left: inherit;
   right: 0;
   min-width: 250px;
+
+  .form-group {
+    margin: 2px 4px;
+  }
+  .btn-default {
+    background-color: black;
+    color: $color-system;
+    border-color: $color-system;
+  }
+  input {
+    background-color: black;
+    color: white;
+    border-color: $color-system;
+  }
+}
+
+.form-control {
+  height: inherit;
 }
 
 ::-webkit-scrollbar-track {
