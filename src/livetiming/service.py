@@ -19,11 +19,11 @@ class Service(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.args = config.extra
-        self.uuid = path.splitext(self.args["initial_state"])[0] if "initial_state" in self.args else uuid4().hex
+        self.uuid = path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
         self.state = self.getInitialState()
 
     def getInitialState(self):
-        if "initial_state" in self.args:
+        if self.args["initial_state"] is not None:
             try:
                 stateFile = open(self.args["initial_state"], 'r')
                 return simplejson.load(stateFile)
@@ -178,12 +178,18 @@ def get_class(kls):
     return m
 
 
+def service_name_from(srv):
+    if srv.startswith("livetiming."):
+        return srv
+    return "livetiming.{}.Service".format(srv)
+
+
 def main():
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
 
     args = parse_args()
 
-    service_class = get_class(args.service_class)
+    service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
 
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
