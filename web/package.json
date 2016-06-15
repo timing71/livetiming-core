@@ -1,6 +1,6 @@
 {
   "name": "livetiming",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Live timing aggregator front-end",
   "main": "index.js",
   "scripts": {
