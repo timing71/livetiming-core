@@ -47,7 +47,7 @@ def mapClasses(rawClass):
         "4": "LM GTE Am",
         "5": "Garage 56"
     }
-    return classMap[rawClass]
+    return classMap[rawClass] if rawClass in classMap else "Unknown"
 
 
 def parseTime(formattedTime):
@@ -73,7 +73,7 @@ def hackDataFromJSONP(data, var):
 
 def getStaticData():
     Logger().info("Retrieving WEC static data...")
-    static_data_url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_542.js"
+    static_data_url = findStaticDataURL(566)
     feed = urllib2.urlopen(static_data_url)
     raw = feed.read()
     return {
@@ -86,6 +86,21 @@ def getStaticData():
         "tabEngages": hackDataFromJSONP(raw, "tabEngages")
     }
 
+def findStaticDataURL(start):
+    high = start
+    trying = high + 1
+    while trying < high + 10:
+        url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_{}.js".format(trying)
+        try:
+            req = urllib2.urlopen(url)
+            high = trying
+        except:
+            pass
+        trying += 1
+    url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_{}.js".format(high)
+    Logger().info("Found static data URL: {}".format(url))
+    return url
+
 
 class WEC(Service):
     log = Logger()
@@ -93,6 +108,7 @@ class WEC(Service):
     def __init__(self, config):
         Service.__init__(self, config)
         self.staticData = getStaticData()
+        print "Got static data"
 
     def getName(self):
         return "WEC"
@@ -139,7 +155,7 @@ class WEC(Service):
 
         for car in rawCarData.values():
             lastLap = parseTime(car["8"])
-            carClass = self.staticData["tabEngages"][car["2"]]["categorie"]
+            carClass = self.staticData["tabEngages"][car["2"]]["categorie"] if car["2"] in self.staticData["tabEngages"] else -1
             if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
                 fastLapsPerClass[carClass] = lastLap
 
@@ -156,11 +172,11 @@ class WEC(Service):
 
         for pos in sorted(rawCarData.iterkeys(), key=lambda i: int(i)):
             car = rawCarData[pos]
-            engage = self.staticData["tabEngages"][car["2"]]
-            voiture = self.staticData["tabVehicules"][engage['voiture']]
-            marque = self.staticData["tabMarques"][voiture['marque']]
+            engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": -1, "team": -1, "voiture": -1, "num": car["2"]}
+            voiture = self.staticData["tabVehicules"][engage['voiture']] if engage['voiture'] in self.staticData["tabVehicules"] else {"nom": "Unknown", "marque": -1}
+            marque = self.staticData["tabMarques"][voiture['marque']] if voiture['marque'] in self.staticData["tabMarques"] else "Unknown"
             driver = self.staticData["tabPilotes"][car["5"]] if car["5"] in self.staticData["tabPilotes"] else {"prenom": "Driver", "nom": car["5"]}
-            team = self.staticData["tabTeams"][engage["team"]]
+            team = self.staticData["tabTeams"][engage["team"]] if engage["team"] in self.staticData["tabTeams"] else {"nom": "Unknown"}
             classe = engage["categorie"]
             lastLap = parseTime(car["12"])
             bestLap = parseTime(car["8"])
