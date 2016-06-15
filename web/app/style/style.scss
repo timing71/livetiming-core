@@ -37,6 +37,13 @@ a {
     color: white;
     border-color: $color-system;
   }
+  li.dropdown-header {
+    font-size: inherit;
+    color: $color-system;
+  }
+  .divider {
+    background-color: $color-system;
+  }
 }
 
 .form-control {

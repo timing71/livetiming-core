@@ -181,7 +181,7 @@ class TimingScreen extends React.Component {
           <Col sm={1}>
             <Nav pullRight={true}>
               <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
-                <span>Delay: <Spinner value={this.state.delay} onChange={this.setDelay.bind(this)} constrain={(v) => Math.max(v, 0)} /></span>
+                <MenuItem header><span>Delay: <Spinner value={this.state.delay} onChange={this.setDelay.bind(this)} constrain={(v) => Math.max(v, 0)} /></span></MenuItem>
                 <MenuItem divider />
                 <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
               </NavDropdown>
