@@ -86,13 +86,14 @@ def getStaticData():
         "tabEngages": hackDataFromJSONP(raw, "tabEngages")
     }
 
+
 def findStaticDataURL(start):
     high = start
     trying = high + 1
     while trying < high + 10:
         url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_{}.js".format(trying)
         try:
-            req = urllib2.urlopen(url)
+            urllib2.urlopen(url)
             high = trying
         except:
             pass
