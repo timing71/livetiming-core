@@ -11,6 +11,7 @@ from uuid import uuid4
 from livetiming.racing import FlagStatus
 import argparse
 import simplejson
+from livetiming.recording import TimingRecorder
 
 
 class Service(ApplicationSession):
@@ -21,6 +22,10 @@ class Service(ApplicationSession):
         self.args = config.extra
         self.uuid = path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
         self.state = self.getInitialState()
+        if "recording_file" in self.args:
+            self.recorder = TimingRecorder(self.args["recording_file"])
+        else:
+            self.recorder = None
 
     def getInitialState(self):
         if self.args["initial_state"] is not None:
@@ -49,6 +54,8 @@ class Service(ApplicationSession):
             self.log.error(e)
         finally:
             stateFile.close()
+        if self.recorder:
+            self.recorder.writeState(self.state)
 
     def createServiceRegistration(self):
         return {
@@ -164,6 +171,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Run a Live Timing service.')
 
     parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
+    parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
 
     return parser.parse_args()
