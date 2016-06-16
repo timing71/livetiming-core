@@ -1,12 +1,9 @@
 from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
-from livetiming.service import Service
+from livetiming.service import Service as lt_service
 import urllib2
 import simplejson
 from datetime import datetime
 from twisted.logger import Logger
-from os import environ
-from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 from time import sleep
 from threading import Thread
@@ -60,11 +57,11 @@ class IMSAFetcher(Thread):
             sleep(self.interval)
 
 
-class IMSA(Service):
+class Service(lt_service):
     log = Logger()
 
     def __init__(self, config):
-        Service.__init__(self, config)
+        lt_service.__init__(self, config)
         self.carsState = []
         self.sessionState = {}
         timingFetcher = IMSAFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceResults.json", self.parseTiming, 5)
@@ -140,7 +137,7 @@ class IMSA(Service):
         self.carsState = cars
 
     def getMessageGenerators(self):
-        return super(IMSA, self).getMessageGenerators() + [
+        return super(Service, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
             DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
             FastLapMessage(lambda c: c[8], lambda c: c[2], lambda c: c[4])
@@ -152,13 +149,3 @@ class IMSA(Service):
 
     def parseRaceState(self, raw):
         self.sessionState["flagState"] = mapFlagStates(int(raw["C"]))
-
-
-def main():
-    Logger().info("Starting IMSA timing service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(IMSA)
-
-if __name__ == '__main__':
-    main()

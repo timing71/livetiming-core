@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
-from livetiming.service import Service
+from livetiming.service import Service as lt_service
 import urllib2
 import re
 import simplejson
 import time
 from datetime import datetime
 from twisted.logger import Logger
-from os import environ
-from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
 
@@ -91,11 +88,11 @@ def findStaticDataURL(start):
     return url
 
 
-class WEC(Service):
+class Service(lt_service):
     log = Logger()
 
     def __init__(self, config):
-        Service.__init__(self, config)
+        lt_service.__init__(self, config)
         self.staticData = self.getStaticData()
 
     def getName(self):
@@ -230,18 +227,8 @@ class WEC(Service):
         return simplejson.loads(feed.read())
 
     def getMessageGenerators(self):
-        return super(WEC, self).getMessageGenerators() + [
+        return super(Service, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
             DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
             FastLapMessage(lambda c: c[10], lambda c: c[2], lambda c: c[4])
         ]
-
-
-def main():
-    Logger().info("Starting WEC timing service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(WEC)
-
-if __name__ == '__main__':
-    main()

@@ -1,12 +1,9 @@
 from livetiming.messages import CarPitMessage, FastLapMessage
-from livetiming.service import Service
+from livetiming.service import Service as lt_service
 import urllib2
 import simplejson
 from datetime import datetime
 from twisted.logger import Logger
-from os import environ
-from autobahn.twisted.wamp import ApplicationRunner
-from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
 
@@ -48,7 +45,7 @@ def parseSessionTime(formattedTime):
             return formattedTime
 
 
-class IndyCar(Service):
+class Service(lt_service):
     log = Logger()
 
     def getName(self):
@@ -116,7 +113,7 @@ class IndyCar(Service):
         return {"cars": cars, "session": state}
 
     def getMessageGenerators(self):
-        return super(IndyCar, self).getMessageGenerators() + [
+        return super(Service, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
             FastLapMessage(lambda c: c[8], lambda c: "Timing", lambda c: c[2])
         ]
@@ -126,13 +123,3 @@ class IndyCar(Service):
         feed = urllib2.urlopen(feed_url)
         lines = feed.readlines()
         return simplejson.loads(lines[1])
-
-
-def main():
-    Logger().info("Starting IndyCar timing service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(IndyCar)
-
-if __name__ == '__main__':
-    main()
