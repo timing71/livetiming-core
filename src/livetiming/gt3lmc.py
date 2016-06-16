@@ -53,6 +53,8 @@ class Service(WEC):
         static_data_url = "http://www.gt3lemanscup.com/en/live"
         feed = urllib2.urlopen(static_data_url)
         raw = feed.read()
+        if re.search("No race actually", raw):
+            raise Exception("No static data available. Has the session started yet?")
         return {
             "tabPays": hackDataFromJSONP(raw, "tabPays"),
             "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
