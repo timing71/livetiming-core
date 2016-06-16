@@ -4,6 +4,7 @@ from twisted.logger import Logger
 import dictdiffer
 import re
 import simplejson
+import time
 import zipfile
 
 
@@ -18,17 +19,30 @@ class TimingRecorder(object):
         try:
             with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
                 maxFrame = 0
-                for frame in z.namelist():
-                    m = re.match("([0-9]{5})i?", frame)
-                    if m:
-                        val = int(m.group(1))
-                        maxFrame = max(val, maxFrame)
-                self.log.info("Found existing recording, starting recording at time + {}".format(maxFrame))
-                self.startTime = self.startTime - timedelta(seconds=maxFrame)
-        except Exception as e:
-            print e
+                names = z.namelist()
+                if "manifest.json" in names:
+                    manifest = simplejson.load(z.open("manifest.json", 'r'))
+                    self.startTime = datetime.utcfromtimestamp(manifest['startTime'])
+                else:
+                    for frame in names:
+                        m = re.match("([0-9]{5})i?", frame)
+                        if m:
+                            val = int(m.group(1))
+                            maxFrame = max(val, maxFrame)
+                    self.log.info("Found existing recording with no manifest, starting recording at time + {}".format(maxFrame))
+                    self.startTime = self.startTime - timedelta(seconds=maxFrame)
+        except Exception:
+            pass
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
+
+    def writeManifest(self, serviceRegistration):
+        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
+            if "manifest.json" not in z.namelist():
+                serviceRegistration["startTime"] = time.time()
+                z.writestr("manifest.json", simplejson.dumps(serviceRegistration))
+            else:
+                self.log.info("Not overwriting existing manifest.")
 
     def writeState(self, state):
         timeDelta = (datetime.now() - self.startTime).total_seconds()
