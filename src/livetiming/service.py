@@ -24,6 +24,7 @@ class Service(ApplicationSession):
         self.state = self.getInitialState()
         if "recording_file" in self.args:
             self.recorder = TimingRecorder(self.args["recording_file"])
+            self.recorder.writeManifest(self.createServiceRegistration())
         else:
             self.recorder = None
 
