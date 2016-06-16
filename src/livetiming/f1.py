@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.service import Service
+from livetiming.service import Service as lt_service
 from threading import Thread
 from time import sleep
 from twisted.logger import Logger
-from os import environ
 import math
 import simplejson
 import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
-from autobahn.twisted.wamp import ApplicationRunner
 from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
-from livetiming.network import Realm
 from livetiming.racing import FlagStatus
 
 
@@ -96,12 +93,12 @@ def getServerConfig():
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
 
 
-class F1(Service):
+class Service(lt_service):
 
     DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
 
     def __init__(self, config):
-        Service.__init__(self, config)
+        lt_service.__init__(self, config)
         self.carsState = []
         self.sessionState = {}
         server_base_url = getServerConfig()
@@ -319,18 +316,8 @@ class F1(Service):
         return -45  # XXX this is Monaco's hardcoded value
 
     def getMessageGenerators(self):
-        return super(F1, self).getMessageGenerators() + [
+        return super(Service, self).getMessageGenerators() + [
             CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
             FastLapMessage(lambda c: c[15], lambda c: "Timing", lambda c: c[2]),
             RaceControlMessage()
         ]
-
-
-def main():
-    Logger().info("Starting F1 timing service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(F1)
-
-if __name__ == '__main__':
-    main()

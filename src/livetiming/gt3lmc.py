@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, WEC
+from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
 
 import time
