@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
+from livetiming.racing import FlagStatus
 from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
 
@@ -6,7 +8,6 @@ import time
 import re
 import simplejson
 import urllib2
-from livetiming.racing import FlagStatus
 
 
 def hackDataFromJSONP(data, var):
@@ -142,3 +143,8 @@ class Service(WEC):
         }
 
         return {"cars": cars, "session": state}
+
+    def getMessageGenerators(self):
+        return super(Service, self).getMessageGenerators()[0:-1] + [
+            FastLapMessage(lambda c: c[9], lambda c: c[2], lambda c: c[4])
+        ]
