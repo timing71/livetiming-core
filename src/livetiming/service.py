@@ -22,7 +22,7 @@ class Service(ApplicationSession):
         self.args = config.extra
         self.uuid = path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
         self.state = self.getInitialState()
-        if "recording_file" in self.args:
+        if self.args["recording_file"] is not None:
             self.recorder = TimingRecorder(self.args["recording_file"])
             self.recorder.writeManifest(self.createServiceRegistration())
         else:
@@ -200,7 +200,6 @@ def main():
 
     service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
-
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
     runner.run(service_class)
 
