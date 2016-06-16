@@ -75,22 +75,6 @@ def hackDataFromJSONP(data, var):
     return simplejson.loads(re.search(r'(?:%s = jQuery\.parseJSON\(\')([^\;]+)(?:\'\)\;)' % var, data).group(1).replace("\\\'", "'"))
 
 
-def getStaticData():
-    Logger().info("Retrieving WEC static data...")
-    static_data_url = findStaticDataURL(566)
-    feed = urllib2.urlopen(static_data_url)
-    raw = feed.read()
-    return {
-        "tabPays": hackDataFromJSONP(raw, "tabPays"),
-        "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
-        "tabMarques": hackDataFromJSONP(raw, "tabMarques"),
-        "tabVehicules": hackDataFromJSONP(raw, "tabVehicules"),
-        "tabTeams": hackDataFromJSONP(raw, "tabTeams"),
-        "tabPilotes": hackDataFromJSONP(raw, "tabPilotes"),
-        "tabEngages": hackDataFromJSONP(raw, "tabEngages")
-    }
-
-
 def findStaticDataURL(start):
     high = start
     trying = high + 1
@@ -112,8 +96,7 @@ class WEC(Service):
 
     def __init__(self, config):
         Service.__init__(self, config)
-        self.staticData = getStaticData()
-        print "Got static data"
+        self.staticData = self.getStaticData()
 
     def getName(self):
         return "WEC"
@@ -151,6 +134,21 @@ class WEC(Service):
 
     def getPollInterval(self):
         return 20
+
+    def getStaticData(self):
+        Logger().info("Retrieving WEC static data...")
+        static_data_url = findStaticDataURL(566)
+        feed = urllib2.urlopen(static_data_url)
+        raw = feed.read()
+        return {
+            "tabPays": hackDataFromJSONP(raw, "tabPays"),
+            "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
+            "tabMarques": hackDataFromJSONP(raw, "tabMarques"),
+            "tabVehicules": hackDataFromJSONP(raw, "tabVehicules"),
+            "tabTeams": hackDataFromJSONP(raw, "tabTeams"),
+            "tabPilotes": hackDataFromJSONP(raw, "tabPilotes"),
+            "tabEngages": hackDataFromJSONP(raw, "tabEngages")
+        }
 
     def getRaceState(self):
         raw = self.getRawFeedData()
