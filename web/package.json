@@ -7,7 +7,7 @@
     "clean": "rm -rf build/*",
     "build": "webpack",
     "start": "webpack-dev-server",
-    "upload": "rsync --delete -rz build/* timing.71wytham.org.uk:/var/www/livetiming",
+    "upload": "rsync --delete -rz build/ timing.71wytham.org.uk:/var/www/livetiming",
     "deploy": "npm run clean && npm run build && npm run upload"
   },
   "author": "James Muscat",
