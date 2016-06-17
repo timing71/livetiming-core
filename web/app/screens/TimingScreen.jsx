@@ -33,8 +33,6 @@ class TimingScreen extends React.Component {
   }
 
   componentWillMount() {
-    const {session} = this.props;
-
     const service = this.findServiceFromContext(this.props);
 
     if (service) {
@@ -51,7 +49,7 @@ class TimingScreen extends React.Component {
           this.handleData([result]);
         },
         (error) => {
-          console.log("Error");
+          console.log("Error:", error);
         }
       );
       session.subscribe(service.uuid, this.handleData).then(
@@ -138,7 +136,7 @@ class TimingScreen extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     const service = this.findServiceFromContext(nextProps);
-    const disconnected = !service
+    const disconnected = !service;
     if (disconnected != this.state.disconnected) {
       if (disconnected) {
         this.setState({
