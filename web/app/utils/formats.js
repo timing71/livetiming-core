@@ -41,7 +41,7 @@ export function timeWithHours(seconds) {
   var hours = Math.floor(seconds / 3600);
   seconds = seconds - (3600 * hours);
   var minutes = Math.floor(seconds / 60);
-  seconds = Math.ceil(seconds - (60 * minutes));
+  seconds = Math.floor(seconds - (60 * minutes));
   if (hours < 10) {
     hours = "0" + hours;
   }
