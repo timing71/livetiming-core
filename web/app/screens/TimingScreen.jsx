@@ -116,17 +116,21 @@ class TimingScreen extends React.Component {
         delay: delay
       }
     );
-    if (delay > 0 && !this.delayedMessagesInterval) {
+    if (delay > 0) {
       this.delayedMessagesInterval = setInterval(this.processMessageQueue.bind(this), 1000);
     }
     else if (delay == 0) {
       clearInterval(this.delayedMessagesInterval);
-      this.processMessageQueue();
+      // Flush the queue - calling processMessageQueue() would use old state
+      while(this.messageQueue.length > 0) {
+        const msg = this.messageQueue.shift();
+        this.applyMessage(msg[1]);
+      }
     }
   }
 
   processMessageQueue() {
-    while(this.messageQueue.length > 0 && this.messageQueue[0][0] < Date.now() + (1000 * this.state.delay)) {
+    while(this.messageQueue.length > 0 && (this.messageQueue[0][0] + (1000 * this.state.delay)) < Date.now()) {
       const msg = this.messageQueue.shift();
       this.applyMessage(msg[1]);
     }
