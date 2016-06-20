@@ -59,8 +59,14 @@ def parseTime(formattedTime):
 
 
 def parseSessionTime(formattedTime):
-    ttime = datetime.strptime(formattedTime, "%H : %M : %S")
-    return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    try:
+        ttime = datetime.strptime(formattedTime, "%H : %M : %S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        if formattedTime.startswith("24"):
+            return 86400
+        else:
+            return formattedTime
 
 
 def formatTime(seconds):
