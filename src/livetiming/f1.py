@@ -86,8 +86,8 @@ def parseFlagState(flagChar):
 def getServerConfig():
     serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
     servers = ET.parse(serverListXML)
-    race = "MonteCarlo"  # servers.getroot().attrib['race']
-    session = "Qualifying"  # servers.getroot().attrib['session']
+    race = servers.getroot().attrib['race']
+    session = servers.getroot().attrib['session']
     serverIP = random.choice(servers.findall('Server')).get('ip')
     Logger().info("Using server {}".format(serverIP))
     return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
@@ -223,7 +223,7 @@ class Service(lt_service):
             sq = dnd["sq"]
 
             if "X" in dnd["extra"] and dnd["extra"]["X"].split(",")[9] != "":
-                currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][-1])
+                currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][0])
                 currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
             else:
                 currentTyre = ""
