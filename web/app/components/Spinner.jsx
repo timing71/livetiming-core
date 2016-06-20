@@ -1,7 +1,6 @@
 import React from 'react';
-import $ from 'jquery';
 
-import {Button, FormControl, FormGroup, InputGroup} from 'react-bootstrap';
+import {Button, FormControl, InputGroup} from 'react-bootstrap';
 
 export default class Spinner extends React.Component {
   constructor(props) {
@@ -12,20 +11,26 @@ export default class Spinner extends React.Component {
   }
 
   increment() {
-    const constrain = this.props.constrain || ((a) => a);
-    const newValue = constrain(this.state.value + 1);
-    this.setState({value: newValue});
-    if (this.props.onChange) {
-      this.props.onChange(newValue);
-    }
+    this.onChange(this.state.value + 1);
+
   }
 
   decrement() {
-    const constrain = this.props.constrain || ((a) => a);
-    const newValue = constrain(this.state.value - 1);
-    this.setState({value: newValue});
+    this.onChange(this.state.value - 1);
+  }
+
+  constrain(val) {
+    if (this.props.constrain) {
+      return this.props.constrain(val);
+    }
+    return val;
+  }
+
+  onChange(newValue) {
+    const constrainedValue = this.constrain(newValue);
+    this.setState({value: constrainedValue});
     if (this.props.onChange) {
-      this.props.onChange(newValue);
+      this.props.onChange(constrainedValue);
     }
   }
 
@@ -35,7 +40,7 @@ export default class Spinner extends React.Component {
         <InputGroup.Button>
           <Button onClick={this.decrement.bind(this)}>-</Button>
         </InputGroup.Button>
-        <FormControl type="text" value={this.state.value} ref="spinner" />
+        <FormControl type="text" value={this.state.value} onChange={(e) => this.onChange(parseInt(e.target.value, 10))} ref="spinner" />
         <InputGroup.Button>
           <Button onClick={this.increment.bind(this)}>+</Button>
         </InputGroup.Button>

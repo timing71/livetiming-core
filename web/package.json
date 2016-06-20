@@ -1,13 +1,13 @@
 {
   "name": "livetiming",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Live timing aggregator front-end",
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf build/*",
     "build": "webpack",
     "start": "webpack-dev-server",
-    "upload": "rsync --delete -rz build/* timing.71wytham.org.uk:/var/www/livetiming",
+    "upload": "rsync --delete -rz build/ timing.71wytham.org.uk:/var/www/livetiming",
     "deploy": "npm run clean && npm run build && npm run upload"
   },
   "author": "James Muscat",
