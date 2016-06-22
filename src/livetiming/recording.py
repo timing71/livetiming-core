@@ -67,3 +67,44 @@ class TimingRecorder(object):
             'session': list(sessionDiff),
             'messages': messagesDiff
         }
+
+
+class TimingReplayer(object):
+    def __init__(self, recordFile):
+        self.recordFile = recordFile
+        self.iframes = []
+        self.keyframes = []
+        with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
+            maxFrame = 0
+            for frame in z.namelist():
+                m = re.match("([0-9]{5})(i?)", frame)
+                if m:
+                    val = int(m.group(1))
+                    if m.group(2):  # it's an iframe
+                        self.iframes.append(val)
+                    else:
+                        self.keyframes.append(val)
+                    maxFrame = max(val, maxFrame)
+            self.duration = maxFrame
+            self.manifest = simplejson.load(z.open("manifest.json", 'r'))
+        self.frames = len(self.iframes) + len(self.keyframes)
+
+    def getStateAt(self, timecode):
+        mostRecentKeyframeIndex = max([frame for frame in self.keyframes if frame <= timecode] + [min(self.keyframes)])
+        intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
+
+        with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
+            state = simplejson.load(z.open("{:05d}.json".format(mostRecentKeyframeIndex)))
+            for iframeIndex in intraFrames:
+                iframe = simplejson.load(z.open("{:05d}i.json".format(iframeIndex)))
+                state = applyIntraFrame(state, iframe)
+
+            return state
+
+
+def applyIntraFrame(initial, iframe):
+    return {
+        'cars': dictdiffer.patch(iframe['cars'], initial['cars']),
+        'session': dictdiffer.patch(iframe['session'], initial['session']),
+        'messages': (iframe['messages'] + initial['messages'])[0:100]
+    }
