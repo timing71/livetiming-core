@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
 import dictdiffer
+import os
 import re
 import simplejson
 import time
@@ -108,3 +110,24 @@ def applyIntraFrame(initial, iframe):
         'session': dictdiffer.patch(iframe['session'], initial['session']),
         'messages': (iframe['messages'] + initial['messages'])[0:100]
     }
+
+
+class ReplayManager(object):
+    def __init__(self, directory):
+        self.directory = directory
+        self.recordings = {}
+        self.scanTask = LoopingCall(self.scanDirectory)
+        self.scanTask.start(300)
+
+    def scanDirectory(self):
+        (_, _, filenames) = os.walk(self.directory).next()
+        self.recordings = {}
+        for recFile in filenames:
+            fullPath = os.path.join(self.directory, recFile)
+            with zipfile.ZipFile(fullPath, 'r', zipfile.ZIP_DEFLATED) as z:
+                manifest = simplejson.load(z.open("manifest.json", 'r'))
+                self.recordings[manifest['uuid']] = (manifest, fullPath)
+
+    def listRecordings(self):
+        # Strip filenames out of listings that we return.
+        return [v[0] for v in self.recordings.values()]
