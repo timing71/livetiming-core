@@ -16,7 +16,12 @@ class ServiceSelectionScreen extends React.Component {
         </Row>
         <Row>
           <Col md={12}>
-            <ServiceList services={this.props.services} />
+            <ServiceList services={this.props.services} linkPart="timing" header="Available Timing Services" />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={12}>
+            <ServiceList services={this.props.recordings} linkPart="recording" header="Available Recordings" />
           </Col>
         </Row>
         <Row>

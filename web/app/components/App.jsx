@@ -12,6 +12,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       "services": [],
+      "recordings": [],
       "session": null
     };
   }
@@ -28,6 +29,13 @@ class App extends React.Component {
         this.setState({
           ...this.state,
           "services": result}
+        );
+      });
+
+      session.call("livetiming.directory.listRecordings").then((result) => {
+        this.setState({
+          ...this.state,
+          "recordings": result}
         );
       });
 
@@ -48,7 +56,6 @@ class App extends React.Component {
   
   handleControlMessage(data) {
     _(data).forEach((message) => {
-      console.log(message);
       if (message.msgClass == 5) {
         this.setState({
           ...this.state,
@@ -65,7 +72,8 @@ class App extends React.Component {
     const {children} = this.props;
     const newProps = {
       session: this.state.session,
-      services: this.state.services
+      services: this.state.services,
+      recordings: this.state.recordings
     };
     const childrenWithProps = Children.map(
       children,
