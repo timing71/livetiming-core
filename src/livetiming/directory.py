@@ -4,6 +4,7 @@ from os import environ
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
+from livetiming.recording import ReplayManager
 
 
 class Directory(ApplicationSession):
@@ -39,6 +40,10 @@ class Directory(ApplicationSession):
         self.log.debug("Published init message")
         yield self.register(self.listServices, RPC.DIRECTORY_LISTING)
         self.log.debug("Registered service listing RPC")
+
+        self.replayManager = ReplayManager(self.register, "recordings/")
+        yield self.register(self.replayManager.listRecordings, RPC.RECORDING_LISTING)
+        self.log.debug("Registered recording listing RPC")
 
         liveness = task.LoopingCall(self.checkLiveness)
         liveness.start(10)

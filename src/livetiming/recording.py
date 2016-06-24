@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from livetiming.network import RPC
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
@@ -113,21 +114,53 @@ def applyIntraFrame(initial, iframe):
 
 
 class ReplayManager(object):
-    def __init__(self, directory):
-        self.directory = directory
+    def __init__(self, register, recordingDirectory):
+        self.log = Logger()
+        self.recordingDirectory = recordingDirectory
+        self.register = register
         self.recordings = {}
+        self.services = {}
         self.scanTask = LoopingCall(self.scanDirectory)
         self.scanTask.start(300)
 
     def scanDirectory(self):
-        (_, _, filenames) = os.walk(self.directory).next()
+        (_, _, filenames) = os.walk(self.recordingDirectory).next()
         self.recordings = {}
         for recFile in filenames:
-            fullPath = os.path.join(self.directory, recFile)
+            fullPath = os.path.join(self.recordingDirectory, recFile)
             with zipfile.ZipFile(fullPath, 'r', zipfile.ZIP_DEFLATED) as z:
-                manifest = simplejson.load(z.open("manifest.json", 'r'))
-                self.recordings[manifest['uuid']] = (manifest, fullPath)
+                try:
+                    manifest = simplejson.load(z.open("manifest.json", 'r'))
+                    self.recordings[manifest['uuid']] = (manifest, fullPath)
+                except:
+                    self.log.warn("Could not read {} as a recording (perhaps it isn't one?)".format(fullPath))
+        for recordingUUID in self.recordings.keys():
+            if recordingUUID not in self.services:
+                newService = ReplayService(self.recordings[recordingUUID][1])
+                newService.connect(self.register)
+                self.log.info("New recording service for {}".format(recordingUUID))
+                self.services[recordingUUID] = newService
+        for service in self.services.keys():
+            if service not in self.recordings:
+                oldService = self.services.pop(service)
+                oldService.disconnect()
+                self.log.info("Recording service for {} removed".format(service))
 
     def listRecordings(self):
         # Strip filenames out of listings that we return.
         return [v[0] for v in self.recordings.values()]
+
+
+class ReplayService(object):
+    def __init__(self, recordingFile):
+        self.log = Logger()
+        self.replayer = TimingReplayer(recordingFile)
+
+    def connect(self, register):
+        self.registration = register(self.requestStateAt, RPC.REQUEST_STATE.format(self.replayer.manifest['uuid']))
+
+    def disconnect(self):
+        self.registration.unregister()
+
+    def requestStateAt(self, timecode):
+        return self.replayer.getStateAt(timecode)
