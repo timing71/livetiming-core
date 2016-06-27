@@ -66,14 +66,23 @@ export default class RecordingProvider extends React.Component {
   }
 
   play() {
-    const playInterval = setInterval(() => {this.setTime(this.state.time + 10)}, 10000);
-    this.setState({playing: true, playInterval: playInterval});
+    const playInterval = setInterval(() => {this.tick()}, 1000);
+    this.setState({playing: true, playInterval: playInterval, lastFrame: new Date().getTime()});
   }
 
   pause() {
     clearInterval(this.state.playInterval);
-    this.setState({playing: false, playInterval: undefined});
+    this.setState({playing: false, playInterval: undefined, lastFrame: undefined});
 
+  }
+
+  tick() {
+    const timingUpdateInterval = 10
+    const now = new Date().getTime();
+    if (now >= this.state.lastFrame + (timingUpdateInterval * 1000)) {
+      this.setTime(this.state.time + timingUpdateInterval);
+      this.setState({lastFrame: now});
+    }
   }
 
   render() {
