@@ -6,7 +6,7 @@ export default class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.updateTimer = this.updateTimer.bind(this);
-    this.state = { seconds: 0, refTime: Date.now() };
+    this.state = { seconds: 0, refTime: Date.now(), delta: 0 };
     this.interval = null;
   }
 
