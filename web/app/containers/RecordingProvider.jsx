@@ -1,7 +1,7 @@
 import React from 'react';
 import { browserHistory } from 'react-router';
 
-import { Glyphicon, Nav, NavDropdown, MenuItem} from 'react-bootstrap';
+import { Glyphicon, Nav, NavDropdown, NavItem, MenuItem} from 'react-bootstrap';
 
 import TimingScreen from '../screens/TimingScreen';
 import {ServiceNotAvailable} from '../components/Modals';
@@ -12,6 +12,7 @@ export default class RecordingProvider extends React.Component {
     super(props);
     this.state = {
       time: 0,
+      playing: false,
       recordedState: {
         "cars": [],
         "messages": [],
@@ -49,6 +50,7 @@ export default class RecordingProvider extends React.Component {
       console.log("setTime called without a service");
       return;
     }
+    console.log(`Time now ${time}`);
     this.props.session.call(`livetiming.service.requestState.${service.uuid}`, [time]).then(
       (result) => {
         this.setState({
@@ -63,18 +65,39 @@ export default class RecordingProvider extends React.Component {
     );
   }
 
+  play() {
+    const playInterval = setInterval(() => {this.setTime(this.state.time + 10)}, 10000);
+    this.setState({playing: true, playInterval: playInterval});
+  }
+
+  pause() {
+    clearInterval(this.state.playInterval);
+    this.setState({playing: false, playInterval: undefined});
+
+  }
+
   render() {
     const service = this.getServiceFromProps();
     if (!service) {
       return <ServiceNotAvailable />;
     }
     const {session, cars, messages} = this.state.recordedState;
-    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={<PlaybackControls />} />
+    const menu = (
+      <PlaybackControls
+        playing={this.state.playing}
+        onPlay={this.play.bind(this)}
+        onPause={this.pause.bind(this)}
+      />
+    );
+    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={menu} />
   }
 }
 
-const PlaybackControls = () => (
-  <Nav pullRight={true}>
+const PlaybackControls = ({playing, onPlay, onPause}) => (
+  <Nav className="timing-menu">
+    <NavItem eventKey="playPause" onClick={() => playing ? onPause() : onPlay()}>
+      <Glyphicon glyph={playing ? "pause" : "play"} />
+    </NavItem>
     <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
       <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
     </NavDropdown>
