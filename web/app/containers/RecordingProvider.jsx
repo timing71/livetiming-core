@@ -1,4 +1,7 @@
 import React from 'react';
+import { browserHistory } from 'react-router';
+
+import { Glyphicon, Nav, NavDropdown, MenuItem} from 'react-bootstrap';
 
 import TimingScreen from '../screens/TimingScreen';
 import {ServiceNotAvailable} from '../components/Modals';
@@ -57,6 +60,14 @@ export default class RecordingProvider extends React.Component {
       return <ServiceNotAvailable />;
     }
     const {session, cars, messages} = this.state.recordedState;
-    return <TimingScreen service={this.state.service} session={session} cars={cars} messages={messages} menu={null} />
+    return <TimingScreen service={this.state.service} session={session} cars={cars} messages={messages} menu={<PlaybackControls />} />
   }
 }
+
+const PlaybackControls = () => (
+  <Nav pullRight={true}>
+    <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
+      <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
+    </NavDropdown>
+  </Nav>
+);
