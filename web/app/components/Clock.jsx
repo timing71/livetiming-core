@@ -23,18 +23,23 @@ export default class Clock extends React.Component {
     }
   }
 
-  componentWillReceiveProps() {
-    this.setState({...this.state, refTime: Date.now()})
+  componentWillReceiveProps(newProps) {
+    if (newProps.seconds != this.props.seconds) {
+      this.setState({refTime: Date.now()});
+    }
+    else if (newProps.pause == false && this.props.pause === true) {
+      this.setState({refTime: Date.now() - (1000 * this.state.delta)});
+    }
   }
 
   updateTimer() {
     if (this.props.seconds != null) {
-      const delta = Math.ceil((Date.now() - this.state.refTime) / 1000);
+      const delta = this.props.pause ? this.state.delta : Math.ceil((Date.now() - this.state.refTime) / 1000);
       if (this.props.countdown) {
-        this.setState({...this.state, seconds : Math.max(this.props.seconds - delta, 0)});
+        this.setState({seconds: Math.max(this.props.seconds - delta, 0), delta: delta});
       }
       else {
-        this.setState({...this.state, seconds : this.props.seconds + delta});
+        this.setState({seconds: this.props.seconds + delta, delta: delta});
       }
     }
   }

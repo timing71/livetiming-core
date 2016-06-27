@@ -12,19 +12,19 @@ import TrackData from '../components/TrackData';
 class TimingScreen extends React.Component {
 
   render() {
-    const {session, service, cars, messages, menu} = this.props;
+    const {session, service, cars, messages, menu, pauseClocks} = this.props;
     let remaining;
     if (session.lapsRemain !== undefined) {
       remaining = <div className="clock">{session.lapsRemain} lap{session.lapsRemain == 1 ? "" : "s"} remaining</div>
     }
     else {
-      remaining = <Clock seconds={session.timeRemain} countdown={true} caption="remaining" />
+      remaining = <Clock seconds={session.timeRemain} countdown={true} caption="remaining" pause={pauseClocks} />
     }
     return (
       <Grid fluid={true} className="screen timing-screen">
         <Row className="timing-screen-header">
           <Col sm={2}>
-            <Clock seconds={session.timeElapsed} caption="elapsed" />
+            <Clock seconds={session.timeElapsed} caption="elapsed" pause={pauseClocks} />
           </Col>
           <Col sm={7}>
             <FlagStatusPanel flag={session.flagState} text={service.name} />

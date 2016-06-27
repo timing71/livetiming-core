@@ -98,7 +98,7 @@ export default class RecordingProvider extends React.Component {
         onPause={this.pause.bind(this)}
       />
     );
-    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={menu} />
+    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={menu} pauseClocks={!this.state.playing} />
   }
 }
 
