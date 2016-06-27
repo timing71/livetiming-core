@@ -25,18 +25,26 @@ export default class RecordingProvider extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
+    // Get service from new props, not existing ones - in case it hasn't made it that far yet
     const service = _(newProps.recordings).find((svc) => svc.uuid === this.props.params.recordingUUID);
 
-    if (service) {
-      this.setState({...this.state, service: service});
-      if (this.props.session) {
-        this.setTime(0, service);
-      }
+    if (service && newProps.session) {
+      this.setTime(0, service);
     }
   }
 
+  componentWillMount() {
+    if (this.props.session) {
+      this.setTime(0, this.getServiceFromProps());
+    }
+  }
+
+  getServiceFromProps() {
+    return _.find(this.props.recordings, (svc) => svc.uuid === this.props.params.recordingUUID);
+  }
+
   setTime(time, useService) {
-    const service = useService || this.state.service;
+    const service = useService || this.getServiceFromProps();
     if (!service) {
       console.log("setTime called without a service");
       return;
@@ -56,11 +64,12 @@ export default class RecordingProvider extends React.Component {
   }
 
   render() {
-    if (!this.state.service) {
+    const service = this.getServiceFromProps();
+    if (!service) {
       return <ServiceNotAvailable />;
     }
     const {session, cars, messages} = this.state.recordedState;
-    return <TimingScreen service={this.state.service} session={session} cars={cars} messages={messages} menu={<PlaybackControls />} />
+    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={<PlaybackControls />} />
   }
 }
 
