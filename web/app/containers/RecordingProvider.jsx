@@ -13,6 +13,7 @@ export default class RecordingProvider extends React.Component {
     this.state = {
       time: 0,
       playing: false,
+      lastFrame: 0,
       recordedState: {
         "cars": [],
         "messages": [],
@@ -67,18 +68,18 @@ export default class RecordingProvider extends React.Component {
 
   play() {
     const playInterval = setInterval(() => {this.tick()}, 1000);
-    this.setState({playing: true, playInterval: playInterval, lastFrame: new Date().getTime()});
+    this.setState({playing: true, playInterval: playInterval, lastFrame: Date.now() - this.state.lastFrame});
   }
 
   pause() {
     clearInterval(this.state.playInterval);
-    this.setState({playing: false, playInterval: undefined, lastFrame: undefined});
+    this.setState({playing: false, playInterval: undefined, lastFrame: Date.now() - this.state.lastFrame});
 
   }
 
   tick() {
-    const timingUpdateInterval = 10
-    const now = new Date().getTime();
+    const timingUpdateInterval = 10;
+    const now = Date.now();
     if (now >= this.state.lastFrame + (timingUpdateInterval * 1000)) {
       this.setTime(this.state.time + timingUpdateInterval);
       this.setState({lastFrame: now});
