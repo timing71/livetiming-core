@@ -2,6 +2,7 @@ import React from 'react';
 import { browserHistory } from 'react-router';
 
 import { Glyphicon, Nav, NavDropdown, NavItem, MenuItem} from 'react-bootstrap';
+import ReactSlider from 'react-slider';
 
 import TimingScreen from '../screens/TimingScreen';
 import {ServiceNotAvailable} from '../components/Modals';
@@ -94,21 +95,29 @@ export default class RecordingProvider extends React.Component {
     const {session, cars, messages} = this.state.recordedState;
     const menu = (
       <PlaybackControls
+        position={this.state.time}
+        length={service.duration}
         playing={this.state.playing}
         onPlay={this.play.bind(this)}
         onPause={this.pause.bind(this)}
+        onSeek={this.setTime.bind(this)}
       />
     );
     return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={menu} pauseClocks={!this.state.playing} />
   }
 }
 
-const PlaybackControls = ({playing, onPlay, onPause}) => (
+const PlaybackControls = ({position, length, playing, onPlay, onPause, onSeek}) => (
   <Nav className="timing-menu">
     <NavItem eventKey="playPause" onClick={() => playing ? onPause() : onPlay()}>
       <Glyphicon glyph={playing ? "pause" : "play"} />
     </NavItem>
     <NavDropdown eventKey={1} title={<Glyphicon glyph="cog" />} id="nav-dropdown">
+      <MenuItem header>
+        <span>Position</span>
+        <ReactSlider max={length} value={position} onChange={onSeek} withBars />
+      </MenuItem>
+      <MenuItem divider />
       <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
     </NavDropdown>
   </Nav>
