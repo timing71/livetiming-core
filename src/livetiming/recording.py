@@ -140,6 +140,7 @@ class ReplayManager(object):
                 newService.connect(self.register)
                 self.log.info("New recording service for {}".format(recordingUUID))
                 self.services[recordingUUID] = newService
+                self.recordings[recordingUUID][0]["duration"] = newService.duration
         for service in self.services.keys():
             if service not in self.recordings:
                 oldService = self.services.pop(service)
@@ -155,6 +156,7 @@ class ReplayService(object):
     def __init__(self, recordingFile):
         self.log = Logger()
         self.replayer = TimingReplayer(recordingFile)
+        self.duration = self.replayer.duration
 
     def connect(self, register):
         self.registration = register(self.requestStateAt, RPC.REQUEST_STATE.format(self.replayer.manifest['uuid']))
