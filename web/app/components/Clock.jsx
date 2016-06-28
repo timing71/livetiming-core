@@ -24,11 +24,11 @@ export default class Clock extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
-    if (newProps.seconds != this.props.seconds) {
-      this.setState({refTime: Date.now()});
-    }
-    else if (newProps.pause == false && this.props.pause === true) {
+    if (newProps.pause == false && this.props.pause === true) {
       this.setState({refTime: Date.now() - (1000 * this.state.delta)});
+    }
+    else if (newProps.pause !== true) {
+      this.setState({refTime: Date.now(), delta: 0});
     }
   }
 
