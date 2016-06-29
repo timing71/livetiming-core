@@ -93,6 +93,7 @@ export default class RecordingProvider extends React.Component {
       return <ServiceNotAvailable />;
     }
     const {session, cars, messages} = this.state.recordedState;
+    const serviceTime = Math.ceil(service["startTime"]) + this.state.time;
     const menu = (
       <PlaybackControls
         position={this.state.time}
@@ -103,7 +104,15 @@ export default class RecordingProvider extends React.Component {
         onSeek={this.setTime.bind(this)}
       />
     );
-    return <TimingScreen service={service} session={session} cars={cars} messages={messages} menu={menu} pauseClocks={!this.state.playing} />
+    return <TimingScreen
+      service={service}
+      session={session}
+      cars={cars}
+      messages={messages}
+      menu={menu}
+      pauseClocks={!this.state.playing}
+      serviceTime={serviceTime}
+    />;
   }
 }
 

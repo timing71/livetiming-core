@@ -43,7 +43,7 @@ class TimingScreen extends React.Component {
         </Row>
         <Row className="messages-container">
           <Col md={8} className="full-height">
-            <Messages messages={messages} />
+            <Messages messages={messages} serviceTime={this.props.serviceTime || Date.now() / 1000}/>
           </Col>
           <Col md={4}>
             <TrackData spec={service.trackDataSpec} dataset={session.trackData} />

@@ -6,7 +6,7 @@ import { timestamp, classNameFromCategory } from '../utils/formats';
 export default class Messages extends React.Component {
   constructor(props) {
     super(props);
-    this.highWaterMark= 0
+    this.state = {highWaterMark: 0}
   }
   render() {
     const { messages } = this.props;
@@ -23,11 +23,13 @@ export default class Messages extends React.Component {
     );
   }
 
-  componentDidUpdate() {
-    const { messages } = this.props;
-    var high = this.highWaterMark;
+  componentWillReceiveProps(newProps) {
+    const { messages, serviceTime } = newProps;
+    const adjustedWaterMark = Math.min(this.state.highWaterMark, Math.ceil(serviceTime));
+    var high = adjustedWaterMark;
+    const cutoff = serviceTime - 60;
     for (var i = 0; i < messages.length; i++) {
-      if (messages[i][0] > this.highWaterMark) {
+      if (messages[i][0] > adjustedWaterMark && messages[i][0] > cutoff) {
         if (messages[i].length == 5) {
           const carRef = `#car_${messages[i][4]}`;
           $(carRef).fadeTo(300, 0.1).fadeTo(300, 1).fadeTo(300, 0.1).fadeTo(300, 1);
@@ -35,7 +37,7 @@ export default class Messages extends React.Component {
         high = Math.max(messages[i][0], high);
       }
     }
-    this.highWaterMark= high;
+    this.setState({highWaterMark: high});
   }
 }
 
