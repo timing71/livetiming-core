@@ -135,14 +135,14 @@ class ReplayManager(object):
                 except:
                     self.log.warn("Could not read {} as a recording (perhaps it isn't one?)".format(fullPath))
         for recordingUUID in self.recordings.keys():
+            manifest, filename = self.recordings[recordingUUID]
             if recordingUUID not in self.services:
-                manifest, filename = self.recordings[recordingUUID]
                 newService = ReplayService(filename)
                 newService.connect(self.register)
                 self.log.info("New recording service for {}".format(recordingUUID))
                 self.services[recordingUUID] = newService
-                manifest["duration"] = newService.duration
-                self.recordings[recordingUUID] = (manifest, filename)
+            manifest["duration"] = self.services[recordingUUID].duration
+            self.recordings[recordingUUID] = (manifest, filename)
         for service in self.services.keys():
             if service not in self.recordings:
                 oldService = self.services.pop(service)
