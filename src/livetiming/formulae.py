@@ -1,4 +1,4 @@
-from livetiming.service import Service as lt_service
+from livetiming.service import Service as lt_service, JSONFetcher
 import urllib2
 import simplejson
 
@@ -17,6 +17,22 @@ class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
         self.sessionID = self.getSessionID()
+
+        self.carState = []
+        self.carFetcher = JSONFetcher(
+            "http://telemetry.dc-formulae.com/api/timing/all?sessionid={}".format(self.sessionID),
+            self.processCarData,
+            1
+        )
+        self.carFetcher.start()
+
+        self.sessionState = {"flagState": 'none'}
+        self.trackFetcher = JSONFetcher(
+            "http://telemetry.dc-formulae.com/api/track?sessionid={}".format(self.sessionID),
+            self.processTrackData,
+            1
+        )
+        self.trackFetcher.start()
 
     def getName(self):
         return "FIA Formula E"
@@ -43,11 +59,13 @@ class Service(lt_service):
         return 1
 
     def getRaceState(self):
-        raw = self.getRawFeedData()
+        return {"cars": self.carState, "session": self.sessionState}
+
+    def processCarData(self, data):
         cars = []
         overallBests = [99999, 99999, 99999, 99999]
-        if "data" in raw:
-            for car in sorted([car for car in raw["data"].itervalues() if "id" in car], key=lambda car: int(car["pos"])):
+        if "data" in data:
+            for car in sorted([car for car in data["data"].itervalues() if "id" in car], key=lambda car: int(car["pos"])):
                 gap = parseTime(car["gap"])
 
                 bests = [
@@ -96,14 +114,10 @@ class Service(lt_service):
                 if car[10][0] == overallBests[0]:
                     car[10][1] = "sb"
 
-        return {"cars": cars, "session": {"flagState": "green"}}
+        self.carState = cars
 
-    def getRawFeedData(self):
-        if self.sessionID:
-            feed_url = "http://telemetry.dc-formulae.com/api/timing/all?sessionid={}".format(self.sessionID)
-            feed = urllib2.urlopen(feed_url)
-            return simplejson.loads(feed.read())
-        return {}
+    def processTrackData(self, data):
+        pass
 
     def getSessionID(self):
         sessionURL = "http://telemetry.dc-formulae.com/api/timing/sessionid?sessionid=911cfcbe-1973-4c9c-b6f3-19cbfadeb00f"

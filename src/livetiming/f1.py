@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.service import Service as lt_service
-from threading import Thread
-from time import sleep
+from livetiming.service import MultiLineFetcher, Service as lt_service
 from twisted.logger import Logger
 import math
 import simplejson
@@ -12,24 +10,6 @@ import urllib2
 import xml.etree.ElementTree as ET
 from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
 from livetiming.racing import FlagStatus
-
-
-class Fetcher(Thread):
-    def __init__(self, url, callback, interval):
-        Thread.__init__(self)
-        self.url = url
-        self.callback = callback
-        self.interval = interval
-        self.setDaemon(True)
-
-    def run(self):
-        while True:
-            try:
-                feed = urllib2.urlopen(self.url)
-                self.callback(feed.readlines())
-            except:
-                pass  # Bad data feed :(
-            sleep(self.interval)
 
 
 class RaceControlMessage(TimingMessage):
@@ -105,9 +85,9 @@ class Service(lt_service):
         self.dataMap = {}
         self.prevRaceControlMessage = ""
         allURL = server_base_url + "all.js"
-        allFetcher = Fetcher(allURL, self.processData, 60)
+        allFetcher = MultiLineFetcher(allURL, self.processData, 60)
         allFetcher.start()
-        curFetcher = Fetcher(server_base_url + "cur.js", self.processData, 1)
+        curFetcher = MultiLineFetcher(server_base_url + "cur.js", self.processData, 1)
         curFetcher.start()
         self.processData(urllib2.urlopen(allURL).readlines())
         self.timestampLastUpdated = datetime.now()
