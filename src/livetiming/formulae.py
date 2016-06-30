@@ -1,4 +1,7 @@
-from livetiming.service import Service as lt_service, JSONFetcher
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from livetiming.racing import FlagStatus
+from livetiming.service import JSONFetcher, Service as lt_service
 import urllib2
 import simplejson
 
@@ -11,6 +14,28 @@ def parseTime(rawTime):
         return parsedValue / 1000.0
     except:
         return rawTime
+
+
+def parseSessionTime(formattedTime):
+    try:
+        ttime = datetime.strptime(formattedTime, "%H:%M:%S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S")
+            return (60 * ttime.minute) + ttime.second
+        except ValueError:
+            return formattedTime
+
+
+def mapFlagStates(rawState):
+    flagMap = {
+        "Finish": FlagStatus.CHEQUERED,
+        # What else goes here?
+    }
+    if rawState in flagMap:
+        return flagMap[rawState].name.lower()
+    return "none"
 
 
 class Service(lt_service):
@@ -53,6 +78,16 @@ class Service(lt_service):
             ("S2", "time"),
             ("S3", "time"),
             ("Best", "time")
+        ]
+
+    def getTrackDataSpec(self):
+        return [
+            "Temp",
+            "Humidity",
+            "Wind Speed",
+            "Direction",
+            "Pressure",
+            "Rain"
         ]
 
     def getPollInterval(self):
@@ -117,7 +152,21 @@ class Service(lt_service):
         self.carState = cars
 
     def processTrackData(self, data):
-        pass
+        if "data" in data:
+            trackData = data["data"]["track"]
+            self.sessionState = {
+                "flagState": mapFlagStates(trackData["flag"]),
+                "timeElapsed": parseSessionTime(trackData["racetime"]),
+                "timeRemain": parseSessionTime(trackData["time_to_go"]),
+                "trackData": [
+                    u"{:.3g}°C".format(float(trackData["temperature"])),
+                    "{}%".format(trackData["humidity"]),
+                    "{:.2g}kph".format(float(trackData["wind_speed"])),
+                    u"{}°".format(trackData["wind_direction"]),
+                    "{}mbar".format(trackData["pressure"]),
+                    "{}%".format(trackData["rain"])
+                ]
+            }
 
     def getSessionID(self):
         sessionURL = "http://telemetry.dc-formulae.com/api/timing/sessionid?sessionid=911cfcbe-1973-4c9c-b6f3-19cbfadeb00f"
