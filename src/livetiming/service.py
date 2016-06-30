@@ -2,16 +2,18 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
 from livetiming.messages import FlagChangeMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
+from livetiming.racing import FlagStatus
+from livetiming.recording import TimingRecorder
 from os import environ, path
 from random import randint
+from threading import Thread
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
-from livetiming.racing import FlagStatus
 import argparse
 import simplejson
-from livetiming.recording import TimingRecorder
+import urllib2
 
 
 class Service(ApplicationSession):
@@ -166,6 +168,32 @@ class Service(ApplicationSession):
         self.log.info("Disconnected")
         if reactor.running:
             reactor.stop()
+
+
+class Fetcher(Thread):
+    def __init__(self, url, callback, interval):
+        Thread.__init__(self)
+        self.url = url
+        self.callback = callback
+        self.interval = interval
+        self.setDaemon(True)
+
+    def run(self):
+        while True:
+            try:
+                feed = urllib2.urlopen(self.url)
+                self.callback(feed.read())
+            except:
+                pass  # Bad data feed :(
+            sleep(self.interval)
+
+
+def JSONFetcher(url, callback, interval):
+    return Fetcher(url, lambda j: callback(simplejson.loads(j)), interval)
+
+
+def MultiLineFetcher(url, callback, interval):
+    return Fetcher(url, lambda l: callback(l.splitlines()), interval)
 
 
 def parse_args():
