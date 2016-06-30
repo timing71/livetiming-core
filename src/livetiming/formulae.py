@@ -49,7 +49,7 @@ class RaceControlMessage(TimingMessage):
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
-        self.sessionID = self.getSessionID()
+        self.sessionID = self._getSessionID()
 
         self.carState = []
         self.carFetcher = JSONFetcher(
@@ -192,7 +192,7 @@ class Service(lt_service):
             RaceControlMessage()
         ]
 
-    def getSessionID(self):
+    def _getSessionID(self):
         sessionURL = "http://telemetry.dc-formulae.com/api/timing/sessionid?sessionid=911cfcbe-1973-4c9c-b6f3-19cbfadeb00f"
         sessionFeed = urllib2.urlopen(sessionURL)
         session = simplejson.loads(sessionFeed.read())
