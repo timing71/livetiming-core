@@ -1,12 +1,8 @@
 from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
-from livetiming.service import Service as lt_service
-import urllib2
-import simplejson
+from livetiming.service import JSONFetcher, Service as lt_service
 from datetime import datetime
 from twisted.logger import Logger
 from livetiming.racing import FlagStatus
-from time import sleep
-from threading import Thread
 
 
 def mapFlagStates(rawState):
@@ -39,24 +35,6 @@ def parseSessionTime(formattedTime):
         return 0
 
 
-class IMSAFetcher(Thread):
-    def __init__(self, url, callback, interval):
-        Thread.__init__(self)
-        self.url = url
-        self.callback = callback
-        self.interval = interval
-        self.setDaemon(True)
-
-    def run(self):
-        while True:
-            try:
-                feed = urllib2.urlopen(self.url)
-                self.callback(simplejson.load(feed))
-            except:
-                pass  # Bad data feed :(
-            sleep(self.interval)
-
-
 class Service(lt_service):
     log = Logger()
 
@@ -64,11 +42,11 @@ class Service(lt_service):
         lt_service.__init__(self, config)
         self.carsState = []
         self.sessionState = {}
-        timingFetcher = IMSAFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceResults.json", self.parseTiming, 5)
+        timingFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceResults.json", self.parseTiming, 5)
         timingFetcher.start()
-        sessionFetcher = IMSAFetcher("http://multimedia.netstorage.imsa.com/scoring_data/SessionInfo.json", self.parseSession, 5)
+        sessionFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/SessionInfo.json", self.parseSession, 5)
         sessionFetcher.start()
-        raceStateFetcher = IMSAFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceData.json", self.parseRaceState, 5)
+        raceStateFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceData.json", self.parseRaceState, 5)
         raceStateFetcher.start()
 
     def getName(self):
