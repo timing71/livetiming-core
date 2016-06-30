@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from livetiming.messages import FastLapMessage, TimingMessage
 from livetiming.racing import FlagStatus
 from livetiming.service import JSONFetcher, Service as lt_service
 import urllib2
@@ -38,6 +39,13 @@ def mapFlagStates(rawState):
     return "none"
 
 
+class RaceControlMessage(TimingMessage):
+    def _consider(self, oldState, newState):
+        if newState["raceControlMessage"] is not None:
+            msg = newState["raceControlMessage"]
+            return ["Race Control", msg, "raceControl"]
+
+
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
@@ -58,6 +66,9 @@ class Service(lt_service):
             1
         )
         self.trackFetcher.start()
+
+        self.currentMessage = None
+        self.lastMessage = None
 
     def getName(self):
         return "FIA Formula E"
@@ -94,7 +105,13 @@ class Service(lt_service):
         return 1
 
     def getRaceState(self):
-        return {"cars": self.carState, "session": self.sessionState}
+        state = {
+            "cars": self.carState,
+            "session": self.sessionState,
+            "raceControlMessage": self.currentMessage if self.currentMessage != self.lastMessage else None
+        }
+        self.lastMessage = self.currentMessage
+        return state
 
     def processCarData(self, data):
         cars = []
@@ -167,6 +184,13 @@ class Service(lt_service):
                     "{}%".format(trackData["rain"])
                 ]
             }
+            self.currentMessage = trackData["message"]
+
+    def getMessageGenerators(self):
+        return super(Service, self).getMessageGenerators() + [
+            FastLapMessage(lambda c: c[6], lambda c: "Timing", lambda c: c[1]),
+            RaceControlMessage()
+        ]
 
     def getSessionID(self):
         sessionURL = "http://telemetry.dc-formulae.com/api/timing/sessionid?sessionid=911cfcbe-1973-4c9c-b6f3-19cbfadeb00f"
