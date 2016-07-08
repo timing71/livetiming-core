@@ -55,7 +55,7 @@ def parseTime(timeBlock):
         except ValueError:
             timeVal = "" if timeBlock["Value"] == "." else timeBlock["Value"]
 
-    flag = "pb" if "PersonalFastest" in timeBlock and timeBlock["PersonalFastest"] == 1 else "sb" if "OverallFastest" in timeBlock and timeBlock["OverallFastest"] == 1 else ""
+    flag = "sb" if "OverallFastest" in timeBlock and timeBlock["OverallFastest"] == 1 else "pb" if "PersonalFastest" in timeBlock and timeBlock["PersonalFastest"] == 1 else ""
 
     return (timeVal, flag)
 
@@ -74,8 +74,11 @@ def parseSessionTime(rawTime):
 
 def parseFlag(rawFlag):
     flagMap = {
-        "Finished": FlagStatus.CHEQUERED,
-        "Finalised": FlagStatus.CHEQUERED,
+        "1": FlagStatus.GREEN,
+        "2": FlagStatus.YELLOW,
+        "4": FlagStatus.SC,
+        "5": FlagStatus.RED,
+        "6": FlagStatus.VSC
     }
     if rawFlag in flagMap:
         return flagMap[rawFlag].name.lower()
@@ -94,9 +97,10 @@ class Service(lt_service):
         connectWS(factory)
 
         self.carState = []
-        self.sessionState = {}
+        self.sessionState = { "flagState": "none" }
         self.timeLeft = 0
         self.lastTimeUpdate = datetime.utcnow()
+        self.sessionFeed = None
 
     def getName(self):
         return "GP2"
@@ -149,8 +153,9 @@ class Service(lt_service):
                         int(car["position"]["Value"])
                     ])
             if "sessionfeed" in payload["R"]:
-                print parseFlag(payload["R"]["sessionfeed"][1]["Value"])
-                self.sessionState["flagState"] = parseFlag(payload["R"]["sessionfeed"][1]["Value"])
+                self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]    
+            if "trackfeed" in payload["R"]:
+                self.sessionState["flagState"] = parseFlag(payload["R"]["trackfeed"][1]["Value"])
             if "timefeed" in payload["R"]:
                 self.timeLeft = parseSessionTime(payload["R"]["timefeed"][2])
                 self.lastTimeUpdate = datetime.utcnow()
@@ -176,7 +181,6 @@ class Service(lt_service):
                     car[1] = parseState(line["status"])
         if messageType == "statsfeed":
             data = message["A"][1]
-            print data
             for line in data["lines"]:
                 car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
                 if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
@@ -188,7 +192,14 @@ class Service(lt_service):
         if messageType == "timefeed":
             self.timeLeft = parseSessionTime(message["A"][2])
             self.lastTimeUpdate = datetime.utcnow()
+            
+        if messageType == "sessionfeed":
+            self.sessionFeed = message["A"][1]["Value"]
+
+        self._updateRaceState()
 
     def getRaceState(self):
         self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
+        if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
+            self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
         return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
