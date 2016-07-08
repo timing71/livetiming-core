@@ -132,7 +132,7 @@ class Service(lt_service):
                 self.carState = []
                 carList = payload["R"]["data"][2].itervalues()
                 self.carState = []
-                for car in sorted(carList, key=lambda car: int(car["position"]["Value"])):
+                for car in carList:
                     self.carState.append([
                         car["driver"]["RacingNumber"],
                         parseState(car["status"]),
@@ -145,7 +145,8 @@ class Service(lt_service):
                         parseTime(car["sectors"][2]),
                         parseTime(car["last"]),
                         parseTime(car["best"]),
-                        car["pits"]["Value"]
+                        car["pits"]["Value"],
+                        int(car["position"]["Value"])
                     ])
             if "sessionfeed" in payload["R"]:
                 print parseFlag(payload["R"]["sessionfeed"][1]["Value"])
@@ -180,10 +181,14 @@ class Service(lt_service):
                 car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
                 if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
                     car[10] = parseTime(line["PersonalBestLapTime"])
+                if "Position" in line:
+                    car[-1] = int(line["position"])
+                    print car
+                    
         if messageType == "timefeed":
             self.timeLeft = parseSessionTime(message["A"][2])
             self.lastTimeUpdate = datetime.utcnow()
 
     def getRaceState(self):
         self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
-        return {"cars": self.carState, "session": self.sessionState}
+        return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
