@@ -60,6 +60,18 @@ def parseTime(timeBlock):
     return (timeVal, flag)
 
 
+def parseSessionTime(rawTime):
+    try:
+        ttime = datetime.strptime(rawTime, "%H:%M:%S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        try:
+            ttime = datetime.strptime(rawTime, "%M:%S")
+            return (60 * ttime.minute) + ttime.second
+        except ValueError:
+            return rawTime
+
+
 def parseFlag(rawFlag):
     flagMap = {
         "Finished": FlagStatus.CHEQUERED,
@@ -83,6 +95,8 @@ class Service(lt_service):
 
         self.carState = []
         self.sessionState = {}
+        self.timeLeft = 0
+        self.lastTimeUpdate = datetime.utcnow()
 
     def getName(self):
         return "GP2"
@@ -136,11 +150,40 @@ class Service(lt_service):
             if "sessionfeed" in payload["R"]:
                 print parseFlag(payload["R"]["sessionfeed"][1]["Value"])
                 self.sessionState["flagState"] = parseFlag(payload["R"]["sessionfeed"][1]["Value"])
-        else:
+            if "timefeed" in payload["R"]:
+                self.timeLeft = parseSessionTime(payload["R"]["timefeed"][2])
+                self.lastTimeUpdate = datetime.utcnow()
+        elif payload:  # is not empty
             print "What is {}?".format(payload)
 
     def handleTimingMessage(self, message):
-        print "Message of type {}".format(message["M"])
+        messageType = message["M"]
+        print "Message of type {}".format(messageType)
+        if messageType == "datafeed":
+            data = message["A"][2]
+            for line in data["lines"]:
+                car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                print "Data feed with {}".format(line.keys())
+                if "sectors" in line:
+                    for sector in line["sectors"]:
+                        car[int(sector["Id"]) + 5] = parseTime(sector)
+                if "laps" in line:
+                    car[3] = line["laps"]["Value"]
+                if "last" in line:
+                    car[9] = parseTime(line["last"])
+                if "status" in line:
+                    car[1] = parseState(line["status"])
+        if messageType == "statsfeed":
+            data = message["A"][1]
+            print data
+            for line in data["lines"]:
+                car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
+                    car[10] = parseTime(line["PersonalBestLapTime"])
+        if messageType == "timefeed":
+            self.timeLeft = parseSessionTime(message["A"][2])
+            self.lastTimeUpdate = datetime.utcnow()
 
     def getRaceState(self):
+        self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
         return {"cars": self.carState, "session": self.sessionState}
