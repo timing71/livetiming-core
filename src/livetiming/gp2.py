@@ -142,8 +142,8 @@ class Service(lt_service):
                         parseState(car["status"]),
                         car["driver"]["FullName"],
                         car["laps"]["Value"],
-                        car["gapP"]["Value"],
-                        car["intervalP"]["Value"],
+                        car["gapP"]["Value"] if "gapP" in car else car["gap"]["Value"] if "gap" in car else "",
+                        car["intervalP"]["Value"] if "intervalP" in car else car["interval"]["Value"] if "interval" in car else "",
                         parseTime(car["sectors"][0]),
                         parseTime(car["sectors"][1]),
                         parseTime(car["sectors"][2]),
@@ -179,6 +179,14 @@ class Service(lt_service):
                     car[9] = parseTime(line["last"])
                 if "status" in line:
                     car[1] = parseState(line["status"])
+                if "position" in line:
+                    car[-1] = int(line["position"]["Value"])
+                if "gap" in line:
+                    car[4] = line["gap"]["Value"]
+                if "interval" in line:
+                    car[5] = line["interval"]["Value"]
+                if "pits" in line:
+                    car[11] = line["pits"]["Value"]
         if messageType == "statsfeed":
             data = message["A"][1]
             for line in data["lines"]:
@@ -186,8 +194,7 @@ class Service(lt_service):
                 if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
                     car[10] = parseTime(line["PersonalBestLapTime"])
                 if "Position" in line:
-                    car[-1] = int(line["position"])
-                    print car
+                    car[-1] = int(line["Position"])
                     
         if messageType == "timefeed":
             self.timeLeft = parseSessionTime(message["A"][2])
