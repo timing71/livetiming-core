@@ -55,15 +55,30 @@ def parseTime(timeBlock):
         except ValueError:
             timeVal = "" if timeBlock["Value"] == "." else timeBlock["Value"]
 
-    flag = "pb" if "PersonalFastest" in timeBlock and timeBlock["PersonalFastest"] == 1 else "sb" if "OverallFastest" in timeBlock and timeBlock["OverallFastest"] == 1 else ""
+    flag = "sb" if "OverallFastest" in timeBlock and timeBlock["OverallFastest"] == 1 else "pb" if "PersonalFastest" in timeBlock and timeBlock["PersonalFastest"] == 1 else ""
 
     return (timeVal, flag)
 
 
+def parseSessionTime(rawTime):
+    try:
+        ttime = datetime.strptime(rawTime, "%H:%M:%S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        try:
+            ttime = datetime.strptime(rawTime, "%M:%S")
+            return (60 * ttime.minute) + ttime.second
+        except ValueError:
+            return rawTime
+
+
 def parseFlag(rawFlag):
     flagMap = {
-        "Finished": FlagStatus.CHEQUERED,
-        "Finalised": FlagStatus.CHEQUERED,
+        "1": FlagStatus.GREEN,
+        "2": FlagStatus.YELLOW,
+        "4": FlagStatus.SC,
+        "5": FlagStatus.RED,
+        "6": FlagStatus.VSC
     }
     if rawFlag in flagMap:
         return flagMap[rawFlag].name.lower()
@@ -82,7 +97,10 @@ class Service(lt_service):
         connectWS(factory)
 
         self.carState = []
-        self.sessionState = {}
+        self.sessionState = { "flagState": "none" }
+        self.timeLeft = 0
+        self.lastTimeUpdate = datetime.utcnow()
+        self.sessionFeed = None
 
     def getName(self):
         return "GP2"
@@ -118,29 +136,77 @@ class Service(lt_service):
                 self.carState = []
                 carList = payload["R"]["data"][2].itervalues()
                 self.carState = []
-                for car in sorted(carList, key=lambda car: int(car["position"]["Value"])):
+                for car in carList:
                     self.carState.append([
                         car["driver"]["RacingNumber"],
                         parseState(car["status"]),
                         car["driver"]["FullName"],
                         car["laps"]["Value"],
-                        car["gapP"]["Value"],
-                        car["intervalP"]["Value"],
+                        car["gapP"]["Value"] if "gapP" in car else car["gap"]["Value"] if "gap" in car else "",
+                        car["intervalP"]["Value"] if "intervalP" in car else car["interval"]["Value"] if "interval" in car else "",
                         parseTime(car["sectors"][0]),
                         parseTime(car["sectors"][1]),
                         parseTime(car["sectors"][2]),
                         parseTime(car["last"]),
                         parseTime(car["best"]),
-                        car["pits"]["Value"]
+                        car["pits"]["Value"],
+                        int(car["position"]["Value"])
                     ])
             if "sessionfeed" in payload["R"]:
-                print parseFlag(payload["R"]["sessionfeed"][1]["Value"])
-                self.sessionState["flagState"] = parseFlag(payload["R"]["sessionfeed"][1]["Value"])
-        else:
+                self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]    
+            if "trackfeed" in payload["R"]:
+                self.sessionState["flagState"] = parseFlag(payload["R"]["trackfeed"][1]["Value"])
+            if "timefeed" in payload["R"]:
+                self.timeLeft = parseSessionTime(payload["R"]["timefeed"][2])
+                self.lastTimeUpdate = datetime.utcnow()
+        elif payload:  # is not empty
             print "What is {}?".format(payload)
 
     def handleTimingMessage(self, message):
-        print "Message of type {}".format(message["M"])
+        messageType = message["M"]
+        print "Message of type {}".format(messageType)
+        if messageType == "datafeed":
+            data = message["A"][2]
+            for line in data["lines"]:
+                car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                print "Data feed with {}".format(line.keys())
+                if "sectors" in line:
+                    for sector in line["sectors"]:
+                        car[int(sector["Id"]) + 5] = parseTime(sector)
+                if "laps" in line:
+                    car[3] = line["laps"]["Value"]
+                if "last" in line:
+                    car[9] = parseTime(line["last"])
+                if "status" in line:
+                    car[1] = parseState(line["status"])
+                if "position" in line:
+                    car[-1] = int(line["position"]["Value"])
+                if "gap" in line:
+                    car[4] = line["gap"]["Value"]
+                if "interval" in line:
+                    car[5] = line["interval"]["Value"]
+                if "pits" in line:
+                    car[11] = line["pits"]["Value"]
+        if messageType == "statsfeed":
+            data = message["A"][1]
+            for line in data["lines"]:
+                car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
+                    car[10] = parseTime(line["PersonalBestLapTime"])
+                if "Position" in line:
+                    car[-1] = int(line["Position"])
+                    
+        if messageType == "timefeed":
+            self.timeLeft = parseSessionTime(message["A"][2])
+            self.lastTimeUpdate = datetime.utcnow()
+            
+        if messageType == "sessionfeed":
+            self.sessionFeed = message["A"][1]["Value"]
+
+        self._updateRaceState()
 
     def getRaceState(self):
-        return {"cars": self.carState, "session": self.sessionState}
+        self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
+        if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
+            self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
+        return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
