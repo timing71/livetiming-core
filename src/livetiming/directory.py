@@ -35,7 +35,7 @@ class Directory(ApplicationSession):
 
     def onConnect(self):
         print("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "directory"))
-        self.join(self.config.realm, [u"wampcra"], "hans")
+        self.join(self.config.realm, [u"wampcra"], "directory")
 
     def onChallenge(self, challenge):
         if challenge.method == u"wampcra":
