@@ -140,7 +140,7 @@ class Service(lt_service):
                     min(bests[1], overallBests[2]),
                     min(bests[2], overallBests[3])
                 ]
-                
+
                 cars.append([
                     car["id"],
                     car["name"],
