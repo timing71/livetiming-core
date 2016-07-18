@@ -11,6 +11,46 @@
           "name": "timing",
           "roles": [
             {
+              "name": "authenticator",
+              "permissions": [
+                {
+                  "uri": "livetiming.authenticate",
+                  "match": "exact",
+                  "allow": {
+                    "call": false,
+                    "register": true,
+                    "publish": false,
+                    "subscribe": false
+                  },
+                  "disclose": {
+                    "caller": false,
+                    "publisher": false
+                  },
+                  "cache": true
+                }
+              ]
+            },
+            {
+              "name": "services",
+              "permissions": [
+                {
+                  "uri": "",
+                  "match": "prefix",
+                  "allow": {
+                    "call": true,
+                    "register": true,
+                    "publish": true,
+                    "subscribe": true
+                  },
+                  "disclose": {
+                    "caller": false,
+                    "publisher": false
+                  },
+                  "cache": true
+                }
+              ]
+            },
+            {
               "name": "anonymous",
               "permissions": [
                 {
@@ -39,7 +79,25 @@
           "endpoint": {
             "type": "tcp",
             "port": 8080
+          },
+          "auth": {
+            "wampcra": {
+              "type": "dynamic",
+              "authenticator": "livetiming.authenticate"
+            },
+            "anonymous": {
+              "type": "static",
+              "role": "anonymous"
+            }
           }
+        }
+      ],
+      "components": [
+        {
+          "type": "class",
+          "classname": "authenticator.AuthenticatorSession",
+          "realm": "timing",
+          "role": "authenticator"
         }
       ]
     }
