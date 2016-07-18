@@ -135,8 +135,8 @@ class Service(WEC):
             "timeElapsed": parseSessionTime(course["4"]),
             "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"]),
             "trackData": [
-                u"{}°C".format(trackData["3"]),
                 u"{}°C".format(trackData["6"]),
+                u"{}°C".format(trackData["3"]),
                 "{}%".format(trackData["2"]),
                 "{}kph".format(trackData["8"]),
                 u"{}°".format(trackData["0"]),
