@@ -97,7 +97,7 @@ class Service(lt_service):
         connectWS(factory)
 
         self.carState = []
-        self.sessionState = { "flagState": "none" }
+        self.sessionState = {"flagState": "none"}
         self.timeLeft = 0
         self.lastTimeUpdate = datetime.utcnow()
         self.sessionFeed = None
@@ -153,7 +153,7 @@ class Service(lt_service):
                         int(car["position"]["Value"])
                     ])
             if "sessionfeed" in payload["R"]:
-                self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]    
+                self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]
             if "trackfeed" in payload["R"]:
                 self.sessionState["flagState"] = parseFlag(payload["R"]["trackfeed"][1]["Value"])
             if "timefeed" in payload["R"]:
@@ -195,11 +195,11 @@ class Service(lt_service):
                     car[10] = parseTime(line["PersonalBestLapTime"])
                 if "Position" in line:
                     car[-1] = int(line["Position"])
-                    
+
         if messageType == "timefeed":
             self.timeLeft = parseSessionTime(message["A"][2])
             self.lastTimeUpdate = datetime.utcnow()
-            
+
         if messageType == "sessionfeed":
             self.sessionFeed = message["A"][1]["Value"]
 
