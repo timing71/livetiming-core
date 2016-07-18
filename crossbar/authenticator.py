@@ -1,4 +1,5 @@
 ###############################################################################
+##  Based on code subject to the following:
 ##
 ##  Copyright (C) Tavendo GmbH and/or collaborators. All rights reserved.
 ##
@@ -26,20 +27,28 @@
 ##
 ###############################################################################
 
-from pprint import pprint
-
-from twisted.internet.defer import inlineCallbacks
-
 from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.exception import ApplicationError
+from twisted.internet.defer import inlineCallbacks
+
+import os
 
 
-# our user "database"
-USERDB = {
+LIVETIMING_SHARED_SECRET = os.environ.get('LIVETIMING_SHARED_SECRET', None)
+
+if LIVETIMING_SHARED_SECRET is None:
+    raise Exception("LIVETIMING_SHARED_SECRET not set, zombie invasion inevitable")
+
+
+USERS = {
    'directory': {
-      'secret': '123456',
+      'secret': LIVETIMING_SHARED_SECRET,
       'role': u"services"
-   }
+   },
+   'services': {
+      'secret': LIVETIMING_SHARED_SECRET,
+      'role': u"services"
+   },
 }
 
 
@@ -50,11 +59,10 @@ class AuthenticatorSession(ApplicationSession):
 
       def authenticate(realm, authid, details):
          print("WAMP-CRA dynamic authenticator invoked: realm='{}', authid='{}'".format(realm, authid))
-         pprint(details)
 
-         if authid in USERDB:
+         if authid in USERS:
             # return a dictionary with authentication information ...
-            return USERDB[authid]
+            return USERS[authid]
          else:
             raise ApplicationError(u'com.example.no_such_user', 'could not authenticate session - no such user {}'.format(authid))
 
