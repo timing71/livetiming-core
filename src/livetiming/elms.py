@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
+from livetiming.messages import FastLapMessage
 from livetiming.racing import FlagStatus
 from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
