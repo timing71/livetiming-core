@@ -140,7 +140,7 @@ class Service(lt_service):
 
     def getStaticData(self):
         Logger().info("Retrieving WEC static data...")
-        static_data_url = findStaticDataURL(566)
+        static_data_url = findStaticDataURL(482)
         feed = urllib2.urlopen(static_data_url)
         raw = feed.read()
         return {
