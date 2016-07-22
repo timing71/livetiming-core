@@ -32,6 +32,8 @@ def parseSessionTime(formattedTime):
 def mapFlagStates(rawState):
     flagMap = {
         "Finish": FlagStatus.CHEQUERED,
+        "Green": FlagStatus.GREEN,
+        "Yellow": FlagStatus.YELLOW,
         # What else goes here?
     }
     if rawState in flagMap:
@@ -117,7 +119,7 @@ class Service(lt_service):
         cars = []
         overallBests = [99999, 99999, 99999, 99999]
         if "data" in data:
-            for car in sorted([car for car in data["data"].itervalues() if "id" in car], key=lambda car: int(car["pos"])):
+            for car in sorted([car for car in data["data"].itervalues() if "id" in car], key=lambda car: int(car["pos"]) if car["pos"] != "" else 0):
                 gap = parseTime(car["gap"])
 
                 bests = [
