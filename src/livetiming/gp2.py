@@ -58,7 +58,7 @@ def parseTime(timeBlock):
 
     flag = "sb" if "OverallFastest" in timeBlock and timeBlock["OverallFastest"] == 1 else "pb" if "PersonalFastest" in timeBlock and timeBlock["PersonalFastest"] == 1 else ""
 
-    return (timeVal, flag)
+    return [timeVal, flag]
 
 
 def parseSessionTime(rawTime):
