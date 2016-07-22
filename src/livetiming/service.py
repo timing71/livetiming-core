@@ -12,6 +12,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
 import argparse
+import copy
 import simplejson
 import urllib2
 
@@ -99,8 +100,8 @@ class Service(ApplicationSession):
         try:
             newState = self.getRaceState()
             self.state["messages"] = (self.createMessages(self.state, newState) + self.state["messages"])[0:100]
-            self.state["cars"] = newState["cars"]
-            self.state["session"] = newState["session"]
+            self.state["cars"] = copy.deepcopy(newState["cars"])
+            self.state["session"] = copy.deepcopy(newState["session"])
             self.saveState()
         except Exception as e:
             self.log.error(e)

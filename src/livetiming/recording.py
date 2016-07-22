@@ -1,5 +1,8 @@
+from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from datetime import datetime, timedelta
-from livetiming.network import RPC
+from livetiming.network import RPC, Realm
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
@@ -170,3 +173,27 @@ class ReplayService(object):
 
     def requestStateAt(self, timecode):
         return self.replayer.getStateAt(timecode)
+
+
+class RecordingsDirectory(ApplicationSession):
+    @inlineCallbacks
+    def onJoin(self, details):
+        self.replayManager = ReplayManager(self.register, "recordings/")
+        yield self.register(self.replayManager.listRecordings, RPC.RECORDING_LISTING)
+        self.log.info("Registered recording listing RPC")
+
+    def onDisconnect(self):
+        self.log.info("Disconnected")
+        if reactor.running:
+            reactor.stop()
+
+
+def main():
+    Logger().info("Starting recording directory service...")
+    router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
+    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+    runner.run(RecordingsDirectory)
+
+
+if __name__ == '__main__':
+    main()
