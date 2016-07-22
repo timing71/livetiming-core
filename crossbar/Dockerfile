@@ -1,17 +1,17 @@
-# docker build -t crossbar .
 FROM debian:jessie
 
-RUN apt-get update && apt-get -y install build-essential libssl-dev libffi-dev libreadline-dev libbz2-dev libsqlite3-dev libncurses5-dev python-pip python-dev
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update
+RUN apt-get -y install build-essential libssl-dev libffi-dev libreadline-dev libbz2-dev libsqlite3-dev libncurses5-dev python-pip python-dev
+RUN apt-get clean
 RUN pip install --upgrade cffi
-RUN pip install crossbar[all]
+RUN pip install crossbar
 
-RUN mkdir /app
-WORKDIR /app
-ADD . /app
+RUN mkdir /config
+WORKDIR /config
+COPY ./config.json /config
 
-# This creates the default "hello world" application.
-#RUN crossbar init --template hello:python --appdir /hello
+EXPOSE 8080
 
-# You need to forward port 8080 with "-p 8080" on the command-line:
-# docker run -p 8080 crossbar
-#ENTRYPOINT ["crossbar", "start", "--cbdir", "/hello/.crossbar"]
+ENTRYPOINT ["crossbar", "start", "--cbdir", "/config"]

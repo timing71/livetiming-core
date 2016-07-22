@@ -7,10 +7,10 @@ class Service(LMS):
         LMS.__init__(self, config)
 
     def getName(self):
-        return "GT3 Le Mans Cup"
+        return "European Le Mans Series"
 
     def getStaticDataUrl(self):
-        return "http://www.gt3lemanscup.com/en/live"
+        return "http://www.europeanlemansseries.com/en/live"
 
     def getRawFeedDataUrl(self):
-        return "http://www.gt3lemanscup.com/assets/1/live/GT3/data.js?tx={}&t={}"
+        return "http://www.europeanlemansseries.com/assets/1/live/ELMS/data.js?tx={}&t={}"
