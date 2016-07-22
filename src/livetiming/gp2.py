@@ -1,5 +1,6 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientFactory, WebSocketClientProtocol
 from datetime import datetime
+from livetiming.messages import CarPitMessage, FastLapMessage
 from livetiming.racing import FlagStatus
 from livetiming.service import Service as lt_service
 
@@ -177,6 +178,8 @@ class Service(lt_service):
                     car[3] = line["laps"]["Value"]
                 if "last" in line:
                     car[9] = parseTime(line["last"])
+                    if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '':  # last == best == sb and just set S3
+                        car[9][1] = 'sb-new'
                 if "status" in line:
                     car[1] = parseState(line["status"])
                 if "position" in line:
@@ -203,6 +206,9 @@ class Service(lt_service):
         if messageType == "sessionfeed":
             self.sessionFeed = message["A"][1]["Value"]
 
+        if messageType == "trackfeed":
+            self.sessionState["flagState"] = parseFlag(message["A"][1]["Value"])
+
         self._updateRaceState()
 
     def getRaceState(self):
@@ -210,3 +216,9 @@ class Service(lt_service):
         if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
             self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
         return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
+
+    def getMessageGenerators(self):
+        return super(Service, self).getMessageGenerators() + [
+            CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
+            FastLapMessage(lambda c: c[9], lambda c: "Timing", lambda c: c[2])
+        ]
