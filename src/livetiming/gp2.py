@@ -93,7 +93,7 @@ class Service(lt_service):
         connector = self
         socketURL = getWebSocketURL(getToken())
         factory = WebSocketClientFactory(socketURL)
-        factory.protocol = GP2ClientProtocol
+        factory.protocol = self.getClientProtocol()
 
         connectWS(factory)
 
@@ -102,6 +102,9 @@ class Service(lt_service):
         self.timeLeft = 0
         self.lastTimeUpdate = datetime.utcnow()
         self.sessionFeed = None
+
+    def getClientProtocol(self):
+        return GP2ClientProtocol
 
     def getName(self):
         return "GP2"
