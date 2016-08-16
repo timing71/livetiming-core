@@ -1,0 +1,6 @@
+FROM livetiming-base:latest
+
+ENV PYTHONUNBUFFERED 1
+ENV LIVETIMING_ROUTER=ws://timing.71wytham.org.uk/ws
+
+ENTRYPOINT ["python", "-m", "livetiming.recording"]

@@ -1,0 +1,9 @@
+FROM crossbario/autobahn-python:cpy2-minimal-tx
+
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+COPY . /app
+
+RUN pip install --upgrade pip
+RUN python setup.py install
