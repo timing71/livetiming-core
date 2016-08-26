@@ -46,6 +46,7 @@ def parseTyre(tyreChar):
         "E": ("US", "tyre-usoft"),
         "I": ("I", "tyre-inter"),
         "W": ("W", "tyre-wet"),
+        "U": ("U", "tyre-development")
     }
     return tyreMap[tyreChar]
 
