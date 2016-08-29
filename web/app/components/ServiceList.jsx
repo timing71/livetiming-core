@@ -16,11 +16,9 @@ export default class ServiceList extends React.Component {
       return <p>No services available.</p>;
     }
     return (
-        <Panel header={header}>
           <ul>
             {services.map((svc) => <ServiceListEntry key={svc.uuid} service={svc} onChooseService={() => onChooseService(svc.uuid)} linkPart={linkPart} />)}
           </ul>
-        </Panel>
         );
   }
 }

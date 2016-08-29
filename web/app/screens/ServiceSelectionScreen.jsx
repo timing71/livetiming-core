@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Grid, Row, Col, PageHeader } from 'react-bootstrap';
+import {Grid, Row, Col, PageHeader, Panel} from 'react-bootstrap';
 
 import ServiceList from '../components/ServiceList';
 import Version from '../components/Version';
@@ -15,13 +15,15 @@ class ServiceSelectionScreen extends React.Component {
           </Col>
         </Row>
         <Row>
-          <Col md={12}>
-            <ServiceList services={this.props.services} linkPart="timing" header="Available Timing Services" />
+          <Col md={6} sm={12}>
+            <Panel header="Live now">
+              <ServiceList services={this.props.services} linkPart="timing" header="Available Timing Services"/>
+            </Panel>
           </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
-            <ServiceList services={this.props.recordings} linkPart="recording" header="Available Recordings" />
+          <Col md={6} sm={12}>
+            <Panel header="Replays">
+              <ServiceList services={this.props.recordings} linkPart="recording" header="Available Recordings"/>
+            </Panel>
           </Col>
         </Row>
         <Row>
