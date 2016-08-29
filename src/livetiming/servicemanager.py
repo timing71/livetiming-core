@@ -46,7 +46,12 @@ def _start_service(args):
     if _pid_for(args.service_class, args.pid_directory) is not None:
         raise Exception("Service for {} already running!".format(args.service_class))
     else:
-        p = Popen(['livetiming-service', args.service_class])
+        extra_args = []
+        if args.recording_file is not None:
+            extra_args += ['-r', args.recording_file]
+        if args.initial_state is not None:
+            extra_args += ['-s', args.initial_state]
+        p = Popen(['livetiming-service', args.service_class] + extra_args)
         _write_pid_for(args.service_class, p.pid, args.pid_directory)
         print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
 
