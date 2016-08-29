@@ -67,7 +67,8 @@ class Service(ApplicationSession):
             "name": self.getName(),
             "description": self.getDescription(),
             "colSpec": self.getColumnSpec(),
-            "trackDataSpec": self.getTrackDataSpec()
+            "trackDataSpec": self.getTrackDataSpec(),
+            "pollInterval": self.getPollInterval()
         }
 
     def getName(self):
