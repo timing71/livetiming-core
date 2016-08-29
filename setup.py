@@ -1,5 +1,7 @@
-from setuptools import setup, find_packages
 import re
+
+from setuptools import setup, find_packages
+
 
 VERSIONFILE = "src/livetiming/_version.py"
 verstr = "unknown"
@@ -23,12 +25,13 @@ setup(
     packages=find_packages('src', exclude=["*.tests"]),
     package_dir = {'':'src'},
       long_description="Live timing aggregator and web service for motorsport timing feeds.",
-    install_requires=["autobahn[twisted]", "dictdiffer", "enum34", "simplejson"],
+    install_requires=["autobahn[twisted]", "dictdiffer", "enum34", "simplejson", "subprocess32"],
     entry_points={
         'console_scripts': [
                 'livetiming-directory = livetiming.directory:main',
                 'livetiming-recordings = livetiming.recording:main',
                 'livetiming-service = livetiming.service:main',
+                'livetiming-service-manager = livetiming.servicemanager:main'
             ],
         }
       )
