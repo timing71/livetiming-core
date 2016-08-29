@@ -104,6 +104,11 @@ a {
   border-radius: 8px;
 }
 
+span.playback-position {
+  font-size: small;
+  text-align: center;
+}
+
 @import './Clock';
 @import './FlagStatusPanel';
 @import './TimingModal';

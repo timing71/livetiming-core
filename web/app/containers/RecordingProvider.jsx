@@ -7,6 +7,8 @@ import ReactSlider from 'react-slider';
 import TimingScreen from '../screens/TimingScreen';
 import {ServiceNotAvailable} from '../components/Modals';
 
+import { timeWithHours } from '../utils/formats';
+
 export default class RecordingProvider extends React.Component {
 
   constructor(props) {
@@ -125,6 +127,7 @@ const PlaybackControls = ({position, length, playing, onPlay, onPause, onSeek}) 
       <MenuItem header>
         <span>Position</span>
         <ReactSlider max={length} value={position} onChange={onSeek} withBars />
+        <span className="playback-position">{timeWithHours(position)} / {timeWithHours(length)}</span>
       </MenuItem>
       <MenuItem divider />
       <MenuItem eventKey="1.2" onClick={() => browserHistory.push("/")}>Main menu</MenuItem>
