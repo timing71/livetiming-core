@@ -39,3 +39,4 @@ venv/
 crossbar/.crossbar/node.key
 /*.json
 /.settings
+/*.log
