@@ -75,7 +75,7 @@ class Service(lt_service):
     def getName(self):
         return "FIA Formula E"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "FIA Formula E"
 
     def getColumnSpec(self):

@@ -34,7 +34,7 @@ class Service(gpservice):
     def getName(self):
         return "GP3"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "GP3"
 
     def getWSHeaders(self):
