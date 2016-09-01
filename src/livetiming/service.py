@@ -76,6 +76,11 @@ class Service(ApplicationSession):
         return "Generic Service"
 
     def getDescription(self):
+        if self.args.description:
+            return self.args.description
+        return self.getdefaultDescription()
+
+    def getDefaultDescription(self):
         return "A generic service that has no purpose other than as a base class"
 
     def getColumnSpec(self):
@@ -204,6 +209,7 @@ def parse_args():
 
     parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
     parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
+    parser.add_argument('-d', '--description', nargs='?', help='Service description')
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
 
     return parser.parse_args()
