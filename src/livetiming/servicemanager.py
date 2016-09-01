@@ -62,7 +62,7 @@ def _stop_service(args):
         raise Exception("Service for {} not running!".format(args.service_class))
     else:
         try:
-            os.kill(pid, signal.SIGKILL)
+            os.kill(pid, signal.SIGINT)
         except OSError as e:
             if e.errno != errno.ESRCH:
                 raise e
