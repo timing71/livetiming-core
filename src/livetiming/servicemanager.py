@@ -16,6 +16,7 @@ def _parse_args():
     parser.add_argument('service_class', help='Class name of service to run')
     parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
     parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
+    parser.add_argument('-d', '--description', nargs='?', help='Service description')
     parser.add_argument('-p', '--pid-directory', nargs='?', help='Directory to store pidfiles in', default=_PID_DIRECTORY)
 
     return parser.parse_args()
@@ -51,6 +52,8 @@ def _start_service(args):
             extra_args += ['-r', args.recording_file]
         if args.initial_state is not None:
             extra_args += ['-s', args.initial_state]
+        if args.description is not None:
+            extra_args += ['-d', args.description]
         p = Popen(['livetiming-service', args.service_class] + extra_args)
         _write_pid_for(args.service_class, p.pid, args.pid_directory)
         print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
