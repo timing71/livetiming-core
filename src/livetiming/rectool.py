@@ -1,8 +1,35 @@
 import argparse
 import datetime
+import os
 import re
 import simplejson
+import tempfile
 import zipfile
+
+
+# http://stackoverflow.com/a/25739108/11643
+def updateZip(zipname, filename, data):
+    # generate a temp file
+    tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(zipname))
+    os.close(tmpfd)
+
+    # create a temp copy of the archive without filename
+    with zipfile.ZipFile(zipname, 'r') as zin:
+        with zipfile.ZipFile(tmpname, 'w') as zout:
+            zout.comment = zin.comment  # preserve the comment
+            seen_filenames = []
+            for item in zin.infolist():
+                if item.filename != filename and item.filename not in seen_filenames:
+                    zout.writestr(item, zin.read(item.filename))
+                    seen_filenames.append(item.filename)
+
+    # replace with the temp archive
+    os.remove(zipname)
+    os.rename(tmpname, zipname)
+
+    # now add filename with its new data
+    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(filename, data)
 
 
 class RecordingFile(object):
@@ -25,6 +52,17 @@ class RecordingFile(object):
             self.manifest = simplejson.load(z.open("manifest.json", 'r'))
         self.frames = len(self.iframes) + len(self.keyframes)
 
+    def save_manifest(self):
+        updateZip(self.filename, "manifest.json", simplejson.dumps(self.manifest))
+
+
+def describe(args, extras):
+    f = RecordingFile(args.recfile)
+    new_description = ' '.join(extras)
+    f.manifest['description'] = new_description
+    f.save_manifest()
+    print "Set description to '{}'".format(new_description)
+
 
 def inspect(args, extras):
     f = RecordingFile(args.recfile)
@@ -37,7 +75,8 @@ def inspect(args, extras):
 
 
 ACTIONS = {
-    'inspect': inspect
+    'inspect': inspect,
+    'describe': describe
 }
 
 
