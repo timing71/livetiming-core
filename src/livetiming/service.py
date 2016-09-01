@@ -14,6 +14,7 @@ from uuid import uuid4
 import argparse
 import copy
 import simplejson
+import txaio
 import urllib2
 
 
@@ -231,7 +232,11 @@ def main():
     service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
-    runner.run(service_class)
+
+    with open("{}.log".format(args.service_class), 'a', 0) as logFile:
+        txaio.start_logging(out=logFile, level='info')
+        runner.run(service_class)
+        print "Service terminated."
 
 if __name__ == '__main__':
     main()
