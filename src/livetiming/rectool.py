@@ -26,7 +26,7 @@ class RecordingFile(object):
         self.frames = len(self.iframes) + len(self.keyframes)
 
 
-def inspect(args):
+def inspect(args, extras):
     f = RecordingFile(args.recfile)
     print "##########"
     print f.manifest['description']
@@ -45,13 +45,13 @@ def _parse_args():
     parser = argparse.ArgumentParser(description='Tool for manipulating Live Timing recordings.')
     parser.add_argument('action', choices=ACTIONS.keys(), help='Action to perform')
     parser.add_argument('recfile', help='Recording file to use')
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 
 def main():
-    args = _parse_args()
+    args, extras = _parse_args()
     if args.action in ACTIONS.keys():
-        ACTIONS[args.action](args)
+        ACTIONS[args.action](args, extras)
     else:
         # argparse should prevent us from getting here
         print "Unrecognised action: {}".format(args.action)
