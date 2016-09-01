@@ -103,7 +103,7 @@ class Service(lt_service):
     def getName(self):
         return "Formula 1"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "Formula 1"
 
     def getColumnSpec(self):

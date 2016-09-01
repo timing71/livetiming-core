@@ -109,7 +109,7 @@ class Service(lt_service):
     def getName(self):
         return "GP2"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "GP2"
 
     def getPollInterval(self):
