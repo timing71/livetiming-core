@@ -102,6 +102,7 @@ class Service(lt_service):
         self.timeLeft = 0
         self.lastTimeUpdate = datetime.utcnow()
         self.sessionFeed = None
+        self.trackFeed = None
 
     def getClientProtocol(self):
         return GP2ClientProtocol
@@ -159,7 +160,7 @@ class Service(lt_service):
             if "sessionfeed" in payload["R"]:
                 self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]
             if "trackfeed" in payload["R"]:
-                self.sessionState["flagState"] = parseFlag(payload["R"]["trackfeed"][1]["Value"])
+                self.trackFeed = payload["R"]["trackfeed"][1]["Value"]
             if "timefeed" in payload["R"]:
                 self.timeLeft = parseSessionTime(payload["R"]["timefeed"][2])
                 self.lastTimeUpdate = datetime.utcnow()
@@ -210,7 +211,7 @@ class Service(lt_service):
             self.sessionFeed = message["A"][1]["Value"]
 
         if messageType == "trackfeed":
-            self.sessionState["flagState"] = parseFlag(message["A"][1]["Value"])
+            self.trackFeed = message["A"][1]["Value"]
 
         self._updateRaceState()
 
@@ -218,6 +219,8 @@ class Service(lt_service):
         self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
         if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
             self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
+        else:
+            self.sessionState["flagState"] = parseFlag(self.trackFeed)
         return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
 
     def getMessageGenerators(self):
