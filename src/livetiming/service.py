@@ -76,9 +76,9 @@ class Service(ApplicationSession):
         return "Generic Service"
 
     def getDescription(self):
-        if self.args.description:
-            return self.args.description
-        return self.getdefaultDescription()
+        if self.args['description'] is not None:
+            return self.args['description']
+        return self.getDefaultDescription()
 
     def getDefaultDescription(self):
         return "A generic service that has no purpose other than as a base class"
@@ -158,11 +158,12 @@ class Service(ApplicationSession):
         self.log.info("Published init message")
 
         # Update race state (randomly) every 10 seconds
-        updater = task.LoopingCall(self._updateRaceState)
-        updater.start(self.getPollInterval())
+        #updater = task.LoopingCall(self._updateRaceState)
+       # updater.start(self.getPollInterval())
 
         while True:
             self.log.info("Publishing timing data for {}".format(self.uuid))
+            self._updateRaceState()
             self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
             yield sleep(self.getPollInterval())  # No point in sleeping for less time than we wait between updates!
 
@@ -240,7 +241,7 @@ def main():
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
-        txaio.start_logging(out=logFile, level='info')
+#        txaio.start_logging(out=logFile, level='info')
         runner.run(service_class)
         print "Service terminated."
 
