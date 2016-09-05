@@ -6,6 +6,8 @@ from threading import Thread
 import simplejson
 from livetiming.racing import FlagStatus
 
+import time
+
 
 def AlkamelNamespaceFactory(feedID, handler):
     class AlkamelNamespace(BaseNamespace):
@@ -90,9 +92,8 @@ class Service(lt_service):
         socketThread.start()
 
     def session(self, data):
-        self.sessionData = data
-        self.cars = []
-        if 'participants' in data:
+        self.sessionData.update(data)
+        if 'participants' in data and not self.cars:
             for participant in data['participants']:
                 self.cars.append([
                     participant['nr'],
@@ -189,5 +190,17 @@ class Service(lt_service):
         ]
 
         session['flagState'] = mapFlag(self.sessionData['flag'])
+
+        if self.sessionData['remaining']:
+            current_remaining = self.sessionData['remaining']
+            if current_remaining['running']:
+                session['timeElapsed'] = time.time() - current_remaining['startTime'] - current_remaining['deadTime']
+            else:
+                session['timeElapsed'] = current_remaining['stopTime'] - current_remaining['startTime'] - current_remaining['deadTime']
+
+            if current_remaining['finaltype'] == 1:
+                session['timeRemain'] = current_remaining['finalTime'] - session['timeElapsed']
+            elif current_remaining['finaltype'] == 2:
+                session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
         return {"cars": self.cars, "session": session}
