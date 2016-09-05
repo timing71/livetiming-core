@@ -5,8 +5,16 @@ from threading import Thread
 
 import simplejson
 from livetiming.racing import FlagStatus
-
+from datetime import datetime
 import time
+from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
+
+
+class RaceControlMessage(TimingMessage):
+    def _consider(self, oldState, newState):
+        if 'raceControlMessage' in newState and newState["raceControlMessage"] is not None:
+            msg = newState["raceControlMessage"]
+            return ["Race Control", msg, "raceControl"]
 
 
 def AlkamelNamespaceFactory(feedID, handler):
@@ -76,16 +84,29 @@ def mapFlag(rawFlag):
     return 'none'
 
 
+def parseTime(formattedTime):
+    if formattedTime == "":
+        return 0
+    try:
+        ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+        return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+    except ValueError:
+        ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+        return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+
+
 class Service(lt_service):
-    def __init__(self, config):
+    def __init__(self, config, feed):
         lt_service.__init__(self, config)
         self.sessionData = {}
         self.meteoData = {}
         self.cars = []
+        self.raceControlMessage = None
+        self.prevRaceControlMessage = None
         self.socketIO = SocketIO(
             'livetiming.alkamelsystems.com',
             80,
-            AlkamelNamespaceFactory("92200890-f282-11e3-ac10-0800200c9a66", self)
+            AlkamelNamespaceFactory(feed, self)
         )
         socketThread = Thread(target=self.socketIO.wait)
         socketThread.daemon = True
@@ -136,9 +157,9 @@ class Service(lt_service):
             if 's3' in entry:
                 car[10] = (entry['s3'], mapModifier(entry['s3i']) if 's3i' in entry else '')
             if 'last' in entry:
-                car[11] = (entry['last'], mapModifier(entry['l_i']) if 'l_i' in entry else '')
+                car[11] = (parseTime(entry['last']), mapModifier(entry['l_i']) if 'l_i' in entry else '')
             if 'best_time' in entry:
-                car[12] = entry['best_time']
+                car[12] = parseTime(entry['best_time'])
             if 'pits' in entry:
                 car[13] = entry['pits']
 
@@ -149,8 +170,7 @@ class Service(lt_service):
         self.meteoData.update(data)
 
     def rc_message(self, data):
-        print "Race control:"
-        print data
+        self.raceControlMessage = data
 
     def getColumnSpec(self):
         return [
@@ -206,4 +226,14 @@ class Service(lt_service):
             elif current_remaining['finaltype'] == 2:
                 session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
+        session['raceControlMessage'] = self.raceControlMessage if self.raceControlMessage else None
+        self.prevRaceControlMessage = self.raceControlMessage
+
         return {"cars": self.cars, "session": session}
+
+    def getMessageGenerators(self):
+        return super(Service, self).getMessageGenerators() + [
+            CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
+            FastLapMessage(lambda c: c[11], lambda c: "Timing", lambda c: c[2]),
+            RaceControlMessage()
+        ]
