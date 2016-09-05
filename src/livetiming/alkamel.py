@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
+from livetiming.racing import FlagStatus
 from livetiming.service import Service as lt_service
 from socketIO_client import SocketIO, BaseNamespace
 from threading import Thread
 
 import simplejson
-from livetiming.racing import FlagStatus
-from datetime import datetime
 import time
-from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
 
 
 class RaceControlMessage(TimingMessage):
