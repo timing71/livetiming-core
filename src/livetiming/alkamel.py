@@ -22,19 +22,19 @@ def AlkamelNamespaceFactory(feedID, handler):
                 self.emit('subscribe', 'm')  # Weather
 
         def on_st_refresh(self, data):
-            handler.st_refresh(simplejson.loads(data))
+            handler.st_refresh(simplejson.loads(data.encode('iso-8859-1')))
 
         def on_st_update(self, data):
-            handler.st_update(simplejson.loads(data))
+            handler.st_update(simplejson.loads(data.encode('iso-8859-1')))
 
         def on_meteo(self, data):
-            handler.meteo(simplejson.loads(data))
+            handler.meteo(simplejson.loads(data.encode('iso-8859-1')))
 
         def on_session(self, data):
-            handler.session(simplejson.loads(data))
+            handler.session(simplejson.loads(data.encode('iso-8859-1')))
 
         def on_rc_message(self, data):
-            handler.rc_message(simplejson.loads(data))
+            handler.rc_message(simplejson.loads(data.encode('iso-8859-1')))
 
     return AlkamelNamespace
 
