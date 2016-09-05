@@ -179,6 +179,9 @@ class Service(lt_service):
             "Wind Speed",
         ]
 
+    def getPollInterval(self):
+        return 1
+
     def getRaceState(self):
         session = {}
         session['trackData'] = [
