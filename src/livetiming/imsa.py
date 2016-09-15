@@ -102,7 +102,7 @@ class Service(lt_service):
                 car["N"],
                 "PIT" if car["P"] == 1 else "RUN",
                 car["C"],
-                car["V"],
+                car["A1"] if "A1" in car else car["V"],
                 car["F"],
                 car["L"],
                 car["D"],
