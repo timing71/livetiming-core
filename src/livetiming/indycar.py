@@ -51,7 +51,7 @@ class Service(lt_service):
     def getName(self):
         return "IndyCar"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "IndyCar"
 
     def getColumnSpec(self):
