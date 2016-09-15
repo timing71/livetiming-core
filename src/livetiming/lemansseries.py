@@ -29,7 +29,7 @@ class Service(WEC):
     def __init__(self, config):
         WEC.__init__(self, config)
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return self.getName()
 
     def getColumnSpec(self):

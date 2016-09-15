@@ -26,7 +26,7 @@ class Service(lt_service):
     def getName(self):
         return "NASCAR Sprint Cup"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "NASCAR Sprint Cup"
 
     def getColumnSpec(self):

@@ -104,7 +104,7 @@ class Service(lt_service):
     def getName(self):
         return "WEC"
 
-    def getDescription(self):
+    def getDefaultDescription(self):
         return "World Endurance Championship"
 
     def getColumnSpec(self):
