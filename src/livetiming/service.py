@@ -15,6 +15,7 @@ import argparse
 import copy
 import simplejson
 import txaio
+import time
 import urllib2
 
 
@@ -157,15 +158,11 @@ class Service(ApplicationSession):
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
         self.log.info("Published init message")
 
-        # Update race state (randomly) every 10 seconds
-        #updater = task.LoopingCall(self._updateRaceState)
-       # updater.start(self.getPollInterval())
-
         while True:
             self.log.info("Publishing timing data for {}".format(self.uuid))
             self._updateRaceState()
             self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
-            yield sleep(self.getPollInterval())  # No point in sleeping for less time than we wait between updates!
+            yield sleep(self.getPollInterval())
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
@@ -194,7 +191,7 @@ class Fetcher(Thread):
                 self.callback(feed.read())
             except:
                 pass  # Bad data feed :(
-            sleep(self.interval)
+            time.sleep(self.interval)
 
 
 def JSONFetcher(url, callback, interval):
@@ -241,7 +238,7 @@ def main():
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
-#        txaio.start_logging(out=logFile, level='info')
+        txaio.start_logging(out=logFile, level='info')
         runner.run(service_class)
         print "Service terminated."
 
