@@ -192,6 +192,10 @@ class Service(lt_service):
                     car[4] = line["gap"]["Value"]
                 if "interval" in line:
                     car[5] = line["interval"]["Value"]
+                if "gapP" in line:
+                    car[4] = line["gapP"]["Value"]
+                if "intervalP" in line:
+                    car[5] = line["intervalP"]["Value"]
                 if "pits" in line:
                     car[11] = line["pits"]["Value"]
         if messageType == "statsfeed":
