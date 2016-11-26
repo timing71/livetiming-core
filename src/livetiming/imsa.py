@@ -41,7 +41,8 @@ class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
         self.carsState = []
-        self.sessionState = {}
+        self.sessionState = {'flagState': 'none'}
+        self.carsPreviousState = {}
         timingFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceResults.json", self.parseTiming, 5)
         timingFetcher.start()
         sessionFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/SessionInfo.json", self.parseSession, 5)
@@ -53,7 +54,7 @@ class Service(lt_service):
         return "IMSA"
 
     def getDefaultDescription(self):
-        return "IMSA WeatherTech and support championships"
+        return "IMSA (testing)"
 
     def getColumnSpec(self):
         return [
@@ -71,7 +72,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return 5
+        return 10
 
     def getRaceState(self):
         return {"cars": self.carsState, "session": self.sessionState}
@@ -98,9 +99,17 @@ class Service(lt_service):
         for car in sorted(carList, key=lambda car: car["A"]):
             lastLap = parseTime(car["LL"])
             bestLap = parseTime(car["BL"])
+
+#             print "{}: {} / {} = {}".format(
+#                 car["N"],
+#                 self.carsPreviousState[car["N"]] if car["N"] in self.carsPreviousState else "-",
+#                 car["P"],
+#                 "PIT" if car["P"] == 1 and (car["N"] not in self.carsPreviousState or self.carsPreviousState[car["N"]] == 1) else "RUN",
+#             )
+
             cars.append([
                 car["N"],
-                "PIT" if car["P"] == 1 else "RUN",
+                "PIT" if car["P"] == 1 and (car["N"] not in self.carsPreviousState or self.carsPreviousState[car["N"]] == 1) else "RUN",
                 car["C"],
                 car["A1"] if "A1" in car else car["V"],
                 car["F"],
@@ -111,6 +120,8 @@ class Service(lt_service):
                 [bestLap, getFlags(car["C"], bestLap, -1)],
                 car["PS"]
             ])
+
+            self.carsPreviousState[car["N"]] = car["P"]
 
         self.carsState = cars
 
