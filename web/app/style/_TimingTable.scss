@@ -131,6 +131,14 @@ tr.car_state_RET td {
   font-style: italic;
 }
 
+
+tr.car_state_FIN td.column_State {
+  background-image: url('chequer.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  color: transparent;
+}
+
 tr.car_class_p td.column_Class {
   color: $color-class-p;
 }
