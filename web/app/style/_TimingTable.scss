@@ -98,11 +98,11 @@ td.column_Num, td.column_Laps, td.column_Pits {
 }
 
 
-tr.car_state_PIT {
+tr.car_state_PIT, tr.car_state_FUEL {
   background-color: #550000;
 }
 
-.table-striped > tbody > tr.car_state_PIT:nth-of-type(odd) {
+.table-striped > tbody > tr.car_state_PIT:nth-of-type(odd), .table-striped > tbody > tr.car_state_FUEL:nth-of-type(odd) {
   background-color: #5C0000;
 }
 
