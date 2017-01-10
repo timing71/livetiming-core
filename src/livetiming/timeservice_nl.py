@@ -7,6 +7,8 @@ from lzstring import LZString
 import simplejson
 import urllib2
 from livetiming.racing import FlagStatus
+from datetime import datetime
+import time
 
 
 def getToken():
@@ -38,10 +40,11 @@ def create_protocol(service):
                 for submessage in initialState:
                     self.handleMessage(submessage)
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
+                print msgType
                 getattr(service, msgType)(body)
             elif msgType == "a_i":
                 # stats - ignore
-                print "a_i", body
+                pass
             else:
                 print "Unknown message {}: {}".format(msgType, body)
 
@@ -51,24 +54,38 @@ def create_protocol(service):
 
 
 def mapCar(car):
-    return [
-        car[2],
-        mapState(car[1]),
-        car[6],
-        car[18],
-        car[4],
-        car[20],
-        car[13],
-        parseTime(car[10]),
-        parseTime(car[11]),
-        [parseTime(car[15])],
-        [parseTime(car[16])],
-        [parseTime(car[17])],
-        [parseTime(car[12])],
-        [parseTime(car[8])],
-        car[9],
-        int(car[0])  # position
+
+    mappedCar = [
+        car[2][0],
+        mapState(car[1][0]),
+        car[6][0],
+        car[18][0],
+        car[4][0],
+        car[20][0],
+        car[13][0],
+        parseTime(car[10][0]),
+        parseTime(car[11][0]),
+        [parseTime(car[15][0]), mapTimeFlags(car[15][1])],
+        [parseTime(car[16][0]), mapTimeFlags(car[16][1])],
+        [parseTime(car[17][0]), mapTimeFlags(car[17][1])],
+        [parseTime(car[12][0]), mapTimeFlags(car[12][1])],
+        [parseTime(car[8][0]), mapTimeFlags(car[8][1])],
+        car[9][0],
+        int(car[0][0])  # position
     ]
+
+    if mappedCar[12][1] == "sb" and mappedCar[12][0] == mappedCar[13][0]:
+        mappedCar[12][1] = "sb-new"
+
+    return mappedCar
+
+
+def mapTimeFlags(flag):
+    if flag == "65280":
+        return 'pb'
+    if flag == "16736511":
+        return 'sb'
+    return ""
 
 
 def mapState(raw):
@@ -77,6 +94,7 @@ def mapState(raw):
         "1": "RUN",
         "2": "RUN",
         "3": "RUN",
+        "4": "FIN",
         "5": "PIT",
         "6": "N/S",
         "11": "OUT",
@@ -114,6 +132,11 @@ def parseTime(raw):
         return raw
 
 
+def serverToRealTime(serverTime):
+    timeFactor = 10957 * 24 * 60 * 60 * 1000
+    return ((serverTime / 1000) + timeFactor) / 1000
+
+
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
@@ -124,6 +147,7 @@ class Service(lt_service):
 
         self.carState = []
         self.sessionState = {"flagState": "none"}
+        self.timeOffset = None
 
     def getColumnSpec(self):
         return [
@@ -150,8 +174,10 @@ class Service(lt_service):
             for cellspec in body['r']:
                 if cellspec[0] not in table:
                     table[cellspec[0]] = {}
-                table[cellspec[0]][cellspec[1]] = cellspec[2]
+                table[cellspec[0]][cellspec[1]] = (cellspec[2], None) if len(cellspec) == 3 else (cellspec[2], cellspec[3])
             self.carState = table
+        # TODO parse column headers from body['l']['h']
+        # We should probably generate column spec from it
 
     def h_h(self, body):
         if "f" in body:
@@ -167,6 +193,10 @@ class Service(lt_service):
         for update in body:
             if update[0] != -1 and update[1] != -1:
                 self.carState[update[0]][update[1]] = update[2]
+
+    def s_t(self, serverTime):
+        self.timeOffset = serverToRealTime(serverTime) - time.mktime(datetime.utcnow().utctimetuple())
+        self.log.info("Set time offset to {}".format(self.timeOffset))
 
     def getRaceState(self):
         state = {
