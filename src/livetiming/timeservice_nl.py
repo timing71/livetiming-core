@@ -54,7 +54,6 @@ def create_protocol(service):
 
 
 def mapCar(car):
-
     mappedCar = [
         car[2][0],
         mapState(car[1][0]),
@@ -132,9 +131,21 @@ def parseTime(raw):
         return raw
 
 
-def serverToRealTime(serverTime):
-    timeFactor = 10957 * 24 * 60 * 60 * 1000
-    return ((serverTime / 1000) + timeFactor) / 1000
+timeFactor = 10957 * 24 * 60 * 60 * 1000
+
+
+def utcnow():
+    return time.mktime(datetime.utcnow().utctimetuple())
+
+
+def serverToRealTime(serverTime, offset=0):
+    if offset is None:
+        offset = 0
+    return (((serverTime / 1000) + timeFactor) / 1000) - offset
+
+
+def realToServerTime(realTime):
+    return (realTime * 1000 - timeFactor) * 1000
 
 
 class Service(lt_service):
@@ -148,6 +159,7 @@ class Service(lt_service):
         self.carState = []
         self.sessionState = {"flagState": "none"}
         self.timeOffset = None
+        self.times = {}
 
     def getColumnSpec(self):
         return [
@@ -184,7 +196,16 @@ class Service(lt_service):
             self.sessionState["flagState"] = mapFlag(body["f"])
         if "ll" in body:
             self.sessionState["lapsCompleted"] = int(body['ll'])
-        print "h_h", body
+        if "q" in body:
+            self.times['q'] = int(body['q'])
+        if "r" in body:
+            self.times['r'] = int(body['r'])
+        if "s" in body:
+            self.times['s'] = int(body['s'])
+        if "e" in body:
+            self.times['e'] = int(body['e'])
+        if "lt" in body:
+            self.times['lt'] = int(body['lt'])
 
     def h_i(self, body):
         self.h_h(body)
@@ -195,10 +216,15 @@ class Service(lt_service):
                 self.carState[update[0]][update[1]] = update[2]
 
     def s_t(self, serverTime):
-        self.timeOffset = serverToRealTime(serverTime) - time.mktime(datetime.utcnow().utctimetuple())
+        self.timeOffset = serverToRealTime(serverTime) - utcnow()
         self.log.info("Set time offset to {}".format(self.timeOffset))
 
     def getRaceState(self):
+        if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
+            serverNow = realToServerTime(utcnow() + self.timeOffset)
+            elapsed = (serverNow - self.times['q'] + self.times['r'])
+            self.sessionState['timeElapsed'] = elapsed / 1000000
+            self.sessionState['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
         state = {
             "cars": sorted(map(mapCar, self.carState.values()), key=lambda c: c[-1]),
             "session": self.sessionState
