@@ -173,11 +173,13 @@ class Service(lt_service):
 
         self.messages = []
 
+        self.description = "24H Series"
+
     def getName(self):
         return "24H Series"
 
     def getDefaultDescription(self):
-        return "24H Series"
+        return self.description
 
     def getColumnSpec(self):
         return [
@@ -237,6 +239,9 @@ class Service(lt_service):
             self.times['lt'] = int(body['lt'])
         if "h" in body:
             self.times['h'] = body['h']
+        if "n" in body:
+            self.description = body["n"]
+            self.publishManifest()
 
     def h_i(self, body):
         self.h_h(body)
