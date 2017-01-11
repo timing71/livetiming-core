@@ -58,8 +58,9 @@ class TimingRow extends React.Component {
     const carClass = classNameFromCategory(car[classCol]);
     const carNumIdx = findRaceNumberIndex(columnSpec);
     const carNum = carNumIdx > -1 ? `car_${car[carNumIdx]}` : null;
+    const carState = car[stateCol].replace(/[\/ ]/g, "")
     return (
-      <tr id={carNum} className={`car_state_${car[stateCol]} car_class_${carClass} ${hasSetSB? "sb-new" : ""}`} >
+      <tr id={carNum} className={`car_state_${carState} car_class_${carClass} ${hasSetSB? "sb-new" : ""}`} >
         {cols}
       </tr>
     );

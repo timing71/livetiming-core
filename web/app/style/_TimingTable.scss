@@ -126,7 +126,7 @@ tr.car_state_OUT td.column_State {
   color: $color-state-out;
 }
 
-tr.car_state_RET td {
+tr.car_state_RET td, tr.car_state_NS td {
   color: grey;
   font-style: italic;
 }
