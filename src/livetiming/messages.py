@@ -73,6 +73,8 @@ class CarPitMessage(PerCarMessage):
                 return [self.getClass(newCar), u"#{} ({}) has left the pits".format(newCar[0], self.getDriver(newCar)), "out"]
             elif newStatus == "PIT":
                 return [self.getClass(newCar), u"#{} ({}) has entered the pits".format(newCar[0], self.getDriver(newCar)), "pit"]
+            elif newStatus == "FUEL":
+                return [self.getClass(newCar), u"#{} ({}) has entered the fuelling area".format(newCar[0], self.getDriver(newCar)), "pit"]
             elif newStatus == "RET":
                 return [self.getClass(newCar), u"#{} ({}) has retired".format(newCar[0], self.getDriver(newCar)), ""]
 
