@@ -194,8 +194,7 @@ class Service(lt_service):
             ("S3", "time"),
             ("Last", "time"),
             ("Best", "time"),
-            ("Pits", "num"),
-            ("dbg_pos", "num")
+            ("Pits", "num")
         ]
 
     def getPollInterval(self):
