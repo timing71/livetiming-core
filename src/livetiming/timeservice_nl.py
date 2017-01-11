@@ -6,7 +6,7 @@ from lzstring import LZString
 
 import simplejson
 import urllib2
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from datetime import datetime
 import time
 from livetiming.messages import TimingMessage, CarPitMessage,\
@@ -183,20 +183,20 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Class", "class"),
-            ("Team", "text"),
-            ("Driver", "text"),
-            ("Car", "text"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("S1", "time"),
-            ("S2", "time"),
-            ("S3", "time"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Pits", "num")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.CLASS,
+            Stat.TEAM,
+            Stat.DRIVER,
+            Stat.CAR,
+            Stat.GAP,
+            Stat.INT,
+            Stat.S1,
+            Stat.S2,
+            Stat.S3,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getPollInterval(self):
@@ -283,8 +283,8 @@ class Service(lt_service):
 
     def getMessageGenerators(self):
         return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
-            DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
-            FastLapMessage(lambda c: c[11], lambda c: c[2], lambda c: c[4]),
+            CarPitMessage(lambda c: c[self.getColumnSpec().index(Stat.STATE)], lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
+            DriverChangeMessage(lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
+            FastLapMessage(lambda c: c[self.getColumnSpec().index(Stat.LAST_LAP)], lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
             RaceControlMessage(self.messages)
         ]

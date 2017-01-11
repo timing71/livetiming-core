@@ -2,7 +2,7 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
 from livetiming.messages import FlagChangeMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from livetiming.recording import TimingRecorder
 from os import environ, path
 from random import randint
@@ -64,11 +64,12 @@ class Service(ApplicationSession):
             self.recorder.writeState(self.state)
 
     def createServiceRegistration(self):
+        colspec = map(lambda s: s.value if isinstance(s, Stat) else s, self.getColumnSpec())
         return {
             "uuid": self.uuid,
             "name": self.getName(),
             "description": self.getDescription(),
-            "colSpec": self.getColumnSpec(),
+            "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval()
         }
