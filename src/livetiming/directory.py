@@ -48,9 +48,8 @@ class Directory(ApplicationSession):
         self.log.info("Received message {}".format(msg))
         if (msg.msgClass == MessageClass.SERVICE_REGISTRATION):
             reg = msg.payload
-            if reg["uuid"] not in self.services.keys():
-                self.services[reg["uuid"]] = reg
-                self.broadcastServicesList()
+            self.services[reg["uuid"]] = reg
+            self.broadcastServicesList()
 
     def onDisconnect(self):
         self.log.info("Disconnected")
