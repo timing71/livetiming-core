@@ -9,6 +9,8 @@ import urllib2
 from livetiming.racing import FlagStatus
 from datetime import datetime
 import time
+from livetiming.messages import TimingMessage, CarPitMessage,\
+    DriverChangeMessage, FastLapMessage
 
 
 def getToken():
@@ -58,18 +60,17 @@ def mapCar(car):
         car[2][0],
         mapState(car[1][0]),
         car[6][0],
-        car[18][0],
+        car[19][0],
         car[4][0],
-        car[20][0],
-        car[13][0],
-        parseTime(car[10][0]),
-        parseTime(car[11][0]),
-        [parseTime(car[15][0]), mapTimeFlags(car[15][1])],
+        car[21][0],
+        parseTime(car[8][0]),
+        parseTime(car[9][0]),
         [parseTime(car[16][0]), mapTimeFlags(car[16][1])],
         [parseTime(car[17][0]), mapTimeFlags(car[17][1])],
-        [parseTime(car[12][0]), mapTimeFlags(car[12][1])],
-        [parseTime(car[8][0]), mapTimeFlags(car[8][1])],
-        car[9][0],
+        [parseTime(car[18][0]), mapTimeFlags(car[18][1])],
+        [parseTime(car[10][0]), mapTimeFlags(car[10][1])],
+        [parseTime(car[11][0]), mapTimeFlags(car[11][1])],
+        car[12][0],
         int(car[0][0])  # position
     ]
 
@@ -148,6 +149,15 @@ def realToServerTime(realTime):
     return (realTime * 1000 - timeFactor) * 1000
 
 
+class RaceControlMessage(TimingMessage):
+    def __init__(self, messageList):
+        self.messageList = messageList
+
+    def _consider(self, oldState, newState):
+        if len(self.messageList) > 0:
+            return ["Race Control", self.messageList.pop(), "raceControl"]
+
+
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
@@ -161,6 +171,14 @@ class Service(lt_service):
         self.timeOffset = None
         self.times = {}
 
+        self.messages = []
+
+    def getName(self):
+        return "24H Series"
+
+    def getDefaultDescription(self):
+        return "24H Series"
+
     def getColumnSpec(self):
         return [
             ("Num", "text"),
@@ -169,7 +187,6 @@ class Service(lt_service):
             ("Team", "text"),
             ("Driver", "text"),
             ("Car", "text"),
-            ("Laps", "numeric"),
             ("Gap", "delta"),
             ("Int", "delta"),
             ("S1", "time"),
@@ -177,8 +194,21 @@ class Service(lt_service):
             ("S3", "time"),
             ("Last", "time"),
             ("Best", "time"),
-            ("Pits", "num")
+            ("Pits", "num"),
+            ("dbg_pos", "num")
         ]
+
+    def getPollInterval(self):
+        return 1
+
+    def a_r(self, body):
+        # clear stats
+        self.times = {}
+        self.sessionState = {"flagState": "none"}
+
+    def a_u(self, body):
+        # best lap history - ignore
+        pass
 
     def r_i(self, body):
         if 'r' in body:
@@ -206,27 +236,51 @@ class Service(lt_service):
             self.times['e'] = int(body['e'])
         if "lt" in body:
             self.times['lt'] = int(body['lt'])
+        if "h" in body:
+            self.times['h'] = body['h']
 
     def h_i(self, body):
         self.h_h(body)
 
+    def m_c(self, body):
+        # race control message
+        if 'Id' in body and 't' in body:
+            self.messages.append(body['t'])
+
     def r_c(self, body):
         for update in body:
-            if update[0] != -1 and update[1] != -1:
-                self.carState[update[0]][update[1]] = update[2]
+            if update[0] != -1 and update[1] != -1 and update[0] in self.carState.keys():
+                if update[1] == 0:
+                    print "Received position update {}".format(update)
+                self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
 
     def s_t(self, serverTime):
         self.timeOffset = serverToRealTime(serverTime) - utcnow()
         self.log.info("Set time offset to {}".format(self.timeOffset))
 
+    def t_p(self, body):
+        # track position - ignore
+        pass
+
     def getRaceState(self):
         if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
-            serverNow = realToServerTime(utcnow() + self.timeOffset)
-            elapsed = (serverNow - self.times['q'] + self.times['r'])
-            self.sessionState['timeElapsed'] = elapsed / 1000000
-            self.sessionState['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
+            if "h" in self.times and self.times["h"]:
+                self.sessionState['timeRemain'] = self.times['r'] / 1000000
+            else:
+                serverNow = realToServerTime(utcnow() + self.timeOffset)
+                elapsed = (serverNow - self.times['q'] + self.times['r'])
+                self.sessionState['timeElapsed'] = elapsed / 1000000
+                self.sessionState['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
         state = {
             "cars": sorted(map(mapCar, self.carState.values()), key=lambda c: c[-1]),
             "session": self.sessionState
         }
         return state
+
+    def getMessageGenerators(self):
+        return super(Service, self).getMessageGenerators() + [
+            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
+            DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
+            FastLapMessage(lambda c: c[11], lambda c: c[2], lambda c: c[4]),
+            RaceControlMessage(self.messages)
+        ]
