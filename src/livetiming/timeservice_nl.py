@@ -74,8 +74,8 @@ def mapCar(car):
         int(car[0][0])  # position
     ]
 
-    if mappedCar[12][1] == "sb" and mappedCar[12][0] == mappedCar[13][0]:
-        mappedCar[12][1] = "sb-new"
+    if mappedCar[10][1] == "sb" and mappedCar[10][0] == mappedCar[11][0]:
+        mappedCar[11][1] = "sb-new"
 
     return mappedCar
 
