@@ -26,9 +26,15 @@
   background-color: $color-course-red;
 }
 
+@keyframes sc-purple-anim {
+  from { background-color: $color-course-purple; color: black; }
+  to { background-color: black; color: white; }
+}
+
 .flag-status-code_60 {
   background-color: $color-course-purple;
   color: black;
+  animation: sc-purple-anim 0.5s alternate infinite;
 }
 
 .flag-status-chequered {
