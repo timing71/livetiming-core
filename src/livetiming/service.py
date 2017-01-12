@@ -2,7 +2,7 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
 from livetiming.messages import FlagChangeMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from livetiming.recording import TimingRecorder
 from os import environ, path
 from random import randint
@@ -64,11 +64,12 @@ class Service(ApplicationSession):
             self.recorder.writeState(self.state)
 
     def createServiceRegistration(self):
+        colspec = map(lambda s: s.value if isinstance(s, Stat) else s, self.getColumnSpec())
         return {
             "uuid": self.uuid,
             "name": self.getName(),
             "description": self.getDescription(),
-            "colSpec": self.getColumnSpec(),
+            "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval()
         }
@@ -148,6 +149,9 @@ class Service(ApplicationSession):
     def requestCurrentState(self):
         return Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise()
 
+    def publishManifest(self):
+        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready for service {}".format(self.uuid))
@@ -155,7 +159,7 @@ class Service(ApplicationSession):
         yield self.register(self.requestCurrentState, RPC.REQUEST_STATE.format(self.uuid))
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.info("Subscribed to control channel")
-        yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
+        yield self.publishManifest()
         self.log.info("Published init message")
 
         while True:
@@ -168,7 +172,7 @@ class Service(ApplicationSession):
         msg = Message.parse(message)
         self.log.info("Received message {}".format(msg))
         if msg.msgClass == MessageClass.INITIALISE_DIRECTORY:
-            yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.createServiceRegistration()).serialise())
+            yield self.publishManifest()
 
     def onDisconnect(self):
         self.log.info("Disconnected")
@@ -211,7 +215,7 @@ def parse_args():
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
     parser.add_argument('-v', '--verbose', action='store_true')
 
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 
 def get_class(kls):
@@ -232,11 +236,14 @@ def service_name_from(srv):
 def main():
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
 
-    args = parse_args()
+    args, extra_args = parse_args()
+
+    extra = vars(args)
+    extra['extra_args'] = extra_args
 
     service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
+    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=extra)
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
         if not args.verbose:
