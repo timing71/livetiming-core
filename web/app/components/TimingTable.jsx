@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 
 import _ from 'lodash';
 
-import { Table } from 'react-bootstrap';
+import { OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 
 import { format, classNameFromCategory } from '../utils/formats';
 
@@ -67,6 +67,21 @@ class TimingRow extends React.Component {
   }
 }
 
+const TimingTableHeader = ({spec}) => {
+  if (spec.length == 3) {
+    const toolTip = <Tooltip id="timing-table-header-tooltip">{spec[2]}</Tooltip>;
+    return (
+      <td>
+        <OverlayTrigger placement="bottom" overlay={toolTip}>
+          <span className="with-tooltip">{spec[0]}</span>
+        </OverlayTrigger>
+      </td>);
+  }
+  else {
+    return <td>{spec[0]}</td>;
+  }
+};
+
 export default class TimingTable extends React.Component {
   render() {
     const carRows = [];
@@ -78,7 +93,7 @@ export default class TimingTable extends React.Component {
         <thead>
           <tr className="timing-table-header">
             <td>Pos</td>
-            {this.props.columnSpec.map((spec, idx) => <td key={idx}>{spec[0]}</td>)}
+            {this.props.columnSpec.map((spec, idx) => <TimingTableHeader key={idx} spec={spec} />)}
           </tr>
         </thead>
         <tbody>

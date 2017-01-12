@@ -19,10 +19,22 @@
   color: $color-system;
   text-transform: uppercase;
   border-bottom: 2px solid $color-system;
+  span.with-tooltip {
+    border-bottom: 1px dotted $color-system;
+    cursor: help;
+  }
 }
 
 .timing-table td {
   border-bottom: 1px solid black;
+}
+
+.tooltip {
+  font-size: medium;
+}
+
+.tooltip-inner {
+  border: 1px solid $color-system;
 }
 
 td.timing-row-position {
