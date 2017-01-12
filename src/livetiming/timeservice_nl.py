@@ -215,9 +215,13 @@ class Service(lt_service):
                     table[cellspec[0]] = {}
                 table[cellspec[0]][cellspec[1]] = (cellspec[2], None) if len(cellspec) == 3 else (cellspec[2], cellspec[3])
             self.carState = table
-        if 'l' in body and 'h' in body['l']:
+        if 'l' in body:
+            self.r_l(body['l'])
+
+    def r_l(self, body):
+        if 'h' in body:
             # Dynamically generate column spec and mapping
-            availableColumns = map(lambda h: h['c'], body['l']['h'])
+            availableColumns = map(lambda h: h['c'], body['h'])
             self.carFieldMapping = []
             self.log.info("Discovered columns: {}".format(availableColumns))
             newColumnSpec = []
