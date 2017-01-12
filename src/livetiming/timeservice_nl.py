@@ -78,6 +78,7 @@ def mapState(raw):
     if raw in mapp:
         return mapp[raw]
     else:
+        print "Unknown state value {}".format(raw)
         return raw
 
 
@@ -95,6 +96,7 @@ def mapFlag(raw):
             return mapp[int(raw)].name.lower()
     except:
         pass
+    print "Unknown flag value {}".format(raw)
     return "none"
 
 
@@ -262,10 +264,19 @@ class Service(lt_service):
     def h_i(self, body):
         self.h_h(body)
 
+    def m_i(self, body):
+        # multiple messages
+        for msg in body:
+            self.m_c(msg)
+
     def m_c(self, body):
         # race control message
         if 'Id' in body and 't' in body:
             self.messages.append(body['t'])
+
+    def m_d(self, msgId):
+        # delete message - not relevant for us
+        pass
 
     def r_c(self, body):
         for update in body:
