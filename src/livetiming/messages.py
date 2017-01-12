@@ -88,7 +88,7 @@ class DriverChangeMessage(PerCarMessage):
     def _consider(self, oldCar, newCar):
         oldDriver = self.getDriver(oldCar)
         newDriver = self.getDriver(newCar)
-        if oldDriver != newDriver:
+        if oldDriver != newDriver and oldDriver != "":
             return [self.getClass(newCar), u"#{} Driver change ({} to {})".format(newCar[0], oldDriver, newDriver)]
 
 
@@ -105,7 +105,7 @@ class FastLapMessage(PerCarMessage):
         oldFlags = oldTime[1]
         newFlags = newTime[1]
         if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
-            if newFlags == "pb":
+            if newFlags == "pb" and oldFlags == "":
                 return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "pb"]
             elif newFlags == "sb-new":
                 return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "sb"]
