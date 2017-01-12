@@ -215,7 +215,7 @@ def parse_args():
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
     parser.add_argument('-v', '--verbose', action='store_true')
 
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 
 def get_class(kls):
@@ -236,11 +236,14 @@ def service_name_from(srv):
 def main():
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
 
-    args = parse_args()
+    args, extra_args = parse_args()
+
+    extra = vars(args)
+    extra['extra_args'] = extra_args
 
     service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=vars(args))
+    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=extra)
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
         if not args.verbose:

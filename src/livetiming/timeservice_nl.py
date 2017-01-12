@@ -12,6 +12,7 @@ from datetime import datetime
 import time
 from livetiming.messages import TimingMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
+import argparse
 
 
 def getToken():
@@ -20,8 +21,8 @@ def getToken():
     return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
 
 
-def getWebSocketURL(tk, tkdm, token):
-    return "wss://livetiming.getraceresults.com/lt/connect?transport=webSockets&clientProtocol=1.5&_tk={}&_gr=w&_tkdm={}&connectionToken={}&tid=8".format(tk, tkdm, urllib2.quote(token[1]))
+def getWebSocketURL(tk, token):
+    return "wss://livetiming.getraceresults.com/lt/connect?transport=webSockets&clientProtocol=1.5&_tk={}&_gr=w&connectionToken={}&tid=8".format(tk, urllib2.quote(token[1]))
 
 
 def create_protocol(service):
@@ -173,10 +174,22 @@ DEFAULT_COLUMN_SPEC = [
 ]
 
 
+def parse_extra_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tk", help="timeservice.nl feed ID")
+    # Known IDs:
+    # 24H Series - 17047960b73e48c4a899f43a2459cc20 (Dubai, Jan 2017)
+
+    return parser.parse_args(args)
+
+
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
-        socketURL = getWebSocketURL("17047960b73e48c4a899f43a2459cc20", "41798", getToken())
+
+        myArgs = parse_extra_args(config.extra['extra_args'])
+
+        socketURL = getWebSocketURL(myArgs.tk, getToken())
         factory = WebSocketClientFactory(socketURL)
         factory.protocol = create_protocol(self)
         connectWS(factory)
