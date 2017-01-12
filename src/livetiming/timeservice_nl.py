@@ -43,7 +43,6 @@ def create_protocol(service):
                 for submessage in initialState:
                     self.handleMessage(submessage)
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
-                print msgType
                 getattr(service, msgType)(body)
             elif msgType == "a_i":
                 # stats - ignore
@@ -234,7 +233,6 @@ class Service(lt_service):
             self.columnSpec = newColumnSpec
             self.publishManifest()
             self.carFieldMapping.append((availableColumns.index("POS"), lambda x: int(x[0])))
-            self.log.info("Car field mapping: {}".format(self.carFieldMapping))
 
     def h_h(self, body):
         if "f" in body:
@@ -268,8 +266,6 @@ class Service(lt_service):
     def r_c(self, body):
         for update in body:
             if update[0] != -1 and update[1] != -1 and update[0] in self.carState.keys():
-                if update[1] == 0:
-                    print "Received position update {}".format(update)
                 self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
 
     def s_t(self, serverTime):
