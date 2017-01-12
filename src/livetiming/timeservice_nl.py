@@ -55,31 +55,6 @@ def create_protocol(service):
     return TimeserviceNLClientProtocol
 
 
-def mapCar(car):
-    mappedCar = [
-        car[2][0],
-        mapState(car[1][0]),
-        car[6][0],
-        car[19][0],
-        car[4][0],
-        car[21][0],
-        parseTime(car[8][0]),
-        parseTime(car[9][0]),
-        [parseTime(car[16][0]), mapTimeFlags(car[16][1])],
-        [parseTime(car[17][0]), mapTimeFlags(car[17][1])],
-        [parseTime(car[18][0]), mapTimeFlags(car[18][1])],
-        [parseTime(car[10][0]), mapTimeFlags(car[10][1])],
-        [parseTime(car[11][0]), mapTimeFlags(car[11][1])],
-        car[12][0],
-        int(car[0][0])  # position
-    ]
-
-    if mappedCar[10][1] == "sb" and mappedCar[10][0] == mappedCar[11][0]:
-        mappedCar[11][1] = "sb-new"
-
-    return mappedCar
-
-
 def mapTimeFlags(flag):
     if flag == "65280":
         return 'pb'
@@ -158,6 +133,33 @@ class RaceControlMessage(TimingMessage):
             return ["Race Control", self.messageList.pop(), "raceControl"]
 
 
+def ident(val):
+    return val[0]
+
+# Map our columns to TSNL's labels, in our chosen order, and provide mapping function
+# This should include all possible columns
+DEFAULT_COLUMN_SPEC = [
+    (Stat.NUM, "NR", ident),
+    (Stat.STATE, "", lambda i: mapState(i[0])),
+    (Stat.CLASS, "CLS", ident),
+    (Stat.TEAM, "TEAM", ident),
+    (Stat.DRIVER, "NAME", ident),
+    (Stat.CAR, "CAR", ident),
+    (Stat.LAPS, "LAPS", ident),
+    (Stat.GAP, "GAP", lambda i: parseTime(i[0])),
+    (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
+    (Stat.S1, "SECT 1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S2, "SECT 2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S3, "SECT 3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S1, "SECT-1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.BEST_LAP, "BEST", lambda i: parseTime(i[0])),
+    (Stat.PITS, "PIT", ident)
+]
+
+
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
@@ -174,6 +176,8 @@ class Service(lt_service):
         self.messages = []
 
         self.description = "24H Series"
+        self.columnSpec = map(lambda c: c[0], DEFAULT_COLUMN_SPEC)
+        self.carFieldMapping = []
 
     def getName(self):
         return "24H Series"
@@ -182,22 +186,7 @@ class Service(lt_service):
         return self.description
 
     def getColumnSpec(self):
-        return [
-            Stat.NUM,
-            Stat.STATE,
-            Stat.CLASS,
-            Stat.TEAM,
-            Stat.DRIVER,
-            Stat.CAR,
-            Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.S2,
-            Stat.S3,
-            Stat.LAST_LAP,
-            Stat.BEST_LAP,
-            Stat.PITS
-        ]
+        return self.columnSpec
 
     def getPollInterval(self):
         return 1
@@ -219,8 +208,25 @@ class Service(lt_service):
                     table[cellspec[0]] = {}
                 table[cellspec[0]][cellspec[1]] = (cellspec[2], None) if len(cellspec) == 3 else (cellspec[2], cellspec[3])
             self.carState = table
-        # TODO parse column headers from body['l']['h']
-        # We should probably generate column spec from it
+        if 'l' in body and 'h' in body['l']:
+            # Dynamically generate column spec and mapping
+            availableColumns = map(lambda h: h['c'], body['l']['h'])
+            self.carFieldMapping = []
+            self.log.info("Discovered columns: {}".format(availableColumns))
+            newColumnSpec = []
+            for stat, label, mapFunc in DEFAULT_COLUMN_SPEC:
+                # if mapped col exists in availableColumns
+                # add it to newColumnSpec
+                try:
+                    idx = availableColumns.index(label)
+                    newColumnSpec.append(stat)
+                    self.carFieldMapping.append((idx, mapFunc))
+                except ValueError:
+                    self.log.info("Label {} not found in columns, dropping {}".format(label, stat))
+            self.columnSpec = newColumnSpec
+            self.publishManifest()
+            self.carFieldMapping.append((availableColumns.index("POS"), lambda x: int(x[0])))
+            self.log.info("Car field mapping: {}".format(self.carFieldMapping))
 
     def h_h(self, body):
         if "f" in body:
@@ -266,6 +272,17 @@ class Service(lt_service):
         # track position - ignore
         pass
 
+    def mapCar(self, car):
+        result = [mapFunc(car[idx]) for idx, mapFunc in self.carFieldMapping]
+
+        lastIdx = self.getColumnSpec().index(Stat.LAST_LAP)
+        bestIdx = self.getColumnSpec().index(Stat.BEST_LAP)
+
+        if result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
+            result[lastIdx] = (result[lastIdx][0], "sb-new")
+
+        return result
+
     def getRaceState(self):
         if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
             if "h" in self.times and self.times["h"]:
@@ -276,7 +293,7 @@ class Service(lt_service):
                 self.sessionState['timeElapsed'] = elapsed / 1000000
                 self.sessionState['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
         state = {
-            "cars": sorted(map(mapCar, self.carState.values()), key=lambda c: c[-1]),
+            "cars": sorted(map(self.mapCar, self.carState.values()), key=lambda c: c[-1]),
             "session": self.sessionState
         }
         return state
