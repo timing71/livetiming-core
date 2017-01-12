@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import WebSocketClientProtocol,\
     WebSocketClientFactory, connectWS
 
@@ -136,15 +137,22 @@ class RaceControlMessage(TimingMessage):
 def ident(val):
     return val[0]
 
+
+def shorten(nameTuple):
+    name = nameTuple[0]
+    if len(name) > 24:
+        return u"{}…".format(name[0:24])
+    return name
+
 # Map our columns to TSNL's labels, in our chosen order, and provide mapping function
 # This should include all possible columns
 DEFAULT_COLUMN_SPEC = [
     (Stat.NUM, "NR", ident),
     (Stat.STATE, "", lambda i: mapState(i[0])),
     (Stat.CLASS, "CLS", ident),
-    (Stat.TEAM, "TEAM", ident),
+    (Stat.TEAM, "TEAM", shorten),
     (Stat.DRIVER, "NAME", ident),
-    (Stat.CAR, "CAR", ident),
+    (Stat.CAR, "CAR", shorten),
     (Stat.LAPS, "LAPS", ident),
     (Stat.GAP, "GAP", lambda i: parseTime(i[0])),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
@@ -155,7 +163,7 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.BEST_LAP, "BEST", lambda i: parseTime(i[0])),
+    (Stat.BEST_LAP, "BEST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.PITS, "PIT", ident)
 ]
 
@@ -278,7 +286,7 @@ class Service(lt_service):
         lastIdx = self.getColumnSpec().index(Stat.LAST_LAP)
         bestIdx = self.getColumnSpec().index(Stat.BEST_LAP)
 
-        if result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
+        if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
             result[lastIdx] = (result[lastIdx][0], "sb-new")
 
         return result
