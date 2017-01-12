@@ -156,6 +156,7 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.CLASS, "CLS", ident),
     (Stat.TEAM, "TEAM", shorten),
     (Stat.DRIVER, "NAME", ident),
+    (Stat.DRIVER, "DRIVER IN CAR", ident),
     (Stat.CAR, "CAR", shorten),
     (Stat.LAPS, "LAPS", ident),
     (Stat.GAP, "GAP", lambda i: parseTime(i[0])),
