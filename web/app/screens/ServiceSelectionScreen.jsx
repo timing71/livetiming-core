@@ -15,11 +15,13 @@ class ServiceSelectionScreen extends React.Component {
           </Col>
         </Row>
         <Row>
-          <Col md={6} sm={12}>
+          <Col sm={12}>
             <Panel header="Live now">
               <ServiceList services={this.props.services} linkPart="timing" header="Available Timing Services"/>
             </Panel>
           </Col>
+        </Row>
+        <Row>
           <Col md={6} sm={12}>
             <Panel header="Replays">
               <ServiceList services={this.props.recordings} linkPart="recording" header="Available Recordings"/>
@@ -29,7 +31,7 @@ class ServiceSelectionScreen extends React.Component {
         <Row>
           <Col md={4} mdOffset={8}>
             <Version />
-            <p>Copyright &copy; James Muscat 2016. Feed data remains owner of original data source.</p>
+            <p>Copyright &copy; James Muscat 2016-17. Feed data remains owner of original data source.</p>
           </Col>
         </Row>
       </Grid>

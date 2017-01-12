@@ -5,7 +5,7 @@ import { Panel } from 'react-bootstrap';
 class ServiceListEntry extends React.Component {
   render() {
     const {linkPart, service} = this.props;
-    return <li><Link to={`/${linkPart}/${service.uuid}`}>{service.description}</Link></li>
+    return <li><Link to={`/${linkPart}/${service.uuid}`}>{service.name} - {service.description}</Link></li>
   }
 }
 
