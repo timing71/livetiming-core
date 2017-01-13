@@ -87,7 +87,9 @@ def mapState(raw):
 
 
 def mapFlag(raw):
+    print "Flag: {}".format(raw)
     mapp = {
+        1: FlagStatus.NONE,  # Ready to start
         2: FlagStatus.RED,
         3: FlagStatus.SC,
         4: FlagStatus.CODE_60,
@@ -145,8 +147,8 @@ def ident(val):
 
 def shorten(nameTuple):
     name = nameTuple[0]
-    if len(name) > 24:
-        return u"{}…".format(name[0:24])
+    if len(name) > 20:
+        return u"{}…".format(name[0:20])
     return name
 
 # Map our columns to TSNL's labels, in our chosen order, and provide mapping function
@@ -194,7 +196,7 @@ class Service(lt_service):
         factory.protocol = create_protocol(self)
         connectWS(factory)
 
-        self.carState = []
+        self.carState = {}
         self.sessionState = {"flagState": "none"}
         self.timeOffset = None
         self.times = {}
