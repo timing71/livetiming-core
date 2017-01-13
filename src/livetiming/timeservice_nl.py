@@ -39,6 +39,7 @@ def create_protocol(service):
 
         def handleMessage(self, message):
             msgType, body = message
+            print msgType
             if msgType == "_":
                 initialState = simplejson.loads(LZString().decompressFromUTF16(body))
                 for submessage in initialState:
@@ -76,6 +77,7 @@ def mapState(raw):
         "4": "FIN",
         "5": "PIT",
         "6": "N/S",
+        "8": "?",
         "11": "OUT",
         "12": "FUEL"
     }
@@ -202,6 +204,8 @@ class Service(lt_service):
         self.times = {}
 
         self.messages = []
+        self.yellowFlags = []
+        self.raceFlag = "none"
 
         self.description = "24H Series"
         self.columnSpec = map(lambda c: c[0], DEFAULT_COLUMN_SPEC)
@@ -261,7 +265,7 @@ class Service(lt_service):
 
     def h_h(self, body):
         if "f" in body:
-            self.sessionState["flagState"] = mapFlag(body["f"])
+            self.raceFlag = mapFlag(body["f"])
         if "ll" in body:
             self.sessionState["lapsCompleted"] = int(body['ll'])
         if "q" in body:
@@ -292,10 +296,13 @@ class Service(lt_service):
         # race control message
         if 'Id' in body and 't' in body:
             self.messages.append(body['t'])
+            if body['t'].startswith("Yellow flag"):
+                self.yellowFlags.append(body['Id'])
 
     def m_d(self, msgId):
-        # delete message - not relevant for us
-        pass
+        # delete message
+        if msgId in self.yellowFlags:
+            self.yellowFlags.remove(msgId)
 
     def r_c(self, body):
         for update in body:
@@ -322,17 +329,25 @@ class Service(lt_service):
         return result
 
     def getRaceState(self):
+        session = {}
         if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
             if "h" in self.times and self.times["h"]:
-                self.sessionState['timeRemain'] = self.times['r'] / 1000000
+                session['timeRemain'] = self.times['r'] / 1000000
             else:
                 serverNow = realToServerTime(utcnow() + self.timeOffset)
                 elapsed = (serverNow - self.times['q'] + self.times['r'])
-                self.sessionState['timeElapsed'] = elapsed / 1000000
-                self.sessionState['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
+                session['timeElapsed'] = elapsed / 1000000
+                session['timeRemain'] = (self.times['lt'] - elapsed) / 1000000
+
+        if self.raceFlag == "green" and len(self.yellowFlags) > 0:
+            self.log.debug("Overriding flag state {} as {} yellow flags shown".format(self.raceFlag, len(self.yellowFlags)))
+            session['flagState'] = "yellow"
+        else:
+            session['flagState'] = self.raceFlag
+
         state = {
             "cars": sorted(map(self.mapCar, self.carState.values()), key=lambda c: c[-1]),
-            "session": self.sessionState
+            "session": session
         }
         return state
 
