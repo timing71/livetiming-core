@@ -224,9 +224,8 @@ class Service(lt_service):
         return 1
 
     def a_r(self, body):
-        # clear stats
-        self.times = {}
-        self.sessionState = {"flagState": "none"}
+        # clear stats page - ignore
+        pass
 
     def a_u(self, body):
         # best lap history - ignore
