@@ -1,5 +1,4 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from datetime import datetime, timedelta
 from livetiming.network import RPC, Realm
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -12,33 +11,42 @@ import re
 import simplejson
 import time
 import zipfile
+import tempfile
+import datetime
 
 
 INTRA_FRAMES = 10
 
 
+# http://stackoverflow.com/a/25739108/11643
+def updateZip(zipname, filename, data, new_filename=None, new_zipname=None):
+    # generate a temp file
+    tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(zipname))
+    os.close(tmpfd)
+
+    # create a temp copy of the archive without filename
+    with zipfile.ZipFile(zipname, 'r') as zin:
+        with zipfile.ZipFile(tmpname, 'w') as zout:
+            zout.comment = zin.comment  # preserve the comment
+            seen_filenames = []
+            for item in zin.infolist():
+                if item.filename != filename and item.filename not in seen_filenames:
+                    zout.writestr(item, zin.read(item.filename))
+                    seen_filenames.append(item.filename)
+
+    # replace with the temp archive
+    os.remove(zipname)
+    os.rename(tmpname, new_zipname if new_zipname else zipname)
+
+    # now add filename with its new data
+    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(new_filename if new_filename else filename, data)
+
+
 class TimingRecorder(object):
     def __init__(self, recordFile):
         self.recordFile = recordFile
-        self.startTime = datetime.now()
         self.log = Logger()
-        try:
-            with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
-                maxFrame = 0
-                names = z.namelist()
-                if "manifest.json" in names:
-                    manifest = simplejson.load(z.open("manifest.json", 'r'))
-                    self.startTime = datetime.utcfromtimestamp(manifest['startTime'])
-                else:
-                    for frame in names:
-                        m = re.match("([0-9]{5})i?", frame)
-                        if m:
-                            val = int(m.group(1))
-                            maxFrame = max(val, maxFrame)
-                    self.log.info("Found existing recording with no manifest, starting recording at time + {}".format(maxFrame))
-                    self.startTime = self.startTime - timedelta(seconds=maxFrame)
-        except Exception:
-            pass
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
 
@@ -51,13 +59,12 @@ class TimingRecorder(object):
                 self.log.info("Not overwriting existing manifest.")
 
     def writeState(self, state):
-        timeDelta = (datetime.now() - self.startTime).total_seconds()
         with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
             if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
-                z.writestr("{:05d}.json".format(int(timeDelta)), simplejson.dumps(state))
+                z.writestr("{:011d}.json".format(time.time()), simplejson.dumps(state))
             else:  # Write an intra-frame
                 diff = self._diffState(state)
-                z.writestr("{:05d}i.json".format(int(timeDelta)), simplejson.dumps(diff))
+                z.writestr("{:011d}i.json".format(time.time()), simplejson.dumps(diff))
         self.frames += 1
         self.prevState = state.copy()
 
@@ -75,15 +82,23 @@ class TimingRecorder(object):
         }
 
 
-class TimingReplayer(object):
-    def __init__(self, recordFile):
-        self.recordFile = recordFile
+class RecordingFile(object):
+    def __init__(self, filename, force_compat=False):
+        self.filename = filename
         self.iframes = []
         self.keyframes = []
-        with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(filename, 'r', zipfile.ZIP_DEFLATED) as z:
+            self.manifest = simplejson.load(z.open("manifest.json", 'r'))
+
+            if "version" not in self.manifest and not force_compat:
+                raise Exception("Unknown / pre-v1 recording file, unsupported. Try rectool convert")
+            if "version" in self.manifest and self.manifest['version'] != 1:
+                raise Exception("Unknown recording file version {}, cannot continue".format(self.manifest['version']))
+
+            minFrame = 999999999999999
             maxFrame = 0
             for frame in z.namelist():
-                m = re.match("([0-9]{5})(i?)", frame)
+                m = re.match("([0-9]{5,11})(i?)", frame)
                 if m:
                     val = int(m.group(1))
                     if m.group(2):  # it's an iframe
@@ -91,18 +106,22 @@ class TimingReplayer(object):
                     else:
                         self.keyframes.append(val)
                     maxFrame = max(val, maxFrame)
-            self.duration = maxFrame
-            self.manifest = simplejson.load(z.open("manifest.json", 'r'))
+                    minFrame = min(val, minFrame)
+            self.startTime = datetime.datetime.fromtimestamp(minFrame)
+            self.duration = (datetime.datetime.fromtimestamp(maxFrame) - datetime.datetime.fromtimestamp(minFrame)).total_seconds()
         self.frames = len(self.iframes) + len(self.keyframes)
+
+    def save_manifest(self):
+        updateZip(self.filename, "manifest.json", simplejson.dumps(self.manifest))
 
     def getStateAt(self, timecode):
         mostRecentKeyframeIndex = max([frame for frame in self.keyframes if frame <= timecode] + [min(self.keyframes)])
         intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
 
         with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
-            state = simplejson.load(z.open("{:05d}.json".format(mostRecentKeyframeIndex)))
+            state = simplejson.load(z.open("{:011d}.json".format(mostRecentKeyframeIndex)))
             for iframeIndex in intraFrames:
-                iframe = simplejson.load(z.open("{:05d}i.json".format(iframeIndex)))
+                iframe = simplejson.load(z.open("{:011d}i.json".format(iframeIndex)))
                 state = applyIntraFrame(state, iframe)
 
             return state
@@ -161,7 +180,7 @@ class ReplayManager(object):
 class ReplayService(object):
     def __init__(self, recordingFile):
         self.log = Logger()
-        self.replayer = TimingReplayer(recordingFile)
+        self.replayer = RecordingFile(recordingFile)
         self.duration = self.replayer.duration
 
     def connect(self, register):
