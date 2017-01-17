@@ -30,13 +30,14 @@ def inspect(args, extras):
 def convert(args, extras):
     orig = RecordingFile(args.recfile, force_compat=True)
     startTime = orig.manifest['startTime']
+    outfile = "{}{}_conv{}".format(os.path.dirname(args.recfile), *os.path.splitext(os.path.basename(args.recfile)))
 
     tempdir = tempfile.mkdtemp(suffix=".rectool-convert")
 
     with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
         z.extractall(tempdir)
 
-    with zipfile.ZipFile("conv_{}".format(args.recfile), 'w', zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
         for frame in orig.keyframes:
             print "{} => {}".format(frame, int(startTime + frame))
             z.write(os.path.join(tempdir, "{:05d}.json".format(frame)), "{:011d}.json".format(int(startTime + frame)))
@@ -45,6 +46,39 @@ def convert(args, extras):
             z.write(os.path.join(tempdir, "{:05d}i.json".format(frame)), "{:011d}i.json".format(int(startTime + frame)))
         orig.manifest['version'] = 1
         del orig.manifest['startTime']
+        z.writestr("manifest.json", simplejson.dumps(orig.manifest))
+
+    shutil.rmtree(tempdir)
+
+
+def clip(args, extras):
+    orig = RecordingFile(args.recfile)
+    startTime = orig.manifest['startTime']
+    tempdir = tempfile.mkdtemp(suffix=".rectool-convert")
+    outfile = "{}{}_clip{}".format(os.path.dirname(args.recfile), *os.path.splitext(os.path.basename(args.recfile)))
+
+    clipStart = False
+    clipEnd = False
+    if len(extras) >= 1:
+        clipStart = int(extras[0][1:]) if extras[0][0] == "@" else int(extras[0]) + startTime
+    if len(extras) >= 2:
+        clipEnd = int(extras[1][1:]) if extras[1][0] == "@" else int(extras[1]) + startTime
+
+    def shouldBeCopied(ts):
+        return (not clipStart or ts >= clipStart) and (not clipEnd or ts < clipEnd)
+
+    with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
+        z.extractall(tempdir)
+
+    with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
+        if clipStart not in orig.keyframes:
+            z.writestr("{:011d}.json".format(clipStart), simplejson.dumps(orig.getStateAtTimestamp(clipStart)))
+        for frame in orig.keyframes:
+            if shouldBeCopied(frame):
+                z.write(os.path.join(tempdir, "{:011d}.json".format(frame)), "{:011d}.json".format(frame))
+        for frame in orig.iframes:
+            if shouldBeCopied(frame):
+                z.write(os.path.join(tempdir, "{:011d}i.json".format(frame)), "{:011d}i.json".format(frame))
         z.writestr("manifest.json", simplejson.dumps(orig.manifest))
 
     shutil.rmtree(tempdir)
@@ -98,7 +132,8 @@ ACTIONS = {
     'describe': describe,
     'convert': convert,
     'scan': scan,
-    'show': show
+    'show': show,
+    'clip': clip
 }
 
 

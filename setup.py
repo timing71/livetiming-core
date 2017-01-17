@@ -31,7 +31,8 @@ setup(
                 'livetiming-directory = livetiming.directory:main',
                 'livetiming-recordings = livetiming.recording:main',
                 'livetiming-service = livetiming.service:main',
-                'livetiming-service-manager = livetiming.servicemanager:main'
+                'livetiming-service-manager = livetiming.servicemanager:main',
+                'livetiming-rectool = livetiming.rectool:main'
             ],
         }
       )
