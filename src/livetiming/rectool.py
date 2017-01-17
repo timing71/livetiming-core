@@ -3,6 +3,7 @@ import dictdiffer
 import os
 import shutil
 import simplejson
+import sys
 import tempfile
 import time
 import zipfile
@@ -104,30 +105,33 @@ def clip(args, extras):
 def scan(args, extras):
     r = RecordingFile(args.recfile)
     startTime = r.manifest['startTime']
-    interval = r.manifest['pollInterval'] if 'pollInterval' in r.manifest else 1
+    interval = int(r.manifest['pollInterval']) if 'pollInterval' in r.manifest else 1
     print "First frame: {}".format(startTime)
-    initialState = r.getStateAt(startTime)
-    curTime = startTime
+    initialState = r.getStateAt(0)
+    curTime = int(startTime)
+    endTime = int(startTime + r.duration)
 
     foundSessionChange = False
     foundMessageChange = False
     foundCarsChange = False
 
-    while curTime < startTime + r.duration:
-        nowState = r.getStateAt(curTime)
+    while curTime < endTime:
+        sys.stdout.write("\r{:05d} / {:05d} [ @{:011d} / @{:011d} ] {} %".format((curTime - startTime), (endTime - startTime), curTime, endTime, (curTime - startTime) / (endTime - startTime)))
+        sys.stdout.flush()
+        nowState = r.getStateAtTimestamp(curTime)
         sessionDiffs = list(dictdiffer.diff(initialState['session'], nowState['session'])) if not foundSessionChange else []
         messageDiffs = list(dictdiffer.diff(initialState['messages'], nowState['messages'])) if not foundMessageChange else []
         carDiffs = list(dictdiffer.diff(initialState['cars'], nowState['cars'])) if not foundCarsChange else []
         if not foundSessionChange and len(sessionDiffs) > 0:
-            print "First session change at {} (@{})".format(curTime - startTime, curTime)
+            print "\nFirst session change at {} (@{})".format(curTime - startTime, curTime)
             foundSessionChange = True
             print list(sessionDiffs)
         if not foundMessageChange and len(messageDiffs) > 0:
-            print "First message change at {} (@{})".format(curTime - startTime, curTime)
+            print "\nFirst message change at {} (@{})".format(curTime - startTime, curTime)
             print list(messageDiffs)
             foundMessageChange = True
         if not foundCarsChange and len(carDiffs) > 0:
-            print "First car change at {} (@{})".format(curTime - startTime, curTime)
+            print "\nFirst car change at {} (@{})".format(curTime - startTime, curTime)
             print list(carDiffs)
             foundCarsChange = True
         if foundCarsChange and foundMessageChange and foundSessionChange:
