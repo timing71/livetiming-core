@@ -40,3 +40,5 @@ crossbar/.crossbar/node.key
 /*.json
 /.settings
 /*.log
+/recordings/
+.idea
