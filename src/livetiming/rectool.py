@@ -6,6 +6,7 @@ import tempfile
 import zipfile
 
 from livetiming.recording import RecordingFile
+import dictdiffer
 
 
 def describe(args, extras):
@@ -49,10 +50,55 @@ def convert(args, extras):
     shutil.rmtree(tempdir)
 
 
+def scan(args, extras):
+    r = RecordingFile(args.recfile)
+    startTime = r.manifest['startTime']
+    interval = r.manifest['pollInterval'] if 'pollInterval' in r.manifest else 1
+    print "First frame: {}".format(startTime)
+    initialState = r.getStateAt(startTime)
+    curTime = startTime
+
+    foundSessionChange = False
+    foundMessageChange = False
+    foundCarsChange = False
+
+    while curTime < startTime + r.duration:
+        nowState = r.getStateAt(curTime)
+        sessionDiffs = list(dictdiffer.diff(initialState['session'], nowState['session'])) if not foundSessionChange else []
+        messageDiffs = list(dictdiffer.diff(initialState['messages'], nowState['messages'])) if not foundMessageChange else []
+        carDiffs = list(dictdiffer.diff(initialState['cars'], nowState['cars'])) if not foundCarsChange else []
+        if not foundSessionChange and len(sessionDiffs) > 0:
+            print "First session change at {} (@{})".format(curTime - startTime, curTime)
+            foundSessionChange = True
+            print list(sessionDiffs)
+        if not foundMessageChange and len(messageDiffs) > 0:
+            print "First message change at {} (@{})".format(curTime - startTime, curTime)
+            print list(messageDiffs)
+            foundMessageChange = True
+        if not foundCarsChange and len(carDiffs) > 0:
+            print "First car change at {} (@{})".format(curTime - startTime, curTime)
+            print list(carDiffs)
+            foundCarsChange = True
+        if foundCarsChange and foundMessageChange and foundSessionChange:
+            break
+        curTime += interval
+
+
+def show(args, extras):
+    r = RecordingFile(args.recfile)
+    idx = extras[0]
+    if idx[0] == "@":
+        print r.getStateAtTimestamp(int(idx[1:]))
+    else:
+        print r.getStateAt(int(idx))
+
+
 ACTIONS = {
     'inspect': inspect,
     'describe': describe,
-    'convert': convert
+    'convert': convert,
+    'scan': scan,
+    'show': show
 }
 
 
