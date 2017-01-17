@@ -54,7 +54,7 @@ def convert(args, extras):
             if not startTime or startTime < 60:
                 firstKeyframe = min(orig.keyframes)
                 info = z.getinfo("{:05d}.json".format(firstKeyframe))
-                startTime = time.mktime(info.date_time + (0, 0, 0)) + firstKeyframe
+                startTime = time.mktime(info.date_time + (0, 0, 0)) - firstKeyframe
                 print "Start time not available, inferring from first keyframe as {}".format(startTime)
 
         with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
