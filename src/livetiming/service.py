@@ -1,6 +1,7 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.util import sleep
-from livetiming.messages import FlagChangeMessage
+from livetiming.messages import FlagChangeMessage, CarPitMessage,\
+    DriverChangeMessage, FastLapMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
 from livetiming.racing import FlagStatus, Stat
 from livetiming.recording import TimingRecorder
@@ -131,15 +132,21 @@ class Service(ApplicationSession):
             }
         }
 
-    def getMessageGenerators(self):
+    def _getMessageGenerators(self):
         return [
-            FlagChangeMessage()
+            FlagChangeMessage(),
+            CarPitMessage(self.getColumnSpec()),
+            DriverChangeMessage(self.getColumnSpec()),
+            FastLapMessage(self.getColumnSpec()),
         ]
+
+    def getExtraMessageGenerators(self):
+        return []
 
     def createMessages(self, oldState, newState):
         # Messages are of the form [time, category, text, messageType]
         messages = []
-        for mg in self.getMessageGenerators():
+        for mg in self._getMessageGenerators() + self.getExtraMessageGenerators():
             messages += mg.process(oldState, newState)
         return messages
 
