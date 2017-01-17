@@ -7,7 +7,7 @@ from livetiming.recording import TimingRecorder
 from os import environ, path
 from random import randint
 from threading import Thread
-from twisted.internet import reactor, task
+from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from uuid import uuid4
