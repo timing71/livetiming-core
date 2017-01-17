@@ -234,7 +234,7 @@ class Service(lt_service):
 
     def getMessageGenerators(self):
         return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[1], lambda c: c[2], lambda c: c[4]),
-            DriverChangeMessage(lambda c: c[2], lambda c: c[4]),
-            FastLapMessage(lambda c: c[10], lambda c: c[2], lambda c: c[4])
+            CarPitMessage(self.getColumnSpec()),
+            DriverChangeMessage(self.getColumnSpec()),
+            FastLapMessage(self.getColumnSpec())
         ]

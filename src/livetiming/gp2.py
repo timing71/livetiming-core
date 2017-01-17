@@ -229,6 +229,6 @@ class Service(lt_service):
 
     def getMessageGenerators(self):
         return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[1], lambda c: "Pits", lambda c: c[2]),
-            FastLapMessage(lambda c: c[9], lambda c: "Timing", lambda c: c[2])
+            CarPitMessage(self.getColumnSpec(), "Pits"),
+            FastLapMessage(self.getColumnSpec(), "Timing")
         ]

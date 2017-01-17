@@ -352,8 +352,8 @@ class Service(lt_service):
 
     def getMessageGenerators(self):
         return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(lambda c: c[self.getColumnSpec().index(Stat.STATE)], lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
-            DriverChangeMessage(lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
-            FastLapMessage(lambda c: c[self.getColumnSpec().index(Stat.LAST_LAP)], lambda c: c[self.getColumnSpec().index(Stat.CLASS)], lambda c: c[self.getColumnSpec().index(Stat.DRIVER)]),
+            CarPitMessage(self.getColumnSpec()),
+            DriverChangeMessage(self.getColumnSpec()),
+            FastLapMessage(self.getColumnSpec()),
             RaceControlMessage(self.messages)
         ]

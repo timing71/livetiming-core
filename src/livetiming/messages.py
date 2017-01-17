@@ -1,5 +1,6 @@
 from racing import FlagStatus
 import time
+from livetiming.racing import Stat
 
 
 def formatTime(seconds):
@@ -19,6 +20,21 @@ class TimingMessage(object):
 
 
 class PerCarMessage(TimingMessage):
+    def __init__(self, columnSpec=None, clazz=None):
+        self.columnSpec = columnSpec
+        self.clazz = clazz
+
+    def getValue(self, car, stat):
+        if self.columnSpec and stat in self.columnSpec:
+            idx = self.columnSpec.index(stat)
+            return car[idx]
+        return None
+
+    def getClass(self, car):
+        if self.clazz:
+            return self.clazz
+        return self.getValue(car, Stat.CLASS)
+
     def process(self, oldState, newState):
         messages = []
         for newCar in newState["cars"]:
@@ -60,52 +76,49 @@ class FlagChangeMessage(TimingMessage):
 
 # Emits a message if a car enters or leaves the pits, or retires.
 class CarPitMessage(PerCarMessage):
-    def __init__(self, getPitStatus, getClass, getDriver):
-        self.getPitStatus = getPitStatus
-        self.getClass = getClass
-        self.getDriver = getDriver
 
     def _consider(self, oldCar, newCar):
-        oldStatus = self.getPitStatus(oldCar)
-        newStatus = self.getPitStatus(newCar)
+        oldStatus = self.getValue(oldCar, Stat.STATE)
+        newStatus = self.getValue(newCar, Stat.STATE)
+
+        carNum = self.getValue(newCar, Stat.NUM)
+        driver = self.getValue(newCar, Stat.DRIVER)
+
         if oldStatus != newStatus:
             if newStatus == "OUT" or (newStatus == "RUN" and oldStatus == "PIT"):
-                return [self.getClass(newCar), u"#{} ({}) has left the pits".format(newCar[0], self.getDriver(newCar)), "out"]
+                return [self.getClass(newCar), u"#{} ({}) has left the pits".format(carNum, driver), "out"]
             elif newStatus == "PIT":
-                return [self.getClass(newCar), u"#{} ({}) has entered the pits".format(newCar[0], self.getDriver(newCar)), "pit"]
+                return [self.getClass(newCar), u"#{} ({}) has entered the pits".format(carNum, driver), "pit"]
             elif newStatus == "FUEL":
-                return [self.getClass(newCar), u"#{} ({}) has entered the fuelling area".format(newCar[0], self.getDriver(newCar)), "pit"]
+                return [self.getClass(newCar), u"#{} ({}) has entered the fuelling area".format(carNum, driver), "pit"]
             elif newStatus == "RET":
-                return [self.getClass(newCar), u"#{} ({}) has retired".format(newCar[0], self.getDriver(newCar)), ""]
+                return [self.getClass(newCar), u"#{} ({}) has retired".format(carNum, driver), ""]
 
 
 # Emits a message if the driver of a car changes.
 class DriverChangeMessage(PerCarMessage):
-    def __init__(self, getClass, getDriver):
-        self.getClass = getClass
-        self.getDriver = getDriver
 
     def _consider(self, oldCar, newCar):
-        oldDriver = self.getDriver(oldCar)
-        newDriver = self.getDriver(newCar)
+        oldDriver = self.getValue(oldCar, Stat.DRIVER)
+        newDriver = self.getValue(newCar, Stat.DRIVER)
+        carNum = self.getValue(newCar, Stat.NUM)
         if oldDriver != newDriver and oldDriver != "":
-            return [self.getClass(newCar), u"#{} Driver change ({} to {})".format(newCar[0], oldDriver, newDriver)]
+            return [self.getClass(newCar), u"#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver)]
 
 
 # Emits a message if a car sets a personal or overall best.
 class FastLapMessage(PerCarMessage):
-    def __init__(self, getTime, getClass, getDriver):
-        self.getTime = getTime
-        self.getClass = getClass
-        self.getDriver = getDriver
 
     def _consider(self, oldCar, newCar):
-        oldTime = self.getTime(oldCar)
-        newTime = self.getTime(newCar)
+        carNum = self.getValue(newCar, Stat.NUM)
+        driver = self.getValue(newCar, Stat.DRIVER)
+        oldTime = self.getValue(oldCar, Stat.LAST_LAP)
+        newTime = self.getValue(newCar, Stat.LAST_LAP)
         oldFlags = oldTime[1]
         newFlags = newTime[1]
+
         if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
             if newFlags == "pb" and oldFlags == "":
-                return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "pb"]
+                return [self.getClass(newCar), u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
             elif newFlags == "sb-new":
-                return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(newCar[0], self.getDriver(newCar), formatTime(newTime[0])), "sb"]
+                return [self.getClass(newCar), u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]

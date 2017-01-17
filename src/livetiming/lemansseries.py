@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from livetiming.messages import FastLapMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
@@ -142,8 +141,3 @@ class Service(WEC):
         }
 
         return {"cars": cars, "session": state}
-
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators()[0:-1] + [
-            FastLapMessage(lambda c: c[9], lambda c: c[2], lambda c: c[4])
-        ]
