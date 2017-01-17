@@ -108,17 +108,21 @@ class RecordingFile(object):
                     maxFrame = max(val, maxFrame)
                     minFrame = min(val, minFrame)
             self.startTime = datetime.datetime.fromtimestamp(minFrame)
-            self.duration = (datetime.datetime.fromtimestamp(maxFrame) - datetime.datetime.fromtimestamp(minFrame)).total_seconds()
+            self.manifest['startTime'] = minFrame
+            self.duration = (datetime.datetime.fromtimestamp(maxFrame) - self.startTime).total_seconds()
         self.frames = len(self.iframes) + len(self.keyframes)
 
     def save_manifest(self):
         updateZip(self.filename, "manifest.json", simplejson.dumps(self.manifest))
 
-    def getStateAt(self, timecode):
+    def getStateAt(self, interval):
+        return self.getStateAtTimestamp(self.manifest['startTime'] + interval)
+
+    def getStateAtTimestamp(self, timecode):
         mostRecentKeyframeIndex = max([frame for frame in self.keyframes if frame <= timecode] + [min(self.keyframes)])
         intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
 
-        with zipfile.ZipFile(self.recordFile, 'r', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(self.filename, 'r', zipfile.ZIP_DEFLATED) as z:
             state = simplejson.load(z.open("{:011d}.json".format(mostRecentKeyframeIndex)))
             for iframeIndex in intraFrames:
                 iframe = simplejson.load(z.open("{:011d}i.json".format(iframeIndex)))
