@@ -87,13 +87,13 @@ class Service(ApplicationSession):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("Driver", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "time"),
-            ("Int", "time"),
-            ("Last", "time"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.DRIVER,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.LAST_LAP,
+            Stat.PITS
         ]
 
     def getTrackDataSpec(self):

@@ -36,8 +36,12 @@ class Stat(Enum):
     S1 = ("S1", "time", "Sector 1 time")
     S2 = ("S2", "time", "Sector 2 time")
     S3 = ("S3", "time", "Sector 3 time")
+    BS1 = ("BS1", "time", "Best sector 1 time")
+    BS2 = ("BS2", "time", "Best sector 2 time")
+    BS3 = ("BS3", "time", "Best sector 3 time")
     SPEED = ("Spd", "numeric")
     PITS = ("Pits", "numeric")
+    PUSH_TO_PASS = ("PTP", "numeric", "Push-to-Pass remaining")
 
     def __init__(self, title, ttype, description=None):
         self.title = title
