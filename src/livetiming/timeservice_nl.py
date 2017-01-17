@@ -10,8 +10,7 @@ import urllib2
 from livetiming.racing import FlagStatus, Stat
 from datetime import datetime
 import time
-from livetiming.messages import TimingMessage, CarPitMessage,\
-    DriverChangeMessage, FastLapMessage
+from livetiming.messages import TimingMessage
 import argparse
 
 
@@ -350,10 +349,7 @@ class Service(lt_service):
         }
         return state
 
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            DriverChangeMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec()),
+    def getExtraMessageGenerators(self):
+        return [
             RaceControlMessage(self.messages)
         ]

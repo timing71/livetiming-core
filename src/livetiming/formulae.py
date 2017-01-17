@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.messages import FastLapMessage, TimingMessage
+from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus
 from livetiming.service import JSONFetcher, Service as lt_service
 import urllib2
@@ -188,9 +188,8 @@ class Service(lt_service):
             }
             self.currentMessage = trackData["message"]
 
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            FastLapMessage(lambda c: c[6], lambda c: "Timing", lambda c: c[1]),
+    def getExtraMessageGenerators(self):
+        return [
             RaceControlMessage()
         ]
 

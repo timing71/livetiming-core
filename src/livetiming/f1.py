@@ -8,7 +8,7 @@ import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
-from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
+from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus, Stat
 
 
@@ -296,9 +296,7 @@ class Service(lt_service):
     def _getTrackRotationOffset(self):
         return -45  # XXX this is Monaco's hardcoded value
 
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec()),
+    def getExtraMessageGenerators(self):
+        return [
             RaceControlMessage()
         ]

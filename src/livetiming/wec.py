@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.service import Service as lt_service
 import urllib2
 import re
@@ -231,10 +230,3 @@ class Service(lt_service):
         )
         feed = urllib2.urlopen(feed_url)
         return simplejson.loads(feed.read())
-
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            DriverChangeMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec())
-        ]

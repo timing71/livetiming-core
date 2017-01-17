@@ -1,4 +1,3 @@
-from livetiming.messages import CarPitMessage, FastLapMessage
 from livetiming.service import Service as lt_service
 import urllib2
 import simplejson
@@ -111,12 +110,6 @@ class Service(lt_service):
         if "totalLaps" in heartbeat:
             state["lapsRemain"] = int(heartbeat["totalLaps"]) - int(heartbeat["lapNumber"])
         return {"cars": cars, "session": state}
-
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec())
-        ]
 
     def getRawFeedData(self):
         feed_url = "http://racecontrol.indycar.com/xml/timingscoring.json"

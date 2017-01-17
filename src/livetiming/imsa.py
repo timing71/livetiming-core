@@ -1,4 +1,3 @@
-from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.service import JSONFetcher, Service as lt_service
 from datetime import datetime
 from twisted.logger import Logger
@@ -124,13 +123,6 @@ class Service(lt_service):
             self.carsPreviousState[car["N"]] = car["P"]
 
         self.carsState = cars
-
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            DriverChangeMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec())
-        ]
 
     def parseSession(self, raw):
         self.sessionState["timeElapsed"] = parseSessionTime(raw["TT"])

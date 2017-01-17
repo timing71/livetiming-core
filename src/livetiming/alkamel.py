@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
+from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from socketIO_client import SocketIO, BaseNamespace
@@ -231,9 +231,7 @@ class Service(lt_service):
 
         return {"cars": self.cars, "session": session}
 
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec()),
+    def getExtraMessageGenerators(self):
+        return [
             RaceControlMessage()
         ]

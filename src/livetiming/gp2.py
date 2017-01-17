@@ -1,6 +1,5 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientFactory, WebSocketClientProtocol
 from datetime import datetime
-from livetiming.messages import CarPitMessage, FastLapMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 
@@ -226,9 +225,3 @@ class Service(lt_service):
         else:
             self.sessionState["flagState"] = parseFlag(self.trackFeed)
         return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
-
-    def getMessageGenerators(self):
-        return super(Service, self).getMessageGenerators() + [
-            CarPitMessage(self.getColumnSpec()),
-            FastLapMessage(self.getColumnSpec())
-        ]
