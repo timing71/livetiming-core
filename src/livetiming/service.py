@@ -133,7 +133,7 @@ class Service(ApplicationSession):
 
     def getMessageGenerators(self):
         return [
-            FlagChangeMessage(lambda s: FlagStatus.fromString(s["session"]["flagState"]))
+            FlagChangeMessage()
         ]
 
     def createMessages(self, oldState, newState):
