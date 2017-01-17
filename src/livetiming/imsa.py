@@ -53,7 +53,7 @@ class Service(lt_service):
         return "IMSA"
 
     def getDefaultDescription(self):
-        return "IMSA (testing)"
+        return "WeatherTech SportsCar Championship"
 
     def getColumnSpec(self):
         return [
