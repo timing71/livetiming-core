@@ -9,7 +9,7 @@ import re
 import urllib2
 import xml.etree.ElementTree as ET
 from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 
 
 class RaceControlMessage(TimingMessage):
@@ -109,24 +109,24 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Driver", "text"),
-            ("Lap", "num"),
-            ("T", "text"),
-            ("TS", "text"),
-            ("TA", "text"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("S1", "time"),
-            ("BS1", "time"),
-            ("S2", "time"),
-            ("BS2", "time"),
-            ("S3", "time"),
-            ("BS3", "time"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Pits", "num")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.DRIVER,
+            Stat.LAPS,
+            Stat.TYRE,
+            Stat.TYRE_STINT,
+            Stat.TYRE_AGE,
+            Stat.GAP,
+            Stat.INT,
+            Stat.S1,
+            Stat.BS1,
+            Stat.S2,
+            Stat.BS2,
+            Stat.S3,
+            Stat.BS3,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getTrackDataSpec(self):

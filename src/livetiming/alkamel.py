@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from livetiming.messages import CarPitMessage, FastLapMessage, TimingMessage
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from socketIO_client import SocketIO, BaseNamespace
 from threading import Thread
@@ -174,20 +174,20 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Driver", "text"),
-            ("Team", "text"),
-            ("Car", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "time"),
-            ("Int", "time"),
-            ("S1", "time"),
-            ("S2", "time"),
-            ("S3", "time"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.DRIVER,
+            Stat.TEAM,
+            Stat.CAR,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.S1,
+            Stat.S2,
+            Stat.S3,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getTrackDataSpec(self):

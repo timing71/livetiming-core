@@ -2,7 +2,7 @@ from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessa
 from livetiming.service import JSONFetcher, Service as lt_service
 from datetime import datetime
 from twisted.logger import Logger
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 
 
 def mapFlagStates(rawState):
@@ -58,17 +58,17 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Class", "text"),
-            ("Car", "text"),
-            ("Driver", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.CLASS,
+            Stat.CAR,
+            Stat.DRIVER,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getPollInterval(self):

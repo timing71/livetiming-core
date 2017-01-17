@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from livetiming.messages import FastLapMessage
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
 
@@ -34,19 +34,19 @@ class Service(WEC):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Class", "class"),
-            ("Team", "text"),
-            ("Driver", "text"),
-            ("Car", "text"),
-            ("T", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "delta"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Spd", "numeric"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.CLASS,
+            Stat.TEAM,
+            Stat.DRIVER,
+            Stat.CAR,
+            Stat.TYRE,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.SPEED,
+            Stat.PITS
         ]
 
     def getStaticData(self):

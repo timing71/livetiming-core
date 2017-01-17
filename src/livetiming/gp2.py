@@ -1,7 +1,7 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientFactory, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import CarPitMessage, FastLapMessage
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 
 import simplejson
@@ -118,18 +118,18 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Driver", "text"),
-            ("Lap", "num"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("S1", "time"),
-            ("S2", "time"),
-            ("S3", "time"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Pits", "num")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.DRIVER,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.S1,
+            Stat.S2,
+            Stat.S3,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def onTimingPayload(self, payload):

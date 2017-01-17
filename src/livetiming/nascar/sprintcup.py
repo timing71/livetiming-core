@@ -3,7 +3,7 @@ import urllib2
 import simplejson
 import random
 from twisted.logger import Logger
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 
 
 def mapFlagStates(rawState):
@@ -31,16 +31,16 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Driver", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("Last", "time"),
-            ("Last Spd", "numeric"),
-            ("Best", "time"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.DRIVER,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.LAST_LAP,
+            Stat.SPEED,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getPollInterval(self):

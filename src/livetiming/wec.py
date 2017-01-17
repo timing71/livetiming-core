@@ -7,7 +7,7 @@ import simplejson
 import time
 from datetime import datetime
 from twisted.logger import Logger
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 
 
 def mapFlagStates(rawState):
@@ -109,20 +109,20 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
-            ("Num", "text"),
-            ("State", "text"),
-            ("Class", "class"),
-            ("Team", "text"),
-            ("Driver", "text"),
-            ("Car", "text"),
-            ("T", "text"),
-            ("Laps", "numeric"),
-            ("Gap", "delta"),
-            ("Int", "delta"),
-            ("Last", "time"),
-            ("Best", "time"),
-            ("Spd", "numeric"),
-            ("Pits", "numeric")
+            Stat.NUM,
+            Stat.STATE,
+            Stat.CLASS,
+            Stat.TEAM,
+            Stat.DRIVER,
+            Stat.CAR,
+            Stat.TYRE,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.SPEED,
+            Stat.PITS
         ]
 
     def getTrackDataSpec(self):
