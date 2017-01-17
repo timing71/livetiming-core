@@ -1,20 +1,31 @@
 import argparse
+import dictdiffer
 import os
 import shutil
 import simplejson
 import tempfile
+import time
 import zipfile
 
+from contextlib import contextmanager
 from livetiming.recording import RecordingFile
-import dictdiffer
 
 
-def describe(args, extras):
+@contextmanager
+def temp_directory(suffix=""):
+    td = tempfile.mkdtemp(suffix=suffix)
+    try:
+        yield td
+    finally:
+        shutil.rmtree(td)
+
+
+def manifest_set(args, extras):
+    if len(extras) != 2:
+        raise Exception("Usage: rectool set <key> <value>")
     f = RecordingFile(args.recfile)
-    new_description = ' '.join(extras)
-    f.manifest['description'] = new_description
+    f.manifest[extras[0]] = extras[1]
     f.save_manifest()
-    print "Set description to '{}'".format(new_description)
 
 
 def inspect(args, extras):
@@ -25,36 +36,42 @@ def inspect(args, extras):
     print "Service: {} ({})".format(f.manifest['name'], f.manifest['uuid'])
     print "{} frames ({}k/{}i), {} duration".format(f.frames, len(f.keyframes), len(f.iframes), f.duration)
     print "Start time: {}".format(f.startTime)
+    print "Full manifest:"
+    print simplejson.dumps(f.manifest, indent="  ")
 
 
 def convert(args, extras):
     orig = RecordingFile(args.recfile, force_compat=True)
     startTime = orig.manifest['startTime']
+
     outfile = "{}{}_conv{}".format(os.path.dirname(args.recfile), *os.path.splitext(os.path.basename(args.recfile)))
 
-    tempdir = tempfile.mkdtemp(suffix=".rectool-convert")
+    with temp_directory(suffix=".rectool-convert") as tempdir:
 
-    with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
-        z.extractall(tempdir)
+        with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
+            z.extractall(tempdir)
 
-    with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
-        for frame in orig.keyframes:
-            print "{} => {}".format(frame, int(startTime + frame))
-            z.write(os.path.join(tempdir, "{:05d}.json".format(frame)), "{:011d}.json".format(int(startTime + frame)))
-        for frame in orig.iframes:
-            print "{}i => {}i".format(frame, int(startTime + frame))
-            z.write(os.path.join(tempdir, "{:05d}i.json".format(frame)), "{:011d}i.json".format(int(startTime + frame)))
-        orig.manifest['version'] = 1
-        del orig.manifest['startTime']
-        z.writestr("manifest.json", simplejson.dumps(orig.manifest))
+            if not startTime or startTime < 60:
+                firstKeyframe = min(orig.keyframes)
+                info = z.getinfo("{:05d}.json".format(firstKeyframe))
+                startTime = time.mktime(info.date_time + (0, 0, 0)) + firstKeyframe
+                print "Start time not available, inferring from first keyframe as {}".format(startTime)
 
-    shutil.rmtree(tempdir)
+        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
+            for frame in orig.keyframes:
+                print "{} => {}".format(frame, int(startTime + frame))
+                z.write(os.path.join(tempdir, "{:05d}.json".format(frame)), "{:011d}.json".format(int(startTime + frame)))
+            for frame in orig.iframes:
+                print "{}i => {}i".format(frame, int(startTime + frame))
+                z.write(os.path.join(tempdir, "{:05d}i.json".format(frame)), "{:011d}i.json".format(int(startTime + frame)))
+            orig.manifest['version'] = 1
+            del orig.manifest['startTime']
+            z.writestr("manifest.json", simplejson.dumps(orig.manifest))
 
 
 def clip(args, extras):
     orig = RecordingFile(args.recfile)
     startTime = orig.manifest['startTime']
-    tempdir = tempfile.mkdtemp(suffix=".rectool-convert")
     outfile = "{}{}_clip{}".format(os.path.dirname(args.recfile), *os.path.splitext(os.path.basename(args.recfile)))
 
     clipStart = False
@@ -67,21 +84,21 @@ def clip(args, extras):
     def shouldBeCopied(ts):
         return (not clipStart or ts >= clipStart) and (not clipEnd or ts < clipEnd)
 
-    with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
-        z.extractall(tempdir)
+    with temp_directory(".rectool-clip") as tempdir:
 
-    with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
-        if clipStart not in orig.keyframes:
-            z.writestr("{:011d}.json".format(clipStart), simplejson.dumps(orig.getStateAtTimestamp(clipStart)))
-        for frame in orig.keyframes:
-            if shouldBeCopied(frame):
-                z.write(os.path.join(tempdir, "{:011d}.json".format(frame)), "{:011d}.json".format(frame))
-        for frame in orig.iframes:
-            if shouldBeCopied(frame):
-                z.write(os.path.join(tempdir, "{:011d}i.json".format(frame)), "{:011d}i.json".format(frame))
-        z.writestr("manifest.json", simplejson.dumps(orig.manifest))
+        with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
+            z.extractall(tempdir)
 
-    shutil.rmtree(tempdir)
+        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
+            if clipStart not in orig.keyframes:
+                z.writestr("{:011d}.json".format(clipStart), simplejson.dumps(orig.getStateAtTimestamp(clipStart)))
+            for frame in orig.keyframes:
+                if shouldBeCopied(frame):
+                    z.write(os.path.join(tempdir, "{:011d}.json".format(frame)), "{:011d}.json".format(frame))
+            for frame in orig.iframes:
+                if shouldBeCopied(frame):
+                    z.write(os.path.join(tempdir, "{:011d}i.json".format(frame)), "{:011d}i.json".format(frame))
+            z.writestr("manifest.json", simplejson.dumps(orig.manifest))
 
 
 def scan(args, extras):
@@ -129,7 +146,7 @@ def show(args, extras):
 
 ACTIONS = {
     'inspect': inspect,
-    'describe': describe,
+    'set': manifest_set,
     'convert': convert,
     'scan': scan,
     'show': show,
