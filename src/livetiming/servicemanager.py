@@ -10,6 +10,10 @@ from subprocess32 import Popen
 _PID_DIRECTORY = os.path.expanduser("~/.livetiming-service-pids/")
 
 
+class ServiceManagementException(Exception):
+    pass
+
+
 def _parse_args(raw_args):
     parser = argparse.ArgumentParser(description='Manager for live timing service processes.')
 
@@ -48,7 +52,7 @@ def _clear_pid_for(service_class, pid_directory):
 
 def _start_service(args):
     if _pid_for(args.service_class, args.pid_directory) is not None:
-        raise Exception("Service for {} already running!".format(args.service_class))
+        raise ServiceManagementException("Service for {} already running!".format(args.service_class))
     else:
         extra_args = []
         if args.recording_file is not None:
@@ -65,7 +69,7 @@ def _start_service(args):
 def _stop_service(args):
     pid = _pid_for(args.service_class, args.pid_directory)
     if pid is None:
-        raise Exception("Service for {} not running!".format(args.service_class))
+        raise ServiceManagementException("Service for {} not running!".format(args.service_class))
     else:
         try:
             os.kill(pid, signal.SIGINT)
@@ -81,7 +85,7 @@ def start_service(service_class, args):
 
 
 def stop_service(service_class):
-    return _start_service(_parse_args(["stop", service_class]))
+    return _stop_service(_parse_args(["stop", service_class]))
 
 
 def main():
