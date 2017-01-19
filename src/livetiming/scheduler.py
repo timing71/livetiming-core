@@ -62,6 +62,7 @@ class Scheduler(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.events = {}
+        self.runningEvents = []
         self.calendarAddress = environ['LIVETIMING_CALENDAR_URL']
 
     def listSchedule(self):
@@ -87,7 +88,22 @@ class Scheduler(ApplicationSession):
         self.log.info("Sync complete")
 
     def execute(self):
-        pass  # TODO Stub
+        self.log.info("Running scheduler loop...")
+
+        now = datetime.datetime.now(pytz.utc)
+        cutoff = now + datetime.timedelta(seconds=60)
+        toStart = [j for j in self.events.values() if j.startDate < cutoff and j.endDate > now and j.uid not in self.runningEvents]
+        toEnd = [j for j in self.events.values() if j.endDate < cutoff]
+
+        for job in toStart:
+            self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
+            # TODO actually start job
+
+        for job in toEnd:
+            self.log.info("Stopping service {}".format(job.service))
+            # TODO actually stop job
+
+        self.log.info("Scheduler loop complete")
 
     @inlineCallbacks
     def onJoin(self, details):
