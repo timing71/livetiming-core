@@ -12,6 +12,7 @@ class Channel:
 class RPC:
     DIRECTORY_LISTING = u"livetiming.directory.listServices"
     RECORDING_LISTING = u"livetiming.directory.listRecordings"
+    SCHEDULE_LISTING = u"livetiming.schedule.list"
     LIVENESS_CHECK = u"livetiming.service.isAlive.{}"
     REQUEST_STATE = u"livetiming.service.requestState.{}"
 
