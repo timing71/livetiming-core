@@ -29,6 +29,7 @@ setup(
         "autobahn[twisted]",
         "dictdiffer",
         "enum34",
+        "icalendar",
         "lzstring",
         "pyopenssl",
         "service_identity",
