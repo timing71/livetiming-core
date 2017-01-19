@@ -8,6 +8,7 @@ from twisted.logger import Logger
 import datetime
 import icalendar
 import re
+import pytz
 import urllib2
 
 
@@ -71,12 +72,12 @@ class Scheduler(ApplicationSession):
         ics = urllib2.urlopen(self.calendarAddress).read()
         cal = icalendar.Calendar.from_ical(ics)
 
-        cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+        cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(minutes=10)
 
         self.events.clear()
 
         for evt in cal.subcomponents:
-            evtEnd = evt.decoded("DTEND").replace(tzinfo=None)
+            evtEnd = evt.decoded("DTEND")
             if evtEnd > cutoff:
                 e = Event.from_ical(evt)
                 if e:
