@@ -2,6 +2,7 @@ import argparse
 import errno
 import os
 import signal
+import sys
 
 from subprocess32 import Popen
 
@@ -9,7 +10,7 @@ from subprocess32 import Popen
 _PID_DIRECTORY = "/var/run/livetiming"
 
 
-def _parse_args():
+def _parse_args(raw_args):
     parser = argparse.ArgumentParser(description='Manager for live timing service processes.')
 
     parser.add_argument('action', choices=['start', 'stop'], help='Action: start or stop.')
@@ -19,7 +20,7 @@ def _parse_args():
     parser.add_argument('-d', '--description', nargs='?', help='Service description')
     parser.add_argument('-p', '--pid-directory', nargs='?', help='Directory to store pidfiles in', default=_PID_DIRECTORY)
 
-    return parser.parse_args()
+    return parser.parse_args(raw_args)
 
 
 def _pid_for(service_class, pid_directory):
@@ -73,8 +74,16 @@ def _stop_service(args):
         print "Stopped livetiming-service {} (PID {})".format(args.service_class, pid)
 
 
+def start_service(service_class, args):
+    return _start_service(_parse_args(["start", service_class] + args))
+
+
+def stop_service(service_class):
+    return _start_service(_parse_args(["stop", service_class]))
+
+
 def main():
-    args = _parse_args()
+    args = _parse_args(sys.argv)
     if args.action == "start":
         _start_service(args)
     elif args.action == "stop":
