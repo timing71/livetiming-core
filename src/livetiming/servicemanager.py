@@ -7,7 +7,7 @@ import sys
 from subprocess32 import Popen
 
 
-_PID_DIRECTORY = "/var/run/livetiming"
+_PID_DIRECTORY = os.path.expanduser("~/.livetiming-service-pids/")
 
 
 def _parse_args(raw_args):
@@ -33,6 +33,8 @@ def _pid_for(service_class, pid_directory):
 
 
 def _write_pid_for(service_class, pid, pid_directory):
+    if not os.path.isdir(pid_directory):
+        os.mkdir(pid_directory)
     pidfile = os.path.join(pid_directory, service_class)
     with open(pidfile, 'w') as f:
         f.write("{}".format(pid))
@@ -83,7 +85,7 @@ def stop_service(service_class):
 
 
 def main():
-    args = _parse_args(sys.argv)
+    args = _parse_args(sys.argv[1:])
     if args.action == "start":
         _start_service(args)
     elif args.action == "stop":
