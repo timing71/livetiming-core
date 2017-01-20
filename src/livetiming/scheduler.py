@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from livetiming import servicemanager
 from livetiming.network import Realm, RPC
 from os import environ
 from twisted.internet import reactor, task
@@ -96,12 +97,21 @@ class Scheduler(ApplicationSession):
         toEnd = [j for j in self.events.values() if j.endDate < cutoff]
 
         for job in toStart:
-            self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
-            # TODO actually start job
+            try:
+                self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
+                servicemanager.start_service(job.service, job.serviceArgs)
+                self.runningEvents.append(job.uid)
+            except Exception as e:
+                self.log.critical(e)
 
         for job in toEnd:
-            self.log.info("Stopping service {}".format(job.service))
-            # TODO actually stop job
+            try:
+                self.log.info("Stopping service {}".format(job.service))
+                servicemanager.stop_service(job.service)
+                self.runningEvents.remove(job.uid)
+                self.events.pop(job.uid)
+            except Exception as e:
+                self.log.critical(e)
 
         self.log.info("Scheduler loop complete")
 
