@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming import servicemanager
-from livetiming.network import Realm, RPC
+from livetiming.network import Realm, RPC, Channel, Message, MessageClass
 from os import environ
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
@@ -97,6 +97,7 @@ class Scheduler(ApplicationSession):
                     print "Found event: {}".format(e)
 
         self.log.info("Sync complete")
+        self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
     def execute(self):
         self.log.info("Running scheduler loop...")
