@@ -11,6 +11,7 @@ import icalendar
 import re
 import pytz
 import urllib2
+import time
 
 
 EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+) *\[(?P<service>[^*,\]]+)(,(?P<args>[^\]]+))?\]")
@@ -56,6 +57,13 @@ class Event(object):
         else:
             print "Incorrect event format: {}".format(summary)
 
+    def serialize(self):
+        return {
+            "id": self.uid,
+            "name": self.name,
+            "startTime": time.mktime(self.startDate.utctimetuple())
+        }
+
 
 class Scheduler(ApplicationSession):
     log = Logger()
@@ -67,7 +75,9 @@ class Scheduler(ApplicationSession):
         self.calendarAddress = environ['LIVETIMING_CALENDAR_URL']
 
     def listSchedule(self):
-        return {}  # TODO Stub
+        now = datetime.datetime.now(pytz.utc)
+        upcoming = [j for j in self.events.values() if j.startDate > now]
+        return map(lambda j: j.serialize(), upcoming)
 
     def updateSchedule(self):
         self.log.info("Syncing schedule with Google Calendar...")
