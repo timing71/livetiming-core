@@ -72,7 +72,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return 10
+        return 5
 
     def getRaceState(self):
         return {"cars": self.carsState, "session": self.sessionState}
