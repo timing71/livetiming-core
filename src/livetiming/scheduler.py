@@ -2,6 +2,7 @@ from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming import servicemanager
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass
 from os import environ
+from threading import Lock
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
@@ -73,6 +74,7 @@ class Scheduler(ApplicationSession):
         self.events = {}
         self.runningEvents = []
         self.calendarAddress = environ['LIVETIMING_CALENDAR_URL']
+        self.lock = Lock()
 
     def listSchedule(self):
         now = datetime.datetime.now(pytz.utc)
@@ -80,49 +82,51 @@ class Scheduler(ApplicationSession):
         return map(lambda j: j.serialize(), upcoming)
 
     def updateSchedule(self):
-        self.log.info("Syncing schedule with Google Calendar...")
-        ics = urllib2.urlopen(self.calendarAddress).read()
-        cal = icalendar.Calendar.from_ical(ics)
+        with self.lock:
+            self.log.info("Syncing schedule with Google Calendar...")
+            ics = urllib2.urlopen(self.calendarAddress).read()
+            cal = icalendar.Calendar.from_ical(ics)
 
-        cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(minutes=10)
+            cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(minutes=10)
 
-        self.events.clear()
+            self.events.clear()
 
-        for evt in cal.subcomponents:
-            evtEnd = evt.decoded("DTEND")
-            if evtEnd > cutoff:
-                e = Event.from_ical(evt)
-                if e:
-                    self.events[e.uid] = e
-                    print "Found event: {}".format(e)
+            for evt in cal.subcomponents:
+                evtEnd = evt.decoded("DTEND")
+                if evtEnd > cutoff:
+                    e = Event.from_ical(evt)
+                    if e:
+                        self.events[e.uid] = e
+                        print "Found event: {}".format(e)
 
-        self.log.info("Sync complete")
+            self.log.info("Sync complete")
         self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
     def execute(self):
-        self.log.info("Running scheduler loop...")
+        with self.lock:
+            self.log.info("Running scheduler loop...")
 
-        now = datetime.datetime.now(pytz.utc)
-        cutoff = now + datetime.timedelta(seconds=60)
-        toStart = [j for j in self.events.values() if j.startDate < cutoff and j.endDate > now and j.uid not in self.runningEvents]
-        toEnd = [j for j in self.events.values() if j.endDate < cutoff]
+            now = datetime.datetime.now(pytz.utc)
+            cutoff = now + datetime.timedelta(seconds=60)
+            toStart = [j for j in self.events.values() if j.startDate < cutoff and j.endDate > now and j.uid not in self.runningEvents]
+            toEnd = [j for j in self.events.values() if j.endDate < cutoff]
 
-        for job in toStart:
-            try:
-                self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
-                servicemanager.start_service(job.service, job.serviceArgs)
-                self.runningEvents.append(job.uid)
-            except Exception as e:
-                self.log.critical(e)
+            for job in toStart:
+                try:
+                    self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
+                    servicemanager.start_service(job.service, job.serviceArgs)
+                    self.runningEvents.append(job.uid)
+                except Exception as e:
+                    self.log.critical(e)
 
-        for job in toEnd:
-            try:
-                self.log.info("Stopping service {}".format(job.service))
-                servicemanager.stop_service(job.service)
-                self.runningEvents.remove(job.uid)
-                self.events.pop(job.uid)
-            except Exception as e:
-                self.log.critical(e)
+            for job in toEnd:
+                try:
+                    self.log.info("Stopping service {}".format(job.service))
+                    servicemanager.stop_service(job.service)
+                    self.runningEvents.remove(job.uid)
+                    self.events.pop(job.uid)
+                except Exception as e:
+                    self.log.critical(e)
 
         self.log.info("Scheduler loop complete")
 
