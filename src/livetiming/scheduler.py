@@ -81,7 +81,7 @@ class Scheduler(ApplicationSession):
 
     def listSchedule(self):
         now = datetime.datetime.now(pytz.utc)
-        upcoming = [j for j in self.events.values() if j.startDate > now]
+        upcoming = [j for j in self.events.values() if j.startDate > now and j.uid not in self.runningEvents]
         return map(lambda j: j.serialize(), upcoming)
 
     def updateSchedule(self):
@@ -114,11 +114,14 @@ class Scheduler(ApplicationSession):
             toStart = [j for j in self.events.values() if j.startDate < cutoff and j.endDate > now and j.uid not in self.runningEvents]
             toEnd = [j for j in self.events.values() if j.endDate < cutoff]
 
+            hasChanged = False
+
             for job in toStart:
                 try:
                     self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
                     servicemanager.start_service(job.service, job.serviceArgs)
                     self.runningEvents.append(job.uid)
+                    hasChanged = True
                 except Exception as e:
                     self.log.critical(e)
 
@@ -128,8 +131,12 @@ class Scheduler(ApplicationSession):
                     servicemanager.stop_service(job.service)
                     self.runningEvents.remove(job.uid)
                     self.events.pop(job.uid)
+                    hasChanged = True
                 except Exception as e:
                     self.log.critical(e)
+
+        if hasChanged:
+            self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
         self.log.debug("Scheduler loop complete")
 
