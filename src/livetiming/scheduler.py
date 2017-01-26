@@ -39,7 +39,7 @@ class Event(object):
         )
 
     @staticmethod
-    def from_ical(evt):
+    def from_ical(evt, logger=None):
         uid = evt["UID"]
         summary = evt["SUMMARY"]
         startDate = evt.decoded("DTSTART")
@@ -56,7 +56,10 @@ class Event(object):
                 endDate
             )
         else:
-            print "Incorrect event format: {}".format(summary)
+            if logger:
+                logger.warn("Incorrect event format: {}".format(summary))
+            else:
+                print "Incorrect event format: {}".format(summary)
 
     def serialize(self):
         return {
@@ -94,7 +97,7 @@ class Scheduler(ApplicationSession):
             for evt in cal.subcomponents:
                 evtEnd = evt.decoded("DTEND")
                 if evtEnd > cutoff:
-                    e = Event.from_ical(evt)
+                    e = Event.from_ical(evt, self.log)
                     if e:
                         self.events[e.uid] = e
                         print "Found event: {}".format(e)
@@ -104,7 +107,7 @@ class Scheduler(ApplicationSession):
 
     def execute(self):
         with self.lock:
-            self.log.info("Running scheduler loop...")
+            self.log.debug("Running scheduler loop...")
 
             now = datetime.datetime.now(pytz.utc)
             cutoff = now + datetime.timedelta(seconds=60)
@@ -128,7 +131,7 @@ class Scheduler(ApplicationSession):
                 except Exception as e:
                     self.log.critical(e)
 
-        self.log.info("Scheduler loop complete")
+        self.log.debug("Scheduler loop complete")
 
     @inlineCallbacks
     def onJoin(self, details):
