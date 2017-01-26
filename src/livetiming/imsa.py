@@ -66,6 +66,8 @@ class Service(lt_service):
             Stat.LAPS,
             Stat.GAP,
             Stat.INT,
+            Stat.CLASS_GAP,
+            Stat.CLASS_INT,
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -115,7 +117,9 @@ class Service(lt_service):
                 car["F"],
                 car["L"],
                 car["D"],
-                car["G"],
+                car["G"],  # This isn't displayed on IMSA site but is present in data
+                car["DIC"],  # TBH all three of these fields (G, DIC, GIC) seem broken in practice sessions
+                car["GIC"],
                 [lastLap, getFlags(car["C"], lastLap, bestLap)],
                 [bestLap, getFlags(car["C"], bestLap, -1)],
                 car["PS"]
