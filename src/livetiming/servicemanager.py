@@ -17,7 +17,7 @@ class ServiceManagementException(Exception):
 def _parse_args(raw_args):
     parser = argparse.ArgumentParser(description='Manager for live timing service processes.')
 
-    parser.add_argument('action', choices=['start', 'stop'], help='Action: start or stop.')
+    parser.add_argument('action', choices=['start', 'stop', 'restart'], help='Action: start or stop.')
     parser.add_argument('service_class', help='Class name of service to run')
     parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
     parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
@@ -94,6 +94,12 @@ def main():
         _start_service(args)
     elif args.action == "stop":
         _stop_service(args)
+    elif args.action == "restart":
+        try:
+            _stop_service(args)
+        except ServiceManagementException:
+            pass
+        _start_service(args)
 
 
 if __name__ == '__main__':
