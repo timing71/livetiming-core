@@ -48,12 +48,13 @@ class Service(lt_service):
         sessionFetcher.start()
         raceStateFetcher = JSONFetcher("http://multimedia.netstorage.imsa.com/scoring_data/RaceData.json", self.parseRaceState, 5)
         raceStateFetcher.start()
+        self.description = "WeatherTech SportsCar Championship"
 
     def getName(self):
         return "IMSA"
 
     def getDefaultDescription(self):
-        return "WeatherTech SportsCar Championship"
+        return self.description
 
     def getColumnSpec(self):
         return [
@@ -127,6 +128,10 @@ class Service(lt_service):
     def parseSession(self, raw):
         self.sessionState["timeElapsed"] = parseSessionTime(raw["TT"])
         self.sessionState["timeRemain"] = parseSessionTime(raw["TR"])
+
+        if raw['S'] != self.description:
+            self.description = raw['S']
+            self.publishManifest()
 
     def parseRaceState(self, raw):
         self.sessionState["flagState"] = mapFlagStates(int(raw["C"]))
