@@ -90,7 +90,7 @@ class Scheduler(ApplicationSession):
             ics = urllib2.urlopen(self.calendarAddress).read()
             cal = icalendar.Calendar.from_ical(ics)
 
-            cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(minutes=10)
+            cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(seconds=60)
 
             self.events.clear()
 
@@ -133,7 +133,7 @@ class Scheduler(ApplicationSession):
                     self.events.pop(job.uid)
                     hasChanged = True
                 except Exception as e:
-                    self.log.critical(e)
+                    self.log.critical(str(e))
 
         if hasChanged:
             self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
