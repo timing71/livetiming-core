@@ -1,5 +1,4 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from autobahn.twisted.util import sleep
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC
@@ -10,6 +9,7 @@ from random import randint
 from threading import Thread
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 from uuid import uuid4
 import argparse
@@ -116,6 +116,11 @@ class Service(ApplicationSession):
         except Exception as e:
             self.log.error(e)
 
+    def _updateAndPublishRaceState(self):
+        self.log.info("Publishing timing data for {}".format(self.uuid))
+        self._updateRaceState()
+        self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
+
     def getRaceState(self):
         time1 = randint(90000, 95000) / 1000.0
         time2 = randint(90000, 95000) / 1000.0
@@ -169,11 +174,8 @@ class Service(ApplicationSession):
         yield self.publishManifest()
         self.log.info("Published init message")
 
-        while True:
-            self.log.info("Publishing timing data for {}".format(self.uuid))
-            self._updateRaceState()
-            self.publish(unicode(self.uuid), Message(MessageClass.SERVICE_DATA, self.getTimingMessage()).serialise())
-            yield sleep(self.getPollInterval())
+        updater = LoopingCall(self._updateAndPublishRaceState)
+        updater.start(self.getPollInterval())
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
