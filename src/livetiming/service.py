@@ -6,7 +6,6 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.recording import TimingRecorder
 from os import environ, path
 from random import randint
-from threading import Thread
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -16,7 +15,6 @@ import argparse
 import copy
 import simplejson
 import txaio
-import time
 import urllib2
 
 
@@ -189,22 +187,22 @@ class Service(ApplicationSession):
             reactor.stop()
 
 
-class Fetcher(Thread):
+class Fetcher(object):
     def __init__(self, url, callback, interval):
-        Thread.__init__(self)
         self.url = url
         self.callback = callback
         self.interval = interval
-        self.setDaemon(True)
 
-    def run(self):
-        while True:
-            try:
-                feed = urllib2.urlopen(self.url)
-                self.callback(feed.read())
-            except:
-                pass  # Bad data feed :(
-            time.sleep(self.interval)
+    def _run(self):
+        try:
+            feed = urllib2.urlopen(self.url)
+            self.callback(feed.read())
+        except:
+            pass  # Bad data feed :(
+
+    def start(self):
+        self.loop = LoopingCall(self._run)
+        self.loop.start(self.interval)
 
 
 def JSONFetcher(url, callback, interval):
