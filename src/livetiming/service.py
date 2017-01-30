@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
@@ -31,6 +32,7 @@ class Service(ApplicationSession):
             self.recorder = TimingRecorder(self.args["recording_file"])
         else:
             self.recorder = None
+        self.analyser = Analyser(self.getAnalysisModules())
 
     ###################################################
     # These methods MUST be implemented by subclasses #
@@ -126,6 +128,13 @@ class Service(ApplicationSession):
         '''
         return []
 
+    def getAnalysisModules(self):
+        '''
+        May be overridden by subclasses to provide a list of analysis modules
+        (by class) for this service.
+        '''
+        return []
+
     ######################################################
     # These methods MUST NOT be overridden by subclasses #
     ######################################################
@@ -185,6 +194,8 @@ class Service(ApplicationSession):
             self.state["messages"] = (self._createMessages(self.state, newState) + self.state["messages"])[0:100]
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
+
+            self.analyser.receiveStateUpdate(newState, self.getColumnSpec())
             self._saveState()
         except Exception as e:
             self.log.error(e)
