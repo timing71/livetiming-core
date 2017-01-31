@@ -11,7 +11,7 @@ class Analyser(object):
 
     def receiveStateUpdate(self, newState, colSpec):
         if self.oldState:
-            for module in self.modules:
+            for module in self.modules.values():
                 module.receiveStateUpdate(self.oldState, newState, colSpec)
         self.oldState = newState
 
