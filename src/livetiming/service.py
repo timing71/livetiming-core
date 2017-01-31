@@ -177,7 +177,8 @@ class Service(ApplicationSession):
             "description": self._getDescription(),
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
-            "pollInterval": self.getPollInterval()
+            "pollInterval": self.getPollInterval(),
+            "hasAnalysis": not not self.getAnalysisModules()
         }
 
     def _getDescription(self):
