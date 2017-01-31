@@ -18,6 +18,8 @@ class RPC:
     SCHEDULE_LISTING = u"livetiming.schedule.list"
     LIVENESS_CHECK = u"livetiming.service.isAlive.{}"
     REQUEST_STATE = u"livetiming.service.requestState.{}"
+    REQUEST_ANALYSIS_MANIFEST = u"livetiming.service.requestAnalysisManifest.{}"
+    REQUEST_ANALYSIS_DATA = u"livetiming.service.requestAnalysisData.{}"
 
 
 class MessageClass(Enum):

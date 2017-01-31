@@ -1,7 +1,8 @@
+from livetiming.analysis import Analysis
 from livetiming.racing import Stat, FlagStatus
 
 
-class LaptimeAnalysis(object):
+class LaptimeAnalysis(Analysis):
     def __init__(self):
         self.laptimes = {}
         self.lapFlags = {}
@@ -10,6 +11,9 @@ class LaptimeAnalysis(object):
         if carNum not in self.laptimes:
             self.laptimes[carNum] = []
         self.laptimes[carNum].append(laptime)
+
+    def getName(self):
+        return "Lap times"
 
     def receiveStateUpdate(self, oldState, newState, colSpec):
 
