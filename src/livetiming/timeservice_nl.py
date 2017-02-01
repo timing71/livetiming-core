@@ -182,6 +182,7 @@ def parse_extra_args(args):
     parser.add_argument("--tk", help="timeservice.nl feed ID")
     # Known IDs:
     # 24H Series - 17047960b73e48c4a899f43a2459cc20 (Dubai, Jan 2017)
+    # Bathurst 12H - 59225c5480a74b178deaf992976595c3
 
     return parser.parse_args(args)
 
