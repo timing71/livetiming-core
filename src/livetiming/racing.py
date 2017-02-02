@@ -13,8 +13,8 @@ class FlagStatus(IntEnum):
     SC = 7
     RED = 9
 
-    @classmethod
-    def fromString(fs, string):
+    @staticmethod
+    def fromString(string):
         return FlagStatus[string.upper()]
 
 
