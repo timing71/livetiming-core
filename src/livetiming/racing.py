@@ -49,3 +49,16 @@ class Stat(Enum):
         self.title = title
         self.type = ttype
         self.description = description
+
+    @staticmethod
+    def from_title(title):
+        if title == "Lap":
+            return Stat.LAPS  # Hack hack hack :(
+        for s in Stat:
+            if s.title == title:
+                return s
+        return None
+
+    @staticmethod
+    def parse_colspec(colSpec):
+        return [Stat.from_title(s[0]) for s in colSpec]
