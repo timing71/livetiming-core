@@ -43,7 +43,7 @@ class FakeAnalysis(ApplicationSession):
 
         def preprocess():
             for i in range(self.rec.frames + 1):
-                newState = self.rec.getStateAt(i * self.manifest['pollInterval'])
+                newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
                 self.a.receiveStateUpdate(newState, pcs)
                 print "{}/{}".format(i, self.rec.frames)
             print "Preprocessing complete"
