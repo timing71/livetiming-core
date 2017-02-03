@@ -19,12 +19,9 @@ def _parse_args(raw_args):
 
     parser.add_argument('action', choices=['start', 'stop', 'restart'], help='Action: start or stop.')
     parser.add_argument('service_class', help='Class name of service to run')
-    parser.add_argument('-s', '--initial-state', nargs='?', help='Initial state file')
-    parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
-    parser.add_argument('-d', '--description', nargs='?', help='Service description')
     parser.add_argument('-p', '--pid-directory', nargs='?', help='Directory to store pidfiles in', default=_PID_DIRECTORY)
 
-    return parser.parse_args(raw_args)
+    return parser.parse_known_args(raw_args)
 
 
 def _pid_for(service_class, pid_directory):
@@ -50,18 +47,11 @@ def _clear_pid_for(service_class, pid_directory):
     os.remove(pidfile)
 
 
-def _start_service(args):
+def _start_service(args, extras):
     if _pid_for(args.service_class, args.pid_directory) is not None:
         raise ServiceManagementException("Service for {} already running!".format(args.service_class))
     else:
-        extra_args = []
-        if args.recording_file is not None:
-            extra_args += ['-r', args.recording_file]
-        if args.initial_state is not None:
-            extra_args += ['-s', args.initial_state]
-        if args.description is not None:
-            extra_args += ['-d', args.description]
-        p = Popen(['livetiming-service', args.service_class] + extra_args)
+        p = Popen(['livetiming-service', args.service_class] + extras)
         _write_pid_for(args.service_class, p.pid, args.pid_directory)
         print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
 
@@ -81,17 +71,17 @@ def _stop_service(args):
 
 
 def start_service(service_class, args):
-    return _start_service(_parse_args(["start", service_class] + args))
+    return _start_service(*_parse_args(["start", service_class] + args))
 
 
 def stop_service(service_class):
-    return _stop_service(_parse_args(["stop", service_class]))
+    return _stop_service(_parse_args(["stop", service_class])[0])
 
 
 def main():
-    args = _parse_args(sys.argv[1:])
+    args, extras = _parse_args(sys.argv[1:])
     if args.action == "start":
-        _start_service(args)
+        _start_service(args, extras)
     elif args.action == "stop":
         _stop_service(args)
     elif args.action == "restart":
