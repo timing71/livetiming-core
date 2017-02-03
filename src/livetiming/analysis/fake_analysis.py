@@ -18,7 +18,7 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser([LaptimeAnalysis])
+        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis])
 
         self.rec = RecordingFile(recFile)
 
