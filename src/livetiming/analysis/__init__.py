@@ -1,9 +1,13 @@
+from livetiming.network import Message, MessageClass
+
+
 class Analyser(object):
-    def __init__(self, modules=[]):
+    def __init__(self, uuid, publishFunc, modules=[]):
         for m in modules:
             if not issubclass(m, Analysis):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
-
+        self.uuid = uuid
+        self.publish = publishFunc
         self.modules = {}
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass()
@@ -11,8 +15,12 @@ class Analyser(object):
 
     def receiveStateUpdate(self, newState, colSpec):
         if self.oldState:
-            for module in self.modules.values():
+            for mclass, module in self.modules.iteritems():
                 module.receiveStateUpdate(self.oldState, newState, colSpec)
+                self.publish(
+                    u"{}/analysis/{}".format(self.uuid, mclass),
+                    Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
+                )
         self.oldState = newState
 
     def getManifest(self):

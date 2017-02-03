@@ -32,7 +32,7 @@ class Service(ApplicationSession):
             self.recorder = TimingRecorder(self.args["recording_file"])
         else:
             self.recorder = None
-        self.analyser = Analyser(self.getAnalysisModules())
+        self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
 
     ###################################################
     # These methods MUST be implemented by subclasses #
