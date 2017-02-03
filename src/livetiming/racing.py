@@ -10,7 +10,7 @@ class FlagStatus(IntEnum):
     FCY = 5
     CODE_60 = 6
     VSC = 7
-    SC = 7
+    SC = 8
     RED = 9
 
     @staticmethod
