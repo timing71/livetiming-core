@@ -252,14 +252,15 @@ class Service(lt_service):
             self.log.info("Discovered columns: {}".format(availableColumns))
             newColumnSpec = []
             for stat, label, mapFunc in DEFAULT_COLUMN_SPEC:
-                # if mapped col exists in availableColumns
-                # add it to newColumnSpec
-                try:
-                    idx = availableColumns.index(label)
-                    newColumnSpec.append(stat)
-                    self.carFieldMapping.append((idx, mapFunc))
-                except ValueError:
-                    self.log.info("Label {} not found in columns, dropping {}".format(label, stat))
+                if stat not in newColumnSpec:
+                    # if mapped col exists in availableColumns
+                    # and not yet in newColumnSpec, add it to newColumnSpec
+                    try:
+                        idx = availableColumns.index(label)
+                        newColumnSpec.append(stat)
+                        self.carFieldMapping.append((idx, mapFunc))
+                    except ValueError:
+                        self.log.info("Label {} not found in columns, dropping {}".format(label, stat))
             self.columnSpec = newColumnSpec
             self.publishManifest()
             self.carFieldMapping.append((availableColumns.index("POS"), lambda x: int(x[0])))
