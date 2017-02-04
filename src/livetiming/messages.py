@@ -102,8 +102,11 @@ class DriverChangeMessage(PerCarMessage):
         oldDriver = self.getValue(oldCar, Stat.DRIVER)
         newDriver = self.getValue(newCar, Stat.DRIVER)
         carNum = self.getValue(newCar, Stat.NUM)
-        if oldDriver != newDriver and oldDriver != "":
-            return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver)]
+        if oldDriver != newDriver:
+            if oldDriver == "":
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change (to {})".format(carNum, oldDriver, newDriver)]
+            elif newDriver != "":
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver)]
 
 
 # Emits a message if a car sets a personal or overall best.
