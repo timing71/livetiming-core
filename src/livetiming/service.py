@@ -28,7 +28,6 @@ class Service(ApplicationSession):
         self.state = self._getInitialState()
         if self.args["recording_file"] is not None:
             self.recorder = TimingRecorder(self.args["recording_file"])
-            self.recorder.writeManifest(self._createServiceRegistration())
         else:
             self.recorder = None
 
@@ -214,6 +213,8 @@ class Service(ApplicationSession):
 
     def publishManifest(self):
         self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
+        if self.recorder:
+            self.recorder.writeManifest(self._createServiceRegistration())
 
     @inlineCallbacks
     def onJoin(self, details):

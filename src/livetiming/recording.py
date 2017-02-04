@@ -51,20 +51,16 @@ class TimingRecorder(object):
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
 
     def writeManifest(self, serviceRegistration):
-        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
-            if "manifest.json" not in z.namelist():
-                serviceRegistration["startTime"] = time.time()
-                z.writestr("manifest.json", simplejson.dumps(serviceRegistration))
-            else:
-                self.log.info("Not overwriting existing manifest.")
+        serviceRegistration["startTime"] = time.time()
+        updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
 
     def writeState(self, state):
         with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
             if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
-                z.writestr("{:011d}.json".format(time.time()), simplejson.dumps(state))
+                z.writestr("{:011d}.json".format(int(time.time())), simplejson.dumps(state))
             else:  # Write an intra-frame
                 diff = self._diffState(state)
-                z.writestr("{:011d}i.json".format(time.time()), simplejson.dumps(diff))
+                z.writestr("{:011d}i.json".format(int(time.time())), simplejson.dumps(diff))
         self.frames += 1
         self.prevState = state.copy()
 
