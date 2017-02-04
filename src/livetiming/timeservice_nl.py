@@ -193,9 +193,9 @@ class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
 
-        myArgs = parse_extra_args(config.extra['extra_args'])
+        self.args = parse_extra_args(config.extra['extra_args'])
 
-        socketURL = getWebSocketURL(myArgs.tk, getToken())
+        socketURL = getWebSocketURL(self.getTrackID(), getToken())
         factory = WebSocketClientFactory(socketURL)
         factory.protocol = create_protocol(self)
         connectWS(factory)
@@ -209,12 +209,19 @@ class Service(lt_service):
         self.yellowFlags = []
         self.raceFlag = "none"
 
-        self.description = "24H Series"
+        self.description = ""
         self.columnSpec = map(lambda c: c[0], DEFAULT_COLUMN_SPEC)
         self.carFieldMapping = []
 
+    def getTrackID(self):
+        '''
+        By default take track ID from commandline args - but subclasses can
+        override this method to provide a fixed value.
+        '''
+        return self.args.tk
+
     def getName(self):
-        return "24H Series"
+        return "timeservice.nl feed"
 
     def getDefaultDescription(self):
         return self.description
