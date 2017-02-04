@@ -318,7 +318,7 @@ class Service(lt_service):
     def r_d(self, idx):
         if idx == 0:
             self.carState.clear()
-        else:
+        elif idx in self.carState:
             self.carState.pop(idx)
 
     def s_t(self, serverTime):
