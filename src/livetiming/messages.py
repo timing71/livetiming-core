@@ -104,7 +104,7 @@ class DriverChangeMessage(PerCarMessage):
         carNum = self.getValue(newCar, Stat.NUM)
         if oldDriver != newDriver:
             if oldDriver == "":
-                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change (to {})".format(carNum, oldDriver, newDriver)]
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change (to {})".format(carNum, newDriver)]
             elif newDriver != "":
                 return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver)]
 
