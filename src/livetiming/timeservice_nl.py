@@ -190,7 +190,7 @@ class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
 
-        self.args = parse_extra_args(config.extra['extra_args'])
+        self.myArgs = parse_extra_args(config.extra['extra_args'])
 
         socketURL = getWebSocketURL(self.getTrackID(), getToken())
         factory = WebSocketClientFactory(socketURL)
@@ -215,7 +215,7 @@ class Service(lt_service):
         By default take track ID from commandline args - but subclasses can
         override this method to provide a fixed value.
         '''
-        return self.args.tk
+        return self.myArgs.tk
 
     def getName(self):
         return "timeservice.nl feed"
