@@ -45,9 +45,6 @@ def create_protocol(service):
                     self.handleMessage(submessage)
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
                 getattr(service, msgType)(body)
-            elif msgType == "a_i":
-                # stats - ignore
-                pass
             else:
                 print "Unknown message {}: {}".format(msgType, body)
 
