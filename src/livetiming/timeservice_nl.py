@@ -315,6 +315,12 @@ class Service(lt_service):
             if update[0] != -1 and update[1] != -1 and update[0] in self.carState.keys():
                 self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
 
+    def r_d(self, idx):
+        if idx == 0:
+            self.carState.clear()
+        else:
+            self.carState.pop(idx)
+
     def s_t(self, serverTime):
         self.timeOffset = serverToRealTime(serverTime) - utcnow()
         self.log.info("Set time offset to {}".format(self.timeOffset))
