@@ -52,6 +52,10 @@ class TimingRecorder(object):
 
     def writeManifest(self, serviceRegistration):
         serviceRegistration["startTime"] = time.time()
+        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
+            if "manifest.json" not in z.namelist():
+                z.writestr("manifest.json", simplejson.dumps(serviceRegistration))
+                return True
         updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
 
     def writeState(self, state):
