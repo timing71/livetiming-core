@@ -1,4 +1,5 @@
 from livetiming.network import Message, MessageClass
+import time
 
 
 class Analyser(object):
@@ -13,9 +14,9 @@ class Analyser(object):
             self.modules[_fullname(mclass)] = mclass()
         self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
 
-    def receiveStateUpdate(self, newState, colSpec):
+    def receiveStateUpdate(self, newState, colSpec, timestamp=time.time()):
         for mclass, module in self.modules.iteritems():
-            module.receiveStateUpdate(self.oldState, newState, colSpec)
+            module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
             self.publish(
                 u"{}/analysis/{}".format(self.uuid, mclass),
                 Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
