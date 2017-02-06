@@ -11,16 +11,15 @@ class Analyser(object):
         self.modules = {}
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass()
-        self.oldState = None
+        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
 
     def receiveStateUpdate(self, newState, colSpec):
-        if self.oldState:
-            for mclass, module in self.modules.iteritems():
-                module.receiveStateUpdate(self.oldState, newState, colSpec)
-                self.publish(
-                    u"{}/analysis/{}".format(self.uuid, mclass),
-                    Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
-                )
+        for mclass, module in self.modules.iteritems():
+            module.receiveStateUpdate(self.oldState, newState, colSpec)
+            self.publish(
+                u"{}/analysis/{}".format(self.uuid, mclass),
+                Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
+            )
         self.oldState = newState
 
     def getManifest(self):
