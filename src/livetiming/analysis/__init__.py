@@ -3,7 +3,7 @@ import time
 
 
 class Analyser(object):
-    def __init__(self, uuid, publishFunc, modules=[]):
+    def __init__(self, uuid, publishFunc, modules=[], publish=True):
         for m in modules:
             if not issubclass(m, Analysis):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
@@ -13,14 +13,16 @@ class Analyser(object):
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass()
         self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+        self.doPublish = publish
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=time.time()):
         for mclass, module in self.modules.iteritems():
             module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
-            self.publish(
-                u"{}/analysis/{}".format(self.uuid, mclass),
-                Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
-            )
+            if self.doPublish:
+                self.publish(
+                    u"{}/analysis/{}".format(self.uuid, mclass),
+                    Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
+                )
         self.oldState = newState
 
     def getManifest(self):
