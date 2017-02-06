@@ -15,14 +15,10 @@ class StintLength(Analysis):
         '''
         Data format is:
           {
-            "carNum": {
-              "driver1": [
-                [startLap, endLap]
-              ],
-              "driver2": [
-                [startLap]
-              ]
-            }
+            "carNum": [
+              ["driver1",startLap, startTime, endLap, endTime]
+              ["driver2", startLap]
+            ]
           }
         '''
         return self.stints
@@ -51,9 +47,9 @@ class StintLength(Analysis):
 
                 if oldDriver != newDriver:
                     if num in self.carPitInTimes:
-                        self._endDriverStint(num, oldDriver, lapCount, self.carPitInTimes.pop(num))
+                        self._endDriverStint(num, lapCount, self.carPitInTimes.pop(num))
                     else:
-                        self._endDriverStint(num, oldDriver, lapCount, timestamp)
+                        self._endDriverStint(num, lapCount, timestamp)
 
                     if num in self.carPitOutTimes:
                         self._startDriverStint(num, newDriver, lapCount, self.carPitOutTimes.pop(num))
@@ -64,13 +60,10 @@ class StintLength(Analysis):
 
     def _startDriverStint(self, car, driver, lapCount, timestamp):
         if car not in self.stints:
-            self.stints[car] = {}
-        if driver not in self.stints[car]:
-            self.stints[car][driver] = []
-        self.stints[car][driver].append([lapCount, timestamp])
+            self.stints[car] = []
+        self.stints[car].append([driver, lapCount, timestamp])
 
-    def _endDriverStint(self, car, driver, lapCount, timestamp):
+    def _endDriverStint(self, car, lapCount, timestamp):
         if car in self.stints:
-            if driver in self.stints[car]:
-                if len(self.stints[car][driver]) > 0:
-                    self.stints[car][driver][-1] += [lapCount, timestamp]
+            if len(self.stints[car]) > 0:
+                self.stints[car][-1] += [lapCount, timestamp]
