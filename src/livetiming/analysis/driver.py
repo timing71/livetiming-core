@@ -7,6 +7,8 @@ class StintLength(Analysis):
         self.stints = {}
         self.carPitInTimes = {}
         self.carPitOutTimes = {}
+        self.carLaps = {}
+        self.latestTimestamp = 0
 
     def getName(self):
         return "Driver stints"
@@ -17,11 +19,14 @@ class StintLength(Analysis):
           {
             "carNum": [
               ["driver1",startLap, startTime, endLap, endTime]
-              ["driver2", startLap]
+              ["driver2", startLap, startTime, currentLap, currentTime, 1]
             ]
           }
         '''
-        return self.stints
+        mappedStints = {}
+        for car, stints in self.stints.iteritems():
+            mappedStints[car] = self._mapStints(car, stints)
+        return mappedStints
 
     def receiveStateUpdate(self, oldState, newState, colSpec, timestamp):
         numIdx = colSpec.index(Stat.NUM)
@@ -29,10 +34,13 @@ class StintLength(Analysis):
         driverIdx = colSpec.index(Stat.DRIVER)
         stateIdx = colSpec.index(Stat.STATE)
 
+        self.latestTimestamp = timestamp
+
         for newCar in newState["cars"]:
             num = newCar[numIdx]
             newDriver = newCar[driverIdx]
             lapCount = newCar[lapCountIdx]
+            self.carLaps[num] = lapCount
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
             if oldCar:
 
@@ -67,3 +75,12 @@ class StintLength(Analysis):
         if car in self.stints:
             if len(self.stints[car]) > 0:
                 self.stints[car][-1] += [lapCount, timestamp]
+
+    def _mapStints(self, car, stints):
+        mappedStints = []
+        for stint in stints:
+            if len(stint) == 5:
+                mappedStints.append(stint)
+            else:
+                mappedStints.append(stint + [self.carLaps[car], self.latestTimestamp, 1])
+        return mappedStints
