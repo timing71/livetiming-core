@@ -18,7 +18,7 @@ class LaptimeAnalysis(Analysis):
     def getName(self):
         return "Lap times"
 
-    def receiveStateUpdate(self, oldState, newState, colSpec):
+    def receiveStateUpdate(self, oldState, newState, colSpec, timestamp):
 
         numIdx = colSpec.index(Stat.NUM)
         lapIdx = colSpec.index(Stat.LAST_LAP)

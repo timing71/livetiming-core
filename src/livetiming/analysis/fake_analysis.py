@@ -9,6 +9,7 @@ from twisted.internet import reactor
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass
 from livetiming.racing import Stat
 from twisted.internet.defer import inlineCallbacks
+from livetiming.analysis.driver import StintLength
 
 
 class FakeAnalysis(ApplicationSession):
@@ -18,7 +19,7 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis])
+        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis, StintLength])
 
         self.rec = RecordingFile(recFile)
 
@@ -44,8 +45,9 @@ class FakeAnalysis(ApplicationSession):
         def preprocess():
             for i in range(self.rec.frames + 1):
                 newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
-                self.a.receiveStateUpdate(newState, pcs)
+                self.a.receiveStateUpdate(newState, pcs, self.rec.manifest['startTime'] + (i * int(self.manifest['pollInterval'])))
                 print "{}/{}".format(i, self.rec.frames)
+                # time.sleep(4)
             print "Preprocessing complete"
 
         reactor.callInThread(preprocess)
