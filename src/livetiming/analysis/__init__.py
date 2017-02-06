@@ -47,7 +47,7 @@ class Analysis(object):
     def getData(self):
         raise NotImplementedError
 
-    def receiveStateUpdate(self, newState, colSpec):
+    def receiveStateUpdate(self, oldState, newState, colSpec):
         raise NotImplementedError
 
 
