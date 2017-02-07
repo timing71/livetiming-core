@@ -13,6 +13,8 @@ class StintLength(Analysis):
         self.lapReckoner = {}
         self.prevLaptimes = {}
 
+        self.fastestLaps = {}
+
     def getName(self):
         return "Driver stints"
 
@@ -21,8 +23,8 @@ class StintLength(Analysis):
         Data format is:
           {
             "carNum": [
-              ["driver1",startLap, startTime, endLap, endTime]
-              ["driver2", startLap, startTime, currentLap, currentTime, 1]
+              ["driver1",startLap, startTime, endLap, endTime, 0, bestLap]
+              ["driver2", startLap, startTime, currentLap, currentTime, 1, bestLap]
             ]
           }
         '''
@@ -43,7 +45,7 @@ class StintLength(Analysis):
         for newCar in newState["cars"]:
             num = newCar[numIdx]
             newDriver = newCar[driverIdx]
-            lapCount = newCar[lapCountIdx] if lapCountIdx else self.lapReckoner[num] if num in self.lapReckoner else 0
+            lapCount = int(newCar[lapCountIdx]) if lapCountIdx else self.lapReckoner[num] if num in self.lapReckoner else 0
             self.carLaps[num] = lapCount
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
             if oldCar:
@@ -56,10 +58,12 @@ class StintLength(Analysis):
                     if oldCar[lastLapIdx][0] != newCar[lastLapIdx][0]:
                         self.prevLaptimes[num] = newCar[lastLapIdx][0]
                         self.lapReckoner[num] = lapCount + 1
+                        self.fastestLaps[num] = min(self.fastestLaps.get(num, 9999999), newCar[lastLapIdx][0])
                 except:
                     if oldCar[lastLapIdx] != newCar[lastLapIdx]:
                         self.prevLaptimes[num] = newCar[lastLapIdx]
                         self.lapReckoner[num] = lapCount + 1
+                        self.fastestLaps[num] = min(self.fastestLaps.get(num, 9999999), newCar[lastLapIdx])
 
                 if newCarState == "PIT" and oldCarState != "PIT":
                     self.carPitInTimes[num] = timestamp
@@ -83,18 +87,22 @@ class StintLength(Analysis):
     def _startDriverStint(self, car, driver, lapCount, timestamp):
         if car not in self.stints:
             self.stints[car] = []
+        if car in self.fastestLaps:
+            self.fastestLaps.pop(car)
         self.stints[car].append([driver, lapCount, timestamp])
 
     def _endDriverStint(self, car, lapCount, timestamp):
         if car in self.stints:
             if len(self.stints[car]) > 0:
-                self.stints[car][-1] += [lapCount, timestamp]
+                fastLap = self.fastestLaps.get(car, None)
+                self.stints[car][-1] += [lapCount, timestamp, 0, fastLap]
 
     def _mapStints(self, car, stints):
         mappedStints = []
         for stint in stints:
-            if len(stint) == 5:
+            if len(stint) == 7:
                 mappedStints.append(stint)
             else:
-                mappedStints.append(stint + [self.carLaps[car], self.latestTimestamp, 1])
+                fastLap = self.fastestLaps.get(car, None)
+                mappedStints.append(stint + [self.carLaps[car], self.latestTimestamp, 1, fastLap])
         return mappedStints
