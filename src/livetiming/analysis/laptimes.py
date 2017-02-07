@@ -22,18 +22,22 @@ class LaptimeAnalysis(Analysis):
 
         numIdx = colSpec.index(Stat.NUM)
         lapIdx = colSpec.index(Stat.LAST_LAP)
-        lapCountIdx = colSpec.index(Stat.LAPS)
+        lapCountIdx = colSpec.index(Stat.LAPS) if Stat.LAPS in colSpec else None
         driverIdx = colSpec.index(Stat.DRIVER)
 
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
 
         if len(newState["cars"]) > 0:
             leader = newState["cars"][0]
-            lapNum = int(leader[lapCountIdx])
+            if lapCountIdx:
+                lapNum = int(leader[lapCountIdx])
+            else:
+                lapNum = len(self.laptimes[leader[numIdx]]) - 1 if leader[numIdx] in self.laptimes else 0
             self.laps[lapNum] = max(self.laps.get(lapNum, -1), flag)
 
         for newCar in newState["cars"]:
             num = newCar[numIdx]
+            lapNum = int(newCar[lapCountIdx]) if lapCountIdx else len(self.laptimes[num]) if num in self.laptimes else 0
             self.drivers[num] = newCar[driverIdx]
             self.thisLapFlags[num] = max(flag, self.thisLapFlags.get(num, FlagStatus.NONE))
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)

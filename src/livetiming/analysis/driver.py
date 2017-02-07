@@ -10,6 +10,9 @@ class StintLength(Analysis):
         self.carLaps = {}
         self.latestTimestamp = 0
 
+        self.lapReckoner = {}
+        self.prevLaptimes = {}
+
     def getName(self):
         return "Driver stints"
 
@@ -30,16 +33,17 @@ class StintLength(Analysis):
 
     def receiveStateUpdate(self, oldState, newState, colSpec, timestamp):
         numIdx = colSpec.index(Stat.NUM)
-        lapCountIdx = colSpec.index(Stat.LAPS)
+        lapCountIdx = colSpec.index(Stat.LAPS) if Stat.LAPS in colSpec else None
         driverIdx = colSpec.index(Stat.DRIVER)
         stateIdx = colSpec.index(Stat.STATE)
+        lastLapIdx = colSpec.index(Stat.LAST_LAP)
 
         self.latestTimestamp = timestamp
 
         for newCar in newState["cars"]:
             num = newCar[numIdx]
             newDriver = newCar[driverIdx]
-            lapCount = newCar[lapCountIdx]
+            lapCount = newCar[lapCountIdx] if lapCountIdx else self.lapReckoner[num] if num in self.lapReckoner else 0
             self.carLaps[num] = lapCount
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
             if oldCar:
@@ -47,6 +51,15 @@ class StintLength(Analysis):
                 oldCarState = oldCar[stateIdx]
                 newCarState = newCar[stateIdx]
                 oldDriver = oldCar[driverIdx]
+
+                try:
+                    if oldCar[lastLapIdx][0] != newCar[lastLapIdx][0]:
+                        self.prevLaptimes[num] = newCar[lastLapIdx][0]
+                        self.lapReckoner[num] = lapCount + 1
+                except:
+                    if oldCar[lastLapIdx] != newCar[lastLapIdx]:
+                        self.prevLaptimes[num] = newCar[lastLapIdx]
+                        self.lapReckoner[num] = lapCount + 1
 
                 if newCarState == "PIT" and oldCarState != "PIT":
                     self.carPitInTimes[num] = timestamp
@@ -65,6 +78,7 @@ class StintLength(Analysis):
                         self._startDriverStint(num, newDriver, lapCount, timestamp)
             else:
                 self._startDriverStint(num, newDriver, lapCount, timestamp)
+                self.prevLaptimes[num] = newCar[lastLapIdx]
 
     def _startDriverStint(self, car, driver, lapCount, timestamp):
         if car not in self.stints:
