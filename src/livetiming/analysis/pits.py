@@ -7,17 +7,27 @@ class Car(object):
         self.num = car
         self.stints = []
         self.inPit = False
+        self.laps = 0
 
     def pitIn(self, lap, timestamp):
         if len(self.stints) > 0:
             currentStint = self.stints[-1]
             currentStint.append(lap)
             currentStint.append(timestamp)
+            currentStint.append(False)
         self.inPit = True
 
     def pitOut(self, lap, timestamp):
         self.stints.append([lap, timestamp])
         self.inPit = False
+
+    def predictedStop(self):
+        if len(self.stints) > 1:  # If we've made at least one stop
+            if len(self.stints[-1]) == 2:  # We're currently on track
+                stintsToConsider = map(lambda stint: stint[2] - stint[0], self.stints[0:-1])
+                outLap = self.stints[-1][0]
+                return float(sum(stintsToConsider) / len(stintsToConsider)) - (self.laps - outLap)
+        return None
 
 
 class PitStopAnalysis(Analysis):
@@ -25,6 +35,7 @@ class PitStopAnalysis(Analysis):
     def __init__(self):
         self.cars = {}
         self.lapReckoner = {}
+        self.latestTimestamp = 0
 
     def getName(self):
         return "Pit stops"
@@ -51,6 +62,7 @@ class PitStopAnalysis(Analysis):
                 except:
                     if oldCar[lastLapIdx] != newCar[lastLapIdx]:
                         self.lapReckoner[num] = lap + 1
+                self._getCar(num).laps = self.lapReckoner.get(num, 0)
 
                 if newCarState == "PIT" and oldCarState != "PIT":
                     self._getCar(num).pitIn(lap, timestamp)
@@ -69,15 +81,28 @@ class PitStopAnalysis(Analysis):
         '''
         Data format:
         {
-          "carNum": [
-            [outLap, outTime, inLap, inTime]
-          ],
-          inPit
-        }
+          "cars": {
+            "carNum": [
+              [
+                [outLap, outTime, inLap, inTime, inProgress]
+              ],
+              inPit,
+              lap,
+              predictedStopLap
+            ]
+          }
+        },
+        "latestTimestamp": latestTimestamp
         '''
-        mappedData = {}
+        mappedData = {"cars": {}, "latestTimestamp": self.latestTimestamp}
 
         for num, car in self.cars.iteritems():
-            mappedData[num] = [car.stints, car.inPit]
+            mappedStints = []
+            for stint in car.stints:
+                if len(stint) == 5:
+                    mappedStints.append(stint)
+                else:
+                    mappedStints.append(stint + [None, self.latestTimestamp, True])
+            mappedData["cars"][num] = [mappedStints, car.inPit, car.laps, car.predictedStop()]
 
         return mappedData
