@@ -102,7 +102,7 @@ class PitStopAnalysis(Analysis):
           "cars": {
             "carNum": [
               [
-                [outLap, outTime, inLap, inTime, inProgress, flag]
+                [outLap, outTime, inLap, inTime, inProgress, lapsUnderYellow]
               ],
               inPit,
               lap,
