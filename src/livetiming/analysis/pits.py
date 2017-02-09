@@ -10,7 +10,7 @@ class Car(object):
     def __init__(self, car):
         self.num = car
         self.stints = []
-        self.inPit = False
+        self.inPit = True
         self.laps = 0
         self.stintFlags = []
 
@@ -24,9 +24,10 @@ class Car(object):
         self.inPit = True
 
     def pitOut(self, lap, timestamp, flag):
-        self.stints.append([lap, timestamp])
-        self.inPit = False
-        self.stintFlags = [flag]
+        if self.inPit:
+            self.stints.append([lap, timestamp])
+            self.inPit = False
+            self.stintFlags = [flag]
 
     def predictedStop(self):
         if len(self.stints) > 1:  # If we've made at least one stop
