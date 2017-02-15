@@ -49,13 +49,12 @@ class Message(object):
         return "<Message class={0} payload={1}>".format(self.msgClass, self.payload)
 
 
-class AuthenticatedService(object):
+def authenticatedService(clazz):
     '''
-    Mixin for WAMP services requiring authentication. Uses env variable LIVETIMING_SHARED_SECRET as a password.
-    This should be inherited BEFORE ApplicationService else the latter overrides these methods!
+    Decorator for ApplicationSessions that require authentication using LIVETIMING_SHARED_SECRET.
     '''
     def onConnect(self):
-        print("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services"))
+        print "Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services")
         self.join(self.config.realm, [u"wampcra"], "services")
 
     def onChallenge(self, challenge):
@@ -81,3 +80,6 @@ class AuthenticatedService(object):
 
         else:
             raise Exception("Invalid authmethod {}".format(challenge.method))
+    clazz.onConnect = onConnect
+    clazz.onChallenge = onChallenge
+    return clazz
