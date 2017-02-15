@@ -1,7 +1,8 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
-from livetiming.network import Channel, Message, MessageClass, Realm, RPC
+from livetiming.network import Channel, Message, MessageClass, Realm, RPC,\
+    AuthenticatedService
 from livetiming.racing import Stat
 from livetiming.recording import TimingRecorder
 from os import environ, path
@@ -18,7 +19,7 @@ import txaio
 import urllib2
 
 
-class Service(ApplicationSession):
+class Service(AuthenticatedService, ApplicationSession):
     log = Logger()
 
     def __init__(self, config):
