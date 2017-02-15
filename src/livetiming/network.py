@@ -1,4 +1,7 @@
+from autobahn.wamp import auth
 from enum import Enum
+
+import os
 
 
 class Realm:
@@ -44,3 +47,37 @@ class Message(object):
 
     def __str__(self):
         return "<Message class={0} payload={1}>".format(self.msgClass, self.payload)
+
+
+class AuthenticatedService(object):
+    '''
+    Mixin for WAMP services requiring authentication. Uses env variable LIVETIMING_SHARED_SECRET as a password.
+    This should be inherited BEFORE ApplicationService else the latter overrides these methods!
+    '''
+    def onConnect(self):
+        print("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services"))
+        self.join(self.config.realm, [u"wampcra"], "services")
+
+    def onChallenge(self, challenge):
+        user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
+        if challenge.method == u"wampcra":
+            print("WAMP-CRA challenge received: {}".format(challenge))
+
+            if u'salt' in challenge.extra:
+                # salted secret
+                key = auth.derive_key(user_secret,
+                                      challenge.extra['salt'],
+                                      challenge.extra['iterations'],
+                                      challenge.extra['keylen'])
+            else:
+                # plain, unsalted secret
+                key = user_secret
+
+            # compute signature for challenge, using the key
+            signature = auth.compute_wcs(key, challenge.extra['challenge'])
+
+            # return the signature to the router for verification
+            return signature
+
+        else:
+            raise Exception("Invalid authmethod {}".format(challenge.method))
