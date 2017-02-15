@@ -30,8 +30,7 @@
                   "disclose": {
                     "caller": false,
                     "publisher": false
-                  },
-                  "cache": true
+                  }
                 }
               ]
             },
@@ -50,8 +49,7 @@
                   "disclose": {
                     "caller": false,
                     "publisher": false
-                  },
-                  "cache": true
+                  }
                 }
               ]
             },
@@ -70,8 +68,7 @@
                   "disclose": {
                     "caller": false,
                     "publisher": false
-                  },
-                  "cache": true
+                  }
                 }
               ]
             }
