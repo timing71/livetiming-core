@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming.network import RPC, Realm, AuthenticatedService
+from livetiming.network import RPC, Realm, authenticatedService
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -199,7 +199,8 @@ class ReplayService(object):
         return self.replayer.getStateAt(timecode)
 
 
-class RecordingsDirectory(AuthenticatedService, ApplicationSession):
+@authenticatedService
+class RecordingsDirectory(ApplicationSession):
     @inlineCallbacks
     def onJoin(self, details):
         self.replayManager = ReplayManager(self.register, "recordings/")

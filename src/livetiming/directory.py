@@ -1,16 +1,13 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming.network import Channel, Message, MessageClass, Realm, RPC,\
-    AuthenticatedService
+from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from os import environ
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 
 
-USER_SECRET = "123456"
-
-
-class Directory(AuthenticatedService, ApplicationSession):
+@authenticatedService
+class Directory(ApplicationSession):
     log = Logger()
 
     def __init__(self, config):

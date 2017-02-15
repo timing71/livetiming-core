@@ -1,7 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming import servicemanager
-from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
-    AuthenticatedService
+from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from os import environ
 from threading import Lock
 from twisted.internet import reactor, task
@@ -70,7 +69,8 @@ class Event(object):
         }
 
 
-class Scheduler(AuthenticatedService, ApplicationSession):
+@authenticatedService
+class Scheduler(ApplicationSession):
     log = Logger()
 
     def __init__(self, config):
