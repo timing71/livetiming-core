@@ -58,8 +58,8 @@
                   "match": "prefix",
                   "allow": {
                     "call": true,
-                    "register": true,
-                    "publish": true,
+                    "register": false,
+                    "publish": false,
                     "subscribe": true
                   },
                   "disclose": {
