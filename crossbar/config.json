@@ -92,6 +92,29 @@
               "role": "anonymous"
             }
           }
+        },
+        {
+          "type": "websocket",
+          "endpoint": {
+            "type": "tcp",
+            "port": 8443,
+            "tls": {
+              "key": "ssl/privkey.pem",
+              "certificate": "ssl/cert.pem",
+              "dhparam": "ssl/dhparam.pem"
+            }
+          },
+          "url": "wss://timing.71wytham.org.uk:8443/ws",
+          "auth": {
+            "wampcra": {
+              "type": "dynamic",
+              "authenticator": "livetiming.authenticate"
+            },
+            "anonymous": {
+              "type": "static",
+              "role": "anonymous"
+            }
+          }
         }
       ],
       "components": [
