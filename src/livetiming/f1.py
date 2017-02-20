@@ -8,15 +8,8 @@ import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
-from livetiming.messages import TimingMessage
+from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
-
-
-class RaceControlMessage(TimingMessage):
-    def _consider(self, oldState, newState):
-        if newState["raceControlMessage"] is not None:
-            msg = newState["raceControlMessage"]
-            return ["Race Control", msg, "raceControl"]
 
 
 def mapTimeFlag(color):
@@ -84,7 +77,8 @@ class Service(lt_service):
         self.sessionState = {}
         server_base_url = getServerConfig()
         self.dataMap = {}
-        self.prevRaceControlMessage = ""
+        self.prevRaceControlMessage = None
+        self.messages = []
         allURL = server_base_url + "all.js"
         allFetcher = MultiLineFetcher(allURL, self.processData, 60)
         allFetcher.start()
@@ -269,10 +263,11 @@ class Service(lt_service):
         state = {
             "cars": cars,
             "session": session,
-            "raceControlMessage": comms["M"] if ("M" in comms and comms["M"] != self.prevRaceControlMessage) else None
         }
 
-        self.prevRaceControlMessage = comms["M"] if "M" in comms else ""
+        if "M" in comms and comms["M"] != self.prevRaceControlMessage:
+            self.messages.append(comms["M"])
+            self.prevRaceControlMessage = comms["M"]
 
         return state
 
@@ -298,5 +293,5 @@ class Service(lt_service):
 
     def getExtraMessageGenerators(self):
         return [
-            RaceControlMessage()
+            RaceControlMessage(self.messages)
         ]
