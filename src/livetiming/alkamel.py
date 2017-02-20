@@ -198,11 +198,11 @@ class Service(lt_service):
     def getRaceState(self):
         session = {}
         session['trackData'] = [
-            u"{:.3g}°C".format(float(self.meteoData["temp"])),
-            u"{:.3g}°C".format(float(self.meteoData["track"])),
-            "{}%".format(self.meteoData["hum"]),
-            "{}mbar".format(self.meteoData["pres"]),
-            "{:.2g}kph".format(float(self.meteoData["wind"])),
+            u"{:.3g}°C".format(float(self.meteoData["temp"])) if "temp" in self.meteoData else "",
+            u"{:.3g}°C".format(float(self.meteoData["track"])) if "track" in self.meteoData else "",
+            "{}%".format(self.meteoData["hum"]) if "hum" in self.meteoData else "",
+            "{}mbar".format(self.meteoData["pres"]) if "pres" in self.meteoData else "",
+            "{:.2g}kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
         ]
 
         session['flagState'] = mapFlag(self.sessionData['flag'])
