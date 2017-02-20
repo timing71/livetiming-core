@@ -124,6 +124,7 @@ class Service(lt_service):
                     '',
                     ''
                 ])
+        self.publishManifest()  # since our description might have changed
 
     def st_refresh(self, data):
         for entry in data:
@@ -194,6 +195,12 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return 1
+
+    def getDefaultDescription(self):
+        if "event_name" in self.sessionData:
+            return self.sessionData["event_name"]
+        else:
+            return ""
 
     def getRaceState(self):
         session = {}
