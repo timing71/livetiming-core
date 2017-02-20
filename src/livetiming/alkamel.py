@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.messages import TimingMessage
+from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from socketIO_client import SocketIO, BaseNamespace
@@ -8,13 +8,6 @@ from threading import Thread
 
 import simplejson
 import time
-
-
-class RaceControlMessage(TimingMessage):
-    def _consider(self, oldState, newState):
-        if 'raceControlMessage' in newState and newState["raceControlMessage"] is not None:
-            msg = newState["raceControlMessage"]
-            return ["Race Control", msg, "raceControl"]
 
 
 def AlkamelNamespaceFactory(feedID, handler):
@@ -101,8 +94,7 @@ class Service(lt_service):
         self.sessionData = {}
         self.meteoData = {}
         self.cars = []
-        self.raceControlMessage = None
-        self.prevRaceControlMessage = None
+        self.messages = []
         self.socketIO = SocketIO(
             'livetiming.alkamelsystems.com',
             80,
@@ -170,7 +162,8 @@ class Service(lt_service):
         self.meteoData.update(data)
 
     def rc_message(self, data):
-        self.raceControlMessage = data
+        for msg in data:
+            self.messages.append(msg.txt)
 
     def getColumnSpec(self):
         return [
@@ -226,12 +219,9 @@ class Service(lt_service):
             elif current_remaining['finaltype'] == 2:
                 session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
-        session['raceControlMessage'] = self.raceControlMessage if self.raceControlMessage else None
-        self.prevRaceControlMessage = self.raceControlMessage
-
         return {"cars": self.cars, "session": session}
 
     def getExtraMessageGenerators(self):
         return [
-            RaceControlMessage()
+            RaceControlMessage(self.messages)
         ]

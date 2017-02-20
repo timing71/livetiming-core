@@ -10,7 +10,7 @@ import urllib2
 from livetiming.racing import FlagStatus, Stat
 from datetime import datetime
 import time
-from livetiming.messages import TimingMessage
+from livetiming.messages import RaceControlMessage
 import argparse
 
 
@@ -128,15 +128,6 @@ def serverToRealTime(serverTime, offset=0):
 
 def realToServerTime(realTime):
     return (realTime * 1000 - timeFactor) * 1000
-
-
-class RaceControlMessage(TimingMessage):
-    def __init__(self, messageList):
-        self.messageList = messageList
-
-    def _consider(self, oldState, newState):
-        if len(self.messageList) > 0:
-            return ["Race Control", self.messageList.pop(), "raceControl"]
 
 
 def ident(val):
