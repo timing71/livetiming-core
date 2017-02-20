@@ -126,3 +126,12 @@ class FastLapMessage(PerCarMessage):
                 return [clazz, u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
             elif newFlags == "sb-new":
                 return [clazz, u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
+
+
+class RaceControlMessage(TimingMessage):
+    def __init__(self, messageList):
+        self.messageList = messageList
+
+    def _consider(self, oldState, newState):
+        if len(self.messageList) > 0:
+            return ["Race Control", self.messageList.pop(), "raceControl"]
