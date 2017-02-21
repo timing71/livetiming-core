@@ -289,6 +289,8 @@ class Service(lt_service):
         if "n" in body:
             self.description = body["n"]
             self.publishManifest()
+        if "c" in body:
+            print "Track length: {}".format(body["c"])
 
     def h_i(self, body):
         self.h_h(body)
@@ -317,6 +319,20 @@ class Service(lt_service):
     def t_p(self, body):
         # track position - ignore
         pass
+#         for P in body:
+#             J = P[0]
+#             carNum = P[1]
+#             position = P[2]  # distance from start line in mm (km * 1e6) - might vary by circuit?
+#             T = P[3]
+#             sector = P[4]  # -1 == pits
+#             speed = P[5]  # mm/s (!)
+#             inPit = P[6]
+#             timestamp = P[7]
+#             print P
+#             print "{} @ {}km (sector {}) Spd: {} km/h Time: {}".format(carNum, position / 1000000.0, sector, 60 * 60 * speed / 1000000, serverToRealTime(timestamp, self.timeOffset))
+
+    def t_l(self, length):
+        print "Track length: {}".format(length)
 
     def mapCar(self, car):
         result = [mapFunc(car[idx]) for idx, mapFunc in self.carFieldMapping]
