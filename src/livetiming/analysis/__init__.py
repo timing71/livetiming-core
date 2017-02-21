@@ -15,7 +15,9 @@ class Analyser(object):
         self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
         self.doPublish = publish
 
-    def receiveStateUpdate(self, newState, colSpec, timestamp=time.time()):
+    def receiveStateUpdate(self, newState, colSpec, timestamp=None):
+        if timestamp is None:
+            timestamp = time.time()
         for mclass, module in self.modules.iteritems():
             module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
             if self.doPublish:
