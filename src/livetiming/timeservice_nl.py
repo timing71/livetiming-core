@@ -230,14 +230,23 @@ class Service(lt_service):
 
     def r_i(self, body):
         if 'r' in body:
-            table = {}
-            for cellspec in body['r']:
-                if cellspec[0] not in table:
-                    table[cellspec[0]] = {}
-                table[cellspec[0]][cellspec[1]] = (cellspec[2], None) if len(cellspec) == 3 else (cellspec[2], cellspec[3])
-            self.carState = table
+            self.carState = {}
+            self.r_c(body['r'])
         if 'l' in body:
             self.r_l(body['l'])
+
+    def r_c(self, body):
+        for update in body:
+            if update[0] != -1 and update[1] != -1:
+                if update[0] not in self.carState:
+                    self.carState[update[0]] = {}
+                self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
+
+    def r_d(self, idx):
+        if idx == 0:
+            self.carState.clear()
+        elif idx in self.carState:
+            self.carState.pop(idx)
 
     def r_l(self, body):
         if 'h' in body:
@@ -300,17 +309,6 @@ class Service(lt_service):
         # delete message
         if msgId in self.yellowFlags:
             self.yellowFlags.remove(msgId)
-
-    def r_c(self, body):
-        for update in body:
-            if update[0] != -1 and update[1] != -1 and update[0] in self.carState.keys():
-                self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
-
-    def r_d(self, idx):
-        if idx == 0:
-            self.carState.clear()
-        elif idx in self.carState:
-            self.carState.pop(idx)
 
     def s_t(self, serverTime):
         self.timeOffset = serverToRealTime(serverTime) - utcnow()
