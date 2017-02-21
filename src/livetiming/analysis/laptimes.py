@@ -4,6 +4,9 @@ from livetiming.racing import Stat, FlagStatus
 
 class LaptimeAnalysis(Analysis):
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.laptimes = {}
         self.thisLapFlags = {}
 

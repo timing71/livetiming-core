@@ -42,6 +42,11 @@ class Analyser(object):
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
+    def reset(self):
+        for module in self.modules.values():
+            module.reset()
+        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+
 
 class Analysis(object):
     def getName(self):
@@ -51,6 +56,9 @@ class Analysis(object):
         raise NotImplementedError
 
     def receiveStateUpdate(self, oldState, newState, colSpec):
+        raise NotImplementedError
+
+    def reset(self):
         raise NotImplementedError
 
 
