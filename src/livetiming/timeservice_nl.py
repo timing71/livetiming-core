@@ -12,6 +12,8 @@ from datetime import datetime
 import time
 from livetiming.messages import RaceControlMessage
 import argparse
+from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.pits import PitStopAnalysis
 
 
 def getToken():
@@ -245,6 +247,7 @@ class Service(lt_service):
     def r_d(self, idx):
         if idx == 0:
             self.carState.clear()
+            self.analyser.reset()
         elif idx in self.carState:
             self.carState.pop(idx)
 
@@ -371,4 +374,10 @@ class Service(lt_service):
     def getExtraMessageGenerators(self):
         return [
             RaceControlMessage(self.messages)
+        ]
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis,
+            PitStopAnalysis
         ]
