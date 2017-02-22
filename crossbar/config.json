@@ -101,6 +101,9 @@
             "tls": {
               "key": "ssl/privkey.pem",
               "certificate": "ssl/cert.pem",
+              "chain_certificates": [
+                "ssl/chain.pem"
+              ],
               "dhparam": "ssl/dhparam.pem"
             }
           },
