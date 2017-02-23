@@ -149,12 +149,20 @@ class Service(lt_service):
                 car[cols[Stat.INT]] = entry['prev']
             if 's1' in entry:
                 car[cols[Stat.S1]] = (entry['s1'], mapModifier(entry['s1i']) if 's1i' in entry else '')
+            elif 's1i' in entry:
+                car[cols[Stat.S1]] = (car[cols[Stat.S1]][0], mapModifier(entry['s1i']))
             if 's2' in entry:
                 car[cols[Stat.S2]] = (entry['s2'], mapModifier(entry['s2i']) if 's2i' in entry else '')
+            elif 's2i' in entry:
+                car[cols[Stat.S2]] = (car[cols[Stat.S2]][0], mapModifier(entry['s2i']))
             if 's3' in entry:
                 car[cols[Stat.S3]] = (entry['s3'], mapModifier(entry['s3i']) if 's3i' in entry else '')
+            elif 's3i' in entry:
+                car[cols[Stat.S3]] = (car[cols[Stat.S3]][0], mapModifier(entry['s3i']))
             if 'last' in entry:
                 car[cols[Stat.LAST_LAP]] = (parseTime(entry['last']), mapModifier(entry['l_i']) if 'l_i' in entry else '')
+            elif 'l_i' in entry:
+                car[cols[Stat.LAST_LAP]] = (car[cols[Stat.LAST_LAP]][0], mapModifier(entry['l_i']))
             if 'best_time' in entry:
                 car[cols[Stat.BEST_LAP]] = parseTime(entry['best_time'])
             if 'pits' in entry:
