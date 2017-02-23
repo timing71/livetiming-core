@@ -107,6 +107,7 @@ class Service(lt_service):
         socketThread.start()
 
         self.hasTrackData = True
+        self.prevRaceControlMessage = None
 
     def session(self, data):
         self.sessionData.update(data)
@@ -194,7 +195,10 @@ class Service(lt_service):
 
     def rc_message(self, data):
         for msg in data:
-            self.messages.append(msg['txt'])
+            if msg['txt'] != self.prevRaceControlMessage:
+                # Duplicate messages can occur as the rc_message is resent after an st_refresh
+                self.messages.append(msg['txt'])
+                self.prevRaceControlMessage = msg['txt']
 
     def getColumnSpec(self):
         return [
