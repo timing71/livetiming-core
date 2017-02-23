@@ -104,7 +104,8 @@
               "chain_certificates": [
                 "ssl/chain.pem"
               ],
-              "dhparam": "ssl/dhparam.pem"
+              "dhparam": "ssl/dhparam.pem",
+              "ciphers": "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AES:RSA+3DES:!ADH:!AECDH:!MD5:!DSS"
             }
           },
           "url": "wss://timing.71wytham.org.uk:8443/ws",
