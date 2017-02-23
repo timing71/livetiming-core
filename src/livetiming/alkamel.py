@@ -138,6 +138,7 @@ class Service(lt_service):
             if 'part_id' in entry:
                 participant = [p for p in self.sessionData['participants'] if p['id'] == entry['part_id']][0]
                 car[cols[Stat.NUM]] = participant['nr']
+                car[cols[Stat.CLASS]] = [c for c in self.sessionData["classes"] if c["id"] == participant['class_id']][0]['n']
                 car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name'])
                 car[cols[Stat.TEAM]] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
                 car[cols[Stat.CAR]] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
