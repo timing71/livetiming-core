@@ -198,6 +198,8 @@ class Service(lt_service):
 
     def getDefaultDescription(self):
         if "event_name" in self.sessionData:
+            if "session_name" in self.sessionData:
+                return "{} - {}".format(self.sessionData["event_name"], self.sessionData["session_name"])
             return self.sessionData["event_name"]
         else:
             return ""
