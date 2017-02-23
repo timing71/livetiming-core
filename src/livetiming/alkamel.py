@@ -21,6 +21,8 @@ def AlkamelNamespaceFactory(feedID, handler):
                 self.emit('subscribe', 't')  # Timing
             if features['meteo'] == '1':
                 self.emit('subscribe', 'm')  # Weather
+            else:
+                handler.meteo(False)
 
         def on_st_refresh(self, data):
             handler.st_refresh(simplejson.loads(data.encode('iso-8859-1')))
@@ -104,6 +106,8 @@ class Service(lt_service):
         socketThread.daemon = True
         socketThread.start()
 
+        self.hasTrackData = True
+
     def session(self, data):
         self.sessionData.update(data)
         if 'participants' in data and not self.cars:
@@ -173,7 +177,11 @@ class Service(lt_service):
         self.st_refresh(data)
 
     def meteo(self, data):
-        self.meteoData.update(data)
+        if data:
+            self.meteoData.update(data)
+        else:
+            self.hasTrackData = False
+            self.publishManifest()
 
     def rc_message(self, data):
         for msg in data:
@@ -199,13 +207,15 @@ class Service(lt_service):
         ]
 
     def getTrackDataSpec(self):
-        return [
-            "Air Temp",
-            "Track Temp",
-            "Humidity",
-            "Pressure",
-            "Wind Speed",
-        ]
+        if self.hasTrackData:
+            return [
+                "Air Temp",
+                "Track Temp",
+                "Humidity",
+                "Pressure",
+                "Wind Speed",
+            ]
+        return []
 
     def getPollInterval(self):
         return 1
@@ -220,13 +230,14 @@ class Service(lt_service):
 
     def getRaceState(self):
         session = {}
-        session['trackData'] = [
-            u"{:.3g}°C".format(float(self.meteoData["temp"])) if "temp" in self.meteoData else "",
-            u"{:.3g}°C".format(float(self.meteoData["track"])) if "track" in self.meteoData else "",
-            "{}%".format(self.meteoData["hum"]) if "hum" in self.meteoData else "",
-            "{}mbar".format(self.meteoData["pres"]) if "pres" in self.meteoData else "",
-            "{:.2g}kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
-        ]
+        if self.hasTrackData:
+            session['trackData'] = [
+                u"{:.3g}°C".format(float(self.meteoData["temp"])) if "temp" in self.meteoData else "",
+                u"{:.3g}°C".format(float(self.meteoData["track"])) if "track" in self.meteoData else "",
+                "{}%".format(self.meteoData["hum"]) if "hum" in self.meteoData else "",
+                "{}mbar".format(self.meteoData["pres"]) if "pres" in self.meteoData else "",
+                "{:.2g}kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
+            ]
 
         session['flagState'] = mapFlag(self.sessionData['flag'])
 
