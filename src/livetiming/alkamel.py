@@ -111,6 +111,7 @@ class Service(lt_service):
                 self.cars.append([
                     participant['nr'],
                     '',
+                    [c for c in data["classes"] if c["id"] == participant['class_id']][0]['n'],
                     u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name']),
                     [f for f in participant['fields'] if f['id'] == 'team'][0]['value'],
                     [f for f in participant['fields'] if f['id'] == 'car'][0]['value'],
@@ -134,27 +135,27 @@ class Service(lt_service):
             if 'part_id' in entry:
                 participant = [p for p in self.sessionData['participants'] if p['id'] == entry['part_id']][0]
                 car[0] = participant['nr']
-                car[2] = u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name'])
-                car[3] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
-                car[4] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
+                car[3] = u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name'])
+                car[4] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
+                car[5] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
             if 'laps' in entry:
-                car[5] = entry['laps']
+                car[6] = entry['laps']
             if 'gap' in entry:
-                car[6] = entry['gap']
+                car[7] = entry['gap']
             if 'prev' in entry:
-                car[7] = entry['prev']
+                car[8] = entry['prev']
             if 's1' in entry:
-                car[8] = (entry['s1'], mapModifier(entry['s1i']) if 's1i' in entry else '')
+                car[9] = (entry['s1'], mapModifier(entry['s1i']) if 's1i' in entry else '')
             if 's2' in entry:
-                car[9] = (entry['s2'], mapModifier(entry['s2i']) if 's2i' in entry else '')
+                car[10] = (entry['s2'], mapModifier(entry['s2i']) if 's2i' in entry else '')
             if 's3' in entry:
-                car[10] = (entry['s3'], mapModifier(entry['s3i']) if 's3i' in entry else '')
+                car[11] = (entry['s3'], mapModifier(entry['s3i']) if 's3i' in entry else '')
             if 'last' in entry:
-                car[11] = (parseTime(entry['last']), mapModifier(entry['l_i']) if 'l_i' in entry else '')
+                car[12] = (parseTime(entry['last']), mapModifier(entry['l_i']) if 'l_i' in entry else '')
             if 'best_time' in entry:
-                car[12] = parseTime(entry['best_time'])
+                car[13] = parseTime(entry['best_time'])
             if 'pits' in entry:
-                car[13] = entry['pits']
+                car[14] = entry['pits']
 
     def st_update(self, data):
         self.st_refresh(data)
@@ -170,6 +171,7 @@ class Service(lt_service):
         return [
             Stat.NUM,
             Stat.STATE,
+            Stat.CLASS,
             Stat.DRIVER,
             Stat.TEAM,
             Stat.CAR,
