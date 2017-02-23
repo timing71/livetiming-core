@@ -141,11 +141,20 @@ class Service(lt_service):
                 car[cols[Stat.STATE]] = mapState(entry['st'])
             if 'part_id' in entry:
                 participant = [p for p in self.sessionData['participants'] if p['id'] == entry['part_id']][0]
+                if 'dri_id' in entry:
+                    participant['_active_driver'] = [d for d in participant['drivers'] if d['id'] == int(entry['dri_id'])][0]
+                if '_active_driver' not in participant:
+                    self.log.warn("No active driver for {}, using first listed driver".format(participant['nr']))
+                    participant['_active_driver'] = participant['drivers'][0]
                 car[cols[Stat.NUM]] = participant['nr']
                 car[cols[Stat.CLASS]] = [c for c in self.sessionData["classes"] if c["id"] == participant['class_id']][0]['n']
-                car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name'])
+                car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['_active_driver']['surname'].upper(), participant['_active_driver']['name'])
                 car[cols[Stat.TEAM]] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
                 car[cols[Stat.CAR]] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
+            if 'dri_id' in entry:
+                participant = [p for p in self.sessionData['participants'] if p['nr'] == car[cols[Stat.NUM]]][0]
+                participant['_active_driver'] = [d for d in participant['drivers'] if d['id'] == int(entry['dri_id'])][0]
+                car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['_active_driver']['surname'].upper(), participant['_active_driver']['name'])
             if 'laps' in entry:
                 car[cols[Stat.LAPS]] = entry['laps']
             if 'gap' in entry:
