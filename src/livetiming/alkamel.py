@@ -185,7 +185,7 @@ class Service(lt_service):
 
     def rc_message(self, data):
         for msg in data:
-            self.messages.append(msg.txt)
+            self.messages.append(msg['txt'])
 
     def getColumnSpec(self):
         return [
