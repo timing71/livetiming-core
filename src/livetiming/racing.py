@@ -42,6 +42,7 @@ class Stat(Enum):
     BS2 = ("BS2", "time", "Best sector 2 time")
     BS3 = ("BS3", "time", "Best sector 3 time")
     SPEED = ("Spd", "numeric")
+    BEST_SPEED = ("B.Spd", "numeric")
     PITS = ("Pits", "numeric")
     PUSH_TO_PASS = ("PTP", "numeric", "Push-to-Pass remaining")
 
