@@ -243,6 +243,8 @@ class Service(ApplicationSession):
 
 
 class Fetcher(object):
+    log = Logger()
+
     def __init__(self, url, callback, interval):
         self.url = url
         self.callback = callback
@@ -251,7 +253,10 @@ class Fetcher(object):
     def _run(self):
         try:
             feed = urllib2.urlopen(self.url)
-            self.callback(feed.read())
+            if feed.getcode() == 200:
+                self.callback(feed.read())
+            else:
+                self.log.warn("HTTP {} on url {}".format(feed.getcode(), self.url))
         except:
             pass  # Bad data feed :(
 
