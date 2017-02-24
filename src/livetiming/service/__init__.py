@@ -202,7 +202,7 @@ class Service(ApplicationSession):
             self.log.error(e)
 
     def _updateAndPublishRaceState(self):
-        self.log.info("Publishing timing data for {}".format(self.uuid))
+        self.log.debug("Publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
         self.publish(unicode(self.uuid), self._requestCurrentState())
 
@@ -243,6 +243,7 @@ class Service(ApplicationSession):
 
         updater = LoopingCall(self._updateAndPublishRaceState)
         updater.start(self.getPollInterval())
+        self.log.info("Service started")
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
