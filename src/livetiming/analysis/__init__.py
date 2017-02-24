@@ -1,0 +1,71 @@
+from livetiming.network import Message, MessageClass
+import time
+
+
+class Analyser(object):
+    def __init__(self, uuid, publishFunc, modules=[], publish=True):
+        for m in modules:
+            if not issubclass(m, Analysis):
+                raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
+        self.uuid = uuid
+        self.publish = publishFunc
+        self.modules = {}
+        for mclass in modules:
+            self.modules[_fullname(mclass)] = mclass()
+        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+        self.doPublish = publish
+
+    def receiveStateUpdate(self, newState, colSpec, timestamp=None):
+        if timestamp is None:
+            timestamp = time.time()
+        for mclass, module in self.modules.iteritems():
+            module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
+            if self.doPublish:
+                self.publish(
+                    u"{}/analysis/{}".format(self.uuid, mclass),
+                    Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
+                )
+        self.oldState = newState
+
+    def getManifest(self):
+        manifest = []
+        for mclass, module in self.modules.iteritems():
+            manifest.append((mclass, module.getName()))
+        return manifest
+
+    def getData(self, mclass=None):
+        if mclass is None:
+            allData = {}
+            for clz, module in self.modules.iteritems():
+                allData[clz] = module.getData()
+            return allData
+        elif mclass in self.modules:
+            return self.modules[mclass].getData()
+        else:
+            raise RuntimeError("No such analysis module: {}".format(mclass))
+
+    def reset(self):
+        for module in self.modules.values():
+            module.reset()
+        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+
+
+class Analysis(object):
+    def getName(self):
+        raise NotImplementedError
+
+    def getData(self):
+        raise NotImplementedError
+
+    def receiveStateUpdate(self, oldState, newState, colSpec):
+        raise NotImplementedError
+
+    def reset(self):
+        raise NotImplementedError
+
+
+def _fullname(ttype):
+    module = ttype.__module__
+    if module is None or module == str.__class__.__module__:
+        return ttype.__name__
+    return module + '.' + ttype.__name__
