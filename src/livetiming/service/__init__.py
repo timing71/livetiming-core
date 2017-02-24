@@ -5,7 +5,6 @@ from livetiming.messages import FlagChangeMessage, CarPitMessage,\
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from livetiming.racing import Stat
 from livetiming.recording import TimingRecorder
-from os import environ, path
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -14,6 +13,7 @@ from uuid import uuid4
 
 import argparse
 import copy
+import os
 import simplejson
 import txaio
 import urllib2
@@ -26,7 +26,7 @@ class Service(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.args = config.extra
-        self.uuid = path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
+        self.uuid = os.path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
         self.state = self._getInitialState()
         if self.args["recording_file"] is not None:
             self.recorder = TimingRecorder(self.args["recording_file"])
@@ -315,7 +315,7 @@ def service_name_from(srv):
 
 
 def main():
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
+    router = unicode(os.environ["LIVETIMING_ROUTER"])
 
     args, extra_args = parse_args()
 
