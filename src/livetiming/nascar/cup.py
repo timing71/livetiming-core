@@ -24,10 +24,10 @@ class Service(lt_service):
     log = Logger()
 
     def getName(self):
-        return "NASCAR Sprint Cup"
+        return "NASCAR Cup"
 
     def getDefaultDescription(self):
-        return "NASCAR Sprint Cup"
+        return "NASCAR Cup"
 
     def getColumnSpec(self):
         return [
