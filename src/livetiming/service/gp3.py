@@ -1,5 +1,5 @@
 from autobahn.twisted.websocket import WebSocketClientProtocol
-from livetiming.gp2 import Service as gpservice
+from livetiming.service.gp2 import Service as gpservice
 
 import simplejson
 

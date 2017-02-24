@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from livetiming.racing import FlagStatus, Stat
-from livetiming.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
+from livetiming.service.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
 from twisted.logger import Logger
 
 import time

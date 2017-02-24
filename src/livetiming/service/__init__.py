@@ -311,7 +311,7 @@ def get_class(kls):
 def service_name_from(srv):
     if srv.startswith("livetiming."):
         return srv
-    return "livetiming.{}.Service".format(srv)
+    return "livetiming.service.{}.Service".format(srv)
 
 
 def main():

@@ -1,4 +1,4 @@
-from livetiming.alkamel import Service as alkamel_service
+from livetiming.service.alkamel import Service as alkamel_service
 
 
 class Service(alkamel_service):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from livetiming.lemansseries import Service as LMS
+from livetiming.service.lemansseries import Service as LMS
 
 
 class Service(LMS):
