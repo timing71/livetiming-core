@@ -60,24 +60,37 @@ class Service(lt_service):
             self.publishManifest()
 
         cars = []
+
+        bestLapCar = None
+        bestLapTime = None
+
         for car in sorted(raw["vehicles"], key=lambda car: car["running_position"]):
-            try:
-                cars.append([
-                    car["vehicle_number"],
-                    "RUN" if car["is_on_track"] else "PIT",
-                    car["driver"]["full_name"].replace("#", "").replace("*", "").replace("(i)", "").strip(),
-                    car["vehicle_manufacturer"],
-                    car["laps_completed"],
-                    car["delta"],
-                    "-" if len(cars) == 0 else car["delta"] if len(cars) == 1 else car["delta"] - cars[-1][5],
-                    (car["last_lap_time"], ""),
-                    car["last_lap_speed"],
-                    (car["best_lap_time"], ""),
-                    (car["best_lap_speed"], ""),
-                    len(car["pit_stops"])
-                ])
-            except Exception as t:
-                print t
+
+            if bestLapCar is None or (bestLapTime > car["best_lap_time"] and car["best_lap_time"] > 0):
+                bestLapCar = len(cars)
+                bestLapTime = car["best_lap_time"]
+
+            last_lap_flag = "pb" if car["best_lap_time"] == car["last_lap_time"] else ""
+            cars.append([
+                car["vehicle_number"],
+                "RUN" if car["is_on_track"] else "PIT",
+                car["driver"]["full_name"].replace("#", "").replace("*", "").replace("(i)", "").strip(),
+                car["vehicle_manufacturer"],
+                car["laps_completed"],
+                car["delta"],
+                "" if len(cars) == 0 or car["best_lap_time"] == 0 else car["delta"] if len(cars) == 1 else car["delta"] - cars[-1][5],
+                (car["last_lap_time"], last_lap_flag),
+                car["last_lap_speed"],
+                (car["best_lap_time"], ""),
+                car["best_lap_speed"],
+                len(car["pit_stops"])
+            ])
+
+        bestCar = cars[bestLapCar]
+        if bestCar[7][0] == bestCar[9][0]:
+            bestCar[7] = (bestCar[7][0], "sb-new")
+        bestCar[9] = (bestCar[9][0], "sb")
+
         state = {
             "flagState": mapFlagStates(raw["flag_state"]),
             "timeElapsed": raw["elapsed_time"],
