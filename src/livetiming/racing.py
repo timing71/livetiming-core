@@ -1,20 +1,20 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
-class FlagStatus(Enum):
-    GREEN = 0
-    YELLOW = 1
-    FCY = 2
-    CODE_60 = 3
-    SC = 4
-    RED = 5
-    CHEQUERED = 6
-    WHITE = 7
-    VSC = 8
-    NONE = 999
+class FlagStatus(IntEnum):
+    NONE = 0
+    GREEN = 1
+    WHITE = 2
+    CHEQUERED = 3
+    YELLOW = 4
+    FCY = 5
+    CODE_60 = 6
+    VSC = 7
+    SC = 8
+    RED = 9
 
-    @classmethod
-    def fromString(fs, string):
+    @staticmethod
+    def fromString(string):
         return FlagStatus[string.upper()]
 
 
@@ -49,3 +49,16 @@ class Stat(Enum):
         self.title = title
         self.type = ttype
         self.description = description
+
+    @staticmethod
+    def from_title(title):
+        if title == "Lap":
+            return Stat.LAPS  # Hack hack hack :(
+        for s in Stat:
+            if s.title == title:
+                return s
+        return None
+
+    @staticmethod
+    def parse_colspec(colSpec):
+        return [Stat.from_title(s[0]) for s in colSpec]

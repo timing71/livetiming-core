@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
@@ -31,6 +32,7 @@ class Service(ApplicationSession):
             self.recorder = TimingRecorder(self.args["recording_file"])
         else:
             self.recorder = None
+        self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
 
     ###################################################
     # These methods MUST be implemented by subclasses #
@@ -126,6 +128,13 @@ class Service(ApplicationSession):
         '''
         return []
 
+    def getAnalysisModules(self):
+        '''
+        May be overridden by subclasses to provide a list of analysis modules
+        (by class) for this service.
+        '''
+        return []
+
     ######################################################
     # These methods MUST NOT be overridden by subclasses #
     ######################################################
@@ -168,7 +177,8 @@ class Service(ApplicationSession):
             "description": self._getDescription(),
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
-            "pollInterval": self.getPollInterval()
+            "pollInterval": self.getPollInterval(),
+            "hasAnalysis": not not self.getAnalysisModules()
         }
 
     def _getDescription(self):
@@ -185,6 +195,8 @@ class Service(ApplicationSession):
             self.state["messages"] = (self._createMessages(self.state, newState) + self.state["messages"])[0:100]
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
+
+            self.analyser.receiveStateUpdate(newState, self.getColumnSpec())
             self._saveState()
         except Exception as e:
             self.log.error(e)
@@ -222,6 +234,8 @@ class Service(ApplicationSession):
         self.log.info("Session ready for service {}".format(self.uuid))
         yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(self.uuid))
         yield self.register(self._requestCurrentState, RPC.REQUEST_STATE.format(self.uuid))
+        yield self.register(self.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(self.uuid))
+        yield self.register(self.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(self.uuid))
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.info("Subscribed to control channel")
         yield self.publishManifest()
