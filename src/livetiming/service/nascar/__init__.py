@@ -97,8 +97,8 @@ class Service(lt_service):
             "timeRemain": -1
         }
 
-        if raw["run_type"] != 1:
-            state["laps_remain"] = raw["laps_to_go"]
+        if raw["run_type"] == 3:  # race (1 = practice, 2 = quali
+            state["lapsRemain"] = raw["laps_to_go"]
 
         return {"cars": cars, "session": state}
 
