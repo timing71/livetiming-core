@@ -66,7 +66,7 @@ class Service(lt_service):
 
         for car in sorted(raw["vehicles"], key=lambda car: car["running_position"]):
 
-            if bestLapCar is None or (bestLapTime > car["best_lap_time"] and car["best_lap_time"] > 0):
+            if car["best_lap_time"] > 0 and (bestLapCar is None or bestLapTime > car["best_lap_time"]):
                 bestLapCar = len(cars)
                 bestLapTime = car["best_lap_time"]
 
@@ -86,10 +86,11 @@ class Service(lt_service):
                 len(car["pit_stops"])
             ])
 
-        bestCar = cars[bestLapCar]
-        if bestCar[7][0] == bestCar[9][0]:
-            bestCar[7] = (bestCar[7][0], "sb-new")
-        bestCar[9] = (bestCar[9][0], "sb")
+	if bestLapCar:
+            bestCar = cars[bestLapCar]
+            if bestCar[7][0] == bestCar[9][0]:
+                bestCar[7] = (bestCar[7][0], "sb-new")
+            bestCar[9] = (bestCar[9][0], "sb")
 
         state = {
             "flagState": mapFlagStates(raw["flag_state"]),
