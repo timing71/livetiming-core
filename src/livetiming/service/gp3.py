@@ -36,9 +36,3 @@ class Service(gpservice):
 
     def getDefaultDescription(self):
         return "GP3"
-
-    def getWSHeaders(self):
-        return {
-            "Origin": "http://www.gp3series.com",
-            "Referer": "http://www.gp3series.com/Live-Timing/Live-Timing-Inline/"
-        }
