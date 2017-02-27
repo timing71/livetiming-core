@@ -82,8 +82,8 @@ class Service(lt_service):
         servers = ET.parse(serverListXML)
         serversRoot = servers.getroot()
         if "race" in serversRoot.attrib and "session" in serversRoot.attrib:
-            race = servers.getroot().attrib['race']
-            session = servers.getroot().attrib['session']
+            race = serversRoot.attrib['race']
+            session = serversRoot.attrib['session']
             self.hasSession = True
 
             serverIP = random.choice(servers.findall('Server')).get('ip')
@@ -156,6 +156,17 @@ class Service(lt_service):
     def getPollInterval(self):
         return 1
 
+    def _getData(self, key, subkey=None):
+        if key in self.dataMap:
+            for key, val in self.dataMap[key].iteritems():
+                if key != "T" and key != "TY":
+                    if subkey is not None:
+                        if subkey in val:
+                            return val[subkey]
+                        return None
+                    return val
+        return None
+
     def getRaceState(self):
         if not self.hasSession:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
@@ -171,41 +182,27 @@ class Service(lt_service):
         cars = []
         drivers = []
         bestTimes = []
-        latestTimes = []
-        sq = []
-        comms = {}
-        extra = []
         flag = None
 
-        for key, val in self.dataMap["init"].iteritems():
-            if key != "T" and key != "TY":
-                drivers = val["Drivers"]
-                startTime = val["ST"]
+        init = self._getData("init")
+        if init:
+            drivers = init["Drivers"]
+            startTime = init["ST"]
 
-        for key, val in self.dataMap["cpd"].iteritems():
-            if key != "T" and key != "TY":
-                currentTime = val["CT"]
+        currentTime = self._getData("cpd", "CT")
 
-        for key, val in self.dataMap["b"].iteritems():
-            if key != "T" and key != "TY":
-                bestTimes = val["DR"]
-                flag = val["F"]
+        b = self._getData("b")
+        if b:
+            bestTimes = b["DR"]
+            flag = b["F"]
 
-        for key, val in self.dataMap["o"].iteritems():
-            if key != "T" and key != "TY":
-                latestTimes = val["DR"]
+        latestTimes = self._getData("o", "DR")
 
-        for key, val in self.dataMap["sq"].iteritems():
-            if key != "T" and key != "TY":
-                sq = val["DR"]
+        sq = self._getData("sq", "DR")
 
-        for key, val in self.dataMap["c"].iteritems():
-            if key != "T" and key != "TY":
-                comms = val
+        comms = self._getData("c")
 
-        for key, val in self.dataMap["x"].iteritems():
-            if key != "T" and key != "TY":
-                extra = val["DR"]
+        extra = self._getData("x", "DR")
 
         free = self.dataMap["f"]["free"]
 
@@ -306,20 +303,19 @@ class Service(lt_service):
         return state
 
     def _getTrackData(self):
-        for key, val in self.dataMap["sq"].iteritems():
-            if key != "T" and key != "TY":
-                if "W" in val:
-                    w = val["W"].split(",")
-                    return [
-                        u"{}°C".format(w[0]),
-                        u"{}°C".format(w[1]),
-                        "{}kph".format(w[3]),
-                        u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
-                        "{}%".format(w[4]),
-                        "{}mbar".format(w[5]),
-                        "Wet" if w[2] == "1" else "Dry",
-                        w[7]
-                    ]
+        W = self._getData("sq", "W")
+        if W:
+            w = W.split(",")
+            return [
+                u"{}°C".format(w[0]),
+                u"{}°C".format(w[1]),
+                "{}kph".format(w[3]),
+                u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
+                "{}%".format(w[4]),
+                "{}mbar".format(w[5]),
+                "Wet" if w[2] == "1" else "Dry",
+                w[7]
+            ]
         return []
 
     def _getTrackRotationOffset(self):
