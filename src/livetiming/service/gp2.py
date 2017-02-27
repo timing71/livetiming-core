@@ -7,6 +7,21 @@ import simplejson
 import urllib2
 
 
+def createProtocol(series, service):
+    class ClientProtocol(WebSocketClientProtocol):
+
+        def onConnect(self, response):
+            print u"Connected: {}".format(response)
+
+        def onOpen(self):
+            self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}')
+            self.sendMessage('{"H":"streaming","M":"GetData2","A":["' + series + '",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
+
+        def onMessage(self, payload, isBinary):
+            service.onTimingPayload(simplejson.loads(payload.decode('utf8')))
+    return ClientProtocol
+
+
 def getToken():
     tokenData = simplejson.load(urllib2.urlopen("http://gpserieslivetiming.cloudapp.net/streaming/negotiate?clientProtocol=1.5"))
     return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
@@ -84,20 +99,7 @@ class Service(lt_service):
         self.trackFeed = None
 
     def getClientProtocol(self):
-        service = self
-
-        class GP2ClientProtocol(WebSocketClientProtocol):
-
-            def onConnect(self, response):
-                print u"Connected: {}".format(response)
-
-            def onOpen(self):
-                self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["GP2", ["data", "weather", "status", "time"]], I: 0}')
-                self.sendMessage('{"H":"streaming","M":"GetData2","A":["GP2",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
-
-            def onMessage(self, payload, isBinary):
-                service.onTimingPayload(simplejson.loads(payload.decode('utf8')))
-        return GP2ClientProtocol
+        return createProtocol("GP2", self)
 
     def getName(self):
         return "GP2"
