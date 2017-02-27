@@ -9,10 +9,11 @@ from livetiming.racing import FlagStatus, Stat
 def mapFlagStates(rawState):
     flagMap = {
         1: FlagStatus.GREEN,
-        2: FlagStatus.YELLOW,
+        2: FlagStatus.FCY,
         3: FlagStatus.RED,
         4: FlagStatus.CHEQUERED,
         5: FlagStatus.WHITE,
+        8: FlagStatus.YELLOW,  # "warm" whatever that means
         10: FlagStatus.WHITE
     }
     if rawState in flagMap:
@@ -66,7 +67,7 @@ class Service(lt_service):
 
         for car in sorted(raw["vehicles"], key=lambda car: car["running_position"]):
 
-            if bestLapCar is None or (bestLapTime > car["best_lap_time"] and car["best_lap_time"] > 0):
+            if car["best_lap_time"] > 0 and (bestLapCar is None or bestLapTime > car["best_lap_time"]):
                 bestLapCar = len(cars)
                 bestLapTime = car["best_lap_time"]
 
@@ -86,10 +87,11 @@ class Service(lt_service):
                 len(car["pit_stops"])
             ])
 
-        bestCar = cars[bestLapCar]
-        if bestCar[7][0] == bestCar[9][0]:
-            bestCar[7] = (bestCar[7][0], "sb-new")
-        bestCar[9] = (bestCar[9][0], "sb")
+	if bestLapCar:
+            bestCar = cars[bestLapCar]
+            if bestCar[7][0] == bestCar[9][0]:
+                bestCar[7] = (bestCar[7][0], "sb-new")
+            bestCar[9] = (bestCar[9][0], "sb")
 
         state = {
             "flagState": mapFlagStates(raw["flag_state"]),
@@ -97,8 +99,8 @@ class Service(lt_service):
             "timeRemain": -1
         }
 
-        if raw["run_type"] != 1:
-            state["laps_remain"] = raw["laps_to_go"]
+        if raw["run_type"] == 3:  # race (1 = practice, 2 = quali
+            state["lapsRemain"] = raw["laps_to_go"]
 
         return {"cars": cars, "session": state}
 
