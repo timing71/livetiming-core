@@ -16,24 +16,6 @@ def getWebSocketURL(token):
     return "ws://gpserieslivetiming.cloudapp.net/streaming/connect?transport=webSockets&clientProtocol=1.5&connectionToken={}&connectionData=%5B%7B%22name%22%3A%22streaming%22%7D%5D&tid=9".format(urllib2.quote(token[1]))
 
 
-connector = None
-
-
-class GP2ClientProtocol(WebSocketClientProtocol):
-
-    def onConnect(self, response):
-        print u"Connected: {}".format(response)
-
-    def onOpen(self):
-        self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["GP2", ["data", "weather", "status", "time"]], I: 0}')
-        self.sendMessage('{"H":"streaming","M":"GetData2","A":["GP2",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
-
-    def onMessage(self, payload, isBinary):
-        global connector
-        if connector is not None:
-            connector.onTimingPayload(simplejson.loads(payload.decode('utf8')))
-
-
 def parseState(rawState):
     if rawState["InPit"] == 1:
         return "PIT"
@@ -88,8 +70,6 @@ def parseFlag(rawFlag):
 class Service(lt_service):
     def __init__(self, config):
         lt_service.__init__(self, config)
-        global connector
-        connector = self
         socketURL = getWebSocketURL(getToken())
         factory = WebSocketClientFactory(socketURL)
         factory.protocol = self.getClientProtocol()
@@ -104,6 +84,19 @@ class Service(lt_service):
         self.trackFeed = None
 
     def getClientProtocol(self):
+        service = self
+
+        class GP2ClientProtocol(WebSocketClientProtocol):
+
+            def onConnect(self, response):
+                print u"Connected: {}".format(response)
+
+            def onOpen(self):
+                self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["GP2", ["data", "weather", "status", "time"]], I: 0}')
+                self.sendMessage('{"H":"streaming","M":"GetData2","A":["GP2",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
+
+            def onMessage(self, payload, isBinary):
+                service.onTimingPayload(simplejson.loads(payload.decode('utf8')))
         return GP2ClientProtocol
 
     def getName(self):
