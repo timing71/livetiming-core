@@ -98,6 +98,8 @@ class Service(lt_service):
         self.sessionFeed = None
         self.trackFeed = None
 
+        self.description = self.getName()
+
     def getClientProtocol(self):
         return createProtocol("GP2", self)
 
@@ -105,7 +107,7 @@ class Service(lt_service):
         return "GP2"
 
     def getDefaultDescription(self):
-        return "GP2"
+        return self.description
 
     def getPollInterval(self):
         return 1
@@ -151,6 +153,12 @@ class Service(lt_service):
                         car["pits"]["Value"],
                         int(car["position"]["Value"])
                     ])
+
+                newDescription = payload["R"]["data"][1]["Session"]
+                if self.description != newDescription:
+                    self.description = newDescription
+                    self.publishManifest()
+
             if "sessionfeed" in payload["R"]:
                 self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]
             if "trackfeed" in payload["R"]:

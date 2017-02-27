@@ -10,6 +10,3 @@ class Service(gpservice):
 
     def getName(self):
         return "GP3"
-
-    def getDefaultDescription(self):
-        return "GP3"
