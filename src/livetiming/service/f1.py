@@ -2,14 +2,19 @@
 from datetime import datetime
 from livetiming.service import MultiLineFetcher, Service as lt_service
 from twisted.logger import Logger
+from twisted.internet import reactor
 import math
 import simplejson
+import time
 import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
+
+
+_F1_SERVICE_YEAR = 2016
 
 
 def mapTimeFlag(color):
@@ -57,35 +62,48 @@ def parseFlagState(flagChar):
     return "green"
 
 
-def getServerConfig():
-    serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/2016/serverlist/svr/serverlist.xml")
-    servers = ET.parse(serverListXML)
-    race = servers.getroot().attrib['race']
-    session = servers.getroot().attrib['session']
-    serverIP = random.choice(servers.findall('Server')).get('ip')
-    Logger().info("Using server {}".format(serverIP))
-    return "http://{}/f1/2016/live/{}/{}/".format(serverIP, race, session)
-
-
 class Service(lt_service):
 
     DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
+    log = Logger()
 
     def __init__(self, config):
         lt_service.__init__(self, config)
         self.carsState = []
         self.sessionState = {}
-        server_base_url = getServerConfig()
         self.dataMap = {}
         self.prevRaceControlMessage = None
         self.messages = []
-        allURL = server_base_url + "all.js"
-        allFetcher = MultiLineFetcher(allURL, self.processData, 60)
-        allFetcher.start()
-        curFetcher = MultiLineFetcher(server_base_url + "cur.js", self.processData, 1)
-        curFetcher.start()
-        self.processData(urllib2.urlopen(allURL).readlines())
-        self.timestampLastUpdated = datetime.now()
+        self.hasSession = False
+        self.configure()
+
+    def configure(self):
+        serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/{}/serverlist/svr/serverlist.xml".format(_F1_SERVICE_YEAR))
+        servers = ET.parse(serverListXML)
+        serversRoot = servers.getroot()
+        if "race" in serversRoot.attrib and "session" in serversRoot.attrib:
+            race = servers.getroot().attrib['race']
+            session = servers.getroot().attrib['session']
+            self.hasSession = True
+
+            serverIP = random.choice(servers.findall('Server')).get('ip')
+            self.log.info("Using server {}".format(serverIP))
+
+            server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
+
+            allURL = server_base_url + "all.js"
+
+            allFetcher = MultiLineFetcher(allURL, self.processData, 60)
+            allFetcher.start()
+
+            curFetcher = MultiLineFetcher(server_base_url + "cur.js", self.processData, 1)
+            curFetcher.start()
+
+            self.processData(urllib2.urlopen(allURL).readlines())
+            self.timestampLastUpdated = datetime.now()
+        else:
+            self.log.info("No live session found, checking again in 30 seconds.")
+            reactor.callLater(30, self.configure)
 
     def processData(self, data):
         for dataline in data:
@@ -139,6 +157,17 @@ class Service(lt_service):
         return 1
 
     def getRaceState(self):
+        if not self.hasSession:
+            self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
+            return {
+                'cars': [],
+                'session': {
+                    "flagState": "none",
+                    "timeElapsed": 0,
+                    "timeRemain": -1
+                }
+            }
+
         cars = []
         drivers = []
         bestTimes = []
