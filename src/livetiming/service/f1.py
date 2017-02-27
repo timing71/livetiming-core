@@ -180,6 +180,11 @@ class Service(lt_service):
         for key, val in self.dataMap["init"].iteritems():
             if key != "T" and key != "TY":
                 drivers = val["Drivers"]
+                startTime = val["ST"]
+
+        for key, val in self.dataMap["cpd"].iteritems():
+            if key != "T" and key != "TY":
+                currentTime = val["CT"]
 
         for key, val in self.dataMap["b"].iteritems():
             if key != "T" and key != "TY":
@@ -281,7 +286,7 @@ class Service(lt_service):
 
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
-            "timeElapsed": 0,
+            "timeElapsed": (currentTime - startTime) / 1000,
             "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds(),
             "trackData": self._getTrackData()
         }
