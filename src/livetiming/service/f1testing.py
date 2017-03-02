@@ -75,7 +75,7 @@ class Service(lt_service):
 
         return {
             "session": {
-                "flagState": "green" if stats["isSessionLive"] else "none",
+                "flagState": "none",
                 "timeElapsed": 0,
                 "timeRemain": -1
             },
