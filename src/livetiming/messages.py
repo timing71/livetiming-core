@@ -118,14 +118,15 @@ class FastLapMessage(PerCarMessage):
         clazz = self.getValue(newCar, Stat.CLASS, "Timing")
         oldTime = self.getValue(oldCar, Stat.LAST_LAP)
         newTime = self.getValue(newCar, Stat.LAST_LAP)
-        oldFlags = oldTime[1]
-        newFlags = newTime[1]
+        if oldTime and newTime:
+            oldFlags = oldTime[1]
+            newFlags = newTime[1]
 
-        if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
-            if newFlags == "pb" and oldFlags == "":
-                return [clazz, u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
-            elif newFlags == "sb-new":
-                return [clazz, u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
+            if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
+                if newFlags == "pb" and oldFlags == "":
+                    return [clazz, u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
+                elif newFlags == "sb-new":
+                    return [clazz, u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
 
 
 class RaceControlMessage(TimingMessage):
