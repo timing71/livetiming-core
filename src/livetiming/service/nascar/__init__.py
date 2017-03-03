@@ -4,6 +4,8 @@ import simplejson
 import random
 from twisted.logger import Logger
 from livetiming.racing import FlagStatus, Stat
+import re
+import logging
 
 
 def mapFlagStates(rawState):
@@ -27,6 +29,7 @@ class Service(lt_service):
     def __init__(self, config):
         super(Service, self).__init__(config)
         self.description = ""
+        self.feedURL = None
 
     def getName(self):
         return "NASCAR"
@@ -105,5 +108,29 @@ class Service(lt_service):
         return {"cars": cars, "session": state}
 
     def getRawFeedData(self):
-        feed = urllib2.urlopen(self.getFeedURL())
-        return simplejson.load(feed)
+        url = "{}".format(self._getFeedURL())
+        self.log.debug("Using url {}".format(url))
+        try:
+            request = urllib2.Request(url)
+            request.add_header("User-Agent", "livetiming")
+            feed = urllib2.urlopen(request)
+            return simplejson.load(feed)
+        except Exception as e:
+            print e
+
+    def getSeriesTag(self):
+        return ""
+
+    def _getFeedURL(self):
+        if not self.feedURL:
+            series = self.getSeriesTag()
+            self.log.info("Retrieving feed URL from http://www.nascar.com/{}racecenter".format(series))
+            raw = None
+            while raw is None or raw.getcode() != 200:
+                rq = urllib2.Request("http://www.nascar.com/{}racecenter".format(series))
+                rq.add_header("User-Agent", "livetiming")
+                raw = urllib2.urlopen(rq)
+            m = re.search("http://www.nascar.com/live/feeds/series.*\.json", raw.read())
+            self.feedURL = m.group(0)
+            self.log.info("Using feed URL {}".format(self.feedURL))
+        return self.feedURL
