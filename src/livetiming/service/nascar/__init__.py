@@ -87,7 +87,7 @@ class Service(lt_service):
                 len(car["pit_stops"])
             ])
 
-	if bestLapCar:
+        if bestLapCar:
             bestCar = cars[bestLapCar]
             if bestCar[7][0] == bestCar[9][0]:
                 bestCar[7] = (bestCar[7][0], "sb-new")
