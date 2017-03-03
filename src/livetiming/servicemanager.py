@@ -89,7 +89,7 @@ def main():
             _stop_service(args)
         except ServiceManagementException:
             pass
-        _start_service(args)
+        _start_service(args, extras)
 
 
 if __name__ == '__main__':
