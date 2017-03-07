@@ -5,6 +5,7 @@ import signal
 import sys
 
 from subprocess32 import Popen
+import re
 
 
 _PID_DIRECTORY = os.path.expanduser("~/.livetiming-service-pids/")
@@ -20,6 +21,7 @@ def _parse_args(raw_args):
     parser.add_argument('action', choices=['start', 'stop', 'restart'], help='Action: start or stop.')
     parser.add_argument('service_class', help='Class name of service to run')
     parser.add_argument('-p', '--pid-directory', nargs='?', help='Directory to store pidfiles in', default=_PID_DIRECTORY)
+    parser.add_argument('-f', '--fresh', action='store_true', help='Don\'t attempt to restore state')
 
     return parser.parse_known_args(raw_args)
 
@@ -47,6 +49,20 @@ def _clear_pid_for(service_class, pid_directory):
     os.remove(pidfile)
 
 
+def _read_uuid_for(service_class):
+    logfile = "{}.log".format(service_class)
+    if os.path.exists(logfile):
+        with open(logfile, 'r') as log:
+            most_recent_pid = None
+            PID_REGEX = re.compile(r"[0-9T\-+:]+ Session ready for service (?P<pid>[0-9a-z]{32})")
+            for line in log:
+                m = PID_REGEX.match(line)
+                if m:
+                    most_recent_pid = m.group("pid")
+            return most_recent_pid
+    return None
+
+
 def _start_service(args, extras):
     if _pid_for(args.service_class, args.pid_directory) is not None:
         raise ServiceManagementException("Service for {} already running!".format(args.service_class))
@@ -70,6 +86,21 @@ def _stop_service(args):
         print "Stopped livetiming-service {} (PID {})".format(args.service_class, pid)
 
 
+def _restart_service(args, extras):
+    if not args.fresh:
+        uuid = _read_uuid_for(args.service_class)
+        if uuid:
+            statefile = "{}.json".format(uuid)
+            if os.path.exists(statefile):
+                print "Reusing existing state for {}".format(uuid)
+                extras += ["-s", statefile]
+    try:
+        _stop_service(args)
+    except ServiceManagementException:
+        pass
+    _start_service(args, extras)
+
+
 def start_service(service_class, args):
     return _start_service(*_parse_args(["start", service_class] + args))
 
@@ -85,11 +116,7 @@ def main():
     elif args.action == "stop":
         _stop_service(args)
     elif args.action == "restart":
-        try:
-            _stop_service(args)
-        except ServiceManagementException:
-            pass
-        _start_service(args, extras)
+        _restart_service(args, extras)
 
 
 if __name__ == '__main__':
