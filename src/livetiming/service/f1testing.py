@@ -59,7 +59,10 @@ class Service(lt_service):
             drivers[driver["racingNumber"]] = driver
 
         for car in stats["testClassification"]:
-            driver = drivers[car["racingNumber"]]
+            if car["racingNumber"] in drivers:
+                driver = drivers[car["racingNumber"]]
+            else:
+                driver = {"driverFullName": car["driverLastName"], "teamName": "?"}
 
             cars.append([
                 car["racingNumber"],
