@@ -31,6 +31,7 @@ setup(
         "lzstring",
         "pyopenssl",
         "service_identity",
+        "signalr-client",
         "simplejson",
         "socketio-client",
         "subprocess32"
