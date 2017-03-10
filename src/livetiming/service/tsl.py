@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
 from requests.sessions import Session
 from signalr import Connection
 from signalr.hubs._hub import HubServer
 from signalr.events._events import EventHook
 from threading import Thread
-from livetiming.racing import Stat
 
 
 ###################################
@@ -81,8 +83,49 @@ class TSLClient(Thread):
                 hub.server.invoke('RegisterConnectionId', self.sessionID, True, False, True)
                 hub.server.invoke_then('GetClassification', self.sessionID)(lambda d: delegate('classification', d))
                 hub.server.invoke_then('GetSessionData', self.sessionID)(lambda d: delegate('session', d))
+                hub.server.invoke_then('GetIntermediatesTimes', self.sessionID)(lambda d: delegate('sectortimes', d))
 
                 connection.wait(None)
+
+
+def mapState(state, inPit):
+    if inPit:
+        return "PIT"
+    if state == "Running":
+        return "RUN"
+    if state == "Finished":
+        return "FIN"
+    if state == "Missing":
+        return "?"
+    return state
+
+
+def parseTime(formattedTime):
+    if formattedTime == "":
+        return 0
+    try:
+        ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+        return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+    except ValueError:
+        ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+        return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+
+
+def mapSessionState(state):
+    mapping = {
+        'Green': FlagStatus.GREEN,
+        'Red': FlagStatus.RED,
+        'Yellow': FlagStatus.YELLOW,
+        'FCY': FlagStatus.FCY,
+        'Finished': FlagStatus.CHEQUERED,
+        'Complete': FlagStatus.CHEQUERED,
+        'Pending': FlagStatus.NONE,
+        'Active': FlagStatus.NONE
+    }
+    if state in mapping:
+        return mapping[state]
+    print "Unknown flag state: {}".format(state)
+    return FlagStatus.NONE
 
 
 class Service(lt_service):
@@ -93,6 +136,26 @@ class Service(lt_service):
 
         self.name = "TSL Timing"
         self.description = ""
+
+        self.cars = {}
+        self.sectorTimes = {}
+        self.trackSectors = {}
+
+        self.flag = FlagStatus.NONE
+        self.timeRemaining = -1
+        self.timeReference = datetime.utcnow()
+        self.lapsRemaining = None
+        self.startTime = datetime.utcnow()
+
+        self.weather = {
+            'tracktemp': None,
+            'trackstate': None,
+            'airtemp': None,
+            'airpressure': None,
+            'windspeed': None,
+            'winddir': None,
+            'humidity': None
+        }
 
     def getHost(self):
         return "livetiming.tsl-timing.com"
@@ -123,13 +186,57 @@ class Service(lt_service):
     def getDefaultDescription(self):
         return self.description
 
+    def getPollInterval(self):
+        return 1
+
+    def getTrackDataSpec(self):
+        return [
+            "Track temp",
+            "Track state",
+            "Air temp",
+            "Air pressure",
+            "Wind speed",
+            "Direction",
+            "Humidity"
+        ]
+
     def getRaceState(self):
+        cars = []
+
+        for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
+            cars.append([
+                car['StartNumber'],
+                car['SubClass'],
+                mapState(car['Status'], car['InPits']),
+                car['Name'],
+                car['Vehicle'],
+                car['Laps'],
+                car['Gap'],
+                car['Diff'],
+                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][0],
+                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][1],
+                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][2],
+                (parseTime(car['LastLapTime']), "pb" if car['PersonalBestTime'] else ""),
+                (parseTime(car['CurrentSessionBest']), "")
+            ])
+
+        now = datetime.utcnow()
+
         return {
-            "cars": [],
+            "cars": cars,
             "session": {
-                "flagState": "none",
-                "timeElapsed": 0,
-                "timeRemain": -1
+                "flagState": self.flag.name.lower(),
+                "timeElapsed": (now - self.startTime).total_seconds(),
+                "timeRemain": max(self.timeRemaining - (now - self.timeReference).total_seconds(), 0),
+                "trackData": [
+                    u"{}°C".format(self.weather['tracktemp']),
+                    self.weather['trackstate'],
+                    u"{}°C".format(self.weather['airtemp']),
+                    "{}mb".format(self.weather['airpressure']),
+                    "{}mph".format(self.weather['windspeed']),
+                    u"{}°".format(self.weather['winddir']),
+                    "{}%".format(self.weather['humidity'])
+                ]
             }
         }
 
@@ -143,5 +250,49 @@ class Service(lt_service):
                 self.description = data["Series"]
             elif data["Name"]:
                 self.description = data["Name"]
-        print data
+        if "State" in data:
+            self.flag = mapSessionState(data['State'])
+        if "TrackConditions" in data:
+            self.weather['trackstate'] = data['TrackConditions']
+        if "LapsRemaining" in data:
+            self.lapsRemaining = data["LapsRemaining"]
+        if "TrackSectors" in data:
+            for sector in data["TrackSectors"]:
+                if sector["Name"][0] == "S" and len(sector["Name"]) == 2:
+                    self.trackSectors[sector['ID']] = int(sector["Name"][1]) - 1
+        if "ActualStart" in data and "UTCOffset" in data:
+            self.startTime = datetime.utcfromtimestamp((data["ActualStart"] - data["UTCOffset"]) / 1e6)
         self.publishManifest()
+
+    def on_classification(self, data):
+        for car in data:
+            self.cars[car['ID']] = car
+
+    def on_settimeremaining(self, data):
+        self.timeRemaining = (60 * (60 * int(data[0]['d'][0]) + int(data[0]['d'][1]))) + int(data[0]['d'][2])
+        self.timeReference = datetime.utcnow()
+
+    def on_updateweather(self, datas):
+        data = datas[0]
+        self.weather.update({
+            'tracktemp': data['TrackTemp'],
+            'airtemp': data['AirTemp'],
+            'airpressure': data['Pressure'],
+            'windspeed': data['WindSpeed'],
+            'winddir': data['WindDirection'],
+            'humidity': data['Humidity']
+        })
+
+    def on_updateresult(self, data):
+        print ">>> updateresult"
+        print data
+        print "<<<"
+
+    def on_sectortimes(self, data):
+        for d in data:
+            cid = d["CompetitorID"]
+            if cid not in self.sectorTimes:
+                self.sectorTimes[cid] = ["", "", ""]
+            sector = self.trackSectors.get(d["Id"], -1)
+            if sector >= 0:
+                self.sectorTimes[cid][sector] = d["Time"] / 1e6
