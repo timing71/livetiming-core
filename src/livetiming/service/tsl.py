@@ -80,7 +80,7 @@ class TSLClient(Thread):
             connection.received += handle
 
             with connection:
-                hub.server.invoke('RegisterConnectionId', self.sessionID, True, False, True)
+                hub.server.invoke('RegisterConnectionId', self.sessionID, True, True, True)
                 hub.server.invoke_then('GetClassification', self.sessionID)(lambda d: delegate('classification', d))
                 hub.server.invoke_then('GetSessionData', self.sessionID)(lambda d: delegate('session', d))
                 hub.server.invoke_then('GetIntermediatesTimes', self.sessionID)(lambda d: delegate('sectortimes', d))
@@ -115,7 +115,7 @@ def mapSessionState(state):
     mapping = {
         'Green': FlagStatus.GREEN,
         'Red': FlagStatus.RED,
-        'Yellow': FlagStatus.YELLOW,
+        'Yellow': FlagStatus.SC,
         'FCY': FlagStatus.FCY,
         'Finished': FlagStatus.CHEQUERED,
         'Complete': FlagStatus.CHEQUERED,
@@ -145,7 +145,8 @@ class Service(lt_service):
         self.timeRemaining = -1
         self.timeReference = datetime.utcnow()
         self.lapsRemaining = None
-        self.startTime = datetime.utcnow()
+        self.startTime = None
+        self.clockRunning = False
 
         self.weather = {
             'tracktemp': None,
@@ -226,8 +227,8 @@ class Service(lt_service):
             "cars": cars,
             "session": {
                 "flagState": self.flag.name.lower(),
-                "timeElapsed": (now - self.startTime).total_seconds(),
-                "timeRemain": max(self.timeRemaining - (now - self.timeReference).total_seconds(), 0),
+                "timeElapsed": (now - self.startTime).total_seconds() if self.startTime else 0,
+                "timeRemain": max(self.timeRemaining - (now - self.timeReference).total_seconds(), 0) if self.clockRunning else self.timeRemaining,
                 "trackData": [
                     u"{}°C".format(self.weather['tracktemp']),
                     self.weather['trackstate'],
@@ -260,7 +261,7 @@ class Service(lt_service):
             for sector in data["TrackSectors"]:
                 if sector["Name"][0] == "S" and len(sector["Name"]) == 2:
                     self.trackSectors[sector['ID']] = int(sector["Name"][1]) - 1
-        if "ActualStart" in data and "UTCOffset" in data:
+        if "ActualStart" in data and data["ActualStart"] and "UTCOffset" in data:
             self.startTime = datetime.utcfromtimestamp((data["ActualStart"] - data["UTCOffset"]) / 1e6)
         self.publishManifest()
 
@@ -271,6 +272,7 @@ class Service(lt_service):
     def on_settimeremaining(self, data):
         self.timeRemaining = (60 * (60 * int(data[0]['d'][0]) + int(data[0]['d'][1]))) + int(data[0]['d'][2])
         self.timeReference = datetime.utcnow()
+        self.clockRunning = data[0]["r"]
 
     def on_updateweather(self, datas):
         data = datas[0]
@@ -284,15 +286,27 @@ class Service(lt_service):
         })
 
     def on_updateresult(self, data):
-        print ">>> updateresult"
+        self.on_classification(data)
+
+    def on_updatesession(self, data):
+        self.on_session(data[0])
+
+    def on_addintermediate(self, data):
+        self.on_sectortimes(data)
+
+    def on_controlbroadcast(self, data):
+        print ">>>> controlbroadcast"
         print data
-        print "<<<"
+        print "<<<<"
 
     def on_sectortimes(self, data):
         for d in data:
             cid = d["CompetitorID"]
-            if cid not in self.sectorTimes:
+            if cid not in self.sectorTimes or d["Id"] == 1:
                 self.sectorTimes[cid] = ["", "", ""]
             sector = self.trackSectors.get(d["Id"], -1)
             if sector >= 0:
                 self.sectorTimes[cid][sector] = d["Time"] / 1e6
+
+    def on_mapanimate(self, _):
+        pass
