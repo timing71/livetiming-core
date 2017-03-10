@@ -47,11 +47,16 @@ def parseSessionTime(formattedTime):
 class Service(lt_service):
     log = Logger()
 
+    def __init__(self, config):
+        super(Service, self).__init__(config)
+        self.name = "IndyCar"
+        self.description = "IndyCar"
+
     def getName(self):
-        return "IndyCar"
+        return self.name
 
     def getDefaultDescription(self):
-        return "IndyCar"
+        return self.description
 
     def getColumnSpec(self):
         return [
@@ -78,7 +83,7 @@ class Service(lt_service):
         timingResults = raw['timing_results']
         seen = set()
         filtered = [seen.add(car["no"]) or car for car in timingResults["Item"] if car["no"] not in seen]
-        for car in sorted(filtered, key=lambda car: int(car["overallRank"])):
+        for car in sorted(filtered, key=lambda car: int(car["rank"])):
             lastLapTime = parseTime(car["lastLapTime"])
             bestLapTime = parseTime(car["bestLapTime"])
             cars.append([
@@ -102,6 +107,17 @@ class Service(lt_service):
         purpleCar[8][1] = "sb-new" if purpleCar[8][0] == purpleCar[10][0] and purpleCar[10][0] > 0 and purpleCar[1] != "PIT" else ""
 
         heartbeat = timingResults['heartbeat']
+
+        shouldRepublish = False
+        if heartbeat["Series"] != self.name:
+            self.name = heartbeat["Series"]
+            shouldRepublish = True
+        if heartbeat["eventName"] != self.description:
+            self.description = heartbeat["eventName"]
+            shouldRepublish = True
+        if shouldRepublish:
+            self.publishManifest()
+
         state = {
             "flagState": mapFlagStates(heartbeat["currentFlag"]),
             "timeElapsed": parseSessionTime(heartbeat["elapsedTime"]),
