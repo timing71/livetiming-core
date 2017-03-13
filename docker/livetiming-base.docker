@@ -5,5 +5,5 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 COPY . /app
 
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip simplejson
 RUN python setup.py install
