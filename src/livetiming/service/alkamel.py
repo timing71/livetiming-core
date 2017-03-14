@@ -110,7 +110,20 @@ class Service(lt_service):
         self.prevRaceControlMessage = None
 
     def session(self, data):
+
+        sessionChange = (
+            ("event_name" in data and ("eventName" not in self.sessionData or data["event_name"] != self.sessionData["event_name"])) or
+            ("session_name" in data and ("session_name" not in self.sessionData or data["session_name"] != self.sessionData["session_name"])) or
+            ("category" in data and ("category" not in self.sessionData or data["category"] != self.sessionData["category"]))
+        )
+
         self.sessionData.update(data)
+
+        if sessionChange:
+            self.publishManifest()  # since our description might have changed
+            self.analyser.reset()
+            self.cars = []
+
         if 'participants' in data and not self.cars:
             for participant in data['participants']:
                 self.cars.append([
@@ -130,7 +143,6 @@ class Service(lt_service):
                     '',
                     ''
                 ])
-        self.publishManifest()  # since our description might have changed
 
     def st_refresh(self, data):
         cols = {}
