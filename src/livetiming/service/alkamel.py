@@ -246,12 +246,15 @@ class Service(lt_service):
         return 1
 
     def getDefaultDescription(self):
+        desc = ""
+
         if "event_name" in self.sessionData:
-            if "session_name" in self.sessionData:
-                return "{} - {}".format(self.sessionData["event_name"], self.sessionData["session_name"])
-            return self.sessionData["event_name"]
-        else:
-            return ""
+            desc = self.sessionData["event_name"]
+        if "category" in self.sessionData:
+            desc = "{} - {}".format(desc, self.sessionData["category"])
+        if "session_name" in self.sessionData:
+            desc = "{} - {}".format(desc, self.sessionData["session_name"])
+        return desc
 
     def getRaceState(self):
         session = {}
