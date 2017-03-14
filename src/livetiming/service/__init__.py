@@ -5,6 +5,7 @@ from livetiming.messages import FlagChangeMessage, CarPitMessage,\
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from livetiming.racing import Stat
 from livetiming.recording import TimingRecorder
+from lzstring import LZString
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -222,7 +223,7 @@ class Service(ApplicationSession):
         return messages
 
     def _requestCurrentState(self):
-        return Message(MessageClass.SERVICE_DATA, self.state).serialise()
+        return Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(self.state))).serialise()
 
     def publishManifest(self):
         self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())

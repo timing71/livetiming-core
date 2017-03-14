@@ -1,4 +1,6 @@
 from livetiming.network import Message, MessageClass
+from lzstring import LZString
+import simplejson
 import time
 
 
@@ -23,7 +25,7 @@ class Analyser(object):
             if self.doPublish:
                 self.publish(
                     u"{}/analysis/{}".format(self.uuid, mclass),
-                    Message(MessageClass.ANALYSIS_DATA, module.getData()).serialise()
+                    Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
                 )
         self.oldState = newState
 

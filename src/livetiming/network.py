@@ -30,6 +30,8 @@ class MessageClass(Enum):
     DIRECTORY_LISTING = 5
     SCHEDULE_LISTING = 6
     ANALYSIS_DATA = 7
+    SERVICE_DATA_COMPRESSED = 8
+    ANALYSIS_DATA_COMPRESSED = 9
 
 
 class Message(object):
