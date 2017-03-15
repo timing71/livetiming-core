@@ -124,12 +124,18 @@ class Service(lt_service):
             self.analyser.reset()
             self.cars = []
 
+        def class_for(classID):
+            possibles = [c for c in data["classes"] if c["id"] == classID]
+            if len(possibles) > 0:
+                return possibles[0]['n']
+            return ""
+
         if 'participants' in data and not self.cars:
             for participant in data['participants']:
                 self.cars.append([
                     participant['nr'],
                     '',
-                    [c for c in data["classes"] if c["id"] == participant['class_id']][0]['n'],
+                    class_for(participant['class_id']),
                     u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name']),
                     [f for f in participant['fields'] if f['id'] == 'team'][0]['value'],
                     [f for f in participant['fields'] if f['id'] == 'car'][0]['value'],
@@ -146,6 +152,13 @@ class Service(lt_service):
 
     def st_refresh(self, data):
         cols = {}
+
+        def class_for(classID):
+            possibles = [c for c in self.sessionData["classes"] if c["id"] == classID]
+            if len(possibles) > 0:
+                return possibles[0]['n']
+            return ""
+
         for idx, col in enumerate(self.getColumnSpec()):
             cols[col] = idx
         for entry in data:
@@ -160,7 +173,7 @@ class Service(lt_service):
                     self.log.warn("No active driver for {}, using first listed driver".format(participant['nr']))
                     participant['_active_driver'] = participant['drivers'][0]
                 car[cols[Stat.NUM]] = participant['nr']
-                car[cols[Stat.CLASS]] = [c for c in self.sessionData["classes"] if c["id"] == participant['class_id']][0]['n']
+                car[cols[Stat.CLASS]] = class_for(participant['class_id'])
                 car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['_active_driver']['surname'].upper(), participant['_active_driver']['name'])
                 car[cols[Stat.TEAM]] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
                 car[cols[Stat.CAR]] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
