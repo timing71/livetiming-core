@@ -112,7 +112,6 @@ class Service(lt_service):
     def session(self, data):
 
         sessionChange = (
-            ("event_name" in data and ("eventName" not in self.sessionData or data["event_name"] != self.sessionData["event_name"])) or
             ("session_name" in data and ("session_name" not in self.sessionData or data["session_name"] != self.sessionData["session_name"])) or
             ("category" in data and ("category" not in self.sessionData or data["category"] != self.sessionData["category"]))
         )
@@ -261,10 +260,8 @@ class Service(lt_service):
     def getDefaultDescription(self):
         desc = ""
 
-        if "event_name" in self.sessionData:
-            desc = self.sessionData["event_name"]
         if "category" in self.sessionData:
-            desc = "{} - {}".format(desc, self.sessionData["category"])
+            desc = self.sessionData["category"]
         if "session_name" in self.sessionData:
             desc = "{} - {}".format(desc, self.sessionData["session_name"])
         return desc
