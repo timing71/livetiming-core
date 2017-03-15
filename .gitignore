@@ -42,3 +42,4 @@ crossbar/.crossbar/node.key
 /*.log
 /recordings/
 .idea
+web/app/config/config.json
