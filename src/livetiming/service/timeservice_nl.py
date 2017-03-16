@@ -173,8 +173,9 @@ def parse_extra_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--tk", help="timeservice.nl feed ID")
     # Known IDs:
-    # 24H Series - 17047960b73e48c4a899f43a2459cc20 (Dubai, Jan 2017)
+    # Dubai - 17047960b73e48c4a899f43a2459cc20
     # Bathurst 12H - 59225c5480a74b178deaf992976595c3
+    # Mugello - 237baff60dfb4291ab20f72319e79aa2
 
     return parser.parse_args(args)
 
@@ -205,9 +206,19 @@ class Service(lt_service):
 
     def getTrackID(self):
         '''
-        By default take track ID from commandline args - but subclasses can
-        override this method to provide a fixed value.
+        By default take track ID or alias from commandline args - but
+        subclasses can override this method to provide a fixed value.
         '''
+        known_tracks = {
+            'bathurst': '59225c5480a74b178deaf992976595c3',
+            'demo': 'aed5546e3b5e46aeb6ba564f6f72457d',
+            'dubai': '17047960b73e48c4a899f43a2459cc20',
+            'mugello': '237baff60dfb4291ab20f72319e79aa2'
+        }
+
+        if self.myArgs.tk in known_tracks:
+            return known_tracks[self.myArgs.tk]
+
         return self.myArgs.tk
 
     def getName(self):
