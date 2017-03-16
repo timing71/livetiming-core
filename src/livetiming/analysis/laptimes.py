@@ -31,10 +31,10 @@ class LaptimeAnalysis(Analysis):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
 
         if len(newState["cars"]) > 0:
-            leader = newState["cars"][0]
             if lapCountIdx:
-                lapNum = int(leader[lapCountIdx]) if leader[lapCountIdx] != "" else 0
+                lapNum = max(map(lambda c: int(c[lapCountIdx]) if c[lapCountIdx] != "" else 0, newState["cars"]))  # as in practice the "leader" might not have done as many laps as others
             else:
+                leader = newState["cars"][0]
                 lapNum = len(self.laptimes[leader[numIdx]]) - 1 if leader[numIdx] in self.laptimes else 0
             self.laps[lapNum] = max(self.laps.get(lapNum, -1), flag)
 
@@ -62,14 +62,16 @@ class LaptimeAnalysis(Analysis):
     def getData(self):
         times = {}
 
+        for num, driver in self.drivers.iteritems():
+            times[num] = {"name": driver}
+
         for num, laptimes in self.laptimes.iteritems():
-            times[num] = {
-                "name": self.drivers.get(num, "-"),
-                "laptimes": map(lambda l: (l[0], l[1], l[2].name.lower()), laptimes)
-            }
+            if num not in times:
+                times[num] = {"name": "-"}
+            times[num]["laptimes"] = map(lambda l: (l[0], l[1], l[2].name.lower()), laptimes)
 
         return {
-            "numLaps": len(self.laps.keys()),
+            "numLaps": max(self.laps.keys()),
             "laps": {l: f.name.lower() for l, f in self.laps.iteritems()},
             "times": times
         }
