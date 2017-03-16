@@ -66,7 +66,10 @@ class PitStopAnalysis(Analysis):
         self.latestTimestamp = timestamp
         for newCar in newState["cars"]:
             num = newCar[numIdx]
-            lap = int(newCar[lapCountIdx]) if lapCountIdx else self.lapReckoner[num] if num in self.lapReckoner else 0
+            if lapCountIdx:
+                lap = int(newCar[lapCountIdx]) if newCar[lapCountIdx] != "" else 0
+            else:
+                lap = self.lapReckoner[num] if num in self.lapReckoner else 0
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
             if oldCar:
 
