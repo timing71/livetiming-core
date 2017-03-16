@@ -5,6 +5,7 @@ from livetiming.service import Service as lt_service
 
 import simplejson
 import urllib2
+from livetiming.analysis.laptimes import LaptimeAnalysis
 
 
 def createProtocol(series, service):
@@ -126,6 +127,11 @@ class Service(lt_service):
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
+        ]
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis
         ]
 
     def onTimingPayload(self, payload):

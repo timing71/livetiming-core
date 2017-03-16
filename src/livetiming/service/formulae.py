@@ -1,4 +1,5 @@
 from livetiming.service.alkamel import Service as AlkamelService
+from livetiming.analysis.laptimes import LaptimeAnalysis
 
 
 class Service(AlkamelService):
@@ -7,3 +8,8 @@ class Service(AlkamelService):
 
     def getName(self):
         return "Formula E"
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis
+        ]

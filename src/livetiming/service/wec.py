@@ -7,6 +7,9 @@ import time
 from datetime import datetime
 from twisted.logger import Logger
 from livetiming.racing import FlagStatus, Stat
+from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.pits import PitStopAnalysis
 
 
 def mapFlagStates(rawState):
@@ -136,6 +139,13 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return 20
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis,
+            PitStopAnalysis,
+            StintLength
+        ]
 
     def getStaticData(self):
         Logger().info("Retrieving WEC static data...")

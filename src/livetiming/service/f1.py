@@ -12,6 +12,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
+from livetiming.analysis.laptimes import LaptimeAnalysis
 
 
 _F1_SERVICE_YEAR = 2016
@@ -155,6 +156,11 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return 1
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis
+        ]
 
     def _getData(self, key, subkey=None):
         if key in self.dataMap:

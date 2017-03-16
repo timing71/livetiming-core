@@ -8,6 +8,9 @@ from threading import Thread
 
 import simplejson
 import time
+from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.pits import PitStopAnalysis
 
 
 def AlkamelNamespaceFactory(feedID, handler):
@@ -296,4 +299,11 @@ class Service(lt_service):
     def getExtraMessageGenerators(self):
         return [
             RaceControlMessage(self.messages)
+        ]
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis,
+            StintLength,
+            PitStopAnalysis
         ]

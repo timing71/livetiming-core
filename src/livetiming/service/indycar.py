@@ -4,6 +4,8 @@ import simplejson
 from datetime import datetime
 from twisted.logger import Logger
 from livetiming.racing import FlagStatus, Stat
+from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.driver import StintLength
 
 
 def mapFlagStates(rawState):
@@ -132,3 +134,9 @@ class Service(lt_service):
         feed = urllib2.urlopen(feed_url)
         lines = feed.readlines()
         return simplejson.loads(lines[1])
+
+    def getAnalysisModules(self):
+        return [
+            LaptimeAnalysis,
+            StintLength
+        ]
