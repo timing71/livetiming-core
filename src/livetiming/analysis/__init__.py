@@ -2,6 +2,7 @@ from livetiming.network import Message, MessageClass
 from lzstring import LZString
 import simplejson
 import time
+import copy
 
 
 class Analyser(object):
@@ -27,7 +28,7 @@ class Analyser(object):
                     u"{}/analysis/{}".format(self.uuid, mclass),
                     Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
                 )
-        self.oldState = newState
+        self.oldState = copy.deepcopy(newState)
 
     def getManifest(self):
         manifest = []
