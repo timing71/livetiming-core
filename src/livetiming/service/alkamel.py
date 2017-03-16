@@ -298,6 +298,16 @@ class Service(lt_service):
             elif current_remaining['finaltype'] == 2:
                 session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
+        colspec = self.getColumnSpec()
+        for car in self.cars:
+            best = car[colspec.index(Stat.BEST_LAP)]
+            last = car[colspec.index(Stat.LAST_LAP)]
+            s3 = car[colspec.index(Stat.S3)]
+            if last[1] == "sb" and best == last[0] and s3[0] != "":
+                car[colspec.index(Stat.LAST_LAP)] = (last[0], "sb-new")
+            elif last[1] == "sb-new" and s3[0] == "":
+                car[colspec.index(Stat.LAST_LAP)] = (last[0], "sb")
+
         return {"cars": self.cars, "session": session}
 
     def getExtraMessageGenerators(self):
