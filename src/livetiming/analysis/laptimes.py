@@ -33,14 +33,17 @@ class LaptimeAnalysis(Analysis):
         if len(newState["cars"]) > 0:
             leader = newState["cars"][0]
             if lapCountIdx:
-                lapNum = int(leader[lapCountIdx])
+                lapNum = int(leader[lapCountIdx]) if leader[lapCountIdx] != "" else 0
             else:
                 lapNum = len(self.laptimes[leader[numIdx]]) - 1 if leader[numIdx] in self.laptimes else 0
             self.laps[lapNum] = max(self.laps.get(lapNum, -1), flag)
 
         for newCar in newState["cars"]:
             num = newCar[numIdx]
-            lapNum = int(newCar[lapCountIdx]) if lapCountIdx else len(self.laptimes[num]) if num in self.laptimes else 0
+            if lapCountIdx:
+                lapNum = int(newCar[lapCountIdx]) if newCar[lapCountIdx] != "" else 0
+            else:
+                lapNum = len(self.laptimes[num]) if num in self.laptimes else 0
             self.drivers[num] = newCar[driverIdx]
             self.thisLapFlags[num] = max(flag, self.thisLapFlags.get(num, FlagStatus.NONE))
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)

@@ -48,7 +48,10 @@ class StintLength(Analysis):
         for newCar in newState["cars"]:
             num = newCar[numIdx]
             newDriver = newCar[driverIdx]
-            lapCount = int(newCar[lapCountIdx]) if lapCountIdx else self.lapReckoner[num] if num in self.lapReckoner else 0
+            if lapCountIdx:
+                lapCount = int(newCar[lapCountIdx]) if newCar[lapCountIdx] != "" else 0
+            else:
+                lapCount = self.lapReckoner[num] if num in self.lapReckoner else 0
             self.carLaps[num] = lapCount
             oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
             if oldCar:
