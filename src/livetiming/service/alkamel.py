@@ -102,7 +102,8 @@ class Service(lt_service):
         lt_service.__init__(self, config)
         self.sessionData = {}
         self.meteoData = {}
-        self.cars = []
+        self.currentStanding = {}
+        self.participants = {}
         self.messages = []
         self.socketIO = SocketIO(
             'livetiming.alkamelsystems.com',
@@ -138,23 +139,7 @@ class Service(lt_service):
 
         if 'participants' in data and not self.cars:
             for participant in data['participants']:
-                self.cars.append([
-                    participant['nr'],
-                    '',
-                    class_for(participant['class_id']),
-                    u"{}, {}".format(participant['drivers'][0]['surname'].upper(), participant['drivers'][0]['name']),
-                    [f for f in participant['fields'] if f['id'] == 'team'][0]['value'],
-                    [f for f in participant['fields'] if f['id'] == 'car'][0]['value'],
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    ''
-                ])
+                self.participants[participant['id']] = participant
 
     def st_refresh(self, data):
         cols = {}
@@ -168,7 +153,7 @@ class Service(lt_service):
         for idx, col in enumerate(self.getColumnSpec()):
             cols[col] = idx
         for entry in data:
-            car = self.cars[entry['id'] - 1]
+            car = self.currentStanding.get(entry['id'], {})
             if 'st' in entry:
                 car[cols[Stat.STATE]] = mapState(entry['st'])
             if 'part_id' in entry:
@@ -213,6 +198,7 @@ class Service(lt_service):
                 car[cols[Stat.BEST_LAP]] = parseTime(entry['best_time'])
             if 'pits' in entry:
                 car[cols[Stat.PITS]] = entry['pits']
+            self.currentStanding[entry['id']] = car
 
     def st_update(self, data):
         self.st_refresh(data)
@@ -299,7 +285,8 @@ class Service(lt_service):
                 session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
         colspec = self.getColumnSpec()
-        for car in self.cars:
+        cars = map(lambda c: c.values(), self.currentStanding.values())
+        for car in cars:
             best = car[colspec.index(Stat.BEST_LAP)]
             last = car[colspec.index(Stat.LAST_LAP)]
             s3 = car[colspec.index(Stat.S3)]
@@ -307,8 +294,10 @@ class Service(lt_service):
                 car[colspec.index(Stat.LAST_LAP)] = (last[0], "sb-new")
             elif last[1] == "sb-new" and s3[0] == "":
                 car[colspec.index(Stat.LAST_LAP)] = (last[0], "sb")
+            elif last[0] == best:
+                car[colspec.index(Stat.LAST_LAP)] = (last[0], 'pb')
 
-        return {"cars": self.cars, "session": session}
+        return {"cars": cars, "session": session}
 
     def getExtraMessageGenerators(self):
         return [
