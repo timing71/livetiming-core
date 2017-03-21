@@ -97,6 +97,13 @@ def parseTime(formattedTime):
             return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
+def formatDriverName(driver):
+    if driver['name'] != "":
+        return u"{}, {}".format(driver['surname'].upper(), driver['name'])
+    else:
+        return driver['surname'].upper()
+
+
 class Service(lt_service):
     def __init__(self, config, feed):
         lt_service.__init__(self, config)
@@ -165,13 +172,13 @@ class Service(lt_service):
                     participant['_active_driver'] = participant['drivers'][0]
                 car[cols[Stat.NUM]] = participant['nr']
                 car[cols[Stat.CLASS]] = class_for(participant['class_id'])
-                car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['_active_driver']['surname'].upper(), participant['_active_driver']['name'])
+                car[cols[Stat.DRIVER]] = formatDriverName(participant['_active_driver'])
                 car[cols[Stat.TEAM]] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
                 car[cols[Stat.CAR]] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
             if 'dri_id' in entry:
                 participant = [p for p in self.sessionData['participants'] if p['nr'] == car[cols[Stat.NUM]]][0]
                 participant['_active_driver'] = [d for d in participant['drivers'] if d['id'] == int(entry['dri_id'])][0]
-                car[cols[Stat.DRIVER]] = u"{}, {}".format(participant['_active_driver']['surname'].upper(), participant['_active_driver']['name'])
+                car[cols[Stat.DRIVER]] = formatDriverName(participant['_active_driver'])
             if 'laps' in entry:
                 car[cols[Stat.LAPS]] = entry['laps']
             if 'gap' in entry:
