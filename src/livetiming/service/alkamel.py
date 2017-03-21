@@ -270,7 +270,7 @@ class Service(lt_service):
                 "{:.2g} kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
             ]
 
-        session['flagState'] = mapFlag(self.sessionData['flag'])
+        session['flagState'] = mapFlag(self.sessionData.get('flag', "none"))
 
         if self.sessionData['remaining']:
             current_remaining = self.sessionData['remaining']
