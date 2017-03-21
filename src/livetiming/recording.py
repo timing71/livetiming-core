@@ -74,7 +74,7 @@ class TimingRecorder(object):
         sessionDiff = dictdiffer.diff(self.prevState['session'], newState['session'])
         messagesDiff = []
         for newMsg in newState['messages']:
-            if newMsg[0] > self.prevState['messages'][0][0]:
+            if len(self.prevState['messages']) == 0 or newMsg[0] > self.prevState['messages'][0][0]:
                 messagesDiff.append(newMsg)
         return {
             'cars': list(carsDiff),
