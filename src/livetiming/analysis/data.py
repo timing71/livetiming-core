@@ -1,28 +1,74 @@
 from livetiming.racing import Stat, FlagStatus
 from livetiming.recording import RecordingFile
 import copy
+import math
 import re
 import sys
 import time
+
+# Credit this many extra laps for every lap of yellow in a stint
+YELLOW_LAP_MODIFIER = 0.5
 
 
 class Car(object):
     def __init__(self, race_num):
         self.race_num = race_num
         self.laps = []
+        self._stints = []
+        self.inPit = True
         self.current_lap = 0
         self._current_lap_flags = [FlagStatus.NONE]
+        self._current_stint_flags = []
 
     def add_lap(self, laptime, current_flag=FlagStatus.NONE):
+        max_flag = max(self._current_lap_flags)
         self.laps.append([
             self.current_lap,
             laptime,
-            max(self._current_lap_flags)
+            max_flag
         ])
+        self._current_stint_flags.append(max_flag)
         self._current_lap_flags = [current_flag]
 
     def see_flag(self, flag):
         self._current_lap_flags.append(flag)
+
+    def pitIn(self, timestamp):
+        if len(self._stints) > 0:
+            currentStint = self._stints[-1]
+            currentStint.append(self.current_lap)
+            currentStint.append(timestamp)
+            currentStint.append(False)
+            currentStint.append(self.activeStintYellows)
+        self.inPit = True
+
+    def pitOut(self, timestamp, flag):
+        if self.inPit:
+            self._stints.append([self.current_lap, timestamp])
+            self.inPit = False
+            self._current_stint_flags = [flag]
+
+    def predictedStop(self):
+        if len(self._stints) > 1:  # If we've made at least one stop
+            if len(self._stints[-1]) == 2:  # We're currently on track
+                stintsToConsider = map(lambda stint: (stint[2] - stint[0]) + (YELLOW_LAP_MODIFIER * stint[5]), self._stints[0:-1])
+                outLap = self._stints[-1][0]
+                return math.floor(float(sum(stintsToConsider) / len(stintsToConsider)) - (self.current_lap - outLap) + (YELLOW_LAP_MODIFIER * self.activeStintYellows))
+        return None
+
+    @property
+    def activeStintYellows(self):
+        return len([f for f in self._current_stint_flags if f >= FlagStatus.YELLOW])
+
+    @property
+    def stints(self):
+        stints = []
+        for stint in self._stints:
+            if len(stint) == 6:
+                stints.append(stint)
+            else:
+                stints.append(stint + [None, None, True, self.activeStintYellows])
+        return stints
 
 
 class Session(object):
@@ -88,6 +134,7 @@ class DataCentre(object):
 
                 if old_flag != flag:
                     car.see_flag(flag)
+                new_car_state = f.get(new_car, Stat.STATE)
 
                 old_car = next(iter([c for c in oldState["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
 
@@ -104,6 +151,15 @@ class DataCentre(object):
                     except:  # Non-tuple case (do any services still not use tuples?)
                         if old_lap != new_lap or old_lap_num != new_lap_num:
                             car.add_lap(new_lap, flag)
+
+                    old_car_state = f.get(old_car, Stat.STATE)
+
+                    if new_car_state == "PIT" and old_car_state != "PIT":
+                        car.pitIn(timestamp)
+                    elif new_car_state != "PIT" and old_car_state == "PIT":
+                        car.pitOut(timestamp, flag)
+                elif new_car_state != "PIT":
+                    car.pitOut(timestamp, flag)
 
     def _update_session(self, oldState, newState, colSpec, timestamp):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
