@@ -1,11 +1,14 @@
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
+from twisted.logger import Logger
 import simplejson
 import time
 import copy
 
 
 class Analyser(object):
+    log = Logger()
+
     def __init__(self, uuid, publishFunc, modules=[], publish=True):
         for m in modules:
             if not issubclass(m, Analysis):
@@ -24,12 +27,15 @@ class Analyser(object):
 
         if newState["session"].get("flagState", "none") != "none":
             for mclass, module in self.modules.iteritems():
-                module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
-                if self.doPublish:
-                    self.publish(
-                        u"{}/analysis/{}".format(self.uuid, mclass),
-                        Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
-                    )
+                try:
+                    module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
+                    if self.doPublish:
+                        self.publish(
+                            u"{}/analysis/{}".format(self.uuid, mclass),
+                            Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
+                        )
+                except Exception:
+                    self.logger.failure("Exception while updating analysis module {mclass}", mclass=mclass)
         self.oldState = copy.deepcopy(newState)
 
     def getManifest(self):
