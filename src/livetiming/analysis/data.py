@@ -9,6 +9,8 @@ import time
 # Credit this many extra laps for every lap of yellow in a stint
 YELLOW_LAP_MODIFIER = 0.5
 
+TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
+
 
 class Car(object):
     def __init__(self, race_num):
@@ -91,8 +93,8 @@ class FieldExtractor(object):
         self.colSpec = colSpec
 
     def get(self, car, field):
-        idx = self.colSpec.index(field)
-        if idx is not None:
+        if field in self.colSpec:
+            idx = self.colSpec.index(field)
             return car[idx]
         return None
 
@@ -171,11 +173,21 @@ class DataCentre(object):
         from_timing = f.get(car, Stat.LAPS)
         if from_timing:
             return from_timing
-        elif re.match("-- [0-9]+ laps?", f.get(cars[0], Stat.GAP)):
-            # TSNL workaround
-            pass
         else:
-            return len(self.car(race_num).laps)
+            our_num = f.get(car, Stat.NUM)
+            # TSNL put lap count in the "gap" column FSR
+            tsnl = TSNL_LAP_HACK_REGEX.match(f.get(cars[0], Stat.GAP))
+            if tsnl:
+                # Work up until we find the lap count relevant to us
+                lap_count = int(tsnl.group(1))
+                for other_car in cars:
+                    tsnl = TSNL_LAP_HACK_REGEX.match(f.get(other_car, Stat.GAP))
+                    if tsnl:
+                        lap_count = int(tsnl.group(1))
+                    if f.get(other_car, Stat.NUM) == our_num:
+                        return lap_count
+            else:
+                return len(self.car(race_num).laps)
 
 
 if __name__ == '__main__':
