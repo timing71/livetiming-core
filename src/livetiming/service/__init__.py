@@ -146,7 +146,7 @@ class Service(ApplicationSession):
                 stateFile = open(self.args["initial_state"], 'r')
                 return simplejson.load(stateFile)
             except Exception:
-                self.log.failure("Exception trying to load saved state")
+                self.log.failure("Exception trying to load saved state: {log_failure}")
             finally:
                 stateFile.close()
         return {
@@ -164,7 +164,7 @@ class Service(ApplicationSession):
             stateFile = open("{}.json".format(self.uuid), 'w')
             simplejson.dump(self.state, stateFile)
         except Exception:
-            self.log.failure("Exception while saving state")
+            self.log.failure("Exception while saving state: {log_failure}")
         finally:
             stateFile.close()
         if self.recorder:
@@ -200,7 +200,7 @@ class Service(ApplicationSession):
             self.analyser.receiveStateUpdate(newState, self.getColumnSpec())
             self._saveState()
         except Exception:
-            self.log.failure("Exception while updating race state")
+            self.log.failure("Exception while updating race state: {log_failure}")
 
     def _updateAndPublishRaceState(self):
         self.log.debug("Publishing timing data for {}".format(self.uuid))
