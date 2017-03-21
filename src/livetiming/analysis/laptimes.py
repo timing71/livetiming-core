@@ -71,7 +71,7 @@ class LaptimeAnalysis(Analysis):
             times[num]["laptimes"] = map(lambda l: (l[0], l[1], l[2].name.lower()), laptimes)
 
         return {
-            "numLaps": max(self.laps.keys()),
+            "numLaps": max([0] + self.laps.keys()),
             "laps": {l: f.name.lower() for l, f in self.laps.iteritems()},
             "times": times
         }
