@@ -15,19 +15,21 @@ class Analyser(object):
         self.modules = {}
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass()
-        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+        self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.doPublish = publish
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
-        for mclass, module in self.modules.iteritems():
-            module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
-            if self.doPublish:
-                self.publish(
-                    u"{}/analysis/{}".format(self.uuid, mclass),
-                    Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
-                )
+
+        if newState["session"].get("flagState", "none") != "none":
+            for mclass, module in self.modules.iteritems():
+                module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
+                if self.doPublish:
+                    self.publish(
+                        u"{}/analysis/{}".format(self.uuid, mclass),
+                        Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
+                    )
         self.oldState = copy.deepcopy(newState)
 
     def getManifest(self):
