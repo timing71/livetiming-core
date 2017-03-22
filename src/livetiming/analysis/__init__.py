@@ -68,6 +68,7 @@ class Analyser(object):
 class Analysis(object):
     def __init__(self, data_centre):
         self.data_centre = data_centre
+        self.reset()
 
     def getName(self):
         raise NotImplementedError
