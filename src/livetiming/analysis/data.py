@@ -172,7 +172,7 @@ class DataCentre(object):
     def _get_lap_count(self, race_num, car, f, cars):
         from_timing = f.get(car, Stat.LAPS)
         if from_timing:
-            return from_timing
+            return int(from_timing)
         else:
             our_num = f.get(car, Stat.NUM)
             # TSNL put lap count in the "gap" column FSR
