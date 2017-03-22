@@ -1,3 +1,4 @@
+from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
 from twisted.logger import Logger
@@ -15,13 +16,15 @@ class Analyser(object):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
         self.uuid = uuid
         self.publish = publishFunc
+        self.data_centre = DataCentre()
         self.modules = {}
         for mclass in modules:
-            self.modules[_fullname(mclass)] = mclass()
+            self.modules[_fullname(mclass)] = mclass(self.data_centre)
         self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.doPublish = publish
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
+        self.data_centre.update_state(newState, colSpec, timestamp)
         if timestamp is None:
             timestamp = time.time()
 
@@ -59,9 +62,13 @@ class Analyser(object):
         for module in self.modules.values():
             module.reset()
         self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+        self.data_centre.reset()
 
 
 class Analysis(object):
+    def __init__(self, data_centre):
+        self.data_centre = data_centre
+
     def getName(self):
         raise NotImplementedError
 
