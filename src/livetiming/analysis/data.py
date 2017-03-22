@@ -242,7 +242,12 @@ if __name__ == '__main__':
 
     colSpec = Stat.parse_colspec(rec.manifest['colSpec'])
 
+    start_time = time.time()
+
     for i in range(rec.frames + 1):
         newState = rec.getStateAt(i * int(rec.manifest['pollInterval']))
         dc.update_state(newState, colSpec, rec.manifest['startTime'] + (i * int(rec.manifest['pollInterval'])))
         print "{}/{}".format(i, rec.frames)
+
+    stop_time = time.time()
+    print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
