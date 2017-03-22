@@ -3,9 +3,6 @@ from livetiming.racing import Stat
 
 
 class StintLength(Analysis):
-    def __init__(self):
-        self.reset()
-
     def reset(self):
         self.stints = {}
         self.carPitInTimes = {}

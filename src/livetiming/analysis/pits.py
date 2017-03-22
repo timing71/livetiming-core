@@ -43,9 +43,6 @@ class Car(object):
 
 class PitStopAnalysis(Analysis):
 
-    def __init__(self):
-        self.reset()
-
     def reset(self):
         self.cars = {}
         self.lapReckoner = {}
