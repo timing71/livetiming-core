@@ -9,16 +9,17 @@ TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 
 
 class Lap(object):
-    def __init__(self, lap_num, laptime, driver, timestamp, flag):
+    def __init__(self, lap_num, laptime, driver, timestamp, flag, tyre):
         self.lap_num = lap_num
         self.laptime = laptime
         self.driver = driver
         self.timestamp = timestamp
         self.flag = flag
+        self.tyre = tyre
 
 
 class Stint(object):
-    def __init__(self, start_lap, start_time, driver, flag=FlagStatus.NONE):
+    def __init__(self, start_lap, start_time, driver, flag=FlagStatus.NONE, tyre=None):
         self.start_lap = start_lap
         self.start_time = start_time
         self.driver = driver
@@ -26,6 +27,7 @@ class Stint(object):
         self.end_time = None
         self.in_progress = True
         self.flags = [flag]
+        self.tyre = tyre
 
     def finish(self, end_lap, end_time):
         self.end_lap = end_lap
@@ -58,7 +60,7 @@ class Car(object):
         self._current_lap_flags = [FlagStatus.NONE]
         self.initial_driver = None
 
-    def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE):
+    def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
         self.laps.append(
             Lap(
@@ -66,7 +68,8 @@ class Car(object):
                 laptime,
                 driver,
                 timestamp,
-                max_flag
+                max_flag,
+                tyre
             )
         )
         self.current_stint.flags.append(max_flag)
@@ -173,6 +176,7 @@ class DataCentre(object):
                     self.leader_lap = new_leader_lap
                     self.session.flag_change(flag, new_leader_lap, timestamp)
                 driver = f.get(new_car, Stat.DRIVER)
+                tyre = f.get(new_car, Stat.TYRE)
 
                 if old_flag != flag:
                     car.see_flag(flag)
@@ -189,10 +193,10 @@ class DataCentre(object):
 
                     try:
                         if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap[0], driver, timestamp, flag)
+                            car.add_lap(new_lap[0], driver, timestamp, flag, tyre)
                     except:  # Non-tuple case (do any services still not use tuples?)
                         if old_lap != new_lap or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap, driver, timestamp, flag)
+                            car.add_lap(new_lap, driver, timestamp, flag, tyre)
 
                     old_car_state = f.get(old_car, Stat.STATE)
 
@@ -200,6 +204,9 @@ class DataCentre(object):
                         car.pitIn(timestamp)
                     elif new_car_state != "PIT" and old_car_state == "PIT":
                         car.pitOut(timestamp, driver, flag)
+
+                    if tyre != f.get(old_car, Stat.TYRE):
+                        car.current_stint.tyre = tyre
 
                     old_driver = f.get(old_car, Stat.DRIVER)
                     if old_driver and old_driver != driver:
