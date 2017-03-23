@@ -1,13 +1,9 @@
 from livetiming.racing import Stat, FlagStatus
 from livetiming.recording import RecordingFile
 import copy
-import math
 import re
 import sys
 import time
-
-# Credit this many extra laps for every lap of yellow in a stint
-YELLOW_LAP_MODIFIER = 0.5
 
 TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 
@@ -92,14 +88,6 @@ class Car(object):
         if self.inPit:
             self.stints.append(Stint(self.current_lap, timestamp, driver, flag))
             self.inPit = False
-
-    def predictedStop(self):
-        if len(self.stints) > 1:  # If we've made at least one stop
-            if self.current_stint.in_progress:  # We're currently on track
-                stintsToConsider = map(lambda stint: (stint.end_lap - stint.start_lap) + (YELLOW_LAP_MODIFIER * stint.yellow_laps), self.stints[0:-1])
-                outLap = self.stints[-1].start_lap
-                return math.floor(float(sum(stintsToConsider) / len(stintsToConsider)) - (self.current_lap - outLap) + (YELLOW_LAP_MODIFIER * self.current_stint.yellow_laps))
-        return None
 
     @property
     def current_stint(self):
