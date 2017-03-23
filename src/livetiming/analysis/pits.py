@@ -5,7 +5,7 @@ import math
 YELLOW_LAP_MODIFIER = 0.5
 
 
-def predict_stop(car):
+def predict_endurance_stop(car):
     if len(car.stints) > 1:  # If we've made at least one stop
         if car.current_stint.in_progress:  # We're currently on track
             stintsToConsider = map(lambda stint: (stint.end_lap - stint.start_lap) + (YELLOW_LAP_MODIFIER * stint.yellow_laps), car.stints[0:-1])
@@ -14,7 +14,7 @@ def predict_stop(car):
     return None
 
 
-class PitStopAnalysis(Analysis):
+class EnduranceStopAnalysis(Analysis):
 
     def getName(self):
         return "Pit stops"
@@ -60,6 +60,6 @@ class PitStopAnalysis(Analysis):
                         stint.yellow_laps
                     ])
 
-            cars[race_num] = [mappedStints, car.inPit, car.current_lap, predict_stop(car)]
+            cars[race_num] = [mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)]
 
         return {"cars": cars, "latestTimestamp": self.data_centre.latest_timestamp}
