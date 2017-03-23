@@ -11,7 +11,7 @@ class LaptimeAnalysis(Analysis):
 
         for car in self.data_centre.cars.values():
             times[car.race_num] = {
-                "name": " / ".join(car.drivers),
+                "name": next(iter(car.drivers)),
                 "laptimes": map(lambda l: (l.lap_num, l.laptime, l.flag.name.lower()), car.laps)
             }
 
