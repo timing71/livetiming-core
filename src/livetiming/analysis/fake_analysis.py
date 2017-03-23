@@ -6,13 +6,16 @@ from livetiming.analysis.laptimes import LaptimeAnalysis
 from livetiming.recording import RecordingFile
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from twisted.internet import reactor
-from livetiming.network import Realm, RPC, Channel, Message, MessageClass
+from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
+    authenticatedService
 from livetiming.racing import Stat
 from twisted.internet.defer import inlineCallbacks
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import PitStopAnalysis
+import time
 
 
+@authenticatedService
 class FakeAnalysis(ApplicationSession):
 
     def __init__(self, config):
@@ -44,12 +47,14 @@ class FakeAnalysis(ApplicationSession):
         pcs = Stat.parse_colspec(self.rec.manifest['colSpec'])
 
         def preprocess():
+            start_time = time.time()
             for i in range(self.rec.frames + 1):
                 newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
                 self.a.receiveStateUpdate(newState, pcs, self.rec.manifest['startTime'] + (i * int(self.manifest['pollInterval'])))
                 print "{}/{}".format(i, self.rec.frames)
                 # time.sleep(4)
-            print "Preprocessing complete"
+            stop_time = time.time()
+            print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
 
         reactor.callInThread(preprocess)
 
