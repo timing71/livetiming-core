@@ -20,26 +20,20 @@ class Analyser(object):
         self.modules = {}
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
-        self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.doPublish = publish
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         self.data_centre.update_state(newState, colSpec, timestamp)
-        if timestamp is None:
-            timestamp = time.time()
 
-        if newState["session"].get("flagState", "none") != "none":
+        if self.doPublish and newState["session"].get("flagState", "none") != "none":
             for mclass, module in self.modules.iteritems():
                 try:
-                    module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
-                    if self.doPublish:
-                        self.publish(
-                            u"{}/analysis/{}".format(self.uuid, mclass),
-                            Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
-                        )
+                    self.publish(
+                        u"{}/analysis/{}".format(self.uuid, mclass),
+                        Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
+                    )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
-        self.oldState = copy.deepcopy(newState)
 
     def getManifest(self):
         manifest = []
@@ -59,27 +53,17 @@ class Analyser(object):
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
     def reset(self):
-        for module in self.modules.values():
-            module.reset()
-        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
         self.data_centre.reset()
 
 
 class Analysis(object):
     def __init__(self, data_centre):
         self.data_centre = data_centre
-        self.reset()
 
     def getName(self):
         raise NotImplementedError
 
     def getData(self):
-        raise NotImplementedError
-
-    def receiveStateUpdate(self, oldState, newState, colSpec):
-        raise NotImplementedError
-
-    def reset(self):
         raise NotImplementedError
 
 
