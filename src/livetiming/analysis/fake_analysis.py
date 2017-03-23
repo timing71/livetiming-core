@@ -11,7 +11,7 @@ from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
 from livetiming.racing import Stat
 from twisted.internet.defer import inlineCallbacks
 from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.pits import EnduranceStopAnalysis
 import time
 
 
@@ -23,7 +23,7 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis, StintLength, PitStopAnalysis], publish=False)
+        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis, StintLength, EnduranceStopAnalysis], publish=False)
 
         self.rec = RecordingFile(recFile)
 

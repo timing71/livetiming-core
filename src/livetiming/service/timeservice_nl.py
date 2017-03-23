@@ -13,7 +13,7 @@ import time
 from livetiming.messages import RaceControlMessage
 import argparse
 from livetiming.analysis.laptimes import LaptimeAnalysis
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
 
 
@@ -391,6 +391,6 @@ class Service(lt_service):
     def getAnalysisModules(self):
         return [
             LaptimeAnalysis,
-            PitStopAnalysis,
+            EnduranceStopAnalysis,
             StintLength
         ]

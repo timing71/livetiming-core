@@ -10,7 +10,7 @@ import simplejson
 import time
 from livetiming.analysis.laptimes import LaptimeAnalysis
 from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.pits import EnduranceStopAnalysis
 import argparse
 
 
@@ -373,5 +373,5 @@ class Service(lt_service):
         return [
             LaptimeAnalysis,
             StintLength,
-            PitStopAnalysis
+            EnduranceStopAnalysis
         ]
