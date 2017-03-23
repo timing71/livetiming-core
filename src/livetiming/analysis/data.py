@@ -97,16 +97,18 @@ class Car(object):
 
     @property
     def drivers(self):
-        return set(map(lambda lap: lap.driver, self.laps))
+        return set(map(lambda stint: stint.driver, self.stints))
 
 
 class Session(object):
     def __init__(self):
         self._flag_periods = []
+        self.lap_flags = {}
         self.this_period = None
 
     def flag_change(self, newFlag, leaderLap, timestamp):
-        if self.this_period:
+        self.lap_flags[leaderLap] = max(self.lap_flags.get(leaderLap, FlagStatus.NONE), newFlag)
+        if self.this_period and self.this_period[0] != newFlag:
             self._flag_periods.append(self.this_period + [leaderLap, timestamp])
         self.this_period = [newFlag, leaderLap, timestamp]
 
@@ -134,7 +136,7 @@ class DataCentre(object):
         self.cars = {}
         self.session = Session()
         self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
-        self.leaderLap = 0
+        self.leader_lap = 0
 
     def car(self, race_num):
         if race_num not in self.cars:
@@ -159,7 +161,10 @@ class DataCentre(object):
             if race_num:
                 car = self.car(race_num)
                 car.current_lap = self._get_lap_count(race_num, new_car, f, newState['cars'])
-                self.leaderLap = max(self.leaderLap, car.current_lap)
+                new_leader_lap = max(self.leader_lap, car.current_lap)
+                if new_leader_lap != self.leader_lap:
+                    self.leader_lap = new_leader_lap
+                    self.session.flag_change(flag, new_leader_lap, timestamp)
                 driver = f.get(new_car, Stat.DRIVER)
 
                 if old_flag != flag:
@@ -200,7 +205,7 @@ class DataCentre(object):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
         old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
         if flag != old_flag:
-            self.session.flag_change(flag, self.leaderLap, timestamp)
+            self.session.flag_change(flag, self.leader_lap, timestamp)
 
     def _get_lap_count(self, race_num, car, f, cars):
         from_timing = f.get(car, Stat.LAPS)
