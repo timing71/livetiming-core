@@ -56,6 +56,7 @@ class Car(object):
         self.inPit = True
         self.current_lap = 0
         self._current_lap_flags = [FlagStatus.NONE]
+        self.initial_driver = None
 
     def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE):
         max_flag = max(self._current_lap_flags)
@@ -77,6 +78,8 @@ class Car(object):
     def set_driver(self, driver):
         if self.current_stint:
             self.current_stint.driver = driver
+        else:
+            self.initial_driver = driver
 
     def pitIn(self, timestamp):
         if len(self.stints) > 0:
@@ -97,6 +100,8 @@ class Car(object):
 
     @property
     def drivers(self):
+        if not self.current_stint:
+            return [self.initial_driver]
         return set(map(lambda stint: stint.driver, self.stints))
 
 
@@ -202,6 +207,8 @@ class DataCentre(object):
 
                 elif new_car_state != "PIT":
                     car.pitOut(timestamp, driver, flag)
+                else:
+                    car.set_driver(driver)
 
     def _update_session(self, oldState, newState, colSpec, timestamp):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
