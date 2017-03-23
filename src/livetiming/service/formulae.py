@@ -1,5 +1,5 @@
 from livetiming.service.alkamel import Service as AlkamelService
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 
 
 class Service(AlkamelService):
@@ -8,5 +8,5 @@ class Service(AlkamelService):
 
     def getAnalysisModules(self):
         return [
-            LaptimeAnalysis
+            LapChart
         ]

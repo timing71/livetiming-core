@@ -12,7 +12,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 
 
 _F1_SERVICE_YEAR = 2017
@@ -182,7 +182,7 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
-            LaptimeAnalysis
+            LapChart
         ]
 
     def _getData(self, key, subkey=None):
