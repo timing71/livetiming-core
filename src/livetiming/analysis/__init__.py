@@ -35,7 +35,7 @@ class Analyser(object):
                             Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
                         )
                 except Exception:
-                    self.logger.failure("Exception while updating analysis module {mclass}: {log_failure}", mclass=mclass)
+                    self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
         self.oldState = copy.deepcopy(newState)
 
     def getManifest(self):
