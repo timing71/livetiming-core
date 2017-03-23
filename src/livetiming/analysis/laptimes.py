@@ -10,8 +10,12 @@ class LaptimeAnalysis(Analysis):
         times = {}
 
         for car in self.data_centre.cars.values():
+            try:
+                driver_name = next(iter(car.drivers))
+            except StopIteration:
+                driver_name = ""
             times[car.race_num] = {
-                "name": next(iter(car.drivers)),
+                "name": driver_name,
                 "laptimes": map(lambda l: (l.lap_num, l.laptime, l.flag.name.lower()), car.laps)
             }
 
