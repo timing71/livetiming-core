@@ -131,6 +131,7 @@ class FieldExtractor(object):
 class DataCentre(object):
     def __init__(self):
         self.reset()
+        self.latest_timestamp = None
 
     def reset(self):
         self.cars = {}
@@ -149,6 +150,7 @@ class DataCentre(object):
         if newState["session"].get("flagState", "none") != "none":
             self._update_cars(self.oldState, newState, colSpec, timestamp)
             self._update_session(self.oldState, newState, colSpec, timestamp)
+            self.latest_timestamp = timestamp
             self.oldState = copy.deepcopy(newState)
 
     def _update_cars(self, oldState, newState, colSpec, timestamp):
