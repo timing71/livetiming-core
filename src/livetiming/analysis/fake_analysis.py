@@ -2,7 +2,7 @@
 import os
 import sys
 from livetiming.analysis import Analyser
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 from livetiming.recording import RecordingFile
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from twisted.internet import reactor
@@ -23,7 +23,7 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis, StintLength, EnduranceStopAnalysis], publish=False)
+        self.a = Analyser("TEST", self.publish, [LapChart, StintLength, EnduranceStopAnalysis], publish=False)
 
         self.rec = RecordingFile(recFile)
 
