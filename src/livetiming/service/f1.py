@@ -193,9 +193,11 @@ class Service(lt_service):
         init = self._getData("init")
         if init:
             drivers = init["Drivers"]
-            startTime = init["ST"]
+            startTime = init.get("ST", None)
 
         currentTime = self._getData("cpd", "CT")
+        if currentTime is None:
+            currentTime = time.time() * 1000
 
         b = self._getData("b")
         if b:
@@ -289,7 +291,7 @@ class Service(lt_service):
 
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
-            "timeElapsed": (currentTime - startTime) / 1000,
+            "timeElapsed": (currentTime - startTime) / 1000 if startTime else 0,
             "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds(),
             "trackData": self._getTrackData()
         }
