@@ -15,7 +15,7 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.analysis.laptimes import LaptimeAnalysis
 
 
-_F1_SERVICE_YEAR = 2016
+_F1_SERVICE_YEAR = 2017
 
 
 def mapTimeFlag(color):
