@@ -86,29 +86,31 @@ class Service(lt_service):
         if "race" in serversRoot.attrib and "session" in serversRoot.attrib:
             race = serversRoot.attrib['race']
             session = serversRoot.attrib['session']
-            self.hasSession = True
 
-            serverIP = random.choice(servers.findall('Server')).get('ip')
-            self.log.info("Using server {}".format(serverIP))
+            if race != "" and session != "":
+                self.hasSession = True
 
-            server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
+                serverIP = random.choice(servers.findall('Server')).get('ip')
+                self.log.info("Using server {}".format(serverIP))
 
-            allURL = server_base_url + "all.js"
+                server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
 
-            allFetcher = MultiLineFetcher(allURL, self.processData, 60)
-            allFetcher.start()
+                allURL = server_base_url + "all.js"
 
-            def getCurURL():
-                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
+                allFetcher = MultiLineFetcher(allURL, self.processData, 60)
+                allFetcher.start()
 
-            curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
-            curFetcher.start()
+                def getCurURL():
+                    return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
 
-            self.processData(urllib2.urlopen(allURL).readlines())
-            self.timestampLastUpdated = datetime.now()
-        else:
-            self.log.info("No live session found, checking again in 30 seconds.")
-            reactor.callLater(30, self.configure)
+                curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
+                curFetcher.start()
+
+                self.processData(urllib2.urlopen(allURL).readlines())
+                self.timestampLastUpdated = datetime.now()
+                return
+        self.log.info("No live session found, checking again in 30 seconds.")
+        reactor.callLater(30, self.configure)
 
     def processData(self, data):
         for dataline in data:
