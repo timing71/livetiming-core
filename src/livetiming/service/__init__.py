@@ -267,12 +267,17 @@ class Fetcher(object):
         self.interval = interval
 
     def _run(self):
+        if callable(self.url):
+            url = self.url()
+        else:
+            url = self.url
+
         try:
-            feed = urllib2.urlopen(self.url)
+            feed = urllib2.urlopen(url)
             if feed.getcode() == 200:
                 self.callback(feed.read())
             else:
-                self.log.warn("HTTP {} on url {}".format(feed.getcode(), self.url))
+                self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
         except:
             pass  # Bad data feed :(
 
