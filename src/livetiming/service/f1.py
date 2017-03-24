@@ -175,8 +175,7 @@ class Service(lt_service):
             "Direction",
             "Humidity",
             "Pressure",
-            "Track",
-            "Forecast"
+            "Track"
         ]
 
     def getPollInterval(self):
@@ -342,12 +341,11 @@ class Service(lt_service):
             return [
                 u"{}°C".format(w[0]),
                 u"{}°C".format(w[1]),
-                "{}kph".format(w[3]),
+                "{} kph".format(w[3]),
                 u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
                 "{}%".format(w[4]),
-                "{}mbar".format(w[5]),
-                "Wet" if w[2] == "1" else "Dry",
-                w[7]
+                "{} mbar".format(w[5]),
+                "Wet" if w[2] == "1" else "Dry"
             ]
         return []
 
