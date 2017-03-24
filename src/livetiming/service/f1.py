@@ -83,32 +83,31 @@ class Service(lt_service):
         serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/{}/serverlist/svr/serverlist.xml".format(_F1_SERVICE_YEAR))
         servers = ET.parse(serverListXML)
         serversRoot = servers.getroot()
-        if "race" in serversRoot.attrib and "session" in serversRoot.attrib:
-            race = serversRoot.attrib['race']
-            session = serversRoot.attrib['session']
 
-            if race != "" and session != "":
-                self.hasSession = True
+        race = serversRoot.attrib.get("race", "")
+        session = serversRoot.attrib.get("session", "")
+        if race != "" and session != "":
+            self.hasSession = True
 
-                serverIP = random.choice(servers.findall('Server')).get('ip')
-                self.log.info("Using server {}".format(serverIP))
+            serverIP = random.choice(servers.findall('Server')).get('ip')
+            self.log.info("Using server {}".format(serverIP))
 
-                server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
+            server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
 
-                allURL = server_base_url + "all.js"
+            allURL = server_base_url + "all.js"
 
-                allFetcher = MultiLineFetcher(allURL, self.processData, 60)
-                allFetcher.start()
+            allFetcher = MultiLineFetcher(allURL, self.processData, 60)
+            allFetcher.start()
 
-                def getCurURL():
-                    return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
+            def getCurURL():
+                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
 
-                curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
-                curFetcher.start()
+            curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
+            curFetcher.start()
 
-                self.processData(urllib2.urlopen(allURL).readlines())
-                self.timestampLastUpdated = datetime.now()
-                return
+            self.processData(urllib2.urlopen(allURL).readlines())
+            self.timestampLastUpdated = datetime.now()
+            return
         self.log.info("No live session found, checking again in 30 seconds.")
         reactor.callLater(30, self.configure)
 
