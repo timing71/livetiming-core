@@ -76,6 +76,7 @@ class Service(lt_service):
         self.prevRaceControlMessage = None
         self.messages = []
         self.hasSession = False
+        self.serverTimestamp = 0
         self.configure()
 
     def configure(self):
@@ -97,7 +98,10 @@ class Service(lt_service):
             allFetcher = MultiLineFetcher(allURL, self.processData, 60)
             allFetcher.start()
 
-            curFetcher = MultiLineFetcher(server_base_url + "cur.js", self.processData, 1)
+            def getCurURL():
+                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
+
+            curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
             curFetcher.start()
 
             self.processData(urllib2.urlopen(allURL).readlines())
@@ -110,7 +114,10 @@ class Service(lt_service):
         for dataline in data:
             matches = self.DATA_REGEX.match(dataline)
             if matches:
-                self.dataMap[matches.group(1)] = simplejson.loads(matches.group(2))
+                content = simplejson.loads(matches.group(2))
+                self.dataMap[matches.group(1)] = content
+                if "T" in content:
+                    self.serverTimestamp = max(self.serverTimestamp, content["T"] / 1000000)
                 if matches.group(1) == "f":
                     self.timestampLastUpdated = datetime.now()
 
