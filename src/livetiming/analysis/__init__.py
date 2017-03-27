@@ -52,6 +52,9 @@ class Analyser(object):
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
+    def getCars(self):
+        return map(lambda car: (car.race_num, car.driver_name()), self.data_centre.cars)
+
     def reset(self):
         self.data_centre.reset()
 
