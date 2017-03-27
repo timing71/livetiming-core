@@ -41,6 +41,7 @@ class FakeAnalysis(ApplicationSession):
         yield self.register(true, RPC.LIVENESS_CHECK.format("TEST"))
         yield self.register(self.a.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format("TEST"))
         yield self.register(self.a.getData, RPC.REQUEST_ANALYSIS_DATA.format("TEST"))
+        yield self.register(self.a.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format("TEST"))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
         print "All registered"
