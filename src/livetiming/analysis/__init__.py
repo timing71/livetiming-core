@@ -7,6 +7,13 @@ import time
 import copy
 
 
+def tryInt(val):
+    try:
+        return int(val)
+    except:
+        return val
+
+
 class Analyser(object):
     log = Logger()
 
@@ -53,7 +60,7 @@ class Analyser(object):
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
     def getCars(self):
-        return map(lambda car: (car.race_num, car.driver_name()), self.data_centre.cars)
+        return sorted(map(lambda car: (car.race_num, car.driver_name()), self.data_centre.cars.itervalues()), key=lambda c: tryInt(c[0]))
 
     def reset(self):
         self.data_centre.reset()
