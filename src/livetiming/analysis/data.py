@@ -62,16 +62,19 @@ class Car(object):
 
     def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
-        self.laps.append(
-            Lap(
-                self.current_lap,
-                laptime,
-                driver,
-                timestamp,
-                max_flag,
-                tyre
+        if laptime > 0:
+            # Some services e.g. F1 don't give a laptime for the first lap.
+            # We still want to consider flags for the stint though.
+            self.laps.append(
+                Lap(
+                    self.current_lap,
+                    laptime,
+                    driver,
+                    timestamp,
+                    max_flag,
+                    tyre
+                )
             )
-        )
         self.current_stint.flags.append(max_flag)
         self._current_lap_flags = [current_flag]
 
