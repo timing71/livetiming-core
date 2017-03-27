@@ -4,6 +4,7 @@ import copy
 import re
 import sys
 import time
+from collections import OrderedDict
 
 TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 
@@ -151,7 +152,7 @@ class DataCentre(object):
         self.latest_timestamp = None
 
     def reset(self):
-        self.cars = {}
+        self.cars = OrderedDict()
         self.session = Session()
         self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.leader_lap = 0
