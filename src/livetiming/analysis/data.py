@@ -110,6 +110,12 @@ class Car(object):
             return [self.initial_driver]
         return set(map(lambda stint: stint.driver, self.stints))
 
+    def driver_name(self):
+        try:
+            return next(iter(self.drivers))
+        except StopIteration:
+            return ""
+
 
 class Session(object):
     def __init__(self):

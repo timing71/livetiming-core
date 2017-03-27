@@ -237,6 +237,7 @@ class Service(ApplicationSession):
         yield self.register(self._requestCurrentState, RPC.REQUEST_STATE.format(self.uuid))
         yield self.register(self.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(self.uuid))
         yield self.register(self.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(self.uuid))
+        yield self.register(self.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(self.uuid))
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.info("Subscribed to control channel")
         yield self.publishManifest()
