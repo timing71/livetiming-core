@@ -146,21 +146,32 @@ class FieldExtractor(object):
         return None
 
 
+def tryInt(val):
+    try:
+        return int(val)
+    except:
+        return val
+
+
 class DataCentre(object):
     def __init__(self):
         self.reset()
         self.latest_timestamp = None
 
     def reset(self):
-        self.cars = OrderedDict()
+        self._cars = OrderedDict()
         self.session = Session()
         self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.leader_lap = 0
 
     def car(self, race_num):
-        if race_num not in self.cars:
-            self.cars[race_num] = Car(race_num)
-        return self.cars[race_num]
+        if race_num not in self._cars:
+            self._cars[race_num] = Car(race_num)
+        return self._cars[race_num]
+
+    @property
+    def cars(self):
+        return sorted(self._cars.values(), key=lambda c: tryInt(c.race_num))
 
     def update_state(self, newState, colSpec, timestamp=None):
         if timestamp is None:
