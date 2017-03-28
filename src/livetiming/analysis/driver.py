@@ -9,17 +9,18 @@ class StintLength(Analysis):
     def getData(self):
         '''
         Data format is:
-          {
-            "carNum": [
+          [
+            [  // for car 0
               ["driver1",startLap, startTime, endLap, endTime, 0, bestLap]
               ["driver2", startLap, startTime, currentLap, currentTime, 1, bestLap]
-            ]
-          }
+            ],
+            [ ... ] // for car 1...
+          ]
         '''
-        mappedStints = {}
-        for car in self.data_centre.cars:
-            mappedStints[car.race_num] = self._mapStints(car)
-        return mappedStints
+        return map(
+            lambda car: self._mapStints(car),
+            self.data_centre.cars
+        )
 
     def _mapStints(self, car):
         mappedStints = []
