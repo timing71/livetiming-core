@@ -71,6 +71,8 @@ class FlagChangeMessage(TimingMessage):
                 return ["Track", "Code 60", "code60"]
             elif newFlag == FlagStatus.VSC:
                 return ["Track", "Virtual safety car deployed", "yellow"]
+            elif newFlag == FlagStatus.CAUTION:
+                return ["Track", "Full course caution", "yellow"]
 
 
 # Emits a message if a car enters or leaves the pits, or retires.
