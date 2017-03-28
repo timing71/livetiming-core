@@ -155,6 +155,7 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.DRIVER, "DRIVER IN CAR", ident),
     (Stat.DRIVER, "DRIVER", ident),
     (Stat.CAR, "CAR", shorten),
+    (Stat.CAR, "BRAND", shorten),
     (Stat.LAPS, "LAPS", ident),
     (Stat.GAP, "GAP", lambda i: parseTime(i[0])),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
@@ -214,7 +215,8 @@ class Service(lt_service):
             'bathurst': '59225c5480a74b178deaf992976595c3',
             'demo': 'aed5546e3b5e46aeb6ba564f6f72457d',
             'dubai': '17047960b73e48c4a899f43a2459cc20',
-            'mugello': '237baff60dfb4291ab20f72319e79aa2'
+            'mugello': '237baff60dfb4291ab20f72319e79aa2',
+            'redbullring': '21e603fd091949538a85e836bff214e6'
         }
 
         if self.myArgs.tk in known_tracks:
