@@ -278,7 +278,7 @@ class Fetcher(object):
                 self.callback(feed.read())
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
-        except:
+        except Exception:
             pass  # Bad data feed :(
 
     def start(self):
@@ -338,6 +338,7 @@ def main():
             txaio.start_logging(out=logFile, level='info')
         runner.run(service_class)
         print "Service terminated."
+
 
 if __name__ == '__main__':
     main()

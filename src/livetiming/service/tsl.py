@@ -31,12 +31,14 @@ def invoke_then(self, method, *data):
         })
     return then
 
+
 HubServer.invoke_then = invoke_then
 
 
 def fire(self, *args, **kwargs):
     # Remove any handlers that return False from calling them
-    self._handlers = [h for h in self._handlers if h(*args, **kwargs) != False]
+    self._handlers = [h for h in self._handlers if h(*args, **kwargs) is not False]
+
 
 EventHook.fire = fire
 
