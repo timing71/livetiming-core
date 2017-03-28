@@ -175,10 +175,7 @@ DEFAULT_COLUMN_SPEC = [
 def parse_extra_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--tk", help="timeservice.nl feed ID")
-    # Known IDs:
-    # Dubai - 17047960b73e48c4a899f43a2459cc20
-    # Bathurst 12H - 59225c5480a74b178deaf992976595c3
-    # Mugello - 237baff60dfb4291ab20f72319e79aa2
+    # @see Service#getTrackID()
 
     return parser.parse_args(args)
 
