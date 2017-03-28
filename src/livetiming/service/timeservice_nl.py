@@ -101,7 +101,7 @@ def mapFlag(raw):
     try:
         if int(raw) in mapp:
             return mapp[int(raw)].name.lower()
-    except:
+    except Exception:
         pass
     print "Unknown flag value {}".format(raw)
     return "none"
@@ -112,7 +112,7 @@ def parseTime(raw):
         return ""
     try:
         return int(raw) / 1000000.0
-    except:
+    except Exception:
         return raw
 
 
@@ -142,6 +142,7 @@ def shorten(nameTuple):
     if len(name) > 20:
         return u"{}…".format(name[0:20])
     return name
+
 
 # Map our columns to TSNL's labels, in our chosen order, and provide mapping function
 # This should include all possible columns
