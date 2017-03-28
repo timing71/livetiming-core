@@ -14,6 +14,15 @@ from livetiming.analysis.pits import PitStopAnalysis
 import argparse
 
 
+KNOWN_FEEDS = {
+    'imsa': '910a7e3e-x15e-93a1-1007-r8c7xa149609',
+    'elms': '41047e3e-c15e-53a1-9007-g1c3bc850710',
+    'fiawec': 'a56c960a-3dff-48d1-a7bf-c076315ef22a',
+    'formulae': '92200890-f282-11e3-ac10-0800200c9a66',
+    'monza': '4d74d480-0ddf-11e6-a148-3e1d05defe78'
+}
+
+
 def AlkamelNamespaceFactory(feedID, handler):
     class AlkamelNamespace(BaseNamespace):
         def on_connect(self, *args):
@@ -116,14 +125,8 @@ class Service(lt_service):
     def __init__(self, config, feed=None):
         lt_service.__init__(self, config)
 
-        extra_args = parse_extra_args(config.extra['extra_args'])
-
-        if feed:
-            feedID = feed
-        elif extra_args.feed:
-            feedID = extra_args.feed
-        else:
-            raise RuntimeError("No feed ID specified for Al Kamel! Cannot continue.")
+        self.extra_args = parse_extra_args(config.extra['extra_args'])
+        self.feed = feed
 
         self.sessionData = {}
         self.meteoData = {}
@@ -133,7 +136,7 @@ class Service(lt_service):
         self.socketIO = SocketIO(
             'livetiming.alkamelsystems.com',
             80,
-            AlkamelNamespaceFactory(feedID, self)
+            AlkamelNamespaceFactory(self.getFeedID(), self)
         )
         socketThread = Thread(target=self.socketIO.wait)
         socketThread.daemon = True
@@ -141,6 +144,17 @@ class Service(lt_service):
 
         self.hasTrackData = True
         self.prevRaceControlMessage = None
+
+    def getFeedID(self):
+        if self.feed:
+            feedID = self.feed
+        elif self.extra_args.feed:
+            feedID = self.extra_args.feed
+        else:
+            raise RuntimeError("No feed ID specified for Al Kamel! Cannot continue.")
+        if feedID in KNOWN_FEEDS:
+            return KNOWN_FEEDS[feedID]
+        return feedID
 
     def session(self, data):
 
