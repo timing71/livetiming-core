@@ -11,7 +11,7 @@ import logging
 def mapFlagStates(rawState):
     flagMap = {
         1: FlagStatus.GREEN,
-        2: FlagStatus.FCY,
+        2: FlagStatus.CAUTION,
         3: FlagStatus.RED,
         4: FlagStatus.CHEQUERED,
         5: FlagStatus.WHITE,
