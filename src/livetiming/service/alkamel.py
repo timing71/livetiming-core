@@ -145,6 +145,8 @@ class Service(lt_service):
         self.hasTrackData = True
         self.prevRaceControlMessage = None
 
+        self.flag_from_messages = None
+
     def getFeedID(self):
         if self.feed:
             feedID = self.feed
@@ -251,11 +253,20 @@ class Service(lt_service):
             self.publishManifest()
 
     def rc_message(self, data):
+        flags_in_messages = []
         for msg in data:
             if msg['txt'] != self.prevRaceControlMessage:
                 # Duplicate messages can occur as the rc_message is resent after an st_refresh
                 self.messages.append(msg['txt'])
                 self.prevRaceControlMessage = msg['txt']
+            if msg['txt'] == "FULL COURSE YELLOW":
+                flags_in_messages.append(FlagStatus.FCY)
+            elif msg['txt'] == "SAFETY CAR":
+                flags_in_messages.append(FlagStatus.SC)
+        if flags_in_messages:
+            self.flag_from_messages = max(flags_in_messages)
+        else:
+            self.flag_from_messages = None
 
     def getColumnSpec(self):
         return [
@@ -317,9 +328,12 @@ class Service(lt_service):
                 "{:.2g} kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
             ]
 
-        session['flagState'] = mapFlag(self.sessionData.get('flag', "none"))
+        if self.flag_from_messages:
+            session['flagState'] = self.flag_from_messages.name.lower()
+        else:
+            session['flagState'] = mapFlag(self.sessionData.get('flag', "none"))
 
-        if self.sessionData['remaining']:
+        if 'remaining' in self.sessionData and self.sessionData['remaining']:
             current_remaining = self.sessionData['remaining']
             if current_remaining['running']:
                 session['timeElapsed'] = time.time() - current_remaining['startTime'] - current_remaining['deadTime']
