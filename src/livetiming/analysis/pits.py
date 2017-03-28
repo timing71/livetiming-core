@@ -38,7 +38,7 @@ class EnduranceStopAnalysis(Analysis):
         '''
         cars = {}
 
-        for race_num, car in self.data_centre.cars.iteritems():
+        for car in self.data_centre.cars:
             mappedStints = []
             for stint in car.stints:
                 if stint.in_progress:
@@ -60,6 +60,6 @@ class EnduranceStopAnalysis(Analysis):
                         stint.yellow_laps
                     ])
 
-            cars[race_num] = [mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)]
+            cars[car.race_num] = [mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)]
 
         return {"cars": cars, "latestTimestamp": self.data_centre.latest_timestamp}

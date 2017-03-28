@@ -7,17 +7,13 @@ class LapChart(Analysis):
         return "Lap chart"
 
     def getData(self):
-        times = {}
-
-        for car in self.data_centre.cars.values():
-            try:
-                driver_name = next(iter(car.drivers))
-            except StopIteration:
-                driver_name = ""
-            times[car.race_num] = {
-                "name": driver_name,
-                "laptimes": map(lambda l: (l.lap_num, l.laptime, l.flag.name.lower()), car.laps)
-            }
+        times = map(
+            lambda car: map(
+                lambda l: (l.lap_num, l.laptime, l.flag.name.lower()),
+                car.laps
+            ),
+            self.data_centre.cars
+        )
 
         return {
             "numLaps": self.data_centre.leader_lap,

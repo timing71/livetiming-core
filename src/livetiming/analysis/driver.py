@@ -17,7 +17,7 @@ class StintLength(Analysis):
           }
         '''
         mappedStints = {}
-        for car in self.data_centre.cars.values():
+        for car in self.data_centre.cars:
             mappedStints[car.race_num] = self._mapStints(car)
         return mappedStints
 
