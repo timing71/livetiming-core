@@ -23,8 +23,8 @@ class EnduranceStopAnalysis(Analysis):
         '''
         Data format:
         {
-          "cars": {
-            "carNum": [
+          "cars": [
+            [
               [
                 [outLap, outTime, inLap, inTime, inProgress, lapsUnderYellow]
               ],
@@ -32,11 +32,11 @@ class EnduranceStopAnalysis(Analysis):
               lap,
               predictedStopLap
             ]
-          }
+          ],
+          "latestTimestamp": latestTimestamp
         },
-        "latestTimestamp": latestTimestamp
         '''
-        cars = {}
+        cars = []
 
         for car in self.data_centre.cars:
             mappedStints = []
@@ -60,6 +60,6 @@ class EnduranceStopAnalysis(Analysis):
                         stint.yellow_laps
                     ])
 
-            cars[car.race_num] = [mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)]
+            cars.append([mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)])
 
         return {"cars": cars, "latestTimestamp": self.data_centre.latest_timestamp}
