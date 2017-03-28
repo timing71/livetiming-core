@@ -7,12 +7,3 @@ class Service(alkamel_service):
 
     def getName(self):
         return "ELMS"
-
-    def getDefaultDescription(self):
-        desc = ""
-
-        if "event_name" in self.sessionData:
-            desc = self.sessionData["event_name"].title()
-        if "session_name" in self.sessionData:
-            desc = "{} - {}".format(desc, self.sessionData["session_name"].title())
-        return desc

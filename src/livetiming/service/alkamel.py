@@ -11,6 +11,7 @@ import time
 from livetiming.analysis.laptimes import LaptimeAnalysis
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import PitStopAnalysis
+import argparse
 
 
 def AlkamelNamespaceFactory(feedID, handler):
@@ -104,9 +105,26 @@ def formatDriverName(driver):
         return driver['surname'].upper()
 
 
+def parse_extra_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--feed", help="Feed ID")
+
+    return parser.parse_args(args)
+
+
 class Service(lt_service):
-    def __init__(self, config, feed):
+    def __init__(self, config, feed=None):
         lt_service.__init__(self, config)
+
+        extra_args = parse_extra_args(config.extra['extra_args'])
+
+        if feed:
+            feedID = feed
+        elif extra_args.feed:
+            feedID = extra_args.feed
+        else:
+            raise RuntimeError("No feed ID specified for Al Kamel! Cannot continue.")
+
         self.sessionData = {}
         self.meteoData = {}
         self.currentStanding = {}
@@ -115,7 +133,7 @@ class Service(lt_service):
         self.socketIO = SocketIO(
             'livetiming.alkamelsystems.com',
             80,
-            AlkamelNamespaceFactory(feed, self)
+            AlkamelNamespaceFactory(feedID, self)
         )
         socketThread = Thread(target=self.socketIO.wait)
         socketThread.daemon = True
@@ -128,6 +146,7 @@ class Service(lt_service):
 
         sessionChange = (
             ("session_name" in data and ("session_name" not in self.sessionData or data["session_name"] != self.sessionData["session_name"])) or
+            ("event_name" in data and ("event_name" not in self.sessionData or data["event_name"] != self.sessionData["event_name"])) or
             ("category" in data and ("category" not in self.sessionData or data["category"] != self.sessionData["category"]))
         )
 
@@ -257,13 +276,20 @@ class Service(lt_service):
     def getPollInterval(self):
         return 1
 
+    def getName(self):
+        if "category" in self.sessionData:
+            return self.sessionData["category"]
+        return "Al Kamel feed"
+
     def getDefaultDescription(self):
         desc = ""
 
-        if "category" in self.sessionData:
-            desc = self.sessionData["category"]
-        if "session_name" in self.sessionData:
-            desc = "{} - {}".format(desc, self.sessionData["session_name"])
+        if "event_name" in self.sessionData:
+            desc = self.sessionData["event_name"].title()
+            if "session_name" in self.sessionData:
+                desc = "{} - {}".format(desc, self.sessionData["session_name"].title())
+        elif "session_name" in self.sessionData:
+            desc = self.sessionData["session_name"].title()
         return desc
 
     def getRaceState(self):
