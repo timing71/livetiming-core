@@ -79,11 +79,11 @@ def mapModifier(rawMod):
     return rawMod
 
 
-def mapFlag(rawFlag):
+def mapFlag(rawFlag, yellowMeansCaution):
     flagMap = {
         'GF': FlagStatus.GREEN,
         'RF': FlagStatus.RED,
-        'YF': FlagStatus.YELLOW,
+        'YF': FlagStatus.CAUTION if yellowMeansCaution else FlagStatus.YELLOW,
         'SF': FlagStatus.WHITE,
         'CH': FlagStatus.CHEQUERED
     }
@@ -117,6 +117,7 @@ def formatDriverName(driver):
 def parse_extra_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--feed", help="Feed ID")
+    parser.add_argument("--caution", help="Understand 'yellow flag' to mean American-style full-course caution", action="store_true")
 
     return parser.parse_args(args)
 
@@ -334,7 +335,7 @@ class Service(lt_service):
         if self.flag_from_messages:
             session['flagState'] = self.flag_from_messages.name.lower()
         else:
-            session['flagState'] = mapFlag(self.sessionData.get('flag', "none"))
+            session['flagState'] = mapFlag(self.sessionData.get('flag', "none"), self.extra_args.caution)
 
         if 'remaining' in self.sessionData and self.sessionData['remaining']:
             current_remaining = self.sessionData['remaining']
