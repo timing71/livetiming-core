@@ -143,7 +143,7 @@ class Service(lt_service):
         socketThread.start()
 
         self.hasTrackData = True
-        self.prevRaceControlMessage = None
+        self.prevRaceControlMessages = []
 
         self.flag_from_messages = None
 
@@ -255,14 +255,17 @@ class Service(lt_service):
     def rc_message(self, data):
         flags_in_messages = []
         for msg in data:
-            if msg['txt'] != self.prevRaceControlMessage:
+            if msg['txt'] not in self.prevRaceControlMessages:
                 # Duplicate messages can occur as the rc_message is resent after an st_refresh
                 self.messages.append(msg['txt'])
-                self.prevRaceControlMessage = msg['txt']
+
             if msg['txt'] == "FULL COURSE YELLOW":
                 flags_in_messages.append(FlagStatus.FCY)
             elif msg['txt'] == "SAFETY CAR":
                 flags_in_messages.append(FlagStatus.SC)
+
+        self.prevRaceControlMessages = map(lambda m: m['txt'], data)
+
         if flags_in_messages:
             self.flag_from_messages = max(flags_in_messages)
         else:
