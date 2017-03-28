@@ -59,13 +59,13 @@ def authenticatedService(clazz):
     Decorator for ApplicationSessions that require authentication using LIVETIMING_SHARED_SECRET.
     '''
     def onConnect(self):
-        print "Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services")
+        self.log.info("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services"))
         self.join(self.config.realm, [u"wampcra", u"anonymous"], "services")
 
     def onChallenge(self, challenge):
         user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
         if challenge.method == u"wampcra":
-            print("WAMP-CRA challenge received: {}".format(challenge))
+            self.log.debug("WAMP-CRA challenge received: {}".format(challenge))
 
             if u'salt' in challenge.extra:
                 # salted secret
