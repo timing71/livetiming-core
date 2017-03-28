@@ -11,7 +11,7 @@ from livetiming.analysis.driver import StintLength
 def mapFlagStates(rawState):
     flagMap = {
         "GREEN": FlagStatus.GREEN,
-        "YELLOW": FlagStatus.YELLOW,
+        "YELLOW": FlagStatus.CAUTION,
         "RED": FlagStatus.RED,
         "CHECKERED": FlagStatus.CHEQUERED,
         "WHITE": FlagStatus.WHITE,
