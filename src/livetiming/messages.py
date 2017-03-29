@@ -1,3 +1,4 @@
+import re
 import time
 
 from racing import FlagStatus
@@ -132,9 +133,16 @@ class FastLapMessage(PerCarMessage):
 
 
 class RaceControlMessage(TimingMessage):
+
+    CAR_NUMBER_REGEX = re.compile("car (?P<race_num>[0-9]+)", re.IGNORECASE)
+
     def __init__(self, messageList):
         self.messageList = messageList
 
     def _consider(self, oldState, newState):
         if len(self.messageList) > 0:
-            return ["Race Control", self.messageList.pop(), "raceControl"]
+            nextMessage = self.messageList.pop()
+            hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
+            if hasCarNum:
+                return ["Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')]
+            return ["Race Control", nextMessage, "raceControl"]
