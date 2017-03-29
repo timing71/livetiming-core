@@ -214,7 +214,8 @@ class Service(lt_service):
             'demo': 'aed5546e3b5e46aeb6ba564f6f72457d',
             'dubai': '17047960b73e48c4a899f43a2459cc20',
             'mugello': '237baff60dfb4291ab20f72319e79aa2',
-            'redbullring': '21e603fd091949538a85e836bff214e6'
+            'redbullring': '21e603fd091949538a85e836bff214e6',
+            'silverstone': '1568d1619bc24e53b294b694304f2b68'
         }
 
         if self.myArgs.tk in known_tracks:
