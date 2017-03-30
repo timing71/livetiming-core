@@ -157,7 +157,7 @@ class FieldExtractor(object):
 def tryInt(val):
     try:
         return int(val)
-    except:
+    except Exception:
         return val
 
 
@@ -223,7 +223,7 @@ class DataCentre(object):
                     try:
                         if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
                             car.add_lap(new_lap[0], driver, timestamp, flag, tyre)
-                    except:  # Non-tuple case (do any services still not use tuples?)
+                    except Exception:  # Non-tuple case (do any services still not use tuples?)
                         if old_lap != new_lap or old_lap_num != new_lap_num:
                             car.add_lap(new_lap, driver, timestamp, flag, tyre)
 
