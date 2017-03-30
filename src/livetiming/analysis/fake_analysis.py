@@ -1,17 +1,19 @@
 #!/usr/bin/env python
-import os
-import sys
+from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming.analysis import Analyser
 from livetiming.analysis.laptimes import LapChart
 from livetiming.recording import RecordingFile
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from twisted.internet import reactor
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
     authenticatedService
 from livetiming.racing import Stat
-from twisted.internet.defer import inlineCallbacks
+from livetiming import load_env
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import EnduranceStopAnalysis
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
+
+import os
+import sys
 import time
 
 
@@ -66,7 +68,7 @@ class FakeAnalysis(ApplicationSession):
 
 
 def main():
-
+    load_env()
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
     runner.run(FakeAnalysis)

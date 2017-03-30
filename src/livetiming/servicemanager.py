@@ -1,11 +1,12 @@
 import argparse
 import errno
 import os
+import re
 import signal
 import sys
 
+from livetiming import load_env
 from subprocess32 import Popen
-import re
 
 
 _PID_DIRECTORY = os.path.expanduser("~/.livetiming-service-pids/")
@@ -118,6 +119,7 @@ def stop_service(service_class):
 
 
 def main():
+    load_env()
     args, extras = _parse_args(sys.argv[1:])
     if args.action == "start":
         _start_service(args, extras)
