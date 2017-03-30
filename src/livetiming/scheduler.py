@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming import servicemanager
+from livetiming import servicemanager, load_env
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from os import environ
 from threading import Lock
@@ -161,6 +161,7 @@ class Scheduler(ApplicationSession):
 
 
 def main():
+    load_env()
     Logger().info("Starting scheduler service...")
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)

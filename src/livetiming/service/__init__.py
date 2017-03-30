@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from livetiming import load_env
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -324,6 +325,7 @@ def service_name_from(srv):
 
 
 def main():
+    load_env()
     router = unicode(os.environ["LIVETIMING_ROUTER"])
 
     args, extra_args = parse_args()
