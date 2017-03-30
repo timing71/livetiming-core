@@ -1,6 +1,6 @@
 #!/bin/bash
-pushd web
+pushd web > /dev/null
 mkdir .git
 npm version $@
 rmdir .git
-popd
+popd > /dev/null
