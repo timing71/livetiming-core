@@ -15,6 +15,7 @@ import argparse
 from livetiming.analysis.laptimes import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
+from livetiming.analysis.session import Session
 
 
 def getToken():
@@ -148,6 +149,7 @@ def shorten(nameTuple):
 # This should include all possible columns
 DEFAULT_COLUMN_SPEC = [
     (Stat.NUM, "NR", ident),
+    (Stat.NUM, "NBR", ident),
     (Stat.STATE, "", lambda i: mapState(i[0])),
     (Stat.CLASS, "CLS", ident),
     (Stat.TEAM, "TEAM", shorten),
@@ -266,7 +268,7 @@ class Service(lt_service):
     def r_l(self, body):
         if 'h' in body:
             # Dynamically generate column spec and mapping
-            availableColumns = map(lambda h: h['c'], body['h'])
+            availableColumns = map(lambda h: h['c'].upper(), body['h'])
             self.carFieldMapping = []
             self.log.info("Discovered columns: {}".format(availableColumns))
             newColumnSpec = []
@@ -390,6 +392,7 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
+            Session,
             LapChart,
             EnduranceStopAnalysis,
             StintLength
