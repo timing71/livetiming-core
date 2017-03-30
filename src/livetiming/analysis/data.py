@@ -136,7 +136,7 @@ class Session(object):
         self.lap_flags[leaderLap] = max(self.lap_flags.get(leaderLap, FlagStatus.NONE), newFlag)
         if self.this_period and self.this_period[0] != newFlag:
             self._flag_periods.append(self.this_period + [leaderLap, timestamp])
-        self.this_period = [newFlag, leaderLap, timestamp]
+            self.this_period = [newFlag, leaderLap, timestamp]
 
     @property
     def flag_periods(self):
@@ -169,7 +169,8 @@ class DataCentre(object):
     def reset(self):
         self._cars = OrderedDict()
         self.session = Session()
-        self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
+        self.current_state = {"cars": [], "session": {"flagState": "none"}, "messages": []}
+        self.column_spec = []
         self.leader_lap = 0
 
     def car(self, race_num):
@@ -185,10 +186,11 @@ class DataCentre(object):
         if timestamp is None:
             timestamp = time.time()
         if newState["session"].get("flagState", "none") != "none":
-            self._update_cars(self.oldState, newState, colSpec, timestamp)
-            self._update_session(self.oldState, newState, colSpec, timestamp)
-            self.latest_timestamp = timestamp
-            self.oldState = copy.deepcopy(newState)
+            self._update_cars(self.current_state, newState, colSpec, timestamp)
+            self._update_session(self.current_state, newState, colSpec, timestamp)
+        self.latest_timestamp = timestamp
+        self.current_state = copy.deepcopy(newState)
+        self.column_spec = colSpec
 
     def _update_cars(self, oldState, newState, colSpec, timestamp):
         f = FieldExtractor(colSpec)
