@@ -1,10 +1,10 @@
+from collections import OrderedDict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.recording import RecordingFile
 import copy
 import re
 import sys
 import time
-from collections import OrderedDict
 
 TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 
