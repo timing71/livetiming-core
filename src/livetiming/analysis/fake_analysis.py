@@ -2,17 +2,20 @@
 import os
 import sys
 from livetiming.analysis import Analyser
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 from livetiming.recording import RecordingFile
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from twisted.internet import reactor
-from livetiming.network import Realm, RPC, Channel, Message, MessageClass
+from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
+    authenticatedService
 from livetiming.racing import Stat
 from twisted.internet.defer import inlineCallbacks
 from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.pits import EnduranceStopAnalysis
+import time
 
 
+@authenticatedService
 class FakeAnalysis(ApplicationSession):
 
     def __init__(self, config):
@@ -20,7 +23,7 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser("TEST", self.publish, [LaptimeAnalysis, StintLength, PitStopAnalysis], publish=False)
+        self.a = Analyser("TEST", self.publish, [LapChart, StintLength, EnduranceStopAnalysis], publish=False)
 
         self.rec = RecordingFile(recFile)
 
@@ -38,18 +41,21 @@ class FakeAnalysis(ApplicationSession):
         yield self.register(true, RPC.LIVENESS_CHECK.format("TEST"))
         yield self.register(self.a.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format("TEST"))
         yield self.register(self.a.getData, RPC.REQUEST_ANALYSIS_DATA.format("TEST"))
+        yield self.register(self.a.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format("TEST"))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
         print "All registered"
         pcs = Stat.parse_colspec(self.rec.manifest['colSpec'])
 
         def preprocess():
+            start_time = time.time()
             for i in range(self.rec.frames + 1):
                 newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
                 self.a.receiveStateUpdate(newState, pcs, self.rec.manifest['startTime'] + (i * int(self.manifest['pollInterval'])))
                 print "{}/{}".format(i, self.rec.frames)
                 # time.sleep(4)
-            print "Preprocessing complete"
+            stop_time = time.time()
+            print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
 
         reactor.callInThread(preprocess)
 

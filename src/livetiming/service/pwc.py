@@ -1,5 +1,5 @@
 from livetiming.service.tsl import Service as tsl_service
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 from livetiming.analysis.driver import StintLength
 
 
@@ -12,6 +12,6 @@ class Service(tsl_service):
 
     def getAnalysisModules(self):
         return [
-            LaptimeAnalysis,
+            LapChart,
             StintLength
         ]

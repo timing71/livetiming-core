@@ -7,9 +7,9 @@ import time
 from datetime import datetime
 from twisted.logger import Logger
 from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis.laptimes import LaptimeAnalysis
+from livetiming.analysis.laptimes import LapChart
 from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.pits import EnduranceStopAnalysis
 
 
 def mapFlagStates(rawState):
@@ -142,8 +142,8 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
-            LaptimeAnalysis,
-            PitStopAnalysis,
+            LapChart,
+            EnduranceStopAnalysis,
             StintLength
         ]
 

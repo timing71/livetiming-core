@@ -12,9 +12,10 @@ from datetime import datetime
 import time
 from livetiming.messages import RaceControlMessage
 import argparse
-from livetiming.analysis.laptimes import LaptimeAnalysis
-from livetiming.analysis.pits import PitStopAnalysis
+from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
+from livetiming.analysis.session import Session
 
 
 def getToken():
@@ -392,7 +393,8 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
-            LaptimeAnalysis,
-            PitStopAnalysis,
+            Session,
+            LapChart,
+            EnduranceStopAnalysis,
             StintLength
         ]
