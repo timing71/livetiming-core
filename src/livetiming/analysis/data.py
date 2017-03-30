@@ -89,21 +89,21 @@ class Car(object):
         else:
             self.initial_driver = driver
 
-    def pitIn(self, timestamp):
+    def pit_in(self, timestamp):
         if len(self.stints) > 0:
             currentStint = self.stints[-1]
             currentStint.finish(self.current_lap, timestamp)
         self.inPit = True
 
-    def pitOut(self, timestamp, driver, flag):
+    def pit_out(self, timestamp, driver, flag):
         if self.inPit:
             self.stints.append(Stint(self.current_lap, timestamp, driver, flag))
             self.inPit = False
 
-    def fuelStart(self, timestamp):
+    def fuel_start(self, timestamp):
         self.fuel_times.append([timestamp, None])
 
-    def fuelStop(self, timestamp):
+    def fuel_stop(self, timestamp):
         if self.fuel_times:
             self.fuel_times[-1][1] = timestamp
 
@@ -232,14 +232,14 @@ class DataCentre(object):
                     pit_states = ["PIT", "FUEL"]
 
                     if new_car_state in pit_states and old_car_state not in pit_states:
-                        car.pitIn(timestamp)
+                        car.pit_in(timestamp)
                     elif new_car_state not in pit_states and old_car_state in pit_states:
-                        car.pitOut(timestamp, driver, flag)
+                        car.pit_out(timestamp, driver, flag)
 
                     if new_car_state == "FUEL" and old_car_state != "FUEL":
-                        car.fuelStart(timestamp)
+                        car.fuel_start(timestamp)
                     elif new_car_state != "FUEL" and old_car_state == "FUEL":
-                        car.fuelStop(timestamp)
+                        car.fuel_stop(timestamp)
 
                     if tyre != f.get(old_car, Stat.TYRE):
                         car.current_stint.tyre = tyre
@@ -249,7 +249,7 @@ class DataCentre(object):
                         car.set_driver(driver)
 
                 elif new_car_state != "PIT":
-                    car.pitOut(timestamp, driver, flag)
+                    car.pit_out(timestamp, driver, flag)
                 else:
                     car.set_driver(driver)
 
