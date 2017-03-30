@@ -32,7 +32,7 @@ def create_protocol(service):
     class TimeserviceNLClientProtocol(WebSocketClientProtocol):
 
         def onConnect(self, response):
-            print u"Connected: {}".format(response)
+            service.log.info("Connected to TSNL")
 
         def onMessage(self, payload, isBinary):
             data = simplejson.loads(payload)
@@ -42,7 +42,6 @@ def create_protocol(service):
 
         def handleMessage(self, message):
             msgType, body = message
-            print msgType
             if msgType == "_":
                 initialState = simplejson.loads(LZString().decompressFromUTF16(body))
                 for submessage in initialState:
@@ -50,10 +49,10 @@ def create_protocol(service):
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
                 getattr(service, msgType)(body)
             else:
-                print "Unknown message {}: {}".format(msgType, body)
+                service.log.warn("Unknown message {}: {}".format(msgType, body))
 
         def onClose(self, wasClean, code, reason):
-            print "Closed"
+            service.log.info("Closed connection to TSNL")
     return TimeserviceNLClientProtocol
 
 
@@ -308,7 +307,7 @@ class Service(lt_service):
             self.description = body["n"]
             self.publishManifest()
         if "c" in body:
-            print "Track length: {}".format(body["c"])
+            self.log.debug("Track length: {}".format(body["c"]))
 
     def h_i(self, body):
         self.h_h(body)
@@ -350,7 +349,7 @@ class Service(lt_service):
 #             print "{} @ {}km (sector {}) Spd: {} km/h Time: {}".format(carNum, position / 1000000.0, sector, 60 * 60 * speed / 1000000, serverToRealTime(timestamp, self.timeOffset))
 
     def t_l(self, length):
-        print "Track length: {}".format(length)
+        self.log.debug("Track length: {}".format(length))
 
     def mapCar(self, car):
         result = [mapFunc(car[idx]) for idx, mapFunc in self.carFieldMapping]
