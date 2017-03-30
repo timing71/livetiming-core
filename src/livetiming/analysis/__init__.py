@@ -5,6 +5,7 @@ from twisted.logger import Logger
 import simplejson
 import time
 import copy
+import cPickle
 
 
 class Analyser(object):
@@ -16,7 +17,7 @@ class Analyser(object):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
         self.uuid = uuid
         self.publish = publishFunc
-        self.data_centre = DataCentre()
+        self._load_data_centre()
         self.modules = {}
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
@@ -34,6 +35,17 @@ class Analyser(object):
                     )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
+
+        with open("{}.data.p".format(self.uuid), "wb") as data_dump_file:
+            cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
+
+    def _load_data_centre(self):
+        try:
+            with open("{}.data.p".format(self.uuid), "rb") as data_dump_file:
+                self.data_centre = cPickle.load(data_dump_file)
+                self.log.info("Using existing data centre dump from {}.dump.p".format(self.uuid))
+        except IOError:
+            self.data_centre = DataCentre()
 
     def getManifest(self):
         manifest = []
