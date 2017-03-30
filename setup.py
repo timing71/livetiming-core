@@ -30,6 +30,7 @@ setup(
         "icalendar",
         "lzstring",
         "pyopenssl",
+        "python-dotenv",
         "service_identity",
         "signalr-client",
         "simplejson",
