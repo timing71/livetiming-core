@@ -1,9 +1,11 @@
+from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
 from twisted.logger import Logger
 import simplejson
 import time
 import copy
+import cPickle
 
 
 class Analyser(object):
@@ -15,28 +17,35 @@ class Analyser(object):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
         self.uuid = uuid
         self.publish = publishFunc
+        self._load_data_centre()
         self.modules = {}
         for mclass in modules:
-            self.modules[_fullname(mclass)] = mclass()
-        self.oldState = {"cars": [], "session": {"flagState": "none"}, "messages": []}
+            self.modules[_fullname(mclass)] = mclass(self.data_centre)
         self.doPublish = publish
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
-        if timestamp is None:
-            timestamp = time.time()
+        self.data_centre.update_state(newState, colSpec, timestamp)
 
-        if newState["session"].get("flagState", "none") != "none":
+        if self.doPublish and newState["session"].get("flagState", "none") != "none":
             for mclass, module in self.modules.iteritems():
                 try:
-                    module.receiveStateUpdate(self.oldState, newState, colSpec, timestamp)
-                    if self.doPublish:
-                        self.publish(
-                            u"{}/analysis/{}".format(self.uuid, mclass),
-                            Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
-                        )
+                    self.publish(
+                        u"{}/analysis/{}".format(self.uuid, mclass),
+                        Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
+                    )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
-        self.oldState = copy.deepcopy(newState)
+
+        with open("{}.data.p".format(self.uuid), "wb") as data_dump_file:
+            cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
+
+    def _load_data_centre(self):
+        try:
+            with open("{}.data.p".format(self.uuid), "rb") as data_dump_file:
+                self.data_centre = cPickle.load(data_dump_file)
+                self.log.info("Using existing data centre dump from {}.dump.p".format(self.uuid))
+        except IOError:
+            self.data_centre = DataCentre()
 
     def getManifest(self):
         manifest = []
@@ -55,23 +64,21 @@ class Analyser(object):
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
+    def getCars(self):
+        return map(lambda car: (car.race_num, car.driver_name()), self.data_centre.cars)
+
     def reset(self):
-        for module in self.modules.values():
-            module.reset()
-        self.oldState = {"cars": [], "session": {"flagStatus": "none"}, "messages": []}
+        self.data_centre.reset()
 
 
 class Analysis(object):
+    def __init__(self, data_centre):
+        self.data_centre = data_centre
+
     def getName(self):
         raise NotImplementedError
 
     def getData(self):
-        raise NotImplementedError
-
-    def receiveStateUpdate(self, oldState, newState, colSpec):
-        raise NotImplementedError
-
-    def reset(self):
         raise NotImplementedError
 
 

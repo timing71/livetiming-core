@@ -1,112 +1,30 @@
 from livetiming.analysis import Analysis
-from livetiming.racing import Stat, FlagStatus
 import math
 
 # Credit this many extra laps for every lap of yellow in a stint
 YELLOW_LAP_MODIFIER = 0.5
 
 
-class Car(object):
-    def __init__(self, car):
-        self.num = car
-        self.stints = []
-        self.inPit = True
-        self.laps = 0
-        self.stintFlags = []
-
-    def pitIn(self, lap, timestamp):
-        if len(self.stints) > 0:
-            currentStint = self.stints[-1]
-            currentStint.append(lap)
-            currentStint.append(timestamp)
-            currentStint.append(False)
-            currentStint.append(self.activeStintYellows())
-        self.inPit = True
-
-    def pitOut(self, lap, timestamp, flag):
-        if self.inPit:
-            self.stints.append([lap, timestamp])
-            self.inPit = False
-            self.stintFlags = [flag]
-
-    def predictedStop(self):
-        if len(self.stints) > 1:  # If we've made at least one stop
-            if len(self.stints[-1]) == 2:  # We're currently on track
-                stintsToConsider = map(lambda stint: (stint[2] - stint[0]) + (YELLOW_LAP_MODIFIER * stint[5]), self.stints[0:-1])
-                outLap = self.stints[-1][0]
-                return math.floor(float(sum(stintsToConsider) / len(stintsToConsider)) - (self.laps - outLap) + (YELLOW_LAP_MODIFIER * self.activeStintYellows()))
-        return None
-
-    def activeStintYellows(self):
-        return len([f for f in self.stintFlags if f >= FlagStatus.YELLOW])
+def predict_endurance_stop(car):
+    if len(car.stints) > 1:  # If we've made at least one stop
+        if car.current_stint.in_progress:  # We're currently on track
+            stintsToConsider = map(lambda stint: (stint.end_lap - stint.start_lap) + (YELLOW_LAP_MODIFIER * stint.yellow_laps), car.stints[0:-1])
+            outLap = car.stints[-1].start_lap
+            return math.floor(float(sum(stintsToConsider) / len(stintsToConsider)) - (car.current_lap - outLap) + (YELLOW_LAP_MODIFIER * car.current_stint.yellow_laps))
+    return None
 
 
-class PitStopAnalysis(Analysis):
-
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.cars = {}
-        self.lapReckoner = {}
-        self.latestTimestamp = 0
-        self.currentFlag = FlagStatus.NONE
+class EnduranceStopAnalysis(Analysis):
 
     def getName(self):
         return "Pit stops"
-
-    def receiveStateUpdate(self, oldState, newState, colSpec, timestamp):
-        numIdx = colSpec.index(Stat.NUM)
-        lapCountIdx = colSpec.index(Stat.LAPS) if Stat.LAPS in colSpec else None
-        stateIdx = colSpec.index(Stat.STATE)
-        lastLapIdx = colSpec.index(Stat.LAST_LAP)
-
-        self.currentFlag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
-
-        self.latestTimestamp = timestamp
-        for newCar in newState["cars"]:
-            num = newCar[numIdx]
-            if lapCountIdx:
-                lap = int(newCar[lapCountIdx]) if newCar[lapCountIdx] != "" else 0
-            else:
-                lap = self.lapReckoner[num] if num in self.lapReckoner else 0
-            oldCar = next(iter([c for c in oldState["cars"] if c[numIdx] == num] or []), None)
-            if oldCar:
-
-                oldCarState = oldCar[stateIdx]
-                newCarState = newCar[stateIdx]
-
-                self._getCar(num).stintFlags[-1] = max(self.currentFlag, self._getCar(num).stintFlags[-1])
-
-                try:
-                    if oldCar[lastLapIdx][0] != newCar[lastLapIdx][0]:
-                        self.lapReckoner[num] = lap + 1
-                        self._getCar(num).stintFlags.append(self.currentFlag)
-                except:
-                    if oldCar[lastLapIdx] != newCar[lastLapIdx]:
-                        self.lapReckoner[num] = lap + 1
-                        self._getCar(num).stintFlags.append(self.currentFlag)
-                self._getCar(num).laps = self.lapReckoner.get(num, 0)
-
-                if newCarState == "PIT" and oldCarState != "PIT":
-                    self._getCar(num).pitIn(lap, timestamp)
-                elif newCarState != "PIT" and oldCarState == "PIT":
-                    self._getCar(num).pitOut(lap, timestamp, self.currentFlag)
-
-            else:
-                self._getCar(num).pitOut(lap, timestamp, self.currentFlag)
-
-    def _getCar(self, car):
-        if car not in self.cars:
-            self.cars[car] = Car(car)
-        return self.cars[car]
 
     def getData(self):
         '''
         Data format:
         {
-          "cars": {
-            "carNum": [
+          "cars": [
+            [
               [
                 [outLap, outTime, inLap, inTime, inProgress, lapsUnderYellow]
               ],
@@ -114,19 +32,34 @@ class PitStopAnalysis(Analysis):
               lap,
               predictedStopLap
             ]
-          }
+          ],
+          "latestTimestamp": latestTimestamp
         },
-        "latestTimestamp": latestTimestamp
         '''
-        mappedData = {"cars": {}, "latestTimestamp": self.latestTimestamp}
+        cars = []
 
-        for num, car in self.cars.iteritems():
+        for car in self.data_centre.cars:
             mappedStints = []
             for stint in car.stints:
-                if len(stint) == 6:
-                    mappedStints.append(stint)
+                if stint.in_progress:
+                    mappedStints.append([
+                        stint.start_lap,
+                        stint.start_time,
+                        None,
+                        self.data_centre.latest_timestamp,
+                        True,
+                        stint.yellow_laps
+                    ])
                 else:
-                    mappedStints.append(stint + [None, self.latestTimestamp, True, car.activeStintYellows()])
-            mappedData["cars"][num] = [mappedStints, car.inPit, car.laps, car.predictedStop()]
+                    mappedStints.append([
+                        stint.start_lap,
+                        stint.start_time,
+                        stint.end_lap,
+                        stint.end_time,
+                        False,
+                        stint.yellow_laps
+                    ])
 
-        return mappedData
+            cars.append([mappedStints, car.inPit, car.current_lap, predict_endurance_stop(car)])
+
+        return {"cars": cars, "latestTimestamp": self.data_centre.latest_timestamp}
