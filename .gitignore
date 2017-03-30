@@ -44,3 +44,4 @@ crossbar/.crossbar/node.key
 /recordings/
 .idea
 web/app/config/config.json
+livetiming.env
