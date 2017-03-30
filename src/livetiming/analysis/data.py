@@ -60,6 +60,7 @@ class Car(object):
         self.current_lap = 0
         self._current_lap_flags = [FlagStatus.NONE]
         self.initial_driver = None
+        self.fuel_times = []
 
     def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
@@ -98,6 +99,13 @@ class Car(object):
         if self.inPit:
             self.stints.append(Stint(self.current_lap, timestamp, driver, flag))
             self.inPit = False
+
+    def fuelStart(self, timestamp):
+        self.fuel_times.append([timestamp, None])
+
+    def fuelStop(self, timestamp):
+        if self.fuel_times:
+            self.fuel_times[-1][1] = timestamp
 
     @property
     def current_stint(self):
@@ -221,10 +229,17 @@ class DataCentre(object):
 
                     old_car_state = f.get(old_car, Stat.STATE)
 
-                    if new_car_state == "PIT" and old_car_state != "PIT":
+                    pit_states = ["PIT", "FUEL"]
+
+                    if new_car_state in pit_states and old_car_state not in pit_states:
                         car.pitIn(timestamp)
-                    elif new_car_state != "PIT" and old_car_state == "PIT":
+                    elif new_car_state not in pit_states and old_car_state in pit_states:
                         car.pitOut(timestamp, driver, flag)
+
+                    if new_car_state == "FUEL" and old_car_state != "FUEL":
+                        car.fuelStart(timestamp)
+                    elif new_car_state != "FUEL" and old_car_state == "FUEL":
+                        car.fuelStop(timestamp)
 
                     if tyre != f.get(old_car, Stat.TYRE):
                         car.current_stint.tyre = tyre
