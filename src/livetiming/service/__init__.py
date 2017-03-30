@@ -302,7 +302,8 @@ def parse_args():
     parser.add_argument('-r', '--recording-file', nargs='?', help='File to record timing data to')
     parser.add_argument('-d', '--description', nargs='?', help='Service description')
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Log to stdout rather than a file')
+    parser.add_argument('--debug', action='store_true')
 
     return parser.parse_known_args()
 
@@ -335,8 +336,11 @@ def main():
     runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=extra)
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
-        if not args.verbose:
-            txaio.start_logging(out=logFile, level='info')
+        level = "debug" if args.debug else "info"
+        if args.verbose:  # log to stdout
+            txaio.start_logging(level=level)
+        else:  # log to file
+            txaio.start_logging(out=logFile, level=level)
         runner.run(service_class)
         print "Service terminated."
 
