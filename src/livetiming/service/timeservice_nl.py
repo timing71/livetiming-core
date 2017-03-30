@@ -20,7 +20,6 @@ from livetiming.analysis.session import Session
 
 def getToken():
     tokenData = simplejson.load(urllib2.urlopen("https://livetiming.getraceresults.com/lt/negotiate?clientProtocol=1.5"))
-    print tokenData
     return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
 
 
