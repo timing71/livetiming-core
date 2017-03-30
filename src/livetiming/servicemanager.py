@@ -31,7 +31,7 @@ def _pid_for(service_class, pid_directory):
     try:
         with open(pidfile, 'r') as f:
             return int(f.read())
-    except:
+    except IOError:
         return None
 
 
@@ -49,6 +49,11 @@ def _clear_pid_for(service_class, pid_directory):
     os.remove(pidfile)
 
 
+def _process_exists(pid):
+    pids = [int(x) for x in os.listdir("/proc") if x.isdigit()]
+    return pid in pids
+
+
 def _read_uuid_for(service_class):
     logfile = "{}.log".format(service_class)
     if os.path.exists(logfile):
@@ -64,8 +69,11 @@ def _read_uuid_for(service_class):
 
 
 def _start_service(args, extras):
-    if _pid_for(args.service_class, args.pid_directory) is not None:
-        raise ServiceManagementException("Service for {} already running!".format(args.service_class))
+    existing_pid = _pid_for(args.service_class, args.pid_directory)
+    if existing_pid is not None:
+        if _process_exists(existing_pid):
+            raise ServiceManagementException("Service for {} already running!".format(args.service_class))
+        print "Ignoring stale PID {}".format(existing_pid)
     else:
         p = Popen(['livetiming-service', args.service_class] + extras)
         _write_pid_for(args.service_class, p.pid, args.pid_directory)
