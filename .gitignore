@@ -38,6 +38,7 @@ nosetests.xml
 venv/
 crossbar/.crossbar/node.key
 /*.json
+/*.data.p
 /.settings
 /*.log
 /recordings/
