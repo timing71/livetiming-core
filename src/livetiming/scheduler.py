@@ -15,7 +15,7 @@ import urllib2
 import time
 
 
-EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(,(?P<args>[^\]]+))?\]")
+EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, ?(?P<args>[^\]]+))?\]")
 
 
 class Event(object):
