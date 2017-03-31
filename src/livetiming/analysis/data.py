@@ -77,6 +77,9 @@ class Car(object):
                     tyre
                 )
             )
+
+        if not self.current_stint:
+            self.stints.append(Stint(self.current_lap, timestamp, driver, current_flag))
         self.current_stint.flags.append(max_flag)
         self._current_lap_flags = [current_flag]
 
@@ -136,11 +139,14 @@ class Session(object):
         self.lap_flags[leaderLap] = max(self.lap_flags.get(leaderLap, FlagStatus.NONE), newFlag)
         if self.this_period and self.this_period[0] != newFlag:
             self._flag_periods.append(self.this_period + [leaderLap, timestamp])
+        if not self.this_period or self.this_period[0] != newFlag:
             self.this_period = [newFlag, leaderLap, timestamp]
 
     @property
     def flag_periods(self):
-        return self._flag_periods + [self.this_period + [None, None]]
+        if self.this_period:
+            return self._flag_periods + [self.this_period + [None, None]]
+        return self._flag_periods
 
 
 class FieldExtractor(object):
@@ -258,7 +264,7 @@ class DataCentre(object):
     def _update_session(self, oldState, newState, colSpec, timestamp):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
         old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
-        if flag != old_flag:
+        if flag != old_flag or not self.session.this_period:
             self.session.flag_change(flag, self.leader_lap, timestamp)
 
     def _get_lap_count(self, race_num, car, f, cars):
