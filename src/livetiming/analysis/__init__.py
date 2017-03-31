@@ -60,7 +60,8 @@ class Analyser(object):
                 allData[clz] = module.getData()
             return allData
         elif mclass in self.modules:
-            return self.modules[mclass].getData()
+            d = self.modules[mclass].getData()
+            return simplejson.loads(simplejson.dumps(d))  # HACK HACK HACK - why does session data fail when we don't do this?
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
