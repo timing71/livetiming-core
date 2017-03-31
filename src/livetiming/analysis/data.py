@@ -237,7 +237,7 @@ class DataCentre(object):
 
                     old_car_state = f.get(old_car, Stat.STATE)
 
-                    pit_states = ["PIT", "FUEL"]
+                    pit_states = ["PIT", "FUEL", "N/S"]
 
                     if new_car_state in pit_states and old_car_state not in pit_states:
                         car.pit_in(timestamp)
