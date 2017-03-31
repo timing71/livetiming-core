@@ -39,7 +39,7 @@ class Session(Analysis):
 
         results['flagStats'] = flag_stats
         results['carPerState'] = car_per_state
-        results['currentFlagPeriod'] = self.data_centre.session.flag_periods[-1]
+        results['currentFlagPeriod'] = self.data_centre.session.flag_periods[-1] if self.data_centre.session.flag_periods else None
         results['currentTimestamp'] = self.data_centre.latest_timestamp
         results['leaderLap'] = self.data_centre.leader_lap
 
