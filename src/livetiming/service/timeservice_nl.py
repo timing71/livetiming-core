@@ -148,6 +148,7 @@ def shorten(nameTuple):
 DEFAULT_COLUMN_SPEC = [
     (Stat.NUM, "NR", ident),
     (Stat.NUM, "NBR", ident),
+    (Stat.NUM, "NR.", ident),
     (Stat.STATE, "", lambda i: mapState(i[0])),
     (Stat.CLASS, "CLS", ident),
     (Stat.TEAM, "TEAM", shorten),
@@ -166,6 +167,11 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.S1, "SECT-1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S1, "SECT.1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S2, "SECT.2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S3, "SECT.3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.LAST_LAP, "LAST TIME", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.BEST_LAP, "BEST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.PITS, "PIT", ident)
@@ -353,11 +359,13 @@ class Service(lt_service):
     def mapCar(self, car):
         result = [mapFunc(car[idx]) for idx, mapFunc in self.carFieldMapping]
 
-        lastIdx = self.getColumnSpec().index(Stat.LAST_LAP)
-        bestIdx = self.getColumnSpec().index(Stat.BEST_LAP)
+        colSpec = self.getColumnSpec()
+        if Stat.LAST_LAP in colSpec and Stat.BEST_LAP in colSpec:
+            lastIdx = colSpec.index(Stat.LAST_LAP)
+            bestIdx = colSpec.index(Stat.BEST_LAP)
 
-        if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
-            result[lastIdx] = (result[lastIdx][0], "sb-new")
+            if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
+                result[lastIdx] = (result[lastIdx][0], "sb-new")
 
         return result
 
