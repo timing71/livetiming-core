@@ -87,7 +87,7 @@ class CarPitMessage(PerCarMessage):
         driver = self.getValue(newCar, Stat.DRIVER)
         clazz = self.getValue(newCar, Stat.CLASS, "Pits")
 
-        if oldStatus != newStatus:
+        if oldStatus != newStatus and carNum is not None:
             if newStatus == "OUT" or (newStatus == "RUN" and oldStatus == "PIT"):
                 return [clazz, u"#{} ({}) has left the pits".format(carNum, driver), "out"]
             elif newStatus == "PIT":
@@ -105,7 +105,7 @@ class DriverChangeMessage(PerCarMessage):
         oldDriver = self.getValue(oldCar, Stat.DRIVER)
         newDriver = self.getValue(newCar, Stat.DRIVER)
         carNum = self.getValue(newCar, Stat.NUM)
-        if oldDriver != newDriver:
+        if oldDriver != newDriver and carNum is not None:
             if oldDriver == "":
                 return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change (to {})".format(carNum, newDriver)]
             elif newDriver != "":
@@ -121,7 +121,7 @@ class FastLapMessage(PerCarMessage):
         clazz = self.getValue(newCar, Stat.CLASS, "Timing")
         oldTime = self.getValue(oldCar, Stat.LAST_LAP)
         newTime = self.getValue(newCar, Stat.LAST_LAP)
-        if oldTime and newTime:
+        if oldTime and newTime and carNum:
             oldFlags = oldTime[1]
             newFlags = newTime[1]
 
