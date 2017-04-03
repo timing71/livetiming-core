@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.websocket import WebSocketClientFactory
 from livetiming import load_env
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
@@ -9,6 +10,7 @@ from livetiming.recording import TimingRecorder
 from lzstring import LZString
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
@@ -328,6 +330,18 @@ def JSONFetcher(url, callback, interval):
 
 def MultiLineFetcher(url, callback, interval):
     return Fetcher(url, lambda l: callback(l.splitlines()), interval)
+
+
+class ReconnectingWebSocketClientFactory(WebSocketClientFactory, ReconnectingClientFactory):
+    log = Logger()
+
+    def clientConnectionFailed(self, connector, reason):
+        self.log.warn("Connection to upstream source failed! Reason: {reason}. Retrying...", reason=reason)
+        self.retry(connector)
+
+    def clientConnectionLost(self, connector, reason):
+        self.log.warn("Connection to upstream source lost! Reason: {reason}. Retrying...", reason=reason)
+        self.retry(connector)
 
 
 def parse_args():

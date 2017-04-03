@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from autobahn.twisted.websocket import WebSocketClientProtocol,\
-    WebSocketClientFactory, connectWS
+from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 
-from livetiming.service import Service as lt_service
+from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from lzstring import LZString
 
 import simplejson
@@ -32,6 +31,7 @@ def create_protocol(service):
 
         def onConnect(self, response):
             service.log.info("Connected to TSNL")
+            self.factory.resetDelay()
 
         def onMessage(self, payload, isBinary):
             data = simplejson.loads(payload)
@@ -200,7 +200,7 @@ class Service(lt_service):
         self.myArgs = parse_extra_args(extra_args)
 
         socketURL = getWebSocketURL(self.getTrackID(), getToken())
-        factory = WebSocketClientFactory(socketURL)
+        factory = ReconnectingWebSocketClientFactory(socketURL)
         factory.protocol = create_protocol(self)
         connectWS(factory)
 

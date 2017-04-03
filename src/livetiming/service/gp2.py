@@ -1,7 +1,7 @@
-from autobahn.twisted.websocket import connectWS, WebSocketClientFactory, WebSocketClientProtocol
+from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service
+from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 
 import simplejson
 import urllib2
@@ -12,7 +12,8 @@ def createProtocol(series, service):
     class ClientProtocol(WebSocketClientProtocol):
 
         def onConnect(self, response):
-            print u"Connected: {}".format(response)
+            service.log.info("Connected to upstream timing source")
+            self.factory.resetDelay()
 
         def onOpen(self):
             self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}')
@@ -87,7 +88,7 @@ class Service(lt_service):
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
         socketURL = getWebSocketURL(getToken())
-        factory = WebSocketClientFactory(socketURL)
+        factory = ReconnectingWebSocketClientFactory(socketURL)
         factory.protocol = self.getClientProtocol()
 
         connectWS(factory)
