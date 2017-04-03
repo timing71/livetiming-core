@@ -123,10 +123,10 @@ def parse_extra_args(args):
 
 
 class Service(lt_service):
-    def __init__(self, config, feed=None):
-        lt_service.__init__(self, config)
+    def __init__(self, args, extra_args, feed=None):
+        lt_service.__init__(self, args, extra_args)
 
-        self.extra_args = parse_extra_args(config.extra['extra_args'])
+        self.extra_args = parse_extra_args(extra_args)
         self.feed = feed
 
         self.sessionData = {}

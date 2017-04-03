@@ -149,10 +149,10 @@ FULL_COL_SPEC = [
 
 
 class Service(lt_service):
-    def __init__(self, config):
-        lt_service.__init__(self, config)
+    def __init__(self, args, extra_args):
+        lt_service.__init__(self, args, extra_args)
 
-        self.myArgs = parse_extra_args(config.extra['extra_args'])
+        self.myArgs = parse_extra_args(extra_args)
 
         self.colSpec = []
         self.colMapping = []

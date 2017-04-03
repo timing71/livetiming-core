@@ -25,8 +25,8 @@ def mapClasses(rawClass):
 
 
 class Service(WEC):
-    def __init__(self, config):
-        WEC.__init__(self, config)
+    def __init__(self, args, extra_args):
+        WEC.__init__(self, args, extra_args)
 
     def getDefaultDescription(self):
         return self.getName()

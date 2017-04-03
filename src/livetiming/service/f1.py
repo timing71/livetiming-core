@@ -68,8 +68,8 @@ class Service(lt_service):
     DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
     log = Logger()
 
-    def __init__(self, config):
-        lt_service.__init__(self, config)
+    def __init__(self, args, extra_args):
+        lt_service.__init__(self, args, extra_args)
         self.carsState = []
         self.sessionState = {}
         self.dataMap = {}

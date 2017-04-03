@@ -15,8 +15,8 @@ def find_todays_data(all_data):
 
 
 class Service(lt_service):
-    def __init__(self, config):
-        super(Service, self).__init__(config)
+    def __init__(self, args, extra_args):
+        super(Service, self).__init__(args, extra_args)
         self.data = {}
 
         def setData(new_data):

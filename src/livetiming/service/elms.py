@@ -3,8 +3,8 @@ from livetiming.service.lemansseries import Service as LMS
 
 
 class Service(LMS):
-    def __init__(self, config):
-        LMS.__init__(self, config)
+    def __init__(self, args, extra_args):
+        LMS.__init__(self, args, extra_args)
 
     def getName(self):
         return "European Le Mans Series"

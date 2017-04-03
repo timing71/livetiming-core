@@ -3,8 +3,8 @@ from livetiming.analysis.laptimes import LapChart
 
 
 class Service(AlkamelService):
-    def __init__(self, config):
-        super(Service, self).__init__(config, feed='formulae')
+    def __init__(self, args, extra_args):
+        super(Service, self).__init__(args, extra_args, feed='formulae')
 
     def getAnalysisModules(self):
         return [

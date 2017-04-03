@@ -49,8 +49,8 @@ def parseSessionTime(formattedTime):
 class Service(lt_service):
     log = Logger()
 
-    def __init__(self, config):
-        super(Service, self).__init__(config)
+    def __init__(self, args, extra_args):
+        super(Service, self).__init__(args, extra_args)
         self.name = "IndyCar"
         self.description = "IndyCar"
 

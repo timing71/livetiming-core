@@ -21,20 +21,72 @@ import txaio
 import urllib2
 
 
-@authenticatedService
-class Service(ApplicationSession):
+def create_service_session(service):
+    class ServiceSession(ApplicationSession):
+
+        def _isAlive(self):
+            return True
+
+        @inlineCallbacks
+        def onJoin(self, details):
+            service.log.info("Session ready for service {}".format(service.uuid))
+            service.set_publish(self.publish)
+            yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid))
+            yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid))
+            yield self.register(service.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(service.uuid))
+            yield self.register(service.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(service.uuid))
+            yield self.register(service.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(service.uuid))
+            yield self.subscribe(service.onControlMessage, Channel.CONTROL)
+            self.log.info("Subscribed to control channel")
+            yield service.publishManifest()
+            self.log.info("Published init message")
+
+            updater = LoopingCall(service._updateAndPublishRaceState)
+            updater.start(service.getPollInterval())
+            service.log.info("Service started")
+
+        def onDisconnect(self):
+            service.log.info("Disconnected from live timing service")
+
+    return authenticatedService(ServiceSession)
+
+
+class Service(object):
     log = Logger()
 
-    def __init__(self, config):
-        ApplicationSession.__init__(self, config)
-        self.args = config.extra
-        self.uuid = os.path.splitext(self.args["initial_state"])[0] if self.args["initial_state"] is not None else uuid4().hex
+    def __init__(self, args, extra_args={}):
+        self.args = args
+        self.uuid = os.path.splitext(self.args.initial_state)[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
-        if self.args["recording_file"] is not None:
-            self.recorder = TimingRecorder(self.args["recording_file"])
+        if self.args.recording_file is not None:
+            self.recorder = TimingRecorder(self.args.recording_file)
         else:
             self.recorder = None
         self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
+        self._publish = None
+
+    def set_publish(self, func):
+        self._publish = func
+
+    def publish(self, *args):
+        if self._publish:
+            self._publish(*args)
+        else:
+            self.log.warn("Call to publish before publish function set!")
+
+    def start(self):
+        session_class = create_service_session(self)
+        router = unicode(os.environ["LIVETIMING_ROUTER"])
+        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+
+        with open("{}.log".format(self.__class__.__module__), 'a', 0) as logFile:
+            level = "debug" if self.args.debug else "info"
+            if self.args.verbose:  # log to stdout
+                txaio.start_logging(level=level)
+            else:  # log to file
+                txaio.start_logging(out=logFile, level=level)
+            runner.run(session_class, auto_reconnect=True)
+            self.log.info("Service terminated.")
 
     ###################################################
     # These methods MUST be implemented by subclasses #
@@ -142,9 +194,9 @@ class Service(ApplicationSession):
     ######################################################
 
     def _getInitialState(self):
-        if self.args["initial_state"] is not None:
+        if self.args.initial_state is not None:
             try:
-                stateFile = open(self.args["initial_state"], 'r')
+                stateFile = open(self.args.initial_state, 'r')
                 return simplejson.load(stateFile)
             except Exception:
                 self.log.failure("Exception trying to load saved state: {log_failure}")
@@ -184,12 +236,9 @@ class Service(ApplicationSession):
         }
 
     def _getDescription(self):
-        if self.args['description'] is not None:
-            return self.args['description']
+        if self.args.description is not None:
+            return self.args.description
         return self.getDefaultDescription()
-
-    def _isAlive(self):
-        return True
 
     def _updateRaceState(self):
         try:
@@ -231,33 +280,11 @@ class Service(ApplicationSession):
         if self.recorder:
             self.recorder.writeManifest(self._createServiceRegistration())
 
-    @inlineCallbacks
-    def onJoin(self, details):
-        self.log.info("Session ready for service {}".format(self.uuid))
-        yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(self.uuid))
-        yield self.register(self._requestCurrentState, RPC.REQUEST_STATE.format(self.uuid))
-        yield self.register(self.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(self.uuid))
-        yield self.register(self.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(self.uuid))
-        yield self.register(self.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(self.uuid))
-        yield self.subscribe(self.onControlMessage, Channel.CONTROL)
-        self.log.info("Subscribed to control channel")
-        yield self.publishManifest()
-        self.log.info("Published init message")
-
-        updater = LoopingCall(self._updateAndPublishRaceState)
-        updater.start(self.getPollInterval())
-        self.log.info("Service started")
-
     def onControlMessage(self, message):
         msg = Message.parse(message)
         self.log.info("Received message {}".format(msg))
         if msg.msgClass == MessageClass.INITIALISE_DIRECTORY:
             yield self.publishManifest()
-
-    def onDisconnect(self):
-        self.log.info("Disconnected from live timing service")
-        if reactor.running:
-            reactor.stop()
 
 
 class Fetcher(object):
@@ -326,7 +353,6 @@ def service_name_from(srv):
 
 def main():
     load_env()
-    router = unicode(os.environ["LIVETIMING_ROUTER"])
 
     args, extra_args = parse_args()
 
@@ -335,16 +361,8 @@ def main():
 
     service_class = get_class(service_name_from(args.service_class))
     Logger().info("Starting timing service {}...".format(service_class.__module__))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING, extra=extra)
-
-    with open("{}.log".format(args.service_class), 'a', 0) as logFile:
-        level = "debug" if args.debug else "info"
-        if args.verbose:  # log to stdout
-            txaio.start_logging(level=level)
-        else:  # log to file
-            txaio.start_logging(out=logFile, level=level)
-        runner.run(service_class)
-        print "Service terminated."
+    service = service_class(args, extra_args)
+    service.start()
 
 
 if __name__ == '__main__':
