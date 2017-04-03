@@ -19,6 +19,7 @@ import os
 import simplejson
 import txaio
 import urllib2
+from twisted.internet.threads import deferToThread
 
 
 def create_service_session(service):
@@ -290,7 +291,7 @@ class Fetcher(object):
         self.callback = callback
         self.interval = interval
 
-    def _run(self):
+    def _defer(self):
         if callable(self.url):
             url = self.url()
         else:
@@ -299,15 +300,22 @@ class Fetcher(object):
         try:
             feed = urllib2.urlopen(url)
             if feed.getcode() == 200:
-                self.callback(feed.read())
+                return feed.read()
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
         except Exception:
             pass  # Bad data feed :(
 
+    def _run(self):
+        def cb(data):
+            self.callback(data)
+            reactor.callLater(self.interval, self._run)
+
+        deferred = deferToThread(self._defer)
+        deferred.addCallback(cb)
+
     def start(self):
-        self.loop = LoopingCall(self._run)
-        self.loop.start(self.interval)
+        self._run
 
 
 def JSONFetcher(url, callback, interval):
