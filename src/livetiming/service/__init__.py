@@ -41,12 +41,9 @@ def create_service_session(service):
             yield service.publishManifest()
             self.log.info("Published init message")
 
-            updater = LoopingCall(service._updateAndPublishRaceState)
-            updater.start(service.getPollInterval())
-            service.log.info("Service started")
-
         def onDisconnect(self):
             service.log.info("Disconnected from live timing service")
+            service.set_publish(None)
 
     return authenticatedService(ServiceSession)
 
@@ -72,21 +69,19 @@ class Service(object):
         if self._publish:
             self._publish(*args)
         else:
-            self.log.warn("Call to publish before publish function set!")
+            self.log.warn("Call to publish with no publish function set!")
 
     def start(self):
         session_class = create_service_session(self)
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
 
-        with open("{}.log".format(self.__class__.__module__), 'a', 0) as logFile:
-            level = "debug" if self.args.debug else "info"
-            if self.args.verbose:  # log to stdout
-                txaio.start_logging(level=level)
-            else:  # log to file
-                txaio.start_logging(out=logFile, level=level)
-            runner.run(session_class, auto_reconnect=True)
-            self.log.info("Service terminated.")
+        updater = LoopingCall(self._updateAndPublishRaceState)
+        updater.start(self.getPollInterval())
+        self.log.info("Race state updates started")
+
+        runner.run(session_class, auto_reconnect=True)
+        self.log.info("Service terminated.")
 
     ###################################################
     # These methods MUST be implemented by subclasses #
@@ -360,6 +355,14 @@ def main():
     extra['extra_args'] = extra_args
 
     service_class = get_class(service_name_from(args.service_class))
+
+    with open("{}.log".format(service_class.__module__), 'a', 0) as logFile:
+        level = "debug" if args.debug else "info"
+        if args.verbose:  # log to stdout
+            txaio.start_logging(level=level)
+        else:  # log to file
+            txaio.start_logging(out=logFile, level=level)
+
     Logger().info("Starting timing service {}...".format(service_class.__module__))
     service = service_class(args, extra_args)
     service.start()
