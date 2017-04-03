@@ -10,6 +10,7 @@ from lzstring import LZString
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
+from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
 from uuid import uuid4
 
@@ -19,7 +20,6 @@ import os
 import simplejson
 import txaio
 import urllib2
-from twisted.internet.threads import deferToThread
 
 
 def create_service_session(service):
@@ -41,6 +41,10 @@ def create_service_session(service):
             self.log.info("Subscribed to control channel")
             yield service.publishManifest()
             self.log.info("Published init message")
+
+        def onLeave(self, details):
+            super(ServiceSession, self).onLeave(details)
+            service.log.info("Left WAMP session: {details}", details=details)
 
         def onDisconnect(self):
             service.log.info("Disconnected from live timing service")
@@ -70,7 +74,7 @@ class Service(object):
         if self._publish:
             self._publish(*args)
         else:
-            self.log.warn("Call to publish with no publish function set!")
+            self.log.debug("Call to publish with no publish function set!")
 
     def start(self):
         session_class = create_service_session(self)
@@ -249,7 +253,7 @@ class Service(object):
             self.log.failure("Exception while updating race state: {log_failure}")
 
     def _updateAndPublishRaceState(self):
-        self.log.debug("Publishing timing data for {}".format(self.uuid))
+        self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
         self.publish(unicode(self.uuid), self._requestCurrentState())
 
