@@ -368,7 +368,7 @@ def main():
 
     service_class = get_class(service_name_from(args.service_class))
 
-    with open("{}.log".format(service_class.__module__), 'a', 0) as logFile:
+    with open("{}.log".format(args.service_class), 'a', 0) as logFile:
         level = "debug" if args.debug else "info"
         if args.verbose:  # log to stdout
             txaio.start_logging(level=level)
