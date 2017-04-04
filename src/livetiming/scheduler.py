@@ -119,31 +119,37 @@ class Scheduler(ApplicationSession):
 
             for job in toStart:
                 try:
-                    self.log.info("Starting service {} with args {}".format(job.service, job.serviceArgs))
-                    servicemanager.start_service(job.service, job.serviceArgs)
-                    self.runningEvents.append(job.uid)
+                    self._start_service(job.uid, job.service, job.serviceArgs)
                     hasChanged = True
-                except Exception as e:
-                    self.log.critical(e)
+                except Exception:
+                    self.log.failure("Exception while starting job: {log_failure}")
 
             for job in toEnd:
                 try:
-                    self.log.info("Stopping service {}".format(job.service))
-                    servicemanager.stop_service(job.service)
-                    self.runningEvents.remove(job.uid)
-                    self.events.pop(job.uid)
+                    self._stop_service(job.uid, job.service)
                     hasChanged = True
-                except Exception as e:
-                    self.log.critical(str(e))
+                except Exception:
+                    self.log.failure("Exception while stopping job: {log_failure}")
 
         if hasChanged:
             self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
         self.log.debug("Scheduler loop complete")
 
+    def _start_service(self, uid, service, args):
+        self.log.info("Starting service {} with args {}".format(service, args))
+        servicemanager.start_service(service, args)
+        self.runningEvents.append(uid)
+
+    def _stop_service(self, uid, service):
+        self.log.info("Stopping service {}".format(service))
+        servicemanager.stop_service(service)
+        self.runningEvents.remove(uid)
+        self.events.pop(uid)
+
     @inlineCallbacks
     def onJoin(self, details):
-        self.log.info("Session ready")
+        self.log.info("Scheduler session ready")
 
         yield self.register(self.listSchedule, RPC.SCHEDULE_LISTING)
         self.log.debug("Registered service listing RPC")
