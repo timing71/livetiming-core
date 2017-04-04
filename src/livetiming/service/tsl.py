@@ -131,8 +131,8 @@ def mapSessionState(state):
 
 
 class Service(lt_service):
-    def __init__(self, config):
-        super(Service, self).__init__(config)
+    def __init__(self, args, extra_args):
+        super(Service, self).__init__(args, extra_args)
         client = TSLClient(self, host="lt-us.tsl-timing.com", sessionID="171006")
         client.start()
 
