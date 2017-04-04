@@ -78,6 +78,7 @@ def _start_service(args, extras):
     p = Popen(['livetiming-service', args.service_class] + extras)
     _write_pid_for(args.service_class, p.pid, args.pid_directory)
     print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
+    return p.pid
 
 
 def _stop_service(args):
@@ -106,7 +107,7 @@ def _restart_service(args, extras):
         _stop_service(args)
     except ServiceManagementException:
         pass
-    _start_service(args, extras)
+    return _start_service(args, extras)
 
 
 def start_service(service_class, args):
