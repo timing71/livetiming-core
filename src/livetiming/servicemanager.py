@@ -75,10 +75,9 @@ def _start_service(args, extras):
         if _process_exists(existing_pid):
             raise ServiceManagementException("Service for {} already running!".format(args.service_class))
         print "Ignoring stale PID {}".format(existing_pid)
-    else:
-        p = Popen(['livetiming-service', args.service_class] + extras)
-        _write_pid_for(args.service_class, p.pid, args.pid_directory)
-        print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
+    p = Popen(['livetiming-service', args.service_class] + extras)
+    _write_pid_for(args.service_class, p.pid, args.pid_directory)
+    print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
 
 
 def _stop_service(args):
