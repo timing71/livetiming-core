@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.recording import RecordingFile
+import cPickle
 import copy
 import re
 import sys
@@ -302,18 +303,25 @@ class DataCentre(object):
 
 
 if __name__ == '__main__':
-    recFile = sys.argv[1]
-    dc = DataCentre()
-    rec = RecordingFile(recFile)
+    filename = sys.argv[1]
+    dc = None
 
-    colSpec = Stat.parse_colspec(rec.manifest['colSpec'])
+    if filename.endswith(".data.p"):
+        with open(filename, "rb") as data_dump_file:
+            dc = cPickle.load(data_dump_file)
 
-    start_time = time.time()
+    else:
+        dc = DataCentre()
+        rec = RecordingFile(filename)
 
-    for i in range(rec.frames + 1):
-        newState = rec.getStateAt(i * int(rec.manifest['pollInterval']))
-        dc.update_state(newState, colSpec, rec.manifest['startTime'] + (i * int(rec.manifest['pollInterval'])))
-        print "{}/{}".format(i, rec.frames)
+        colSpec = Stat.parse_colspec(rec.manifest['colSpec'])
 
-    stop_time = time.time()
-    print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
+        start_time = time.time()
+
+        for i in range(rec.frames + 1):
+            newState = rec.getStateAt(i * int(rec.manifest['pollInterval']))
+            dc.update_state(newState, colSpec, rec.manifest['startTime'] + (i * int(rec.manifest['pollInterval'])))
+            print "{}/{}".format(i, rec.frames)
+
+        stop_time = time.time()
+        print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
