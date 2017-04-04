@@ -10,9 +10,10 @@ TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 
 
 class Lap(object):
-    def __init__(self, lap_num, laptime, driver, timestamp, flag, tyre):
+    def __init__(self, lap_num, position, laptime, driver, timestamp, flag, tyre):
         self.lap_num = lap_num
         self.laptime = laptime
+        self.position = position
         self.driver = driver
         self.timestamp = timestamp
         self.flag = flag
@@ -62,7 +63,7 @@ class Car(object):
         self.initial_driver = None
         self.fuel_times = []
 
-    def add_lap(self, laptime, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
+    def add_lap(self, laptime, position, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
         if laptime > 0:
             # Some services e.g. F1 don't give a laptime for the first lap.
@@ -70,6 +71,7 @@ class Car(object):
             self.laps.append(
                 Lap(
                     self.current_lap,
+                    position,
                     laptime,
                     driver,
                     timestamp,
@@ -203,7 +205,7 @@ class DataCentre(object):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
         old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
 
-        for new_car in newState['cars']:
+        for idx, new_car in enumerate(newState['cars']):
             race_num = f.get(new_car, Stat.NUM)
             if race_num:
                 car = self.car(race_num)
@@ -230,10 +232,10 @@ class DataCentre(object):
 
                     try:
                         if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap[0], driver, timestamp, flag, tyre)
+                            car.add_lap(new_lap[0], idx + 1, driver, timestamp, flag, tyre)
                     except Exception:  # Non-tuple case (do any services still not use tuples?)
                         if old_lap != new_lap or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap, driver, timestamp, flag, tyre)
+                            car.add_lap(new_lap, idx + 1, driver, timestamp, flag, tyre)
 
                     old_car_state = f.get(old_car, Stat.STATE)
 
