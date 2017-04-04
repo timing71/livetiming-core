@@ -143,9 +143,9 @@ def show(args, extras):
     r = RecordingFile(args.recfile)
     idx = extras[0]
     if idx[0] == "@":
-        print r.getStateAtTimestamp(int(idx[1:]))
+        print simplejson.dumps(r.getStateAtTimestamp(int(idx[1:])))
     else:
-        print r.getStateAt(int(idx))
+        print simplejson.dumps(r.getStateAt(int(idx)))
 
 
 ACTIONS = {
