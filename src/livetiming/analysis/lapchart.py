@@ -4,7 +4,8 @@ from livetiming.analysis import Analysis
 def _lap_chart_add_entry(chart, pos, lap, race_num):
     if pos not in chart:
         chart[pos] = {}
-    chart[pos][lap] = race_num
+    if lap not in chart[pos]:
+        chart[pos][lap] = race_num
 
 
 class LapChart(Analysis):
