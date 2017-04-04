@@ -1,7 +1,8 @@
-from livetiming.service import Service as lt_service, Fetcher
-import simplejson
-from livetiming.racing import Stat
 from datetime import date
+from livetiming.racing import Stat
+from livetiming.service import Service as lt_service, Fetcher
+
+import simplejson
 
 
 def find_todays_data(all_data):

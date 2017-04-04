@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from socketIO_client import SocketIO, BaseNamespace
 from threading import Thread
 
+import argparse
 import simplejson
 import time
-from livetiming.analysis.laptimes import LapChart
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import EnduranceStopAnalysis
-import argparse
 
 
 KNOWN_FEEDS = {

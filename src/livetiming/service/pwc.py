@@ -1,6 +1,6 @@
-from livetiming.service.tsl import Service as tsl_service
-from livetiming.analysis.laptimes import LapChart
 from livetiming.analysis.driver import StintLength
+from livetiming.analysis.laptimes import LapChart
+from livetiming.service.tsl import Service as tsl_service
 
 
 class Service(tsl_service):

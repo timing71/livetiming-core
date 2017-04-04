@@ -1,11 +1,11 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
+from livetiming.analysis.laptimes import LapChart
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 
 import simplejson
 import urllib2
-from livetiming.analysis.laptimes import LapChart
 
 
 def createProtocol(series, service):

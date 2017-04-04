@@ -1,11 +1,12 @@
+from datetime import datetime
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.laptimes import LapChart
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
+from twisted.logger import Logger
+
 import urllib2
 import simplejson
-from datetime import datetime
-from twisted.logger import Logger
-from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis.laptimes import LapChart
-from livetiming.analysis.driver import StintLength
 
 
 def mapFlagStates(rawState):

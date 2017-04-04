@@ -1,7 +1,7 @@
-from livetiming.service import JSONFetcher, Service as lt_service
 from datetime import datetime
-from twisted.logger import Logger
 from livetiming.racing import FlagStatus, Stat
+from livetiming.service import JSONFetcher, Service as lt_service
+from twisted.logger import Logger
 
 
 def mapFlagStates(rawState):

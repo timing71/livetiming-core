@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
-import urllib2
+from twisted.logger import Logger
+
 import re
 import simplejson
 import time
-from datetime import datetime
-from twisted.logger import Logger
-from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis.laptimes import LapChart
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import EnduranceStopAnalysis
+import urllib2
 
 
 def mapFlagStates(rawState):
@@ -88,7 +89,7 @@ def findStaticDataURL(start):
         try:
             urllib2.urlopen(url)
             high = trying
-        except:
+        except Exception:
             pass
         trying += 1
     url = "http://live.fiawec.com/wpphpFichiers/1/live/referentiel_{}.js".format(high)

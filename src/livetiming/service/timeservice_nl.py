@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
-
-from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
-from lzstring import LZString
-
-import simplejson
-import urllib2
-from livetiming.racing import FlagStatus, Stat
 from datetime import datetime
-import time
-from livetiming.messages import RaceControlMessage
-import argparse
 from livetiming.analysis.laptimes import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.session import Session
+from livetiming.messages import RaceControlMessage
+from livetiming.racing import FlagStatus, Stat
+from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
+from lzstring import LZString
+
+import argparse
+import simplejson
+import time
+import urllib2
 
 
 def getToken():

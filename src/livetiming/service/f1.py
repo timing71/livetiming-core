@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from livetiming.analysis.laptimes import LapChart
+from livetiming.messages import RaceControlMessage
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import MultiLineFetcher, Service as lt_service
 from twisted.logger import Logger
 from twisted.internet import reactor
+
 import math
 import simplejson
 import time
@@ -10,9 +14,6 @@ import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
-from livetiming.messages import RaceControlMessage
-from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis.laptimes import LapChart
 
 
 _F1_SERVICE_YEAR = 2017

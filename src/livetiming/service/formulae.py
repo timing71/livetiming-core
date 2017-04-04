@@ -1,5 +1,5 @@
-from livetiming.service.alkamel import Service as AlkamelService
 from livetiming.analysis.laptimes import LapChart
+from livetiming.service.alkamel import Service as AlkamelService
 
 
 class Service(AlkamelService):

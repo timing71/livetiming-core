@@ -1,11 +1,10 @@
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
+
+import random
+import re
 import urllib2
 import simplejson
-import random
-from twisted.logger import Logger
-from livetiming.racing import FlagStatus, Stat
-import re
-import logging
 
 
 def mapFlagStates(rawState):
@@ -24,8 +23,6 @@ def mapFlagStates(rawState):
 
 
 class Service(lt_service):
-    log = Logger()
-
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.description = ""

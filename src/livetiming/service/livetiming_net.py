@@ -90,7 +90,7 @@ def parseSectorTime(raw):
     flag, raw = parseFlags(raw)
     try:
         timeval = float(raw)
-    except:
+    except ValueError:
         timeval = raw
 
     return (timeval, flag)
@@ -112,7 +112,7 @@ def stripFlags(raw):
 def parseDelta(raw):
     try:
         return float(raw)
-    except:
+    except ValueError:
         return raw
 
 
@@ -127,6 +127,7 @@ def mapSessionFlag(raw):
     if raw in mapping:
         return mapping[raw].name.lower()
     return "none"
+
 
 FULL_COL_SPEC = [
     # Stat, label used at livetiming.net, mapping function
