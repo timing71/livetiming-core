@@ -19,6 +19,17 @@ class Lap(object):
         self.flag = flag
         self.tyre = tyre
 
+    def for_json(self):
+        return [
+            self.lap_num,
+            self.laptime,
+            self.position,
+            self.driver,
+            self.timestamp,
+            self.flag,
+            self.tyre
+        ]
+
 
 class Stint(object):
     def __init__(self, start_lap, start_time, driver, flag=FlagStatus.NONE, tyre=None):

@@ -1,11 +1,13 @@
 from livetiming.analysis import Analysis
 
 
-def _lap_chart_add_entry(chart, pos, lap, race_num):
+def _lap_chart_add_entry(chart, race_num, lap):
+    pos = lap.position
+    lap_num = lap.lap_num
     if pos not in chart:
         chart[pos] = {}
-    if lap not in chart[pos]:
-        chart[pos][lap] = race_num
+    if lap_num not in chart[pos]:
+        chart[pos][lap_num] = [race_num] + lap.for_json()
 
 
 class LapChart(Analysis):
@@ -17,6 +19,6 @@ class LapChart(Analysis):
 
         for car in self.data_centre.cars:
             for lap in car.laps:
-                _lap_chart_add_entry(lap_chart, lap.position, lap.lap_num, car.race_num)
+                _lap_chart_add_entry(lap_chart, car.race_num, lap)
 
         return lap_chart
