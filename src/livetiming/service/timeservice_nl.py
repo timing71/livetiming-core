@@ -47,7 +47,7 @@ def create_protocol(service):
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
                 getattr(service, msgType)(body)
             else:
-                service.log.warn("Unknown message {}: {}".format(msgType, body))
+                service.log.warn("Unknown message {msgType}: {msgBody}", msgType=msgType, msgBody=body)
 
         def onClose(self, wasClean, code, reason):
             service.log.info("Closed connection to TSNL")
