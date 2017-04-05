@@ -165,13 +165,15 @@ class Session(object):
 
 class FieldExtractor(object):
     def __init__(self, colSpec):
-        self.colSpec = colSpec
+        self.mapping = {}
+        for idx, col in enumerate(colSpec):
+            self.mapping[col] = idx
 
     def get(self, car, field):
-        if field in self.colSpec:
-            idx = self.colSpec.index(field)
-            return car[idx]
-        return None
+        try:
+            return car[self.mapping[field]]
+        except KeyError:
+            return None
 
 
 def tryInt(val):
