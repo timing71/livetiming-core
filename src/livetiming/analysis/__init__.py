@@ -36,6 +36,7 @@ class Analyser(object):
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
 
+    def save_data_centre(self):
         with open("{}.data.p".format(self.uuid), "wb") as data_dump_file:
             cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
 

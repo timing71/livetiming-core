@@ -87,6 +87,12 @@ class Service(object):
         updater.start(self.getPollInterval())
         self.log.info("Race state updates started")
 
+        if self.getAnalysisModules():
+            def saveAsync():
+                self.log.debug("Saving data centre state")
+                return deferToThread(lambda: self.analyser.save_data_centre())
+            LoopingCall(saveAsync).start(60)
+
         runner.run(session_class, auto_reconnect=True)
         self.log.info("Service terminated.")
 
