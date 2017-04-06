@@ -58,14 +58,14 @@ class Analyser(object):
             manifest.append((mclass, module.getName()))
         return manifest
 
-    def getData(self, mclass=None):
+    def getData(self, mclass=None, *args):
         if mclass is None:
             allData = {}
             for clz, module in self.modules.iteritems():
                 allData[clz] = module.getData()
             return _make_data_message(allData)
         elif mclass in self.modules:
-            d = self.modules[mclass].getData()
+            d = self.modules[mclass].getData(*args)
             return _make_data_message(d)
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
