@@ -8,6 +8,10 @@ import copy
 import cPickle
 
 
+def _make_data_message(data):
+    return Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(data))).serialise()
+
+
 class Analyser(object):
     log = Logger()
 
@@ -31,7 +35,7 @@ class Analyser(object):
                 try:
                     self.publish(
                         u"{}/analysis/{}".format(self.uuid, mclass),
-                        Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(module.getData()))).serialise()
+                        _make_data_message(module.getData())
                     )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
@@ -59,10 +63,10 @@ class Analyser(object):
             allData = {}
             for clz, module in self.modules.iteritems():
                 allData[clz] = module.getData()
-            return allData
+            return _make_data_message(allData)
         elif mclass in self.modules:
             d = self.modules[mclass].getData()
-            return simplejson.loads(simplejson.dumps(d))  # HACK HACK HACK - why does session data fail when we don't do this?
+            return _make_data_message(d)
         else:
             raise RuntimeError("No such analysis module: {}".format(mclass))
 
