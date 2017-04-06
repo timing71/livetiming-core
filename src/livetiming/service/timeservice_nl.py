@@ -59,7 +59,9 @@ def mapTimeFlags(flag):
         return 'pb'
     if flag == "16736511":
         return 'sb'
-    if flag == "6579455" or flag == "4210943" or flag == "255":
+    if flag == "6579455":
+        return "joker"
+    if flag == "4210943" or flag == "255":
         # not sure that 'slow' is accurate but TSNL displays these in red
         return 'slow'
     return ""
