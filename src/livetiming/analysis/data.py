@@ -13,9 +13,12 @@ TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
 class LapChart(object):
     def __init__(self):
         self.laps = defaultdict(list)
+        self._seen_on_lap = defaultdict(list)
 
     def tally(self, race_num, lap):
-        self.laps[lap.lap_num].append((race_num, lap))
+        if race_num not in self._seen_on_lap[lap.lap_num]:
+            self.laps[lap.lap_num].append((race_num, lap))
+            self._seen_on_lap[lap.lap_num].append(race_num)
 
     def iteritems(self):
         return self.laps.iteritems()
