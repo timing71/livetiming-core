@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.recording import RecordingFile
 import cPickle
@@ -8,6 +8,17 @@ import sys
 import time
 
 TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
+
+
+class LapChart(object):
+    def __init__(self):
+        self.laps = defaultdict(list)
+
+    def tally(self, race_num, lap):
+        self.laps[lap.lap_num].append((race_num, lap))
+
+    def iteritems(self):
+        return self.laps.iteritems()
 
 
 class Lap(object):
@@ -194,6 +205,7 @@ class DataCentre(object):
         self.current_state = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.column_spec = []
         self.leader_lap = 0
+        self.lap_chart = LapChart()
 
     def car(self, race_num):
         if race_num not in self._cars:
@@ -247,9 +259,11 @@ class DataCentre(object):
                     try:
                         if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
                             car.add_lap(new_lap[0], idx + 1, driver, timestamp, flag, tyre)
+                            self.lap_chart.tally(race_num, car.laps[-1])
                     except Exception:  # Non-tuple case (do any services still not use tuples?)
                         if old_lap != new_lap or old_lap_num != new_lap_num:
                             car.add_lap(new_lap, idx + 1, driver, timestamp, flag, tyre)
+                            self.lap_chart.tally(race_num, car.laps[-1])
 
                     old_car_state = f.get(old_car, Stat.STATE)
 

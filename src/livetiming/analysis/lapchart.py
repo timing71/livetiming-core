@@ -1,13 +1,5 @@
+from collections import defaultdict
 from livetiming.analysis import Analysis
-
-
-def _lap_chart_add_entry(chart, race_num, lap, is_in_lap):
-    pos = lap.position
-    lap_num = lap.lap_num
-    if pos not in chart:
-        chart[pos] = {}
-    if lap_num not in chart[pos]:
-        chart[pos][lap_num] = [race_num] + lap.for_json() + [is_in_lap]
 
 
 class LapChart(Analysis):
@@ -15,11 +7,14 @@ class LapChart(Analysis):
         return "Lap chart"
 
     def getData(self):
-        lap_chart = {}
+        lap_chart = defaultdict(dict)
 
+        in_laps = {}
         for car in self.data_centre.cars:
-            in_laps = map(lambda s: s.end_lap, car.stints)
-            for lap in car.laps:
-                _lap_chart_add_entry(lap_chart, car.race_num, lap, lap.lap_num in in_laps)
+            in_laps[car.race_num] = map(lambda s: s.end_lap, car.stints)
+
+        for lap_num, laps in self.data_centre.lap_chart.iteritems():
+            for posMinusOne, (race_num, lap) in enumerate(laps):
+                lap_chart[posMinusOne + 1][lap_num] = [race_num] + lap.for_json() + [lap_num in in_laps[race_num]]
 
         return lap_chart
