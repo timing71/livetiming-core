@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.lapchart import LapChart
+from livetiming.analysis.laptimes import LapChart as LapTimeChart
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.messages import RaceControlMessage
@@ -373,5 +374,6 @@ class Service(lt_service):
         return [
             LapChart,
             StintLength,
-            EnduranceStopAnalysis
+            EnduranceStopAnalysis,
+            LapTimeChart
         ]
