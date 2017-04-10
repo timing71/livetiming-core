@@ -100,8 +100,8 @@ def findStaticDataURL(start):
 class Service(lt_service):
     log = Logger()
 
-    def __init__(self, config):
-        lt_service.__init__(self, config)
+    def __init__(self, args, extra_args):
+        lt_service.__init__(self, args, extra_args)
         self.staticData = self.getStaticData()
 
     def getName(self):
