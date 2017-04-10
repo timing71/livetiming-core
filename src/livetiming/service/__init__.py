@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.websocket import WebSocketClientFactory
-from livetiming import load_env
+from livetiming import load_env, sentry
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -22,6 +22,9 @@ import os
 import simplejson
 import txaio
 import urllib2
+
+
+sentry = sentry()
 
 
 def create_service_session(service):
@@ -59,6 +62,7 @@ class Service(object):
     log = Logger()
 
     def __init__(self, args, extra_args={}):
+        sentry.context.activate()
         self.args = args
         self.uuid = os.path.splitext(self.args.initial_state)[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
@@ -68,6 +72,12 @@ class Service(object):
             self.recorder = None
         self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
         self._publish = None
+        sentry.context.merge({
+            'tags': {
+                'uuid': self.uuid,
+                'service_name': self.__module__
+            }
+        })
 
     def set_publish(self, func):
         self._publish = func
@@ -79,6 +89,7 @@ class Service(object):
             self.log.debug("Call to publish with no publish function set!")
 
     def start(self):
+        self.sentry.captureMessage("Started service")
         session_class = create_service_session(self)
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
@@ -208,6 +219,7 @@ class Service(object):
                 return simplejson.load(stateFile)
             except Exception:
                 self.log.failure("Exception trying to load saved state: {log_failure}")
+                sentry.captureException()
             finally:
                 stateFile.close()
         return {
@@ -226,6 +238,7 @@ class Service(object):
             simplejson.dump(self.state, stateFile)
         except Exception:
             self.log.failure("Exception while saving state: {log_failure}")
+            sentry.captureException()
         finally:
             stateFile.close()
         if self.recorder:
@@ -259,6 +272,7 @@ class Service(object):
             self._saveState()
         except Exception:
             self.log.failure("Exception while updating race state: {log_failure}")
+            sentry.captureException()
 
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
@@ -316,6 +330,7 @@ class Fetcher(object):
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
         except Exception:
+            sentry.captureException()
             pass  # Bad data feed :(
 
     def _run(self):

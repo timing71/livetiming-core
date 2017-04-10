@@ -31,6 +31,7 @@ setup(
         "lzstring",
         "pyopenssl",
         "python-dotenv",
+        "raven",
         "service_identity",
         "signalr-client",
         "simplejson",
