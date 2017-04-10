@@ -327,7 +327,7 @@ class Fetcher(object):
         deferred.addCallback(cb)
 
     def start(self):
-        self._run
+        self._run()
 
 
 def JSONFetcher(url, callback, interval):
