@@ -33,13 +33,14 @@ class PerCarMessage(TimingMessage):
 
     def process(self, oldState, newState):
         messages = []
-        for newCar in newState["cars"]:
-            oldCars = [c for c in oldState["cars"] if c[0] == newCar[0]]
-            if oldCars:
-                oldCar = oldCars[0]
-                msg = self._consider(oldCar, newCar)
-                if msg:
-                    messages += [[int(time.time())] + msg + [newCar[0]]]
+        if Stat.NUM in self.columnSpec:
+            for newCar in newState["cars"]:
+                oldCars = [c for c in oldState["cars"] if c[0] == newCar[0] and c[0] is not None and c[0] != ""]
+                if oldCars:
+                    oldCar = oldCars[0]
+                    msg = self._consider(oldCar, newCar)
+                    if msg:
+                        messages += [[int(time.time())] + msg + [newCar[0]]]
         return messages
 
 
