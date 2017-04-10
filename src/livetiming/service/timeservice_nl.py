@@ -14,6 +14,7 @@ import argparse
 import simplejson
 import time
 import urllib2
+import re
 
 
 def getToken():
@@ -151,6 +152,17 @@ def nonnegative(val):
         return val
 
 
+TSNL_LAP_IN_GAP_REGEX = re.compile("-- ([0-9]+) laps?")
+
+
+def parse_gap(val):
+    laps = TSNL_LAP_IN_GAP_REGEX.match(val[0])
+    if laps:
+        lap = int(laps.group(1))
+        return "({} lap{})".format(lap, "" if lap == 1 else "s")
+    return parseTime(val[0])
+
+
 # Map our columns to TSNL's labels, in our chosen order, and provide mapping function
 # This should include all possible columns
 DEFAULT_COLUMN_SPEC = [
@@ -166,8 +178,9 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.DRIVER, "DRIVER", ident),
     (Stat.CAR, "CAR", shorten),
     (Stat.CAR, "BRAND", shorten),
+    (Stat.CAR, "VEHICLE", shorten),
     (Stat.LAPS, "LAPS", nonnegative),
-    (Stat.GAP, "GAP", lambda i: parseTime(i[0])),
+    (Stat.GAP, "GAP", parse_gap),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
     (Stat.S1, "SECT 1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S2, "SECT 2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
