@@ -1,13 +1,10 @@
 from dotenv import load_dotenv, find_dotenv
-from raven import Client
 from twisted.python import log
 
 
 import os
 import pkg_resources
-
-
-__version__ = pkg_resources.require('livetiming')[0].version
+import raven
 
 
 def load_env():
@@ -19,11 +16,8 @@ def load_env():
 
 
 def sentry():
-    return Client(
-        include_paths=[__name__.split('.', 1)[0]],
-        release=__version__
+    return raven.Client(
+        environment=os.getenv("LIVETIMING_ENVIRONMENT", "development"),
+        include_paths=['livetiming'],
+        release=raven.fetch_package_version('livetiming'),
     )
-
-
-def version():
-    return __version__
