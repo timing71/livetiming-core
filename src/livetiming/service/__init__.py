@@ -89,7 +89,6 @@ class Service(object):
             self.log.debug("Call to publish with no publish function set!")
 
     def start(self):
-        self.sentry.captureMessage("Started service")
         session_class = create_service_session(self)
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
