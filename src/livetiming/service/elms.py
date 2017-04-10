@@ -13,4 +13,4 @@ class Service(LMS):
         return "http://www.europeanlemansseries.com/en/live"
 
     def getRawFeedDataUrl(self):
-        return "http://www.europeanlemansseries.com/assets/1/live/ELMS/data.js?tx={}&t={}"
+        return "http://europeanlemansseries.com/ecm/live/ELMS/data.js?tx={}&t={}"
