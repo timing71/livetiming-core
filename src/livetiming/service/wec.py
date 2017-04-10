@@ -61,7 +61,13 @@ def parseTime(formattedTime):
         return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
+SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
+
+
 def parseSessionTime(formattedTime):
+    m = SESSION_TIME_REGEX.match(formattedTime)
+    if m:
+        return (3600 * int(m.group('hours'))) + (60 * int(m.group('minutes'))) + int(m.group('seconds'))
     try:
         ttime = datetime.strptime(formattedTime, "%H : %M : %S")
         return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second

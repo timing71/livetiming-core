@@ -97,7 +97,7 @@ class Service(WEC):
 
         for pos in sorted(rawCarData.iterkeys(), key=lambda i: int(i)):
             car = rawCarData[pos]
-            engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": -1, "team": -1, "voiture": -1, "num": car["2"]}
+            engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]}
             voiture = self.staticData["tabVehicules"][str(engage['voiture'])] if str(engage['voiture']) in self.staticData["tabVehicules"] else {"nom": "Unknown", "marque": -1}
             marque = self.staticData["tabMarques"][str(voiture['marque'])] if str(voiture['marque']) in self.staticData["tabMarques"] else "Unknown"
             driver = self.staticData["tabPilotes"][car["5"]] if car["5"] in self.staticData["tabPilotes"] else {"prenom": "Driver", "nom": car["5"]}
