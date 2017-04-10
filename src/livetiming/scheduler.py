@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming import servicemanager, load_env
+from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from os import environ
 from threading import Lock
@@ -19,6 +19,9 @@ EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, 
 
 EVENT_START_BUFFER = datetime.timedelta(minutes=5)  # Start this many minutes early
 EVENT_END_BUFFER = datetime.timedelta(minutes=10)  # Overrun by this much
+
+
+sentry = sentry()
 
 
 class Event(object):
@@ -130,6 +133,7 @@ class Scheduler(ApplicationSession):
                     hasChanged = True
                 except Exception:
                     self.log.failure("Exception while starting job: {log_failure}")
+                    sentry.captureException()
 
             for job in toEnd:
                 try:
@@ -137,6 +141,7 @@ class Scheduler(ApplicationSession):
                     hasChanged = True
                 except Exception:
                     self.log.failure("Exception while stopping job: {log_failure}")
+                    sentry.captureException()
 
         if hasChanged:
             self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())

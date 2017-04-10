@@ -1,3 +1,4 @@
+from livetiming import sentry
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
@@ -6,6 +7,9 @@ import simplejson
 import time
 import copy
 import cPickle
+
+
+sentry = sentry()
 
 
 def _make_data_message(data):
@@ -39,6 +43,7 @@ class Analyser(object):
                     )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
+                    sentry.captureException()
 
     def save_data_centre(self):
         with open("{}.data.p".format(self.uuid), "wb") as data_dump_file:
