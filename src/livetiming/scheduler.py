@@ -17,6 +17,9 @@ import time
 
 EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, ?(?P<args>[^\]]+))?\]")
 
+EVENT_START_BUFFER = datetime.timedelta(minutes=5)  # Start this many minutes early
+EVENT_END_BUFFER = datetime.timedelta(minutes=10)  # Overrun by this much
+
 
 class Event(object):
 
@@ -111,9 +114,13 @@ class Scheduler(ApplicationSession):
             self.log.debug("Running scheduler loop...")
 
             now = datetime.datetime.now(pytz.utc)
-            cutoff = now + datetime.timedelta(seconds=60)
-            toStart = [j for j in self.events.values() if j.startDate < cutoff and j.endDate > now and j.uid not in self.runningEvents]
-            toEnd = [j for j in self.events.values() if j.endDate < cutoff]
+            poll_interval = datetime.timedelta(seconds=60)
+
+            cutoff_start = now + EVENT_START_BUFFER + poll_interval
+            cutoff_end = now - EVENT_END_BUFFER
+
+            toStart = [j for j in self.events.values() if j.startDate < cutoff_start and j.endDate > now and j.uid not in self.runningEvents]
+            toEnd = [j for j in self.events.values() if j.endDate < cutoff_end]
 
             hasChanged = False
 
