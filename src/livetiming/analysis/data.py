@@ -7,7 +7,7 @@ import re
 import sys
 import time
 
-TSNL_LAP_HACK_REGEX = re.compile("-- ([0-9]+) laps?")
+TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
 
 
 class LapChart(object):
