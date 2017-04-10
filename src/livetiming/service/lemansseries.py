@@ -29,7 +29,7 @@ class Service(WEC):
         WEC.__init__(self, args, extra_args)
 
     def getDefaultDescription(self):
-        return self.getName()
+        return self.description
 
     def getColumnSpec(self):
         return [
@@ -54,6 +54,11 @@ class Service(WEC):
         raw = feed.read()
         if re.search("No race actually", raw):
             raise Exception("No static data available. Has the session started yet?")
+
+        description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
+        if description:
+            self.description = description.group("desc").replace("/", "-")
+
         return {
             "tabPays": hackDataFromJSONP(raw, "tabPays"),
             "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
