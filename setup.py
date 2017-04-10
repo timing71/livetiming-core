@@ -41,9 +41,10 @@ setup(
         'console_scripts': [
                 'livetiming-directory = livetiming.directory:main',
                 'livetiming-recordings = livetiming.recording:main',
+                'livetiming-rectool = livetiming.rectool:main'
+                'livetiming-scheduler = livetiming.scheduler:main',
                 'livetiming-service = livetiming.service:main',
                 'livetiming-service-manager = livetiming.servicemanager:main',
-                'livetiming-rectool = livetiming.rectool:main'
             ],
         }
       )
