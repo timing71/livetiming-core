@@ -5,6 +5,7 @@ from livetiming.analysis.lapchart import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
+from simplejson import JSONDecodeError
 from twisted.internet import reactor
 
 import time
@@ -159,7 +160,12 @@ class Service(lt_service):
             int(time.time() / 15)
         )
         feed = urllib2.urlopen(feed_url)
-        return simplejson.loads(feed.read())
+        feed_data = feed.read()
+        try:
+            return simplejson.loads(feed_data)
+        except JSONDecodeError:
+            self.log.failure("Failed to JSON-decode raw data feed! Raw data was {feed_data}", feed_data=feed_data)
+            raise
 
     def getRaceState(self):
         if self.staticData is None:
