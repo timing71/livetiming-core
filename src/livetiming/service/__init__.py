@@ -93,9 +93,10 @@ class Service(object):
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
 
-        updater = LoopingCall(self._updateAndPublishRaceState)
-        updater.start(self.getPollInterval())
-        self.log.info("Race state updates started")
+        if self.getPollInterval():
+            updater = LoopingCall(self._updateAndPublishRaceState)
+            updater.start(self.getPollInterval())
+            self.log.info("Race state updates started")
 
         if self.getAnalysisModules():
             def saveAsync():
