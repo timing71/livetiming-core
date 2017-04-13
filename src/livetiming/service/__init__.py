@@ -408,9 +408,9 @@ def main():
         else:  # log to file
             txaio.start_logging(out=logFile, level=level)
 
-    Logger().info("Starting timing service {}...".format(service_class.__module__))
-    service = service_class(args, extra_args)
-    service.start()
+        Logger().info("Starting timing service {}...".format(service_class.__module__))
+        service = service_class(args, extra_args)
+        service.start()
 
 
 if __name__ == '__main__':
