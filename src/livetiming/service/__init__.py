@@ -104,7 +104,7 @@ class Service(object):
                 return deferToThread(lambda: self.analyser.save_data_centre())
             LoopingCall(saveAsync).start(60)
 
-        runner.run(session_class, auto_reconnect=True)
+        runner.run(session_class, auto_reconnect=True, log_level="debug" if self.args.debug else "info")
         self.log.info("Service terminated.")
 
     ###################################################
@@ -403,9 +403,7 @@ def main():
 
     with open("{}.log".format(args.service_class), 'a', 0) as logFile:
         level = "debug" if args.debug else "info"
-        if args.verbose:  # log to stdout
-            txaio.start_logging(level=level)
-        else:  # log to file
+        if not args.verbose:  # log to file, not stdout
             txaio.start_logging(out=logFile, level=level)
 
         Logger().info("Starting timing service {}...".format(service_class.__module__))
