@@ -252,7 +252,7 @@ class Service(object):
             "description": self._getDescription(),
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
-            "pollInterval": self.getPollInterval(),
+            "pollInterval": self.getPollInterval() or 1,
             "hasAnalysis": not not self.getAnalysisModules()
         }
 
