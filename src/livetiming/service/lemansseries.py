@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.lapchart import LapChart
+from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service.wec import mapCarState, mapFlagStates, parseSessionTime, parseTime, Service as WEC
+from livetiming.service.wec import Service as WEC
 from twisted.logger import Logger
 
 import time
@@ -13,6 +17,32 @@ def hackDataFromJSONP(data, var):
     return simplejson.loads(re.search(r'(?:%s = )([^\;]+)(?:\;)' % var, data).group(1).replace("\\\'", "'"))
 
 
+def mapFlagStates(rawState):
+    flagMap = {
+        1: FlagStatus.YELLOW,
+        2: FlagStatus.GREEN,
+        3: FlagStatus.RED,
+        4: FlagStatus.CHEQUERED,
+        5: FlagStatus.YELLOW,
+        6: FlagStatus.FCY
+    }
+    if rawState in flagMap:
+        return flagMap[rawState].name.lower()
+    return "none"
+
+
+def mapCarState(rawState):
+    stateMap = {
+        1: "RET",
+        2: "RUN",
+        3: "OUT",
+        4: "PIT"
+    }
+    if rawState in stateMap:
+        return stateMap[rawState]
+    return "RUN"
+
+
 def mapClasses(rawClass):
     classMap = {
         3: "LM P2",
@@ -22,6 +52,34 @@ def mapClasses(rawClass):
         16: "GT3"
     }
     return classMap[rawClass] if rawClass in classMap else rawClass
+
+
+def parseTime(formattedTime):
+    if formattedTime == "":
+        return 0
+    try:
+        ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+        return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+    except ValueError:
+        ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+        return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+
+
+SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
+
+
+def parseSessionTime(formattedTime):
+    m = SESSION_TIME_REGEX.match(formattedTime)
+    if m:
+        return (3600 * int(m.group('hours'))) + (60 * int(m.group('minutes'))) + int(m.group('seconds'))
+    try:
+        ttime = datetime.strptime(formattedTime, "%H : %M : %S")
+        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+    except ValueError:
+        if formattedTime.startswith("24"):
+            return 86400
+        else:
+            return formattedTime
 
 
 class Service(WEC):
@@ -46,6 +104,26 @@ class Service(WEC):
             Stat.BEST_LAP,
             Stat.SPEED,
             Stat.PITS
+        ]
+
+    def getTrackDataSpec(self):
+        return [
+            "Track Temp",
+            "Air Temp",
+            "Humidity",
+            "Wind Speed",
+            "Wind Direction",
+            "Forecast"
+        ]
+
+    def getPollInterval(self):
+        return 20
+
+    def getAnalysisModules(self):
+        return [
+            LapChart,
+            EnduranceStopAnalysis,
+            StintLength
         ]
 
     def getStaticData(self):
