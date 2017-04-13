@@ -214,14 +214,12 @@ class Service(object):
 
     def _getInitialState(self):
         if self.args.initial_state is not None:
-            try:
-                stateFile = open(self.args.initial_state, 'r')
-                return simplejson.load(stateFile)
-            except Exception:
-                self.log.failure("Exception trying to load saved state: {log_failure}")
-                sentry.captureException()
-            finally:
-                stateFile.close()
+            with open(self.args.initial_state, 'r') as stateFile:
+                try:
+                    return simplejson.load(stateFile)
+                except Exception:
+                    self.log.failure("Exception trying to load saved state: {log_failure}")
+                    sentry.captureException()
         return {
             "messages": [],
             "session": {
