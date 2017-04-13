@@ -4,8 +4,8 @@ from livetiming.analysis.driver import StintLength
 from livetiming.analysis.lapchart import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service.wec import Service as WEC
-from twisted.logger import Logger
+from livetiming.service import Service as lt_service
+from twisted.internet import reactor
 
 import time
 import re
@@ -82,9 +82,11 @@ def parseSessionTime(formattedTime):
             return formattedTime
 
 
-class Service(WEC):
+class Service(lt_service):
     def __init__(self, args, extra_args):
-        WEC.__init__(self, args, extra_args)
+        super(Service, self).__init__(args, extra_args)
+        self.description = self.getName()
+        self.staticData = self.getStaticData()
 
     def getDefaultDescription(self):
         return self.description
@@ -113,11 +115,11 @@ class Service(WEC):
             "Humidity",
             "Wind Speed",
             "Wind Direction",
-            "Forecast"
+            "Weather"
         ]
 
     def getPollInterval(self):
-        return 20
+        return 15
 
     def getAnalysisModules(self):
         return [
@@ -127,15 +129,19 @@ class Service(WEC):
         ]
 
     def getStaticData(self):
-        Logger().info("Retrieving static data...")
+        self.log.info("Retrieving static data...")
         feed = urllib2.urlopen(self.getStaticDataUrl())
         raw = feed.read()
         if re.search("No race actually", raw):
-            raise Exception("No static data available. Has the session started yet?")
+            self.log.warn("No static data available. Has the session started yet?")
+            reactor.callLater(30, self.getStaticData)
+            return None
 
         description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
         if description:
             self.description = description.group("desc").replace("/", "-")
+            self.log.info("Setting description: {desc}", desc=self.description)
+            self.publishManifest()
 
         return {
             "tabPays": hackDataFromJSONP(raw, "tabPays"),
@@ -156,6 +162,17 @@ class Service(WEC):
         return simplejson.loads(feed.read())
 
     def getRaceState(self):
+        if self.staticData is None:
+            self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
+            return {
+                'cars': [],
+                'session': {
+                    "flagState": "none",
+                    "timeElapsed": 0,
+                    "timeRemain": -1
+                }
+            }
+
         raw = self.getRawFeedData()
         cars = []
         fastLapsPerClass = {}
@@ -219,7 +236,7 @@ class Service(WEC):
                 "{}%".format(trackData["2"]),
                 "{}kph".format(trackData["8"]),
                 u"{}°".format(trackData["0"]),
-                trackData["1"].title()
+                trackData["1"].replace("_", " ").title()
             ]
         }
 
