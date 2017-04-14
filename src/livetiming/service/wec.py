@@ -9,6 +9,7 @@ from twisted.logger import Logger
 
 import re
 import simplejson
+import time
 
 
 def mapFlagState(params):
@@ -81,7 +82,10 @@ class Service(lt_service):
 
         self.description = "World Endurance Championship"
 
-        fetcher = JSONFetcher("http://www.fiawec.com/ecm/live/WEC/data.json", self._handleData, 10)
+        def data_url():
+            return "http://www.fiawec.com/ecm/live/WEC/data.json?_={}".format(int(1000 * time.time()))
+
+        fetcher = JSONFetcher(data_url, self._handleData, 10)
         fetcher.start()
 
     def getName(self):
