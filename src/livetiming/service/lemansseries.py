@@ -87,7 +87,7 @@ class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.description = self.getName()
-        self.staticData = self.getStaticData()
+        self.setStaticData()
 
     def getDefaultDescription(self):
         return self.description
@@ -129,14 +129,14 @@ class Service(lt_service):
             StintLength
         ]
 
-    def getStaticData(self):
+    def setStaticData(self):
         self.log.info("Retrieving static data...")
         feed = urllib2.urlopen(self.getStaticDataUrl())
         raw = feed.read()
         if re.search("No race actually", raw):
             self.log.warn("No static data available. Has the session started yet?")
-            reactor.callLater(30, self.getStaticData)
-            return None
+            reactor.callLater(30, self.setStaticData)
+            self.staticData = None
 
         description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
         if description:
@@ -144,7 +144,7 @@ class Service(lt_service):
             self.log.info("Setting description: {desc}", desc=self.description)
             self.publishManifest()
 
-        return {
+        self.staticData = {
             "tabPays": hackDataFromJSONP(raw, "tabPays"),
             "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
             "tabMarques": hackDataFromJSONP(raw, "tabMarques"),
