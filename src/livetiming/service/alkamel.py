@@ -173,7 +173,7 @@ class Service(lt_service):
         if sessionChange:
             self.publishManifest()  # since our description might have changed
             self.analyser.reset()
-            self.cars = []
+            self.participants = {}
 
         def class_for(classID):
             possibles = [c for c in data["classes"] if c["id"] == classID]
