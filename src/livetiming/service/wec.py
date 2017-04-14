@@ -10,6 +10,7 @@ from twisted.logger import Logger
 import re
 import simplejson
 import time
+from __builtin__ import True
 
 
 def mapFlagState(params):
@@ -79,6 +80,7 @@ class Service(lt_service):
         lt_service.__init__(self, args, extra_args)
         self.params = {}
         self.entries = []
+        self.latest_seen_timestamp = None
 
         self.description = "World Endurance Championship"
 
@@ -138,15 +140,26 @@ class Service(lt_service):
             StintLength
         ]
 
+    def _data_is_newer(self, data):
+        if self.latest_seen_timestamp is None:
+            return True
+        if "params" not in data:
+            return True  # assume it is...
+        if "timestamp" not in data["params"]:
+            return True
+        return data["params"]["timestamp"] > self.latest_seen_timestamp
+
     def _handleData(self, data):
-        if "params" in data:
-            self.params = simplejson.loads(data["params"])
-            if 'eventName' in self.params and self.params['eventName'] != self.description:
-                self.description = self.params['eventName']
-                self.publishManifest()
-        if "entries" in data:
-            self.entries = simplejson.loads(data["entries"])
-        self._updateAndPublishRaceState()
+        if self._data_is_newer(data):
+            if "params" in data:
+                self.params = simplejson.loads(data["params"])
+                if 'eventName' in self.params and self.params['eventName'] != self.description:
+                    self.description = self.params['eventName']
+                    self.publishManifest()
+                self.latest_seen_timestamp = self.params.get("timestamp", None)
+            if "entries" in data:
+                self.entries = simplejson.loads(data["entries"])
+            self._updateAndPublishRaceState()
 
     def getRaceState(self):
         cars = []
