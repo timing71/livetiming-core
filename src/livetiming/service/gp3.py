@@ -1,4 +1,4 @@
-from livetiming.service.gp2 import Service as gpservice, createProtocol
+from livetiming.service.f2 import Service as gpservice, createProtocol
 
 
 class Service(gpservice):

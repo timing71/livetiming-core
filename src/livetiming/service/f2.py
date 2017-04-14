@@ -103,10 +103,10 @@ class Service(lt_service):
         self.description = self.getName()
 
     def getClientProtocol(self):
-        return createProtocol("GP2", self)
+        return createProtocol("F2", self)
 
     def getName(self):
-        return "GP2"
+        return "Formula 2"
 
     def getDefaultDescription(self):
         return self.description
