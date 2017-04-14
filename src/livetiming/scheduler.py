@@ -94,22 +94,26 @@ class Scheduler(ApplicationSession):
     def updateSchedule(self):
         with self.lock:
             self.log.info("Syncing schedule with Google Calendar...")
-            ics = urllib2.urlopen(self.calendarAddress).read()
-            cal = icalendar.Calendar.from_ical(ics)
+            try:
+                ics = urllib2.urlopen(self.calendarAddress).read()
+                cal = icalendar.Calendar.from_ical(ics)
 
-            cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(seconds=60)
+                cutoff = datetime.datetime.now(pytz.utc) - datetime.timedelta(seconds=60)
 
-            self.events.clear()
+                self.events.clear()
 
-            for evt in cal.subcomponents:
-                evtEnd = evt.decoded("DTEND")
-                if evtEnd > cutoff:
-                    e = Event.from_ical(evt, self.log)
-                    if e:
-                        self.events[e.uid] = e
-                        print "Found event: {}".format(e)
+                for evt in cal.subcomponents:
+                    evtEnd = evt.decoded("DTEND")
+                    if evtEnd > cutoff:
+                        e = Event.from_ical(evt, self.log)
+                        if e:
+                            self.events[e.uid] = e
+                            print "Found event: {}".format(e)
 
-            self.log.info("Sync complete")
+                self.log.info("Sync complete")
+            except Exception:
+                self.log.failure("Exception while syncinc calendar: {log_failure}")
+                sentry.captureException()
         self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
     def execute(self):
