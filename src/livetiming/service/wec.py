@@ -31,7 +31,8 @@ def mapFlagState(params):
 def mapCarState(rawState):
     stateMap = {
         'Run': 'RUN',
-        'Pit': 'PIT',
+        'In': 'PIT',
+        'Out': 'OUT'
     }
     if rawState in stateMap:
         return stateMap[rawState]
@@ -199,26 +200,26 @@ class Service(lt_service):
             # Second pass to highlight sb/sb-new
             car_num = car[0]
             category = car[2]
-            if bestLapsByClass[category][0] == car_num:
+            if category in bestLapsByClass and bestLapsByClass[category][0] == car_num:
                 car[17] = (car[17][0], 'sb')
                 if car[16][0] == car[17][0]:
                     car[16] = (car[16][0], 'sb-new')
-            if bestSectorsByClass[1][category][0] == car_num:
+            if category in bestSectorsByClass[1] and bestSectorsByClass[1][category][0] == car_num:
                 car[11] = (car[11][0], 'sb')
                 if car[10][0] == car[11][0]:
                     car[10] = (car[10][0], 'sb')
-            if bestSectorsByClass[2][category][0] == car_num:
+            if category in bestSectorsByClass[2] and bestSectorsByClass[2][category][0] == car_num:
                 car[13] = (car[13][0], 'sb')
                 if car[12][0] == car[13][0]:
                     car[12] = (car[12][0], 'sb')
-            if bestSectorsByClass[3][category][0] == car_num:
+            if category in bestSectorsByClass[3] and bestSectorsByClass[3][category][0] == car_num:
                 car[15] = (car[15][0], 'sb')
                 if car[14][0] == car[15][0]:
                     car[14] = (car[14][0], 'sb')
 
         session['flagState'] = mapFlagState(self.params)
 
-        session['timeElapsed'] = parseSessionTime(self.params['elapsed']) if 'elapsed' in self.params else None
+        session['timeElapsed'] = self.params['elapsed'] if 'elapsed' in self.params else None
         session['timeRemain'] = self.params['remaining'] if 'remaining' in self.params else None
 
         if 'trackTemp' in self.params:
