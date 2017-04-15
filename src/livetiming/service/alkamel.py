@@ -181,7 +181,7 @@ class Service(lt_service):
                 return possibles[0]['n']
             return ""
 
-        if 'participants' in data and not self.cars:
+        if 'participants' in data and not self.participants:
             for participant in data['participants']:
                 self.participants[participant['id']] = participant
 
