@@ -140,25 +140,27 @@ class Service(lt_service):
             StintLength
         ]
 
-    def _data_is_newer(self, data):
+    def _data_is_newer(self, params):
         if self.latest_seen_timestamp is None:
             return True
-        if "params" not in data:
-            return True  # assume it is...
-        if "timestamp" not in data["params"]:
+        if "timestamp" not in params:
             return True
-        return data["params"]["timestamp"] > self.latest_seen_timestamp
+        return params["timestamp"] > self.latest_seen_timestamp
 
     def _handleData(self, data):
-        if self._data_is_newer(data):
-            if "params" in data:
-                self.params = simplejson.loads(data["params"])
+        if "params" in data:
+            new_params = simplejson.loads(data["params"])
+            if self._data_is_newer(new_params):
+                self.params = new_params
                 if 'eventName' in self.params and self.params['eventName'] != self.description:
                     self.description = self.params['eventName']
                     self.publishManifest()
+
                 self.latest_seen_timestamp = self.params.get("timestamp", None)
-            if "entries" in data:
-                self.entries = simplejson.loads(data["entries"])
+
+                if "entries" in data:
+                    self.entries = simplejson.loads(data["entries"])
+
             self._updateAndPublishRaceState()
 
     def getRaceState(self):
