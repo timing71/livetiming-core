@@ -22,6 +22,7 @@ import os
 import simplejson
 import txaio
 import urllib2
+from simplejson.scanner import JSONDecodeError
 
 
 sentry = sentry()
@@ -344,7 +345,14 @@ class Fetcher(object):
 
 
 def JSONFetcher(url, callback, interval):
-    return Fetcher(url, lambda j: callback(simplejson.loads(j)), interval)
+    def parse_then_callback(data):
+        try:
+            parsed_data = simplejson.loads(data)
+            callback(parsed_data)
+        except JSONDecodeError:
+            sentry.captureException()
+            Logger().failure("Error parsing JSON from source {url}: {log_failure}", url=url)
+    return Fetcher(url, parse_then_callback, interval)
 
 
 def MultiLineFetcher(url, callback, interval):
