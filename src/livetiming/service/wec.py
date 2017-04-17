@@ -26,8 +26,8 @@ def mapFlagState(params):
         'chk': FlagStatus.CHEQUERED,
         'off': FlagStatus.NONE
     }
-    if 'racestate' in params and params['racestate'] in flagMap:
-        return flagMap[params['racestate']].name.lower()
+    if 'racestate' in params and params['racestate'].lower() in flagMap:
+        return flagMap[params['racestate'].lower()].name.lower()
     Logger().warn("Unknown flag state {flag}", flag=params.get('racestate', None))
     return 'none'
 
