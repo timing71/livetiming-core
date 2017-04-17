@@ -23,7 +23,8 @@ def mapFlagState(params):
         'yellow': FlagStatus.YELLOW,
         'full_yellow': FlagStatus.FCY,
         'red': FlagStatus.RED,
-        'chk': FlagStatus.CHEQUERED
+        'chk': FlagStatus.CHEQUERED,
+        'off': FlagStatus.NONE
     }
     if 'racestate' in params and params['racestate'] in flagMap:
         return flagMap[params['racestate']].name.lower()
