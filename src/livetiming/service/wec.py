@@ -11,6 +11,7 @@ import re
 import simplejson
 import time
 from __builtin__ import True
+from simplejson.scanner import JSONDecodeError
 
 
 def mapFlagState(params):
@@ -149,18 +150,26 @@ class Service(lt_service):
 
     def _handleData(self, data):
         if "params" in data:
-            new_params = simplejson.loads(data["params"])
-            if self._data_is_newer(new_params):
-                self.params = new_params
-                if 'eventName' in self.params and self.params['eventName'] != self.description:
-                    self.description = self.params['eventName']
-                    self.publishManifest()
+            try:
+                new_params = simplejson.loads(data["params"])
+                if self._data_is_newer(new_params):
+                    self.params = new_params
+                    if 'eventName' in self.params and self.params['eventName'] != self.description:
+                        self.description = self.params['eventName']
+                        self.publishManifest()
 
-                self.latest_seen_timestamp = self.params.get("timestamp", None)
+                    self.latest_seen_timestamp = self.params.get("timestamp", None)
 
                 if "entries" in data:
-                    self.entries = simplejson.loads(data["entries"])
+                    try:
+                        self.entries = simplejson.loads(data["entries"])
+                    except JSONDecodeError:
+                        self.sentry.captureException()
+                        self.log.failure("Failed to parse WEC entry data {entries}: {log_failure}", entries=data['entries'])
 
+            except JSONDecodeError:
+                self.sentry.captureException()
+                self.log.failure("Failed to parse WEC subdata {params}: {log_failure}", params=data['params'])
             self._updateAndPublishRaceState()
 
     def getRaceState(self):

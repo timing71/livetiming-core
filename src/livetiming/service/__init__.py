@@ -64,6 +64,7 @@ class Service(object):
 
     def __init__(self, args, extra_args={}):
         sentry.context.activate()
+        self.sentry = sentry
         self.args = args
         self.uuid = os.path.splitext(self.args.initial_state)[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
@@ -73,7 +74,7 @@ class Service(object):
             self.recorder = None
         self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
         self._publish = None
-        sentry.context.merge({
+        self.sentry.context.merge({
             'tags': {
                 'uuid': self.uuid,
                 'service_name': self.__module__
