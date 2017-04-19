@@ -3,6 +3,7 @@ from livetiming.racing import Stat
 from livetiming.service import Service as lt_service, Fetcher
 
 import simplejson
+from simplejson.scanner import JSONDecodeError
 
 
 def find_todays_data(all_data):
@@ -21,11 +22,15 @@ class Service(lt_service):
         self.data = {}
 
         def setData(new_data):
-            all_data = simplejson.loads(new_data[28:-2])
-            old_description = self.data.get("description", None)
-            self.data = find_todays_data(all_data)
-            if self.data.get("description", None) != old_description:
-                self.publishManifest()
+            try:
+                all_data = simplejson.loads(new_data[28:-2])
+                old_description = self.data.get("description", None)
+                self.data = find_todays_data(all_data)
+                if self.data.get("description", None) != old_description:
+                    self.publishManifest()
+            except JSONDecodeError as e:
+                self.log.failure("Failed parsing JSON. Exception was {log_failure}. Data was {data}.", data=e.doc)
+                self.sentry.captureException()
 
         fetcher = Fetcher("http://www.softpauer.com/f1/2017/testsessions/TestResults.js", setData, 30)
         fetcher.start()
@@ -56,26 +61,27 @@ class Service(lt_service):
         stats = self.data
 
         drivers = {}
-        for driver in stats["testEntry"]:
-            drivers[driver["racingNumber"]] = driver
+        if "testEntry" in stats and "testClassification" in stats:
+            for driver in stats["testEntry"]:
+                drivers[driver["racingNumber"]] = driver
 
-        for car in stats["testClassification"]:
-            if car["racingNumber"] in drivers:
-                driver = drivers[car["racingNumber"]]
-            else:
-                driver = {"driverFullName": car["driverLastName"], "teamName": "?"}
+            for car in stats["testClassification"]:
+                if car["racingNumber"] in drivers:
+                    driver = drivers[car["racingNumber"]]
+                else:
+                    driver = {"driverFullName": car["driverLastName"], "teamName": "?"}
 
-            cars.append([
-                car["racingNumber"],
-                "PIT" if car["inPits"] else "RUN",
-                driver["driverFullName"],
-                driver["teamName"],
-                car["lapNumber"],
-                car["lapTimeL"] / 1000.0,
-                car["gap"],
-                car["difference"],
-                car["pitStops"]
-            ])
+                cars.append([
+                    car["racingNumber"],
+                    "PIT" if car["inPits"] else "RUN",
+                    driver["driverFullName"],
+                    driver["teamName"],
+                    car["lapNumber"],
+                    car["lapTimeL"] / 1000.0,
+                    car["gap"],
+                    car["difference"],
+                    car["pitStops"]
+                ])
 
         return {
             "session": {
