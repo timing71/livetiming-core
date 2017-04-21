@@ -8,7 +8,7 @@ YELLOW_LAP_MODIFIER = 0.5
 def predict_endurance_stop(car):
     if len(car.stints) > 1:  # If we've made at least one stop
         if car.current_stint.in_progress:  # We're currently on track
-            stintsToConsider = map(lambda stint: (stint.end_lap - stint.start_lap) + (YELLOW_LAP_MODIFIER * stint.yellow_laps), car.stints[0:-1])
+            stintsToConsider = map(lambda stint: (stint.end_lap - stint.start_lap) + (YELLOW_LAP_MODIFIER * stint.yellow_laps), [s for s in car.stints if not s.in_progress])
             outLap = car.stints[-1].start_lap
             return math.floor(float(sum(stintsToConsider) / len(stintsToConsider)) - (car.current_lap - outLap) + (YELLOW_LAP_MODIFIER * car.current_stint.yellow_laps))
     return None
