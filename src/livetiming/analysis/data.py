@@ -282,7 +282,7 @@ class DataCentre(object):
                     elif new_car_state != "FUEL" and old_car_state == "FUEL":
                         car.fuel_stop(timestamp)
 
-                    if tyre != f.get(old_car, Stat.TYRE):
+                    if car.current_stint and (tyre != f.get(old_car, Stat.TYRE) or tyre != car.current_stint.tyre):
                         car.current_stint.tyre = tyre
 
                     old_driver = f.get(old_car, Stat.DRIVER)
