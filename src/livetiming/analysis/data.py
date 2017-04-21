@@ -234,6 +234,8 @@ class DataCentre(object):
         flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
         old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
 
+        pit_states = ["PIT", "FUEL", "N/S"]
+
         for idx, new_car in enumerate(newState['cars']):
             race_num = f.get(new_car, Stat.NUM)
             if race_num:
@@ -270,8 +272,6 @@ class DataCentre(object):
 
                     old_car_state = f.get(old_car, Stat.STATE)
 
-                    pit_states = ["PIT", "FUEL", "N/S"]
-
                     if new_car_state in pit_states and old_car_state not in pit_states:
                         car.pit_in(timestamp)
                     elif new_car_state not in pit_states and old_car_state in pit_states:
@@ -289,7 +289,7 @@ class DataCentre(object):
                     if old_driver and old_driver != driver:
                         car.set_driver(driver)
 
-                elif new_car_state != "PIT":
+                elif new_car_state not in pit_states:
                     car.pit_out(timestamp, driver, flag)
                 else:
                     car.set_driver(driver)
