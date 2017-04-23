@@ -190,7 +190,7 @@ class Service(lt_service):
         }
 
     def _receive_session(self, data):
-        self.log.info("Received session data")
+        self.log.debug("Received session data")
         self._session_data = data['content']['full']
 
         if 'Messages' in self._session_data:
@@ -201,7 +201,7 @@ class Service(lt_service):
                     self.mostRecentMessage = msg_time
 
     def _receive_timing(self, data):
-        self.log.info("Received timing data")
+        self.log.debug("Received timing data")
         self._timing_data = data['content']['full']
 
     def getColumnSpec(self):
@@ -213,6 +213,8 @@ class Service(lt_service):
             Stat.CAR,
             Stat.TEAM,
             Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
             Stat.S1,
             Stat.S2,
             Stat.S3,
@@ -260,6 +262,8 @@ class Service(lt_service):
                 competitor['CarTypeName'],
                 competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
                 main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,
+                main_result['Behind'] if 'Behind' in main_result else '',
+                main_result['Diff'] if 'Diff' in main_result else '',
                 parse_time_data(main_result['LastLap']['Intermediates'][0]) if 'LastLap' in main_result else ('', ''),
                 parse_time_data(main_result['LastLap']['Intermediates'][1]) if 'LastLap' in main_result else ('', ''),
                 parse_time_data(main_result['LastLap']['Intermediates'][2]) if 'LastLap' in main_result else ('', ''),
