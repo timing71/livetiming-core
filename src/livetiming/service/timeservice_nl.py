@@ -161,6 +161,7 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.NUM, "NBR", ident),
     (Stat.NUM, "NR.", ident),
     (Stat.STATE, "", lambda i: mapState(i[0])),
+    (Stat.STATE, "M", lambda i: mapState(i[0])),
     (Stat.CLASS, "CLS", ident),
     (Stat.TEAM, "TEAM", shorten),
     (Stat.TEAM, "TEAM NAME", shorten),
