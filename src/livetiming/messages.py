@@ -140,10 +140,11 @@ class RaceControlMessage(TimingMessage):
     def __init__(self, messageList):
         self.messageList = messageList
 
-    def _consider(self, oldState, newState):
-        if len(self.messageList) > 0:
+    def process(self, oldState, newState):
+        msgs = []
+        while len(self.messageList) > 0:
             nextMessage = self.messageList.pop()
             hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
             if hasCarNum:
-                return ["Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')]
-            return ["Race Control", nextMessage, "raceControl"]
+                msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')])
+            msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl"])
