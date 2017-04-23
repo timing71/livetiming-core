@@ -309,7 +309,7 @@ class DataCentre(object):
             # TSNL put lap count in the "gap" column FSR
             leader_gap = f.get(cars[0], Stat.GAP)
             if leader_gap:
-                tsnl = TSNL_LAP_HACK_REGEX.match()
+                tsnl = TSNL_LAP_HACK_REGEX.match(leader_gap)
                 if tsnl:
                     # Work up until we find the lap count relevant to us
                     lap_count = int(tsnl.group(1))

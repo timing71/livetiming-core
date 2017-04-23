@@ -148,3 +148,4 @@ class RaceControlMessage(TimingMessage):
             if hasCarNum:
                 msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')])
             msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl"])
+        return msgs
