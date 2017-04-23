@@ -386,7 +386,7 @@ class Service(lt_service):
         self.log.debug("Track length: {}".format(length))
 
     def mapCar(self, car):
-        result = [mapFunc(car[idx]) for idx, mapFunc in self.carFieldMapping]
+        result = [mapFunc(car[idx] if idx < len(car) else '') for idx, mapFunc in self.carFieldMapping]
 
         colSpec = self.getColumnSpec()
         if Stat.LAST_LAP in colSpec and Stat.BEST_LAP in colSpec:
