@@ -17,15 +17,6 @@ import urllib2
 import re
 
 
-def getToken():
-    tokenData = simplejson.load(urllib2.urlopen("https://livetiming.getraceresults.com/lt/negotiate?clientProtocol=1.5"))
-    return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
-
-
-def getWebSocketURL(tk, token):
-    return "wss://livetiming.getraceresults.com/lt/connect?transport=webSockets&clientProtocol=1.5&_tk={}&_gr=w&connectionToken={}&tid=8".format(tk, urllib2.quote(token[1]))
-
-
 def create_protocol(service):
     class TimeserviceNLClientProtocol(WebSocketClientProtocol):
 
@@ -183,14 +174,20 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.GAP, "GAP", parse_gap),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
     (Stat.S1, "SECT 1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S2, "SECT 2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S3, "SECT 3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S1, "SECT-1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S1, "SECT.1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S1, "SECT-1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S2, "SECT 2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S2, "SECT.2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S3, "SECT 3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.S3, "SECT.3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S4, "SECT 4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S4, "SECT.4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S4, "SECT-4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S5, "SECT 5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S5, "SECT.5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S5, "SECT-5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST TIME", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
@@ -213,7 +210,7 @@ class Service(lt_service):
 
         self.myArgs = parse_extra_args(extra_args)
 
-        socketURL = getWebSocketURL(self.getTrackID(), getToken())
+        socketURL = self.getWebSocketURL(self.getTrackID(), self.getToken())
         factory = ReconnectingWebSocketClientFactory(socketURL)
         factory.protocol = create_protocol(self)
         connectWS(factory)
@@ -230,6 +227,16 @@ class Service(lt_service):
         self.description = ""
         self.columnSpec = map(lambda c: c[0], DEFAULT_COLUMN_SPEC)
         self.carFieldMapping = []
+
+    def getToken(self):
+        tokenData = simplejson.load(urllib2.urlopen("https://{}/lt/negotiate?clientProtocol=1.5".format(self.getHost())))
+        return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
+
+    def getWebSocketURL(self, tk, token):
+        return "wss://{}/lt/connect?transport=webSockets&clientProtocol=1.5&_tk={}&_gr=w&connectionToken={}&tid=8".format(self.getHost(), tk, urllib2.quote(token[1]))
+
+    def getHost(self):
+        return "livetiming.getraceresults.com"
 
     def getTrackID(self):
         '''

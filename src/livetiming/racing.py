@@ -39,6 +39,8 @@ class Stat(Enum):
     S1 = ("S1", "time", "Sector 1 time")
     S2 = ("S2", "time", "Sector 2 time")
     S3 = ("S3", "time", "Sector 3 time")
+    S4 = ("S4", "time", "Sector 4 time")
+    S5 = ("S5", "time", "Sector 5 time")
     BS1 = ("BS1", "time", "Best sector 1 time")
     BS2 = ("BS2", "time", "Best sector 2 time")
     BS3 = ("BS3", "time", "Best sector 3 time")
