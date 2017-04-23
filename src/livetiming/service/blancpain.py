@@ -6,6 +6,7 @@ from twisted.internet import reactor
 import time
 from livetiming.racing import Stat, FlagStatus
 from datetime import datetime
+from livetiming.messages import RaceControlMessage
 
 
 SRO_ROOT_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SEASON_JSON.json?s=3&t=0"
@@ -150,6 +151,8 @@ class Service(lt_service):
 
         self._timing_data = None
         self._session_data = None
+        self._messages = []
+        self.mostRecentMessage = None
 
         self._init_session()
 
@@ -190,6 +193,13 @@ class Service(lt_service):
         self.log.info("Received session data")
         self._session_data = data['content']['full']
 
+        if 'Messages' in self._session_data:
+            for message in self._session_data['Messages']:
+                msg_time = datetime.strptime(message['Time'], "%d.%m.%Y %H:%M:%S")
+                if not self.mostRecentMessage or self.mostRecentMessage < msg_time:
+                    self._messages.append(message['Text'])
+                    self.mostRecentMessage = msg_time
+
     def _receive_timing(self, data):
         self.log.info("Received timing data")
         self._timing_data = data['content']['full']
@@ -226,6 +236,9 @@ class Service(lt_service):
                 return self._compile_state()
         return self.no_service_state()
 
+    def getExtraMessageGenerators(self):
+        return [RaceControlMessage(self._messages)]
+
     def _compile_state(self):
         cars = []
 
@@ -255,9 +268,12 @@ class Service(lt_service):
                 competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
             ])
 
+        unt = self._timing_data['UntInfo']
+
         session = {
-            'flagState': map_session_flag(self._timing_data['UntInfo']),
-            'timeRemain': parse_session_time(self._timing_data['UntInfo']['RemainingTime'])
+            'flagState': map_session_flag(unt),
+            'timeRemain': parse_session_time(unt['RemainingTime']),
+            'timeElapsed': 0  # They don't specify a timezone for their start time - we can't work it out
         }
 
         return {'cars': cars, 'session': session}

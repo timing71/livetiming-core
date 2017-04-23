@@ -147,5 +147,6 @@ class RaceControlMessage(TimingMessage):
             hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
             if hasCarNum:
                 msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')])
-            msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl"])
+            else:
+                msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl"])
         return msgs
