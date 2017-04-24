@@ -4,8 +4,7 @@ from livetiming.analysis.driver import StintLength
 from livetiming.analysis.lapchart import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service
-from simplejson import JSONDecodeError
+from livetiming.service import Service as lt_service, JSONFetcher
 from twisted.internet import reactor
 
 import time
@@ -88,6 +87,16 @@ class Service(lt_service):
         super(Service, self).__init__(args, extra_args)
         self.description = self.getName()
         self.setStaticData()
+        self.rawData = None
+
+        def feedUrl():
+            return self.getRawFeedDataUrl().format(
+                "",
+                int(time.time() / 15)
+            )
+
+        fetcher = JSONFetcher(feedUrl, self.setRawData, self.getPollInterval())
+        fetcher.start()
 
     def getDefaultDescription(self):
         return self.description
@@ -154,21 +163,11 @@ class Service(lt_service):
             "tabEngages": hackDataFromJSONP(raw, "tabEngages")
         }
 
-    def getRawFeedData(self):
-        feed_url = self.getRawFeedDataUrl().format(
-            "",
-            int(time.time() / 15)
-        )
-        feed = urllib2.urlopen(feed_url)
-        feed_data = feed.read()
-        try:
-            return simplejson.loads(feed_data)
-        except JSONDecodeError:
-            self.log.failure("Failed to JSON-decode raw data feed! Raw data was {feed_data}", feed_data=feed_data)
-            raise
+    def setRawData(self, data):
+        self.rawData = data
 
     def getRaceState(self):
-        if self.staticData is None:
+        if self.staticData is None or self.rawData is None:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
             return {
                 'cars': [],
@@ -179,7 +178,7 @@ class Service(lt_service):
                 }
             }
 
-        raw = self.getRawFeedData()
+        raw = self.rawData
         cars = []
         fastLapsPerClass = {}
         rawCarData = raw[0]
