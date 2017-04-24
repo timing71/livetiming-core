@@ -1,10 +1,10 @@
 from livetiming.analysis import Analysis
 
 
-class LapChart(Analysis):
+class LaptimeChart(Analysis):
 
     def getName(self):
-        return "Lap chart"
+        return "Laptime chart"
 
     def getData(self):
         times = map(

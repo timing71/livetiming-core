@@ -1,4 +1,4 @@
-from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.service.alkamel import Service as AlkamelService
 
 
@@ -8,5 +8,5 @@ class Service(AlkamelService):
 
     def getAnalysisModules(self):
         return [
-            LapChart
+            LaptimeChart
         ]

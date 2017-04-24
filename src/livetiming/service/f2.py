@@ -1,6 +1,6 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
-from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 
@@ -132,7 +132,7 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
-            LapChart
+            LaptimeChart
         ]
 
     def onTimingPayload(self, payload):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 from datetime import datetime
-from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.session import Session
@@ -429,7 +429,7 @@ class Service(lt_service):
     def getAnalysisModules(self):
         return [
             Session,
-            LapChart,
+            LaptimeChart,
             EnduranceStopAnalysis,
             StintLength
         ]

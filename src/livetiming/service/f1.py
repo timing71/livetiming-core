@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.analysis.laptimes import LapChart
+from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import MultiLineFetcher, Service as lt_service
@@ -183,7 +183,7 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
-            LapChart
+            LaptimeChart
         ]
 
     def _getData(self, key, subkey=None):

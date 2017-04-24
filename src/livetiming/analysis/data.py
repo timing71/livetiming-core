@@ -10,7 +10,7 @@ import time
 TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
 
 
-class LapChart(object):
+class LaptimeChart(object):
     def __init__(self):
         self.laps = defaultdict(list)
         self._seen_on_lap = defaultdict(list)
@@ -208,7 +208,7 @@ class DataCentre(object):
         self.current_state = {"cars": [], "session": {"flagState": "none"}, "messages": []}
         self.column_spec = []
         self.leader_lap = 0
-        self.lap_chart = LapChart()
+        self.lap_chart = LaptimeChart()
 
     def car(self, race_num):
         if race_num not in self._cars:
