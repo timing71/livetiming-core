@@ -23,6 +23,7 @@ import simplejson
 import txaio
 import urllib2
 from simplejson.scanner import JSONDecodeError
+from urllib2 import HTTPError
 
 
 sentry = sentry()
@@ -317,6 +318,11 @@ class Fetcher(object):
         self.callback = callback
         self.interval = interval
 
+        self.backoff = 0
+
+    def _schedule(self, delay):
+        reactor.callLater(delay, self._run)
+
     def _defer(self):
         if callable(self.url):
             url = self.url()
@@ -329,17 +335,25 @@ class Fetcher(object):
                 return feed.read()
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
-        except Exception:
+        except (Exception, HTTPError) as e:
             sentry.captureException()
-            pass  # Bad data feed :(
+            self.log.failure("URL {url} returned error: {msg}", url=url, msg=str(e))
+            raise
 
     def _run(self):
         def cb(data):
+            self.backoff = 0
             self.callback(data)
-            reactor.callLater(self.interval, self._run)
+            self._schedule(self.interval)
+
+        def eb(fail):
+            self.backoff += 1
+            self.log.warn("Trying again in {backoff} seconds", backoff=self.interval * self.backoff)
+            self._schedule(self.interval * self.backoff)
 
         deferred = deferToThread(self._defer)
         deferred.addCallback(cb)
+        deferred.addErrback(eb)
 
     def start(self):
         self._run()
