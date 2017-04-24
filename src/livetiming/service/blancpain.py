@@ -15,6 +15,10 @@ SRO_SESSION_TIMING_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2
 SRO_SESSION_DATA_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_COMP_DETAIL_{session}_JSON.json?s=655"
 
 
+STATE_LIVE = 1
+TYPE_AGGREGATE = 3
+
+
 def json_get(url):
     try:
         return simplejson.load(urllib2.urlopen(url))
@@ -26,7 +30,7 @@ def find_live_meeting():
     meetings_json = json_get(SRO_ROOT_URL)
     if meetings_json:
         meetings = meetings_json['content']['full']['Meetings']
-        live_meetings = [m for m in meetings.values() if m['State'] == 1]
+        live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
         if live_meetings:
             return live_meetings[0]
     return None
@@ -38,11 +42,12 @@ def find_live_session():
         sessions_json = json_get(SRO_SCHEDULE_URL.format(meeting=live_meeting['Id'].upper()))
         if sessions_json:
             sessions = sessions_json['content']['full']['Units']
-            live_sessions = [s for s in sessions.values() if s['State'] == 1 and s['Type'] != 3]
+            live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] != TYPE_AGGREGATE]
             if live_sessions:
-                print "Available sessions: {}".format(live_sessions)
-                return live_sessions[-1]['Id'].upper()
-    return None
+                return live_sessions[-1]['Id'].upper(), \
+                    sessions_json['content']['full']['Competitions'][live_sessions[-1]['CompetitionId']]['Name'], \
+                    live_sessions[-1]['Name']
+    return None, None, None
 
 
 def get_session_data(session):
@@ -154,6 +159,9 @@ class Service(lt_service):
         self._messages = []
         self.mostRecentMessage = None
 
+        self.name = None
+        self.description = None
+
         self._init_session()
 
     def _init_session(self):
@@ -161,7 +169,7 @@ class Service(lt_service):
         if ea.session is not None:
             self.sro_session = ea.session.upper()
         else:
-            self.sro_session = find_live_session()
+            self.sro_session, self.name, self.description = find_live_session()
 
         if self.sro_session:
             self.log.info("Using SRO session {session}", session=self.sro_session)
@@ -227,10 +235,10 @@ class Service(lt_service):
         return 10
 
     def getName(self):
-        return "Blancpain"
+        return self.name if self.name else "Blancpain GT"
 
     def getDefaultDescription(self):
-        return "Blancpain GT"
+        return self.description if self.description else "Blancpain GT"
 
     def getRaceState(self):
         if self.sro_session:
