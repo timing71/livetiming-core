@@ -47,6 +47,7 @@ def create_service_session(service):
             self.log.info("Subscribed to control channel")
             yield service.publishManifest()
             self.log.info("Published init message")
+            service._updateAndPublishRaceState()
 
         def onLeave(self, details):
             super(ServiceSession, self).onLeave(details)
@@ -97,7 +98,7 @@ class Service(object):
 
         if self.getPollInterval():
             updater = LoopingCall(self._updateAndPublishRaceState)
-            updater.start(self.getPollInterval())
+            updater.start(self.getPollInterval(), False)
             self.log.info("Race state updates started")
 
         if self.getAnalysisModules():
