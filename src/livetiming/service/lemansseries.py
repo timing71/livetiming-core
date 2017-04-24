@@ -146,22 +146,22 @@ class Service(lt_service):
             self.log.warn("No static data available. Has the session started yet?")
             reactor.callLater(30, self.setStaticData)
             self.staticData = None
+        else:
+            description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
+            if description:
+                self.description = description.group("desc").replace("/", "-")
+                self.log.info("Setting description: {desc}", desc=self.description)
+                self.publishManifest()
 
-        description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
-        if description:
-            self.description = description.group("desc").replace("/", "-")
-            self.log.info("Setting description: {desc}", desc=self.description)
-            self.publishManifest()
-
-        self.staticData = {
-            "tabPays": hackDataFromJSONP(raw, "tabPays"),
-            "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
-            "tabMarques": hackDataFromJSONP(raw, "tabMarques"),
-            "tabVehicules": hackDataFromJSONP(raw, "tabVehicules"),
-            "tabTeams": hackDataFromJSONP(raw, "tabTeams"),
-            "tabPilotes": hackDataFromJSONP(raw, "tabPilotes"),
-            "tabEngages": hackDataFromJSONP(raw, "tabEngages")
-        }
+            self.staticData = {
+                "tabPays": hackDataFromJSONP(raw, "tabPays"),
+                "tabCategories": hackDataFromJSONP(raw, "tabCategories"),
+                "tabMarques": hackDataFromJSONP(raw, "tabMarques"),
+                "tabVehicules": hackDataFromJSONP(raw, "tabVehicules"),
+                "tabTeams": hackDataFromJSONP(raw, "tabTeams"),
+                "tabPilotes": hackDataFromJSONP(raw, "tabPilotes"),
+                "tabEngages": hackDataFromJSONP(raw, "tabEngages")
+            }
 
     def setRawData(self, data):
         self.rawData = data
