@@ -174,15 +174,12 @@ class Service(lt_service):
         if self.sro_session:
             self.log.info("Using SRO session {session}", session=self.sro_session)
 
-            self.state['messages'] = []
-
             session_fetcher = JSONFetcher(uncache(SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 10)
             session_fetcher.start()
 
             timing_fetcher = JSONFetcher(uncache(SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 10)
             timing_fetcher.start()
 
-            self._updateAndPublishRaceState()
         else:
             self.log.info("No live session found, checking again in 30 seconds.")
             reactor.callLater(30, self._init_session)
