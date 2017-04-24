@@ -8,6 +8,7 @@ from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authe
 from livetiming.racing import Stat
 from livetiming.recording import TimingRecorder
 from lzstring import LZString
+from simplejson.scanner import JSONDecodeError
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ReconnectingClientFactory
@@ -22,8 +23,6 @@ import os
 import simplejson
 import txaio
 import urllib2
-from simplejson.scanner import JSONDecodeError
-from urllib2 import HTTPError
 
 
 sentry = sentry()
@@ -335,7 +334,7 @@ class Fetcher(object):
                 return feed.read()
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
-        except (Exception, HTTPError) as e:
+        except (Exception, urllib2.URLError) as e:
             sentry.captureException()
             self.log.failure("URL {url} returned error: {msg}", url=url, msg=str(e))
             raise
