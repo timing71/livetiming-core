@@ -73,7 +73,7 @@ class Service(object):
             self.recorder = TimingRecorder(self.args.recording_file)
         else:
             self.recorder = None
-        self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules())
+        self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules() if not args.disable_analysis else [])
         self._publish = None
         self.sentry.context.merge({
             'tags': {
@@ -254,7 +254,7 @@ class Service(object):
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval() or 1,
-            "hasAnalysis": not not self.getAnalysisModules()
+            "hasAnalysis": not (self.args.disable_analysis or not self.getAnalysisModules())
         }
 
     def _getDescription(self):
@@ -395,6 +395,7 @@ def parse_args():
     parser.add_argument('service_class', nargs='?', default='livetiming.service.Service', help='Class name of service to run')
     parser.add_argument('-v', '--verbose', action='store_true', help='Log to stdout rather than a file')
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--disable-analysis', action='store_true')
 
     return parser.parse_known_args()
 
