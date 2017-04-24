@@ -122,7 +122,7 @@ class FastLapMessage(PerCarMessage):
         clazz = self.getValue(newCar, Stat.CLASS, "Timing")
         oldTime = self.getValue(oldCar, Stat.LAST_LAP)
         newTime = self.getValue(newCar, Stat.LAST_LAP)
-        if oldTime and newTime and carNum:
+        if oldTime and newTime and carNum and len(oldTime) > 1 and len(newTime) > 1:
             oldFlags = oldTime[1]
             newFlags = newTime[1]
 
