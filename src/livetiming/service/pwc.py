@@ -7,9 +7,6 @@ class Service(tsl_service):
     def getHost(self):
         return "lt-us.tsl-timing.com"
 
-    def getSessionID(self):
-        return 171006
-
     def getAnalysisModules(self):
         return [
             LaptimeChart,

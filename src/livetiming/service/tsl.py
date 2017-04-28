@@ -7,6 +7,7 @@ from signalr import Connection
 from signalr.hubs._hub import HubServer
 from signalr.events._events import EventHook
 from threading import Thread
+import argparse
 
 
 ###################################
@@ -130,10 +131,18 @@ def mapSessionState(state):
     return FlagStatus.NONE
 
 
+def getSessionID(extra_args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--session", help="TSL session ID", required=True)
+
+    a, _ = parser.parse_known_args(extra_args)
+    return a.session
+
+
 class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
-        client = TSLClient(self, host="lt-us.tsl-timing.com", sessionID="171006")
+        client = TSLClient(self, host=self.getHost(), sessionID=getSessionID(extra_args))
         client.start()
 
         self.name = "TSL Timing"
@@ -142,6 +151,7 @@ class Service(lt_service):
         self.cars = {}
         self.sectorTimes = {}
         self.trackSectors = {}
+        self.bestSectorTimes = {}
 
         self.flag = FlagStatus.NONE
         self.timeRemaining = -1
@@ -162,9 +172,6 @@ class Service(lt_service):
 
     def getHost(self):
         return "livetiming.tsl-timing.com"
-
-    def getSessionID(self):
-        return "WebDemo"
 
     def getColumnSpec(self):
         return [
@@ -206,6 +213,14 @@ class Service(lt_service):
     def getRaceState(self):
         cars = []
 
+        def sectorTimeFor(car, sector):
+            if car['ID'] not in self.sectorTimes:
+                return ("", "")
+            stuple = self.sectorTimes[car["ID"]][sector]
+            if stuple[0] == self.bestSectorTimes.get(sector, -1) / 1e6:
+                return (stuple[0], 'sb')
+            return stuple
+
         for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
             cars.append([
                 car['StartNumber'],
@@ -216,9 +231,9 @@ class Service(lt_service):
                 car['Laps'],
                 car['Gap'],
                 car['Diff'],
-                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][0],
-                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][1],
-                "" if car['ID'] not in self.sectorTimes else self.sectorTimes[car["ID"]][2],
+                sectorTimeFor(car, 0),
+                sectorTimeFor(car, 1),
+                sectorTimeFor(car, 2),
                 (parseTime(car['LastLapTime']), "pb" if car['PersonalBestTime'] else ""),
                 (parseTime(car['CurrentSessionBest']), "")
             ])
@@ -263,6 +278,7 @@ class Service(lt_service):
             for sector in data["TrackSectors"]:
                 if sector["Name"][0] == "S" and len(sector["Name"]) == 2:
                     self.trackSectors[sector['ID']] = int(sector["Name"][1]) - 1
+                    self.bestSectorTimes[self.trackSectors[sector['ID']]] = sector["BestTime"]
         if "ActualStart" in data and data["ActualStart"] and "UTCOffset" in data:
             self.startTime = datetime.utcfromtimestamp((data["ActualStart"] - data["UTCOffset"]) / 1e6)
         self.publishManifest()
@@ -305,10 +321,16 @@ class Service(lt_service):
         for d in data:
             cid = d["CompetitorID"]
             if cid not in self.sectorTimes or d["Id"] == 1:
-                self.sectorTimes[cid] = ["", "", ""]
+                self.sectorTimes[cid] = [("", ""), ("", ""), ("", "")]
             sector = self.trackSectors.get(d["Id"], -1)
             if sector >= 0:
-                self.sectorTimes[cid][sector] = d["Time"] / 1e6
+                self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "")
+
+    def on_updatesector(self, data):
+        for s in data:
+            sector = self.trackSectors.get(s["ID"], -1)
+            if sector >= 0:
+                self.bestSectorTimes[sector] = s["BestTime"]
 
     def on_mapanimate(self, _):
         pass
