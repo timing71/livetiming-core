@@ -8,6 +8,8 @@ from signalr.hubs._hub import HubServer
 from signalr.events._events import EventHook
 from threading import Thread
 import argparse
+import re
+from livetiming.messages import RaceControlMessage
 
 
 ###################################
@@ -71,8 +73,7 @@ class TSLClient(Thread):
                 if hasattr(self.handler, handler_method) and callable(getattr(self.handler, handler_method)):
                     getattr(self.handler, handler_method)(data)
                 else:
-                    self.log.info("Unhandled message: {}".format(handler_method))
-                    self.log.debug("Message content was {}".format(data))
+                    self.log.info("Unhandled message {method}: {data}", method=handler_method, data=data)
 
             def handle(**kwargs):
                 if 'M' in kwargs:
@@ -139,6 +140,9 @@ def getSessionID(extra_args):
     return a.session
 
 
+RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*)")
+
+
 class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
@@ -152,6 +156,7 @@ class Service(lt_service):
         self.sectorTimes = {}
         self.trackSectors = {}
         self.bestSectorTimes = {}
+        self.messages = []
 
         self.flag = FlagStatus.NONE
         self.timeRemaining = -1
@@ -210,6 +215,11 @@ class Service(lt_service):
             "Humidity"
         ]
 
+    def getExtraMessageGenerators(self):
+        return [
+            RaceControlMessage(self.messages)
+        ]
+
     def getRaceState(self):
         cars = []
 
@@ -225,7 +235,7 @@ class Service(lt_service):
             cars.append([
                 car['StartNumber'],
                 car['SubClass'],
-                mapState(car['Status'], car['InPits']),
+                "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
                 car['Name'],
                 car['Vehicle'],
                 car['Laps'],
@@ -313,9 +323,14 @@ class Service(lt_service):
         self.on_sectortimes(data)
 
     def on_controlbroadcast(self, data):
-        print ">>>> controlbroadcast"
-        print data
-        print "<<<<"
+        for msg in data:
+            if msg['Message'] != "":
+                text = msg['Message']
+                has_time_prefix = RACE_CONTROL_PREFIX_REGEX.match(text)
+                if has_time_prefix:
+                    self.messages.append(has_time_prefix.group('text'))
+                else:
+                    self.messages.append(text)
 
     def on_sectortimes(self, data):
         for d in data:
@@ -331,6 +346,11 @@ class Service(lt_service):
             sector = self.trackSectors.get(s["ID"], -1)
             if sector >= 0:
                 self.bestSectorTimes[sector] = s["BestTime"]
+
+    def on_competitorpitout(self, data):
+        for c in data:
+            cid = c['CompetitorID']
+            self.cars[cid]['out_lap'] = True
 
     def on_mapanimate(self, _):
         pass
