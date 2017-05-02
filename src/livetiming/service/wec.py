@@ -3,19 +3,18 @@ from datetime import datetime
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, JSONFetcher
+from livetiming.service.alkamel import KNOWN_FEEDS
+from simplejson.scanner import JSONDecodeError
+from socketIO_client import BaseNamespace, SocketIO
+from threading import Thread
 from twisted.logger import Logger
 
 import re
 import simplejson
 import time
-from __builtin__ import True
-from simplejson.scanner import JSONDecodeError
-from socketIO_client import BaseNamespace, SocketIO
-from livetiming.service.alkamel import KNOWN_FEEDS
-from threading import Thread
-from livetiming.messages import RaceControlMessage
 
 
 def mapFlagState(params):
