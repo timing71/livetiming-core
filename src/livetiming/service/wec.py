@@ -12,6 +12,10 @@ import simplejson
 import time
 from __builtin__ import True
 from simplejson.scanner import JSONDecodeError
+from socketIO_client import BaseNamespace, SocketIO
+from livetiming.service.alkamel import KNOWN_FEEDS
+from threading import Thread
+from livetiming.messages import RaceControlMessage
 
 
 def mapFlagState(params):
@@ -75,6 +79,17 @@ def parseSessionTime(formattedTime):
             return formattedTime
 
 
+def AlkamelRCOnlyNamespaceFactory(handler):
+    class AlkamelNamespace(BaseNamespace):
+        def on_connect(self, *args):
+            self.emit('st', {"feed": KNOWN_FEEDS['fiawec'], "ver": "1.0"})
+
+        def on_rc_message(self, data):
+            handler.rc_message(simplejson.loads(data.encode('iso-8859-1')))
+
+    return AlkamelNamespace
+
+
 class Service(lt_service):
     log = Logger()
 
@@ -84,6 +99,9 @@ class Service(lt_service):
         self.entries = []
         self.latest_seen_timestamp = None
 
+        self.messages = []
+        self.prevRaceControlMessages = []
+
         self.description = "World Endurance Championship"
 
         def data_url():
@@ -91,6 +109,15 @@ class Service(lt_service):
 
         fetcher = JSONFetcher(data_url, self._handleData, 10)
         fetcher.start()
+
+        self.socketIO = SocketIO(
+            'livetiming.alkamelsystems.com',
+            80,
+            AlkamelRCOnlyNamespaceFactory(self)
+        )
+        socketThread = Thread(target=self.socketIO.wait)
+        socketThread.daemon = True
+        socketThread.start()
 
     def getName(self):
         return "WEC"
@@ -135,12 +162,25 @@ class Service(lt_service):
     def getPollInterval(self):
         return None  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
 
+    def getExtraMessageGenerators(self):
+        return [
+            RaceControlMessage(self.messages)
+        ]
+
     def getAnalysisModules(self):
         return [
             LaptimeChart,
             EnduranceStopAnalysis,
             StintLength
         ]
+
+    def rc_message(self, data):
+        for msg in data:
+            if msg['txt'] not in self.prevRaceControlMessages:
+                # Duplicate messages can occur as the rc_message is resent after an st_refresh
+                self.messages.append(msg['txt'])
+
+        self.prevRaceControlMessages = map(lambda m: m['txt'], data)
 
     def _data_is_newer(self, params):
         if self.latest_seen_timestamp is None:
