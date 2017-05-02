@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from livetiming import sentry
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
@@ -26,7 +27,7 @@ class Analyser(object):
         self.uuid = uuid
         self.publish = publishFunc
         self._load_data_centre()
-        self.modules = {}
+        self.modules = OrderedDict()
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
         self.doPublish = publish
