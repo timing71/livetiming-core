@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from livetiming.analysis.driver import StintLength
-from livetiming.analysis.laptimes import LaptimeChart
+from livetiming.analysis.lapchart import LaptimeChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
