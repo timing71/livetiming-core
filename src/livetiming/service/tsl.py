@@ -71,6 +71,7 @@ class TSLClient(Thread):
             def delegate(method, data):
                 handler_method = "on_{}".format(method.lower())
                 if hasattr(self.handler, handler_method) and callable(getattr(self.handler, handler_method)):
+                    self.log.debug("Received {method}: {data}", method=method, data=data)
                     getattr(self.handler, handler_method)(data)
                 else:
                     self.log.info("Unhandled message {method}: {data}", method=handler_method, data=data)
@@ -234,7 +235,7 @@ class Service(lt_service):
         for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
             cars.append([
                 car['StartNumber'],
-                car['SubClass'],
+                "{} {}".format(car['PrimaryClass'], car['SubClass']).strip(),
                 "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
                 car['Name'],
                 car['Vehicle'],
