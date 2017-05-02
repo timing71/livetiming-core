@@ -2,7 +2,7 @@ from collections import defaultdict
 from livetiming.analysis import Analysis
 
 
-class LaptimeChart(Analysis):
+class LapChart(Analysis):
     def getName(self):
         return "Lap chart"
 
