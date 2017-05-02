@@ -345,7 +345,7 @@ class Service(lt_service):
                 "{}%".format(self.params['humidity']),
                 "{}kph".format(self.params['windSpeed']),
                 u"{}°".format(self.params['windDirection']),
-                self.params['weather'].title()
+                self.params['weather'].replace('_', ' ').title()
             ]
 
         return {
