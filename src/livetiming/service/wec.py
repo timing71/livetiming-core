@@ -137,48 +137,33 @@ class Service(lt_service):
         return self.description
 
     def getColumnSpec(self):
+        common_cols = [
+            Stat.NUM,
+            Stat.STATE,
+            Stat.CLASS,
+            Stat.TEAM,
+            Stat.DRIVER,
+            Stat.CAR,
+            Stat.TYRE,
+            Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
+            Stat.S1,
+            Stat.BS1,
+            Stat.S2,
+            Stat.BS2,
+            Stat.S3,
+            Stat.BS3,
+            Stat.LAST_LAP
+        ]
         if self.is_qualifying_mode:
-            return [
-                Stat.NUM,
-                Stat.STATE,
-                Stat.CLASS,
-                Stat.TEAM,
-                Stat.DRIVER,
-                Stat.CAR,
-                Stat.TYRE,
-                Stat.LAPS,
-                Stat.GAP,
-                Stat.INT,
-                Stat.S1,
-                Stat.BS1,
-                Stat.S2,
-                Stat.BS2,
-                Stat.S3,
-                Stat.BS3,
-                Stat.LAST_LAP,
+            return common_cols + [
                 Stat.DRIVER_1_BEST_LAP,
                 Stat.DRIVER_2_BEST_LAP,
                 Stat.AGGREGATE_BEST_LAP
             ]
         else:
-            return [
-                Stat.NUM,
-                Stat.STATE,
-                Stat.CLASS,
-                Stat.TEAM,
-                Stat.DRIVER,
-                Stat.CAR,
-                Stat.TYRE,
-                Stat.LAPS,
-                Stat.GAP,
-                Stat.INT,
-                Stat.S1,
-                Stat.BS1,
-                Stat.S2,
-                Stat.BS2,
-                Stat.S3,
-                Stat.BS3,
-                Stat.LAST_LAP,
+            return common_cols + [
                 Stat.BEST_LAP,
                 Stat.SPEED,
                 Stat.PITS
@@ -273,29 +258,32 @@ class Service(lt_service):
             if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
                 bestSectorsByClass[3][category] = (car['number'], bs3)
 
+            common_cols = [
+                car['number'],
+                mapCarState(car['state']),
+                category,
+                car['team'],
+                car['driver'],
+                car['car'],
+                car['tyre'],
+                car['lap'],
+                car['gap'],
+                car['gapPrev'],
+                (s1, 'pb' if s1 == bs1 else ''),
+                (bs1, 'old' if s1 != bs1 else ''),
+                (s2, 'pb' if s2 == bs2 else ''),
+                (bs2, 'old' if s2 != bs2 else ''),
+                (s3, 'pb' if s3 == bs3 else ''),
+                (bs3, 'old' if s3 != bs3 else '')
+            ]
+
             if self.is_qualifying_mode:
                 d1_lap = parseTime(car['d1l1'])
                 d2_lap = parseTime(car['d2l1'])
                 best_lap = min(d1_lap, d2_lap)
                 av_lap = parseTime(car['av_time'])
 
-                cars.append([
-                    car['number'],
-                    mapCarState(car['state']),
-                    category,
-                    car['team'],
-                    car['driver'],
-                    car['car'],
-                    car['tyre'],
-                    car['lap'],
-                    car['gap'],
-                    car['gapPrev'],
-                    (s1, 'pb' if s1 == bs1 else ''),
-                    (bs1, 'old' if s1 != bs1 else ''),
-                    (s2, 'pb' if s2 == bs2 else ''),
-                    (bs2, 'old' if s2 != bs2 else ''),
-                    (s3, 'pb' if s3 == bs3 else ''),
-                    (bs3, 'old' if s3 != bs3 else ''),
+                cars.append(common_cols + [
                     (last_lap, 'pb' if last_lap == best_lap else ''),
                     (d1_lap or '', 'pb' if best_lap == d1_lap else ''),
                     (d2_lap or '', 'pb' if best_lap == d2_lap else ''),
@@ -303,23 +291,7 @@ class Service(lt_service):
                 ])
             else:
                 best_lap = parseTime(car['bestlap'])
-                cars.append([
-                    car['number'],
-                    mapCarState(car['state']),
-                    category,
-                    car['team'],
-                    car['driver'],
-                    car['car'],
-                    car['tyre'],
-                    car['lap'],
-                    car['gap'],
-                    car['gapPrev'],
-                    (s1, 'pb' if s1 == bs1 else ''),
-                    (bs1, 'old' if s1 != bs1 else ''),
-                    (s2, 'pb' if s2 == bs2 else ''),
-                    (bs2, 'old' if s2 != bs2 else ''),
-                    (s3, 'pb' if s3 == bs3 else ''),
-                    (bs3, 'old' if s3 != bs3 else ''),
+                cars.append(common_cols + [
                     (last_lap, 'pb' if last_lap == best_lap else ''),
                     (best_lap, ''),
                     car['speed'],
