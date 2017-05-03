@@ -183,11 +183,11 @@ class FieldExtractor(object):
         for idx, col in enumerate(colSpec):
             self.mapping[col] = idx
 
-    def get(self, car, field):
+    def get(self, car, field, default=None):
         try:
             return car[self.mapping[field]]
         except KeyError:
-            return None
+            return default
 
 
 def tryInt(val):
