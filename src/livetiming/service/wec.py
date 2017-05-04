@@ -4,13 +4,9 @@ from livetiming.analysis.driver import StintLength
 from livetiming.analysis.lapchart import LapChart
 from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.session import Session
-from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, JSONFetcher
-from livetiming.service.alkamel import KNOWN_FEEDS
 from simplejson.scanner import JSONDecodeError
-from socketIO_client import BaseNamespace, SocketIO
-from threading import Thread
 from twisted.logger import Logger
 
 import re
@@ -80,17 +76,6 @@ def parseSessionTime(formattedTime):
             return formattedTime
 
 
-def AlkamelRCOnlyNamespaceFactory(handler):
-    class AlkamelNamespace(BaseNamespace):
-        def on_connect(self, *args):
-            self.emit('st', {"feed": KNOWN_FEEDS['fiawec'], "ver": "1.0"})
-
-        def on_rc_message(self, data):
-            handler.rc_message(simplejson.loads(data.encode('iso-8859-1')))
-
-    return AlkamelNamespace
-
-
 def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
@@ -115,21 +100,13 @@ class Service(lt_service):
             self.log.info("Starting up in QUALIFYING mode")
 
         self.description = "World Endurance Championship"
+        self.session_id = None
 
         def data_url():
             return "http://www.fiawec.com/ecm/live/WEC/data.json?_={}".format(int(1000 * time.time()))
 
         fetcher = JSONFetcher(data_url, self._handleData, 10)
         fetcher.start()
-
-        self.socketIO = SocketIO(
-            'livetiming.alkamelsystems.com',
-            80,
-            AlkamelRCOnlyNamespaceFactory(self)
-        )
-        socketThread = Thread(target=self.socketIO.wait)
-        socketThread.daemon = True
-        socketThread.start()
 
     def getName(self):
         return "WEC"
@@ -183,11 +160,6 @@ class Service(lt_service):
     def getPollInterval(self):
         return None  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
 
-    def getExtraMessageGenerators(self):
-        return [
-            RaceControlMessage(self.messages)
-        ]
-
     def getAnalysisModules(self):
         return [
             Session,
@@ -195,14 +167,6 @@ class Service(lt_service):
             EnduranceStopAnalysis,
             StintLength
         ]
-
-    def rc_message(self, data):
-        for msg in data:
-            if msg['txt'] not in self.prevRaceControlMessages:
-                # Duplicate messages can occur as the rc_message is resent after an st_refresh
-                self.messages.append(msg['txt'])
-
-        self.prevRaceControlMessages = map(lambda m: m['txt'], data)
 
     def _data_is_newer(self, params):
         if self.latest_seen_timestamp is None:
@@ -220,6 +184,9 @@ class Service(lt_service):
                     if 'eventName' in self.params and self.params['eventName'] != self.description:
                         self.description = self.params['eventName']
                         self.publishManifest()
+                        self.analyser.reset()
+                    if "sessionId" in new_params and new_params['sessionId'] != self.session_id:
+                        self.session_id = new_params['sessionId']
                         self.analyser.reset()
 
                     self.latest_seen_timestamp = self.params.get("timestamp", None)
