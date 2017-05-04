@@ -220,6 +220,7 @@ class Service(lt_service):
                     if 'eventName' in self.params and self.params['eventName'] != self.description:
                         self.description = self.params['eventName']
                         self.publishManifest()
+                        self.analyser.reset()
 
                     self.latest_seen_timestamp = self.params.get("timestamp", None)
 
