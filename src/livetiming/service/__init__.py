@@ -334,7 +334,6 @@ class Fetcher(object):
             else:
                 self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
         except (Exception, urllib2.URLError) as e:
-            sentry.captureException()
             self.log.failure("URL {url} returned error: {msg}", url=url, msg=str(e))
             raise
 
@@ -363,7 +362,6 @@ def JSONFetcher(url, callback, interval):
             parsed_data = simplejson.loads(data)
             callback(parsed_data)
         except JSONDecodeError:
-            sentry.captureException()
             Logger().failure("Error parsing JSON from source {url}: {log_failure}", url=url)
     return Fetcher(url, parse_then_callback, interval)
 
