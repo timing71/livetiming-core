@@ -234,14 +234,12 @@ class Service(object):
 
     def _saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
-        try:
-            stateFile = open("{}.json".format(self.uuid), 'w')
-            simplejson.dump(self.state, stateFile)
-        except Exception:
-            self.log.failure("Exception while saving state: {log_failure}")
-            sentry.captureException()
-        finally:
-            stateFile.close()
+        with open("{}.json".format(self.uuid), 'w') as stateFile:
+            try:
+                simplejson.dump(self.state, stateFile)
+            except Exception:
+                self.log.failure("Exception while saving state: {log_failure}")
+                sentry.captureException()
         if self.recorder:
             self.recorder.writeState(self.state)
 
