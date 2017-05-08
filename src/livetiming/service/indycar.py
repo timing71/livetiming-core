@@ -32,7 +32,11 @@ def parseTime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%S.%f")
             return ttime.second + (ttime.microsecond / 1000000.0)
         except ValueError:
-            return formattedTime
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                return formattedTime
 
 
 def parseSessionTime(formattedTime):
