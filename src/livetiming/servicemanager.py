@@ -9,7 +9,7 @@ from livetiming import load_env
 from subprocess32 import Popen
 
 
-_PID_DIRECTORY = os.path.expanduser("~/.livetiming-service-pids/")
+_PID_DIRECTORY = os.environ.get("LIVETIMING_PID_DIR", os.path.expanduser("~/.livetiming-service-pids/"))
 
 
 class ServiceManagementException(Exception):
