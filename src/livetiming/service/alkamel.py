@@ -174,6 +174,7 @@ class Service(lt_service):
             self.publishManifest()  # since our description might have changed
             self.analyser.reset()
             self.participants = {}
+            self.currentStanding = {}
 
         def class_for(classID):
             possibles = [c for c in data["classes"] if c["id"] == classID]
