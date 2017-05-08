@@ -1,53 +1,18 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from livetiming.messages import RaceControlMessage
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
 from requests.sessions import Session
 from signalr import Connection
-from signalr.hubs._hub import HubServer
-from signalr.events._events import EventHook
 from threading import Thread
+
 import argparse
 import re
-from livetiming.messages import RaceControlMessage
 
 
-###################################
-# BEGIN patches to signalr-client #
-###################################
-def invoke_then(self, method, *data):
-    send_counter = self._HubServer__connection.increment_send_counter()
-
-    def then(func):
-        def onServerResponse(**kwargs):
-            if 'I' in kwargs and int(kwargs['I']) == send_counter:
-                    if 'R' in kwargs:
-                        func(kwargs['R'])
-                    return False
-        self._HubServer__connection.received += onServerResponse
-
-        self._HubServer__connection.send({
-            'H': self.name,
-            'M': method,
-            'A': data,
-            'I': send_counter
-        })
-    return then
-
-
-HubServer.invoke_then = invoke_then
-
-
-def fire(self, *args, **kwargs):
-    # Remove any handlers that return False from calling them
-    self._handlers = [h for h in self._handlers if h(*args, **kwargs) is not False]
-
-
-EventHook.fire = fire
-
-###################################
-#  END patches to signalr-client  #
-###################################
+from livetiming.signalr_patches import patch_signalr
+patch_signalr()
 
 
 class TSLClient(Thread):
