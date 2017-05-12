@@ -139,7 +139,7 @@ class Service(lt_service):
                     'Race': "Race"
                 }
 
-                return "{} - {}".format(
+                return u"{} - {}".format(
                     free.get("R", "Formula 1").title(),
                     sessionName[free.get("S", "")]
                 )
