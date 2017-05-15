@@ -61,7 +61,7 @@ def authenticatedService(clazz):
     '''
     def onConnect(self):
         self.log.info("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services"))
-        self.join(self.config.realm, [u"wampcra", u"anonymous"], "services")
+        self.join(self.config.realm, [u"wampcra", u"anonymous"], u"services")
 
     def onChallenge(self, challenge):
         user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
