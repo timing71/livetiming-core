@@ -56,7 +56,10 @@ def _process_exists(pid):
 
 
 def _read_uuid_for(service_class):
-    logfile = "{}.log".format(service_class)
+    logfile = os.path.join(
+        os.environ.get("LIVETIMING_LOG_DIR", os.getcwd()),
+        "{}.log".format(service_class)
+    )
     if os.path.exists(logfile):
         with open(logfile, 'r') as log:
             most_recent_pid = None
@@ -99,7 +102,10 @@ def _restart_service(args, extras):
     if not args.fresh:
         uuid = _read_uuid_for(args.service_class)
         if uuid:
-            statefile = "{}.json".format(uuid)
+            statefile = os.path.join(
+                os.environ.get("LIVETIMING_STATE_DIR", os.getcwd()),
+                "{}.json".format(uuid)
+            )
             if os.path.exists(statefile):
                 print "Reusing existing state for {}".format(uuid)
                 extras += ["-s", statefile]
