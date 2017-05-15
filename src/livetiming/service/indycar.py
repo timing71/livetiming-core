@@ -51,6 +51,33 @@ def parseSessionTime(formattedTime):
             return formattedTime
 
 
+def parseEventName(heartbeat):
+    event = heartbeat["eventName"]
+    track_type = heartbeat["trackType"]
+
+    session = heartbeat["preamble"]
+    if session[0] == "R":
+        return "{} - Race".format(event)
+    elif session[0] == "P":  # Practice
+        if session[1].upper() == "F":
+            return "{} - Final Practice".format(event)
+        return "{} - Practice {}".format(event, session[1])
+    elif session[0] == "Q":  # Qualifying
+        if track_type == "I" or track_type == "O":  # Indy 500 or other oval
+            return "{} - Qualifying".format(event)
+        elif session[1] == "3":
+            return "{} - Qualifying - Round 2".format(event)
+        elif session[1] == "4":
+            return "{} - Qualifying - Firestone Fast Six".format(event)
+        else:
+            return "{} - Qualifying - Group {}".format(event, session[1])
+    elif session[0] == "I":  # Indy 500 qualifying
+        if session[1] == "4":
+            return "{} - Qualifying - Fast 9".format(event)
+        return "{} - Qualifying".format(event)
+    return event
+
+
 class Service(lt_service):
     log = Logger()
 
@@ -120,8 +147,9 @@ class Service(lt_service):
         if heartbeat["Series"] != self.name:
             self.name = heartbeat["Series"]
             shouldRepublish = True
-        if heartbeat["eventName"] != self.description:
-            self.description = heartbeat["eventName"]
+        eventName = parseEventName(heartbeat)
+        if eventName != self.description:
+            self.description = eventName
             shouldRepublish = True
         if shouldRepublish:
             self.publishManifest()
