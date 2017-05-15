@@ -152,6 +152,7 @@ class Service(lt_service):
             self.description = eventName
             shouldRepublish = True
         if shouldRepublish:
+            self.analyser.reset()
             self.publishManifest()
 
         state = {
