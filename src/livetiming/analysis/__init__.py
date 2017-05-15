@@ -8,6 +8,7 @@ import simplejson
 import time
 import copy
 import cPickle
+import os
 
 
 sentry = sentry()
@@ -46,15 +47,21 @@ class Analyser(object):
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
                     sentry.captureException()
 
+    def _data_centre_file(self):
+        return os.path.join(
+            os.environ.get("LIVETIMING_ANALYSIS_DIR", os.getcwd()),
+            "{}.data.p".format(self.uuid)
+        )
+
     def save_data_centre(self):
-        with open("{}.data.p".format(self.uuid), "wb") as data_dump_file:
+        with open(self._data_centre_file(), "wb") as data_dump_file:
             cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
 
     def _load_data_centre(self):
         try:
-            with open("{}.data.p".format(self.uuid), "rb") as data_dump_file:
+            with open(self._data_centre_file(), "rb") as data_dump_file:
                 self.data_centre = cPickle.load(data_dump_file)
-                self.log.info("Using existing data centre dump from {}.dump.p".format(self.uuid))
+                self.log.info("Using existing data centre dump from {}".format(os.path.realpath(data_dump_file.name)))
         except IOError:
             self.data_centre = DataCentre()
 

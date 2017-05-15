@@ -234,7 +234,13 @@ class Service(object):
 
     def _saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
-        with open("{}.json".format(self.uuid), 'w') as stateFile:
+
+        filepath = os.path.join(
+            os.environ.get("LIVETIMING_STATE_DIR", os.getcwd()),
+            "{}.json".format(self.uuid)
+        )
+
+        with open(filepath, 'w') as stateFile:
             try:
                 simplejson.dump(self.state, stateFile)
             except Exception:
@@ -421,7 +427,12 @@ def main():
 
     service_class = get_class(service_name_from(args.service_class))
 
-    with open("{}.log".format(args.service_class), 'a', 0) as logFile:
+    filepath = os.path.join(
+        os.environ.get("LIVETIMING_LOG_DIR", os.getcwd()),
+        "{}.log".format(args.service_class)
+    )
+
+    with open(filepath, 'a', 0) as logFile:
         level = "debug" if args.debug else "info"
         if not args.verbose:  # log to file, not stdout
             txaio.start_logging(out=logFile, level=level)
