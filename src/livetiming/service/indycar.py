@@ -52,29 +52,33 @@ def parseSessionTime(formattedTime):
 
 
 def parseEventName(heartbeat):
-    event = heartbeat["eventName"]
+    if "eventName" in heartbeat:
+        event = "{} - ".format(heartbeat["eventName"])
+    else:
+        event = ""
     track_type = heartbeat["trackType"]
 
-    session = heartbeat["preamble"]
-    if session[0] == "R":
-        return "{} - Race".format(event)
-    elif session[0] == "P":  # Practice
-        if session[1].upper() == "F":
-            return "{} - Final Practice".format(event)
-        return "{} - Practice {}".format(event, session[1])
-    elif session[0] == "Q":  # Qualifying
-        if track_type == "I" or track_type == "O":  # Indy 500 or other oval
-            return "{} - Qualifying".format(event)
-        elif session[1] == "3":
-            return "{} - Qualifying - Round 2".format(event)
-        elif session[1] == "4":
-            return "{} - Qualifying - Firestone Fast Six".format(event)
-        else:
-            return "{} - Qualifying - Group {}".format(event, session[1])
-    elif session[0] == "I":  # Indy 500 qualifying
-        if session[1] == "4":
-            return "{} - Qualifying - Fast 9".format(event)
-        return "{} - Qualifying".format(event)
+    if "preamble" in heartbeat:
+        session = heartbeat["preamble"]
+        if session[0] == "R":
+            return "{}Race".format(event)
+        elif session[0] == "P":  # Practice
+            if session[1].upper() == "F":
+                return "{}Final Practice".format(event)
+            return "{}Practice {}".format(event, session[1])
+        elif session[0] == "Q":  # Qualifying
+            if track_type == "I" or track_type == "O":  # Indy 500 or other oval
+                return "{}Qualifying".format(event)
+            elif session[1] == "3":
+                return "{}Qualifying - Round 2".format(event)
+            elif session[1] == "4":
+                return "{}Qualifying - Firestone Fast Six".format(event)
+            else:
+                return "{}Qualifying - Group {}".format(event, session[1])
+        elif session[0] == "I":  # Indy 500 qualifying
+            if session[1] == "4":
+                return "{}Qualifying - Fast 9".format(event)
+            return "{}Qualifying".format(event)
     return event
 
 
@@ -123,7 +127,7 @@ class Service(lt_service):
             cars.append([
                 car["no"],
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
-                "{0} {1}".format(car["firstName"], car["lastName"]),
+                "{0} {1}".format(car.get("firstName", ""), car.get("lastName", "")),
                 car["laps"],
                 (["P", "tyre-medium"] if car["Tire"] == "P" else ["O", "tyre-ssoft"]) if "Tire" in car else "",
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
@@ -144,7 +148,7 @@ class Service(lt_service):
         heartbeat = timingResults['heartbeat']
 
         shouldRepublish = False
-        if heartbeat["Series"] != self.name:
+        if "Series" in heartbeat and heartbeat["Series"] != self.name:
             self.name = heartbeat["Series"]
             shouldRepublish = True
         eventName = parseEventName(heartbeat)
