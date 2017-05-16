@@ -47,7 +47,7 @@ class Directory(ApplicationSession):
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
-        self.log.info("Received message {}".format(msg))
+        self.log.debug("Received message {msg}", msg=msg)
         if (msg.msgClass == MessageClass.SERVICE_REGISTRATION):
             reg = msg.payload
             self.services[reg["uuid"]] = reg
