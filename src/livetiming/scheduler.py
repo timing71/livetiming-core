@@ -1,15 +1,15 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
-from os import environ
 from threading import Lock
-from twisted.internet import reactor, task
+from twisted.internet import task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 
 import datetime
 import icalendar
 import re
+import os
 import pytz
 import urllib2
 import time
@@ -75,16 +75,46 @@ class Event(object):
         }
 
 
-@authenticatedService
-class Scheduler(ApplicationSession):
+def create_scheduler_session(scheduler):
+    class SchedulerSession(ApplicationSession):
+        @inlineCallbacks
+        def onJoin(self, details):
+            scheduler.log.info("Scheduler session ready")
+
+            yield self.register(scheduler.listSchedule, RPC.SCHEDULE_LISTING)
+            scheduler.log.debug("Registered service listing RPC")
+
+            scheduler.set_publish(self.publish)
+
+        def onDisconnect(self):
+            scheduler.log.info("Disconnected from live timing service")
+            scheduler.set_publish(None)
+
+    return authenticatedService(SchedulerSession)
+
+
+class Scheduler(object):
     log = Logger()
 
-    def __init__(self, config):
-        ApplicationSession.__init__(self, config)
+    def __init__(self):
         self.events = {}
         self.runningEvents = []
-        self.calendarAddress = environ['LIVETIMING_CALENDAR_URL']
+        self.calendarAddress = os.environ['LIVETIMING_CALENDAR_URL']
         self.lock = Lock()
+        self._publish = None
+
+    def start(self):
+        update = task.LoopingCall(self.updateSchedule)
+        update.start(600)  # Update from Google Calendar every 10 minutes
+
+        execute = task.LoopingCall(self.execute)
+        execute.start(60)  # Start and stop services every minute
+
+        session_class = create_scheduler_session(self)
+        router = unicode(os.environ["LIVETIMING_ROUTER"])
+        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+        runner.run(session_class, auto_reconnect=True)
+        self.log.info("Scheduler terminated.")
 
     def listSchedule(self):
         now = datetime.datetime.now(pytz.utc)
@@ -152,6 +182,15 @@ class Scheduler(ApplicationSession):
 
         self.log.debug("Scheduler loop complete")
 
+    def set_publish(self, func):
+        self._publish = func
+
+    def publish(self, *args):
+        if self._publish:
+            self._publish(*args)
+        else:
+            self.log.debug("Call to publish with no publish function set!")
+
     def _start_service(self, uid, service, args):
         self.log.info("Starting service {} with args {}".format(service, args))
         servicemanager.start_service(service, args)
@@ -163,31 +202,12 @@ class Scheduler(ApplicationSession):
         self.runningEvents.remove(uid)
         self.events.pop(uid)
 
-    @inlineCallbacks
-    def onJoin(self, details):
-        self.log.info("Scheduler session ready")
-
-        yield self.register(self.listSchedule, RPC.SCHEDULE_LISTING)
-        self.log.debug("Registered service listing RPC")
-
-        update = task.LoopingCall(self.updateSchedule)
-        update.start(600)  # Update from Google Calendar every 10 minutes
-
-        execute = task.LoopingCall(self.execute)
-        execute.start(60)  # Start and stop services every minute
-
-    def onDisconnect(self):
-        self.log.info("Disconnected")
-        if reactor.running:
-            reactor.stop()
-
 
 def main():
     load_env()
     Logger().info("Starting scheduler service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(Scheduler)
+    scheduler = Scheduler()
+    scheduler.start()
 
 
 if __name__ == '__main__':
