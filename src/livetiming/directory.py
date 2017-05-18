@@ -64,7 +64,7 @@ def main():
     Logger().info("Starting directory service...")
     router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(Directory)
+    runner.run(Directory, auto_reconnect=True)
 
 
 if __name__ == '__main__':
