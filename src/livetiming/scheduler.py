@@ -142,7 +142,7 @@ class Scheduler(object):
 
                 self.log.info("Sync complete")
             except Exception:
-                self.log.failure("Exception while syncinc calendar: {log_failure}")
+                self.log.failure("Exception while syncing calendar: {log_failure}")
                 sentry.captureException()
         self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
 
