@@ -85,7 +85,7 @@ def mapFlag(rawFlag, yellowMeansCaution):
         'GF': FlagStatus.GREEN,
         'RF': FlagStatus.RED,
         'YF': FlagStatus.CAUTION if yellowMeansCaution else FlagStatus.YELLOW,
-        'SF': FlagStatus.WHITE,
+        'SF': FlagStatus.SC,
         'CH': FlagStatus.CHEQUERED
     }
     if rawFlag in flagMap:
