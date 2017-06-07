@@ -28,7 +28,8 @@ class PerCarMessage(TimingMessage):
     def getValue(self, car, stat, default=None):
         if self.columnSpec and stat in self.columnSpec:
             idx = self.columnSpec.index(stat)
-            return car[idx]
+            if idx < len(car):
+                return car[idx]
         return default
 
     def process(self, oldState, newState):
