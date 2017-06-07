@@ -107,7 +107,7 @@ def _restart_service(args, extras):
                 "{}.json".format(uuid)
             )
             if os.path.exists(statefile):
-                print "Reusing existing state for {}".format(uuid)
+                print "Reusing existing state for {}: {}".format(uuid, statefile)
                 extras += ["-s", statefile]
     try:
         _stop_service(args)
