@@ -154,6 +154,12 @@ def parse_gap(val):
     return parseTime(val[0])
 
 
+def map_sector(sector):
+    if len(sector) == 2:
+        return (parseTime(sector[0]), mapTimeFlags(sector[1]))
+    return ('', '')
+
+
 # Map our columns to TSNL's labels, in our chosen order, and provide mapping function
 # This should include all possible columns
 DEFAULT_COLUMN_SPEC = [
@@ -174,21 +180,21 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.LAPS, "LAPS", nonnegative),
     (Stat.GAP, "GAP", parse_gap),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
-    (Stat.S1, "SECT 1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S1, "SECT.1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S1, "SECT-1", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S2, "SECT 2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S2, "SECT.2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S2, "SECT-2", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S3, "SECT 3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S3, "SECT.3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S3, "SECT-3", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S4, "SECT 4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S4, "SECT.4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S4, "SECT-4", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S5, "SECT 5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S5, "SECT.5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
-    (Stat.S5, "SECT-5", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
+    (Stat.S1, "SECT 1", map_sector),
+    (Stat.S1, "SECT.1", map_sector),
+    (Stat.S1, "SECT-1", map_sector),
+    (Stat.S2, "SECT 2", map_sector),
+    (Stat.S2, "SECT.2", map_sector),
+    (Stat.S2, "SECT-2", map_sector),
+    (Stat.S3, "SECT 3", map_sector),
+    (Stat.S3, "SECT.3", map_sector),
+    (Stat.S3, "SECT-3", map_sector),
+    (Stat.S4, "SECT 4", map_sector),
+    (Stat.S4, "SECT.4", map_sector),
+    (Stat.S4, "SECT-4", map_sector),
+    (Stat.S5, "SECT 5", map_sector),
+    (Stat.S5, "SECT.5", map_sector),
+    (Stat.S5, "SECT-5", map_sector),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST TIME", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
     (Stat.LAST_LAP, "LAST", lambda i: (parseTime(i[0]), mapTimeFlags(i[1]))),
