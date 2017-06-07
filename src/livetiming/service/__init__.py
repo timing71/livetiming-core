@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.websocket import WebSocketClientFactory
+from autobahn.wamp.types import RegisterOptions
 from livetiming import load_env, sentry
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
@@ -38,11 +39,14 @@ def create_service_session(service):
         def onJoin(self, details):
             service.log.info("Session ready for service {}".format(service.uuid))
             service.set_publish(self.publish)
-            yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid))
-            yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid))
-            yield self.register(service.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(service.uuid))
-            yield self.register(service.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(service.uuid))
-            yield self.register(service.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(service.uuid))
+
+            register_opts = RegisterOptions(invoke='last')
+
+            yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid), register_opts)
+            yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid), register_opts)
+            yield self.register(service.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(service.uuid), register_opts)
+            yield self.register(service.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(service.uuid), register_opts)
+            yield self.register(service.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(service.uuid), register_opts)
             yield self.subscribe(service.onControlMessage, Channel.CONTROL)
             self.log.info("Subscribed to control channel")
             yield service.publishManifest()
