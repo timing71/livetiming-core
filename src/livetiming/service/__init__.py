@@ -67,7 +67,7 @@ class Service(object):
         sentry.context.activate()
         self.sentry = sentry
         self.args = args
-        self.uuid = os.path.splitext(self.args.initial_state)[0] if self.args.initial_state is not None else uuid4().hex
+        self.uuid = os.path.splitext(os.path.basename(self.args.initial_state))[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
         if self.args.recording_file is not None:
             self.recorder = TimingRecorder(self.args.recording_file)
