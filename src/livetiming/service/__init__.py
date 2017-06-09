@@ -258,6 +258,7 @@ class Service(object):
         return {
             "uuid": self.uuid,
             "name": self.getName(),
+            "serviceClass": self.__module__[19:],  # Everything after 'livetiming.service.'
             "description": self._getDescription(),
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
