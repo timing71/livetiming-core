@@ -45,6 +45,9 @@ class Lap(object):
             self.tyre
         ]
 
+    def __repr__(self, *args, **kwargs):
+        return "<Lap {}: {} pos {} {} {} {} {}>".format(*self.for_json())
+
 
 class Stint(object):
     def __init__(self, start_lap, start_time, driver, flag=FlagStatus.NONE, tyre=None):
@@ -54,7 +57,7 @@ class Stint(object):
         self.end_lap = None
         self.end_time = None
         self.in_progress = True
-        self.flags = [flag]
+        self.laps = []
         self.tyre = tyre
 
     def finish(self, end_lap, end_time):
@@ -64,7 +67,7 @@ class Stint(object):
 
     @property
     def yellow_laps(self):
-        return len([f for f in self.flags if f >= FlagStatus.YELLOW])
+        return len([l for l in self.laps if l.flag >= FlagStatus.YELLOW])
 
     def __repr__(self, *args, **kwargs):
         return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
@@ -91,6 +94,10 @@ class Car(object):
 
     def add_lap(self, laptime, position, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
+
+        if not self.current_stint:
+            self.stints.append(Stint(self.current_lap, timestamp, driver, current_flag))
+
         if laptime > 0:
             # Some services e.g. F1 don't give a laptime for the first lap.
             # We still want to consider flags for the stint though.
@@ -106,9 +113,7 @@ class Car(object):
                 )
             )
 
-        if not self.current_stint:
-            self.stints.append(Stint(self.current_lap, timestamp, driver, current_flag))
-        self.current_stint.flags.append(max_flag)
+        self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
 
     def see_flag(self, flag):
