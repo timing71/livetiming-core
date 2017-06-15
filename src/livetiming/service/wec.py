@@ -119,6 +119,7 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.TEAM,
             Stat.DRIVER,
             Stat.CAR,
@@ -143,7 +144,6 @@ class Service(lt_service):
         else:
             return common_cols + [
                 Stat.BEST_LAP,
-                Stat.SPEED,
                 Stat.PITS
             ]
 
@@ -232,6 +232,7 @@ class Service(lt_service):
                 car['number'],
                 mapCarState(car['state']),
                 category,
+                car['categoryPosition'],
                 car['team'],
                 car['driver'],
                 car['car'],
