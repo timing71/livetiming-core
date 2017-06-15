@@ -99,6 +99,7 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.TEAM,
             Stat.DRIVER,
             Stat.CAR,
@@ -123,7 +124,6 @@ class Service(lt_service):
         else:
             return common_cols + [
                 Stat.BEST_LAP,
-                Stat.SPEED,
                 Stat.PITS
             ]
 
@@ -187,6 +187,7 @@ class Service(lt_service):
                 race_num,
                 mapCarState(car['status']),
                 category,
+                car['rank_by_category'],
                 car['participation']['team']['name_id'],
                 car['current_pilot'],
                 u'{} {}'.format(car['participation']['car']['brand']['name_id'], car['participation']['car']['model'] if 'model' in car['participation']['car'] else ''),
@@ -219,7 +220,6 @@ class Service(lt_service):
                 cars.append(common_cols + [
                     (last_lap, 'pb' if last_lap == best_lap else ''),
                     (best_lap, ''),
-                    car['speed'],
                     car['pitstop']
                 ])
 
