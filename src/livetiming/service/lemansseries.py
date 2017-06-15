@@ -45,10 +45,10 @@ def mapCarState(rawState):
 
 def mapClasses(rawClass):
     classMap = {
-        3: "LM P2",
-        6: "LM P3",
+        3: "LMP2",
+        6: "LMP3",
         8: "GTC",
-        10: "LM GTE",
+        10: "LMGTE",
         16: "GT3"
     }
     return classMap[rawClass] if rawClass in classMap else rawClass
