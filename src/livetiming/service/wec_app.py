@@ -89,7 +89,7 @@ class Service(lt_service):
             f.start()
 
     def getName(self):
-        return "WEC - test"
+        return "WEC (beta)"
 
     def getDefaultDescription(self):
         return self.description
