@@ -318,7 +318,7 @@ class Service(lt_service):
         if "event_name" in self.sessionData:
             desc = self.sessionData["event_name"].title()
             if "session_name" in self.sessionData:
-                desc = "{} - {}".format(desc, self.sessionData["session_name"].title())
+                desc = u"{} - {}".format(desc, self.sessionData["session_name"].title())
         elif "session_name" in self.sessionData:
             desc = self.sessionData["session_name"].title()
         return desc
