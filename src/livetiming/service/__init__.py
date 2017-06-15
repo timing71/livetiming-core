@@ -328,9 +328,11 @@ class Fetcher(object):
         self.interval = interval
 
         self.backoff = 0
+        self.running = False
 
     def _schedule(self, delay):
-        reactor.callLater(delay, self._run)
+        if self.running:
+            reactor.callLater(delay, self._run)
 
     def _defer(self):
         if callable(self.url):
@@ -364,7 +366,11 @@ class Fetcher(object):
         deferred.addErrback(eb)
 
     def start(self):
+        self.running = True
         self._run()
+
+    def stop(self):
+        self.running = False
 
 
 def JSONFetcher(url, callback, interval):

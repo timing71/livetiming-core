@@ -9,6 +9,7 @@ from twisted.logger import Logger
 
 import argparse
 import wecapp
+from twisted.internet.task import LoopingCall
 
 
 def mapFlagState(params):
@@ -62,6 +63,9 @@ class WECFetcher(Fetcher):
         return wecapp.get(self.url)
 
 
+TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
+
+
 class Service(lt_service):
     log = Logger()
 
@@ -77,16 +81,29 @@ class Service(lt_service):
             self.log.info("Starting up in QUALIFYING mode")
 
         self.description = "World Endurance Championship"
+
+        LoopingCall(self._get_current_session).start(60)
+
+    def _get_current_session(self):
+        self.log.debug("Updating WEC session...")
         self.session = get_session()
 
         if self.session:
-            self.description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
-            f = WECFetcher(
-                'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'.format(self.session['id']),
+            self.log.debug("Using session {sessionid}", sessionid=self.session['id'])
+            new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
+            if new_description != self.description:
+                self.description = new_description
+                self.publishManifest()
+            self._f = WECFetcher(
+                TIMING_URL.format(self.session['id']),
                 self._handleData,
                 10
             )
-            f.start()
+            self._f.start()
+        else:
+            self.log.info("No WEC session found!")
+            if self._f:
+                self._f.stop()
 
     def getName(self):
         return "WEC (beta)"
@@ -165,7 +182,7 @@ class Service(lt_service):
         bestSectorsByClass = {1: {}, 2: {}, 3: {}}
 
         for car in self.entries:
-            category = car['participation']['category']['name_id']
+            category = car['participation']['category']['name_id'].replace("LM ", "LM")
             last_lap = car['last_lap']
             race_num = car['participation']['number']
 
