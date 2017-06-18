@@ -268,28 +268,28 @@ class Service(lt_service):
             if category in bestLapsByClass and bestLapsByClass[category][0] == car_num:
                 best_lap_time = bestLapsByClass[category][1]
                 if self.is_qualifying_mode:
-                    if car[17][0] == best_lap_time:  # D1L1
-                        car[17] = (car[17][0], 'sb')
-                    elif car[18][0] == best_lap_time:  # D2L1
-                        car[18] = (car[18][0], 'sb')
+                    if car[self.col_map[Stat.DRIVER_1_BEST_LAP]][0] == best_lap_time:  # D1L1
+                        car[self.col_map[Stat.DRIVER_1_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_1_BEST_LAP]][0], 'sb')
+                    elif car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0] == best_lap_time:  # D2L1
+                        car[self.col_map[Stat.DRIVER_2_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0], 'sb')
                 else:
-                    car[17] = (car[17][0], 'sb')
-                if car[16][0] == best_lap_time:
-                    car[16] = (car[16][0], 'sb-new')
+                    car[self.col_map[Stat.BEST_LAP]] = (car[self.col_map[Stat.BEST_LAP]][0], 'sb')
+                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time:
+                    car[self.col_map[Stat.LAST_LAP]] = (car[self.col_map[Stat.LAST_LAP]][0], 'sb-new')
 
             # Best sectors
             if category in bestSectorsByClass[1] and bestSectorsByClass[1][category][0] == car_num:
-                car[11] = (car[11][0], 'sb')
-                if car[10][0] == car[11][0]:
-                    car[10] = (car[10][0], 'sb')
+                car[self.col_map[Stat.BS1]] = (car[self.col_map[Stat.BS1]][0], 'sb')
+                if car[self.col_map[Stat.S1]][0] == car[self.col_map[Stat.BS1]][0]:
+                    car[self.col_map[Stat.S1]] = (car[self.col_map[Stat.S1]][0], 'sb')
             if category in bestSectorsByClass[2] and bestSectorsByClass[2][category][0] == car_num:
-                car[13] = (car[13][0], 'sb')
-                if car[12][0] == car[13][0]:
-                    car[12] = (car[12][0], 'sb')
+                car[self.col_map[Stat.BS2]] = (car[self.col_map[Stat.BS2]][0], 'sb')
+                if car[self.col_map[Stat.S2]][0] == car[self.col_map[Stat.BS2]][0]:
+                    car[self.col_map[Stat.S2]] = (car[self.col_map[Stat.S2]][0], 'sb')
             if category in bestSectorsByClass[3] and bestSectorsByClass[3][category][0] == car_num:
-                car[15] = (car[15][0], 'sb')
-                if car[14][0] == car[15][0]:
-                    car[14] = (car[14][0], 'sb')
+                car[self.col_map[Stat.BS3]] = (car[self.col_map[Stat.BS3]][0], 'sb')
+                if car[self.col_map[Stat.S3]][0] == car[self.col_map[Stat.BS3]][0]:
+                    car[self.col_map[Stat.S3]] = (car[self.col_map[Stat.S3]][0], 'sb')
 
         session['flagState'] = mapFlagState(self.params)
 
