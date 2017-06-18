@@ -90,6 +90,7 @@ class Service(lt_service):
         self.params = {}
         self.entries = []
         self.latest_seen_timestamp = None
+        self._f = None
 
         self.is_qualifying_mode = parse_extra_args(extra_args)[0].qualifying
 
@@ -99,7 +100,7 @@ class Service(lt_service):
         self.description = "World Endurance Championship"
 
         LoopingCall(self._get_current_session).start(60)
-        
+
         self.col_map = {}
         for idx, stat in enumerate(self.getColumnSpec()):
             self.col_map[stat] = idx
@@ -114,12 +115,13 @@ class Service(lt_service):
             if new_description != self.description:
                 self.description = new_description
                 self.publishManifest()
-            self._f = WECFetcher(
-                TIMING_URL.format(self.session['id']),
-                self._handleData,
-                10
-            )
-            self._f.start()
+            if not self._f:
+                self._f = WECFetcher(
+                    TIMING_URL.format(self.session['id']),
+                    self._handleData,
+                    10
+                )
+                self._f.start()
         else:
             self.log.info("No WEC session found!")
             if self._f:
