@@ -99,6 +99,10 @@ class Service(lt_service):
         self.description = "World Endurance Championship"
 
         LoopingCall(self._get_current_session).start(60)
+        
+        self.col_map = {}
+        for idx, stat in enumerate(self.getColumnSpec()):
+            self.col_map[stat] = idx
 
     def _get_current_session(self):
         self.log.debug("Updating WEC session...")
