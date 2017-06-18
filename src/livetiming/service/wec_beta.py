@@ -10,6 +10,7 @@ from twisted.logger import Logger
 import argparse
 import wecapp
 from twisted.internet.task import LoopingCall
+from datetime import datetime
 
 
 def mapFlagState(params):
@@ -34,7 +35,8 @@ def mapCarState(rawState):
     stateMap = {
         'run': 'RUN',
         'in': 'PIT',
-        'out': 'OUT'
+        'out': 'OUT',
+        'ret': 'RET'
     }
     if rawState in stateMap:
         return stateMap[rawState]
@@ -46,6 +48,20 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
     return parser.parse_known_args(extra_args)
+
+
+def parseTime(formattedTime):
+    if formattedTime == "" or formattedTime is None:
+        return 0
+    try:
+        return float(formattedTime)
+    except ValueError:
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+            return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+        except ValueError:
+            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
 def get_session():
@@ -167,7 +183,7 @@ class Service(lt_service):
 
     def _handleData(self, data):
         if 'live_standing' in data:
-            if 'ranks' in data['live_standing']:
+            if 'ranks' in data['live_standing'] and len(data['live_standing']['ranks']) > 0:
                 self.entries = data['live_standing']['ranks'][:]
                 del data['live_standing']['ranks']
                 self.params = data['live_standing']
@@ -183,7 +199,7 @@ class Service(lt_service):
 
         for car in self.entries:
             category = car['participation']['category']['name_id'].replace("LM ", "LM")
-            last_lap = car['last_lap']
+            last_lap = parseTime(car['last_lap'])
             race_num = car['participation']['number']
 
             s1 = car['sectors']['0']['current'] or 0
@@ -221,8 +237,8 @@ class Service(lt_service):
             ]
 
             if self.is_qualifying_mode:
-                d1_lap = car['d1l1']
-                d2_lap = car['d2l1']
+                d1_lap = parseTime(car['d1l1'])
+                d2_lap = parseTime(car['d2l1'])
                 best_lap = min(d1_lap, d2_lap)
                 av_lap = car['av_time']
 
@@ -233,7 +249,7 @@ class Service(lt_service):
                     (av_lap or '', '')
                 ])
             else:
-                best_lap = car['best_lap']
+                best_lap = parseTime(car['best_lap'])
                 cars.append(common_cols + [
                     (last_lap, 'pb' if last_lap == best_lap else ''),
                     (best_lap, ''),

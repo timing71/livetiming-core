@@ -6,6 +6,7 @@ from livetiming.racing import Stat
 
 
 def formatTime(seconds):
+    print "formatTime called with {}".format(seconds)
     m, s = divmod(seconds, 60)
     return "{}:{:0>6.3f}".format(int(m), s)
 
