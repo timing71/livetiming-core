@@ -77,8 +77,12 @@ def parseTime(formattedTime):
         ttime = datetime.strptime(formattedTime, "%M:%S.%f")
         return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
     except ValueError:
-        ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
-        return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+        try:
+            ttime = datetime.strptime(formattedTime, "%S.%f")
+            return ttime.second + (ttime.microsecond / 1000000.0)
+        except ValueError:
+            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
 def mapSessionState(state):
@@ -98,12 +102,13 @@ def mapSessionState(state):
     return FlagStatus.NONE
 
 
-def getSessionID(extra_args):
+def parseExtraArgs(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--session", help="TSL session ID", required=True)
+    parser.add_argument("--host", help="TSL host")
 
     a, _ = parser.parse_known_args(extra_args)
-    return a.session
+    return a
 
 
 RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*)")
@@ -112,7 +117,9 @@ RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*
 class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
-        client = TSLClient(self, host=self.getHost(), sessionID=getSessionID(extra_args))
+
+        my_args = parseExtraArgs(extra_args)
+        client = TSLClient(self, host=self.getHost(my_args.host), sessionID=my_args.session)
         client.start()
 
         self.name = "TSL Timing"
@@ -141,8 +148,10 @@ class Service(lt_service):
             'humidity': None
         }
 
-    def getHost(self):
-        return "livetiming.tsl-timing.com"
+    def getHost(self, host=None):
+        if not host:
+            return "livetiming.tsl-timing.com"
+        return host
 
     def getColumnSpec(self):
         return [
