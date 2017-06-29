@@ -314,9 +314,10 @@ class Service(object):
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
-        self.log.info("Received message {}".format(msg))
+        self.log.info("Received message {msg}", msg=msg)
         if msg.msgClass == MessageClass.INITIALISE_DIRECTORY:
-            yield self.publishManifest()
+            self.log.info("Publishing manifest on request of directory service.")
+            self.publishManifest()
 
 
 class Fetcher(object):
