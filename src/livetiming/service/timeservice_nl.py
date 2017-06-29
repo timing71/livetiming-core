@@ -399,8 +399,12 @@ class Service(lt_service):
             lastIdx = colSpec.index(Stat.LAST_LAP)
             bestIdx = colSpec.index(Stat.BEST_LAP)
 
+            stateIdx = colSpec.index(Stat.STATE)
+            s3Idx = colSpec.index(Stat.S3)
+
             if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
-                result[lastIdx] = (result[lastIdx][0], "sb-new")
+                if result[stateIdx] == "RUN" and (s3Idx is None or result[s3Idx][0] > 0):  # Not if in pits or have completed next lap S1
+                    result[lastIdx] = (result[lastIdx][0], "sb-new")
 
         return result
 
