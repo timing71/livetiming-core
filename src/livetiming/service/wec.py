@@ -37,7 +37,8 @@ def mapCarState(rawState):
     stateMap = {
         'Run': 'RUN',
         'In': 'PIT',
-        'Out': 'OUT'
+        'Out': 'OUT',
+        'Ret': 'RET'
     }
     if rawState in stateMap:
         return stateMap[rawState]
