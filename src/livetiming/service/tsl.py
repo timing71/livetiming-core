@@ -17,12 +17,13 @@ patch_signalr()
 
 class TSLClient(Thread):
 
-    def __init__(self, handler, host="livetiming.tsl-timing.com", sessionID="WebDemo"):
+    def __init__(self, handler, host="livetiming.tsl-timing.com", sessionID="WebDemo", sprint=False):
         Thread.__init__(self)
         self.handler = handler
         self.log = handler.log
         self.host = host
         self.sessionID = sessionID
+        self.sprint = sprint
         self.daemon = True
 
     def run(self):
@@ -54,6 +55,11 @@ class TSLClient(Thread):
                 hub.server.invoke_then('GetClassification', self.sessionID)(lambda d: delegate('classification', d))
                 hub.server.invoke_then('GetSessionData', self.sessionID)(lambda d: delegate('session', d))
                 hub.server.invoke_then('GetIntermediatesTimes', self.sessionID)(lambda d: delegate('sectortimes', d))
+
+                if self.sprint:
+                    hub.server.invoke_then('GetSprintCompetitors', self.sessionID)(lambda d: delegate('updatesprintcompetitor', d))
+                    hub.server.invoke_then('GetSprintDrivers', self.sessionID)(lambda d: delegate('updatesprintdriver', d))
+                    hub.server.invoke_then('GetSprintRuns', self.sessionID)(lambda d: delegate('updatesprintrun', d))
 
                 connection.wait(None)
 
@@ -102,10 +108,17 @@ def mapSessionState(state):
     return FlagStatus.NONE
 
 
+def format_driver_name(driver):
+    if 'FirstName' in driver and 'LastName' in driver:
+        return "{} {}".format(driver['FirstName'], driver['LastName'].upper())
+    return ''
+
+
 def parseExtraArgs(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--session", help="TSL session ID", required=True)
     parser.add_argument("--host", help="TSL host")
+    parser.add_argument("--sprint", help="TSL sprint mode", action="store_true")
 
     a, _ = parser.parse_known_args(extra_args)
     return a
@@ -119,9 +132,10 @@ class Service(lt_service):
         super(Service, self).__init__(args, extra_args)
 
         my_args = parseExtraArgs(extra_args)
-        client = TSLClient(self, host=self.getHost(my_args.host), sessionID=my_args.session)
+        client = TSLClient(self, host=self.getHost(my_args.host), sessionID=my_args.session, sprint=my_args.sprint)
         client.start()
 
+        self.sprint = my_args.sprint
         self.name = "TSL Timing"
         self.description = ""
 
@@ -129,6 +143,9 @@ class Service(lt_service):
         self.sectorTimes = {}
         self.trackSectors = {}
         self.bestSectorTimes = {}
+        self.sprint_drivers = {}
+        self.sprint_competitors = {}
+        self.sprint_runs = {}
         self.messages = []
 
         self.flag = FlagStatus.NONE
@@ -154,6 +171,19 @@ class Service(lt_service):
         return host
 
     def getColumnSpec(self):
+        if self.sprint:
+            return [
+                Stat.NUM,
+                Stat.CLASS,
+                Stat.STATE,
+                Stat.DRIVER,
+                Stat.CAR,
+                Stat.LAPS,
+                Stat.GAP,
+                Stat.INT,
+                Stat.LAST_LAP,
+                Stat.BEST_LAP
+            ]
         return [
             Stat.NUM,
             Stat.CLASS,
@@ -195,7 +225,7 @@ class Service(lt_service):
             RaceControlMessage(self.messages)
         ]
 
-    def getRaceState(self):
+    def getCars(self):
         cars = []
 
         def sectorTimeFor(car, sector):
@@ -211,7 +241,7 @@ class Service(lt_service):
                 car['StartNumber'],
                 "{} {}".format(car['PrimaryClass'], car['SubClass']).strip(),
                 "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
-                car['Name'],
+                car['Name'] or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
                 car['Laps'],
                 car['Gap'],
@@ -223,7 +253,48 @@ class Service(lt_service):
                 (parseTime(car['CurrentSessionBest']), "")
             ])
 
+        return cars
+
+    def getSprintCars(self):
+        cars = []
+        for car in sorted(self.sprint_competitors.values(), key=lambda c: c['Position'] if c['Position'] > 0 else 9999):
+            runs = self.sprint_runs.get(car['ID'], [])
+            classification = self.cars.get(car['ID'], {})
+
+            if len(runs) > 0:
+                driver = format_driver_name(self.sprint_drivers.get(runs[-1]['DriverID'], '')).strip()
+                lastRun = runs[-1]
+                lastTime = None
+                if "Times" in lastRun and len(lastRun["Times"]) > 0:
+                    if "LapTime" in lastRun["Times"][0] and lastRun['Times'][0]['LapTime'] > 0:
+                        lastTime = lastRun['Times'][0]['LapTime']
+            else:
+                driver = ''
+                lastRun = None
+                lastTime = None
+
+            cars.append([
+                car['No'],
+                car['Class'],
+                mapState(classification.get('Status', ''), classification.get('InPits', False)),
+                driver,
+                car['Vehicle'],
+                len(runs),
+                classification.get('Gap', ''),
+                classification.get('Diff', ''),
+                (float(lastTime), "") if lastTime and float(lastTime) > 0 else ("", ""),
+                (parseTime(classification.get('CurrentSessionBest', "")), "")
+            ])
+
+        return cars
+
+    def getRaceState(self):
         now = datetime.utcnow()
+
+        if self.sprint:
+            cars = self.getSprintCars()
+        else:
+            cars = self.getCars()
 
         return {
             "cars": cars,
@@ -267,6 +338,12 @@ class Service(lt_service):
         if "ActualStart" in data and data["ActualStart"] and "UTCOffset" in data:
             self.startTime = datetime.utcfromtimestamp((data["ActualStart"] - data["UTCOffset"]) / 1e6)
         self.publishManifest()
+
+    def on_sdbroadcast(self, data):
+        self.on_session(data[0])
+
+    def on_updatesprintsession(self, data):
+        pass
 
     def on_classification(self, data):
         for car in data:
@@ -326,6 +403,20 @@ class Service(lt_service):
         for c in data:
             cid = c['CompetitorID']
             self.cars[cid]['out_lap'] = True
+
+    def on_updatesprintdriver(self, data):
+        for driver in data:
+            self.sprint_drivers[driver['ID']] = driver
+
+    def on_updatesprintrun(self, data):
+        for run in data:
+            if run['TeamID'] not in self.sprint_runs:
+                self.sprint_runs[run['TeamID']] = []
+            self.sprint_runs[run['TeamID']].append(run)
+
+    def on_updatesprintcompetitor(self, data):
+        for comp in data:
+            self.sprint_competitors[comp['ID']] = comp
 
     def on_mapanimate(self, _):
         pass
