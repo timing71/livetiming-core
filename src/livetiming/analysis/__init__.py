@@ -21,7 +21,7 @@ def _make_data_message(data):
 class Analyser(object):
     log = Logger()
 
-    def __init__(self, uuid, publishFunc, modules=[], publish=True):
+    def __init__(self, uuid, publishFunc, modules=[], publish=False):
         for m in modules:
             if not issubclass(m, Analysis):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
