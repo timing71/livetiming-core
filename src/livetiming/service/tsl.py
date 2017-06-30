@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.messages import RaceControlMessage
+from livetiming.messages import RaceControlMessage, PerCarMessage
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
 from requests.sessions import Session
@@ -62,6 +62,19 @@ class TSLClient(Thread):
                     hub.server.invoke_then('GetSprintRuns', self.sessionID)(lambda d: delegate('updatesprintrun', d))
 
                 connection.wait(None)
+
+
+class SprintStateMessage(PerCarMessage):
+    def _consider(self, oldCar, newCar):
+        oldState = self.getValue(oldCar, Stat.STATE, "")
+        newState = self.getValue(newCar, Stat.STATE, "")
+        clazz = self.getValue(newCar, Stat.CLASS, "")
+        carNum = self.getValue(newCar, Stat.NUM)
+        driver = self.getValue(newCar, Stat.DRIVER)
+
+        if newState != oldState:
+            if newState == "RUN":
+                return [clazz, u"#{} ({}) has started a run".format(carNum, driver), "green"]
 
 
 def mapState(state, inPit):
@@ -222,7 +235,8 @@ class Service(lt_service):
 
     def getExtraMessageGenerators(self):
         return [
-            RaceControlMessage(self.messages)
+            RaceControlMessage(self.messages),
+            SprintStateMessage(self.getColumnSpec())
         ]
 
     def getCars(self):
@@ -260,10 +274,13 @@ class Service(lt_service):
         for car in sorted(self.sprint_competitors.values(), key=lambda c: c['Position'] if c['Position'] > 0 else 9999):
             runs = self.sprint_runs.get(car['ID'], [])
             classification = self.cars.get(car['ID'], {})
+            isOnRun = False
 
             if len(runs) > 0:
                 driver = format_driver_name(self.sprint_drivers.get(runs[-1]['DriverID'], '')).strip()
                 lastRun = runs[-1]
+                if not lastRun['IsComplete']:
+                    isOnRun = True
                 lastTime = None
                 if "Times" in lastRun and len(lastRun["Times"]) > 0:
                     if "LapTime" in lastRun["Times"][0] and lastRun['Times'][0]['LapTime'] > 0:
@@ -276,7 +293,7 @@ class Service(lt_service):
             cars.append([
                 car['No'],
                 car['Class'],
-                mapState(classification.get('Status', ''), classification.get('InPits', False)),
+                "RUN" if isOnRun else mapState(classification.get('Status', ''), classification.get('InPits', False)),
                 driver,
                 car['Vehicle'],
                 len(runs),
@@ -412,6 +429,9 @@ class Service(lt_service):
         for run in data:
             if run['TeamID'] not in self.sprint_runs:
                 self.sprint_runs[run['TeamID']] = []
+            if len(self.sprint_runs[run['TeamID']]) > 0:
+                if self.sprint_runs[run['TeamID']][-1]['RunNo'] == run['RunNo']:
+                    self.sprint_runs[run['TeamID']].pop()
             self.sprint_runs[run['TeamID']].append(run)
 
     def on_updatesprintcompetitor(self, data):
