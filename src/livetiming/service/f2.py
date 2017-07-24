@@ -162,9 +162,7 @@ class Service(lt_service):
                     ])
 
                 newDescription = payload["R"]["data"][1]["Session"]
-                if self.description != newDescription:
-                    self.description = newDescription
-                    self.publishManifest()
+                self._setDescription(newDescription)
 
             if "sessionfeed" in payload["R"]:
                 self.sessionFeed = payload["R"]["sessionfeed"][1]["Value"]
@@ -207,6 +205,9 @@ class Service(lt_service):
                     car[5] = line["intervalP"]["Value"]
                 if "pits" in line:
                     car[11] = line["pits"]["Value"]
+            if "Session" in message["A"][1]:
+                self._setDescription(message["A"][1]["Session"])
+
         if messageType == "statsfeed":
             data = message["A"][1]
             for line in data["lines"]:
@@ -227,6 +228,11 @@ class Service(lt_service):
             self.trackFeed = message["A"][1]["Value"]
 
         self._updateRaceState()
+
+    def _setDescription(self, description):
+        if description != self.description:
+            self.description = description
+            self.publishManifest()
 
     def getRaceState(self):
         self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
