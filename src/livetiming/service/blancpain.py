@@ -113,6 +113,13 @@ def parse_session_time(formattedTime):
             return formattedTime
 
 
+def parse_sro_date(formattedDate):
+    try:
+        return datetime.strptime(formattedDate, "%d.%m.%Y %H:%M:%S.%f")
+    except ValueError:
+        return None
+
+
 def map_time_flags(flag):
     flags = {
         0: '',
@@ -282,7 +289,7 @@ class Service(lt_service):
         session = {
             'flagState': map_session_flag(unt),
             'timeRemain': parse_session_time(unt['RemainingTime']),
-            'timeElapsed': 0  # They don't specify a timezone for their start time - we can't work it out
+            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds()  # Let's just assume UTC here
         }
 
         return {'cars': cars, 'session': session}
