@@ -10,9 +10,9 @@ from livetiming.messages import RaceControlMessage
 
 
 SRO_ROOT_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SEASON_JSON.json?s=3&t=0"
-SRO_SCHEDULE_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SCHEDULE_{meeting}_JSON.json?s=32&t=0"
-SRO_SESSION_TIMING_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_TIMING_{session}_JSON.json?s=2082"
-SRO_SESSION_DATA_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_COMP_DETAIL_{session}_JSON.json?s=655"
+SRO_SCHEDULE_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SCHEDULE_{meeting}_JSON.json"
+SRO_SESSION_TIMING_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_TIMING_{session}_JSON.json"
+SRO_SESSION_DATA_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_COMP_DETAIL_{session}_JSON.json"
 
 
 STATE_LIVE = 1
@@ -66,7 +66,9 @@ def parse_extra_args(args):
 
 def uncache(url):
     def inner():
-        return "{}&t={}".format(url, int(time.time()))
+        if "?" in url:
+            return "{}&t={}".format(url, int(time.time()))
+        return "{}?t={}".format(url, int(time.time()))
     return inner
 
 
@@ -181,10 +183,10 @@ class Service(lt_service):
         if self.sro_session:
             self.log.info("Using SRO session {session}", session=self.sro_session)
 
-            session_fetcher = JSONFetcher(uncache(SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 10)
+            session_fetcher = JSONFetcher(uncache(SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
             session_fetcher.start()
 
-            timing_fetcher = JSONFetcher(uncache(SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 10)
+            timing_fetcher = JSONFetcher(uncache(SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
             timing_fetcher.start()
 
         else:
