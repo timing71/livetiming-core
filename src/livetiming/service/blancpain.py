@@ -260,7 +260,7 @@ class Service(lt_service):
 
         for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e['ListIndex']):
             competitor = self._session_data['Competitors'][entry['CompetitorId']]
-            driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor else None
+            driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
             if 'ClassId' in competitor:
                 clazz = self._session_data['Classes'][competitor['ClassId']]['ShortName'] if competitor['ClassId'] in self._session_data['Classes'] else competitor['ClassId']
             else:
