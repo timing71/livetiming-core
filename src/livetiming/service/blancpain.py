@@ -26,39 +26,9 @@ def json_get(url):
         return None
 
 
-def find_live_meeting():
-    meetings_json = json_get(SRO_ROOT_URL)
-    if meetings_json:
-        meetings = meetings_json['content']['full']['Meetings']
-        live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
-        if live_meetings:
-            return live_meetings[0]
-    return None
-
-
-def find_live_session():
-    live_meeting = find_live_meeting()
-    if live_meeting:
-        sessions_json = json_get(SRO_SCHEDULE_URL.format(meeting=live_meeting['Id'].upper()))
-        if sessions_json:
-            sessions = sessions_json['content']['full']['Units']
-            live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] != TYPE_AGGREGATE]
-            if live_sessions:
-                return live_sessions[-1]['Id'].upper(), \
-                    sessions_json['content']['full']['Competitions'][live_sessions[-1]['CompetitionId']]['Name'], \
-                    live_sessions[-1]['Name']
-    return None, None, None
-
-
-def get_session_data(session):
-    sess_json = json_get()
-    if sess_json:
-        return sess_json['content']['full']
-    return None
-
-
 def parse_extra_args(args):
     parser = argparse.ArgumentParser()
+    parser.add_argument("--meeting", help="Meeting ID")
     parser.add_argument("--session", help="Session ID")
 
     return parser.parse_known_args(args)
@@ -175,14 +145,10 @@ class Service(lt_service):
 
     def _init_session(self):
         ea, _ = parse_extra_args(self.extra_args)
-        if ea.session is not None:
-            self.sro_session = ea.session.upper()
-        else:
-            self.sro_session, self.name, self.description = find_live_session()
+
+        self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
 
         if self.sro_session:
-            self.log.info("Using SRO session {session}", session=self.sro_session)
-
             session_fetcher = JSONFetcher(uncache(SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
             session_fetcher.start()
 
@@ -190,8 +156,45 @@ class Service(lt_service):
             timing_fetcher.start()
 
         else:
-            self.log.info("No live session found, checking again in 30 seconds.")
+            self.log.info("No session found, checking again in 30 seconds.")
             reactor.callLater(30, self._init_session)
+
+    def _find_meeting(self, meetingID=None):
+        meetings_json = json_get(SRO_ROOT_URL)
+        if meetings_json:
+            meetings = meetings_json['content']['full']['Meetings']
+            if meetingID and meetingID.lower() in meetings:
+                self.log.info("Found requested meeting {meetingID}", meetingID=meetingID.lower())
+                return meetings[meetingID.lower()]
+            else:
+                live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
+                if live_meetings:
+                    self.log.info("Using currently live meeting {meetingID}", meetingID=live_meetings[0]['Id'].lower())
+                    return live_meetings[0]
+        self.log.warn("Could not find a live meeting!")
+        return None
+
+    def _find_session(self, meetingID=None, sessionID=None):
+        meeting = self._find_meeting(meetingID)
+        if meeting:
+            sessions_json = json_get(SRO_SCHEDULE_URL.format(meeting=meeting['Id'].upper()))
+            if sessions_json:
+                sessions = sessions_json['content']['full']['Units']
+                session = None
+                if sessionID and sessionID.lower() in sessions:
+                    self.log.info("Found requested session {sessionID}", sessionID=sessionID.lower())
+                    session = sessions[sessionID]
+                else:
+                    live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] != TYPE_AGGREGATE]
+                    if live_sessions:
+                        self.log.info("Using live session {sessionID}", sessionID=live_sessions[-1]['Id'].lower())
+                        session = live_sessions[-1]
+                if session:
+                    return session['Id'].upper(), \
+                        sessions_json['content']['full']['Competitions'][session['CompetitionId']]['Name'], \
+                        session['Name']
+        self.log.warn("Could not find a live session!")
+        return None, None, None
 
     def no_service_state(self):
         self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
