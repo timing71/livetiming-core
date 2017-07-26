@@ -7,6 +7,10 @@ import time
 from livetiming.racing import Stat, FlagStatus
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
+from livetiming.analysis.lapchart import LapChart
+from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.session import Session
 
 
 SRO_ROOT_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SEASON_JSON.json?s=3&t=0"
@@ -257,6 +261,14 @@ class Service(lt_service):
 
     def getExtraMessageGenerators(self):
         return [RaceControlMessage(self._messages)]
+
+    def getAnalysisModules(self):
+        return [
+            Session,
+            LapChart,
+            EnduranceStopAnalysis,
+            StintLength
+        ]
 
     def _compile_state(self):
         cars = []
