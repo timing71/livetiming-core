@@ -127,7 +127,13 @@ def map_session_flag(data):
         268435456: FlagStatus.NONE
     }
 
-    if data['TrackFlag'] in flag_map:
+    flag = 0
+    if 'SectorFlags' in data:
+        flag = max(data['SectorFlags'])
+
+    flag = max(flag, data['TrackFlag'])
+
+    if flag in flag_map:
         return flag_map[data['TrackFlag']].name.lower()
     return 'none'
 
