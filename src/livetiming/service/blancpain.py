@@ -306,7 +306,7 @@ class Service(lt_service):
         session = {
             'flagState': map_session_flag(unt),
             'timeRemain': parse_session_time(unt['RemainingTime']),
-            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds()  # Let's just assume UTC here
+            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds() if 'StartRealTime' in unt else 0  # Let's just assume UTC here
         }
 
         return {'cars': cars, 'session': session}
