@@ -313,6 +313,12 @@ class Service(lt_service):
                 competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
             ])
 
+            # Hack in previous lap before it disappears from the data feed
+            if cars[-1][12][0] == '':
+                cars[-1][12] = self._previous_laps.get(competitor['Bib'], ('', ''))
+            else:
+                self._previous_laps[competitor['Bib']] = cars[-1][12]
+
         unt = self._timing_data['UntInfo']
 
         session = {
