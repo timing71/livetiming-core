@@ -117,6 +117,10 @@ def map_session_flag(data):
     if data['ChequeredFlag']:
         return FlagStatus.CHEQUERED.name.lower()
 
+    if data['TrackFlag'] == 4:
+        # Track flag yellow means FCY; local yellows are in SectorFlags
+        return FlagStatus.FCY.name.lower()
+
     flag_map = {
         0: FlagStatus.NONE,
         1: FlagStatus.GREEN,
@@ -159,6 +163,8 @@ class Service(lt_service):
         self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
 
         if self.sro_session:
+            self._previous_laps = {}
+
             session_fetcher = JSONFetcher(uncache(SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
             session_fetcher.start()
 
