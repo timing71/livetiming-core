@@ -138,7 +138,7 @@ def map_session_flag(data):
     flag = max(flag, data['TrackFlag'])
 
     if flag in flag_map:
-        return flag_map[data['TrackFlag']].name.lower()
+        return flag_map[flag].name.lower()
     return 'none'
 
 
