@@ -40,7 +40,7 @@ def create_service_session(service):
             service.log.info("Session ready for service {}".format(service.uuid))
             service.set_publish(self.publish)
 
-            register_opts = RegisterOptions(invoke=u'last')
+            register_opts = RegisterOptions(force_reregister=True)
 
             yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid), register_opts)
             yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid), register_opts)

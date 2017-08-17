@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.wamp.types import RegisterOptions
 from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
@@ -81,7 +82,7 @@ def create_scheduler_session(scheduler):
         def onJoin(self, details):
             scheduler.log.info("Scheduler session ready")
 
-            yield self.register(scheduler.listSchedule, RPC.SCHEDULE_LISTING)
+            yield self.register(scheduler.listSchedule, RPC.SCHEDULE_LISTING, RegisterOptions(force_reregister=True))
             scheduler.log.debug("Registered service listing RPC")
 
             scheduler.set_publish(self.publish)
