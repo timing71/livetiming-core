@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.wamp.types import RegisterOptions
 from livetiming import load_env
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from os import environ
@@ -39,7 +40,7 @@ class Directory(ApplicationSession):
         self.log.debug("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.INITIALISE_DIRECTORY).serialise())
         self.log.debug("Published init message")
-        yield self.register(self.listServices, RPC.DIRECTORY_LISTING)
+        yield self.register(self.listServices, RPC.DIRECTORY_LISTING, RegisterOptions(force_reregister=True))
         self.log.debug("Registered service listing RPC")
 
         liveness = task.LoopingCall(self.checkLiveness)

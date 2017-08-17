@@ -24,7 +24,7 @@ setup(
         "simplejson"
     ],
     install_requires=[
-        "autobahn[twisted]",
+        "autobahn[twisted]>=17.6.2",
         "dictdiffer",
         "enum34",
         "icalendar",
