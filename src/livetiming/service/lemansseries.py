@@ -183,11 +183,14 @@ class Service(lt_service):
         fastLapsPerClass = {}
         rawCarData = raw[0]
 
-        for car in rawCarData.values():
-            lastLap = parseTime(car["8"])
-            carClass = self.staticData["tabEngages"][car["2"]]["categorie"] if car["2"] in self.staticData["tabEngages"] else -1
-            if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
-                fastLapsPerClass[carClass] = lastLap
+        try:
+            for car in rawCarData.values():
+                lastLap = parseTime(car["8"])
+                carClass = self.staticData["tabEngages"][car["2"]]["categorie"] if car["2"] in self.staticData["tabEngages"] else -1
+                if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
+                    fastLapsPerClass[carClass] = lastLap
+        except AttributeError:
+            pass  # can happen if rawCarData is empty - server returns list rather than empty object in that case
 
         def getFlags(carClass, last, best):
             if carClass in fastLapsPerClass and last == fastLapsPerClass[carClass]:
@@ -200,7 +203,12 @@ class Service(lt_service):
                 return "slow"
             return ""
 
-        for pos in sorted(rawCarData.iterkeys(), key=lambda i: int(i)):
+        try:
+            carKeys = rawCarData.iterkeys()
+        except AttributeError:  # can happen if rawCarData is empty - server returns list rather than empty object in that case
+            carKeys = []
+
+        for pos in sorted(carKeys, key=lambda i: int(i)):
             car = rawCarData[pos]
             engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]}
             voiture = self.staticData["tabVehicules"][str(engage['voiture'])] if str(engage['voiture']) in self.staticData["tabVehicules"] else {"nom": "Unknown", "marque": -1}
