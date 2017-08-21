@@ -36,7 +36,7 @@ class Event(object):
         self.endDate = endDate
 
     def __repr__(self, *args, **kwargs):
-        return "Event: {} (Service: {} {}) {} - {} [{}]".format(
+        return u"Event: {} (Service: {} {}) {} - {} [{}]".format(
             self.name,
             self.service,
             self.serviceArgs,
