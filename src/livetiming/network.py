@@ -21,6 +21,7 @@ class RPC:
     REQUEST_ANALYSIS_MANIFEST = u"livetiming.service.requestAnalysisManifest.{}"
     REQUEST_ANALYSIS_DATA = u"livetiming.service.requestAnalysisData.{}"
     REQUEST_ANALYSIS_CAR_LIST = u"livetiming.service.requestAnalysisCarList.{}"
+    STATE_PUBLISH = u"livetiming.service.{}"
 
 
 class MessageClass(Enum):
