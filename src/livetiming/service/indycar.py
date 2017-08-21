@@ -56,7 +56,6 @@ def parseEventName(heartbeat):
         event = "{} - ".format(heartbeat["eventName"])
     else:
         event = ""
-    track_type = heartbeat["trackType"]
 
     if "preamble" in heartbeat:
         session = heartbeat["preamble"]
@@ -67,6 +66,7 @@ def parseEventName(heartbeat):
                 return "{}Final Practice".format(event)
             return "{}Practice {}".format(event, session[1])
         elif session[0] == "Q":  # Qualifying
+            track_type = heartbeat["trackType"] if "trackType" in heartbeat else None
             if track_type == "I" or track_type == "O":  # Indy 500 or other oval
                 return "{}Qualifying".format(event)
             elif session[1] == "3":
