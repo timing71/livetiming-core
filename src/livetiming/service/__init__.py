@@ -287,7 +287,7 @@ class Service(object):
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
-        self.publish(unicode(self.uuid), self._requestCurrentState())
+        self.publish(RPC.STATE_PUBLISH.format(self.uuid), self._requestCurrentState())
 
     def _getMessageGenerators(self):
         return [
