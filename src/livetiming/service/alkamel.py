@@ -266,6 +266,8 @@ class Service(lt_service):
                 flags_in_messages.append(FlagStatus.FCY)
             elif msg['txt'] == "SAFETY CAR":
                 flags_in_messages.append(FlagStatus.SC)
+            elif msg['txt'] == "CODE 60":
+                flags_in_messages.append(FlagStatus.CODE_60)
 
         self.prevRaceControlMessages = map(lambda m: m['txt'], data)
 
