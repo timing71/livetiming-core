@@ -1,11 +1,11 @@
 import re
-import simplejson
+import json
 from setuptools import setup, find_packages
 
 
 try:
     with open('web/package.json', 'r') as package:
-        package_json = simplejson.load(package)
+        package_json = json.load(package)
         verstr = package_json['version']
 except:
     verstr = 'unknown'
@@ -17,12 +17,9 @@ setup(
     author='James Muscat',
     author_email='jamesremuscat@gmail.com',
     url='https://github.com/jamesremuscat/livetiming',
-    packages=find_packages('src', exclude=["*.tests"]),
+    packages=find_packages('src', exclude=["*.tests"]) + [''],
     package_dir = {'':'src'},
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
-    setup_requires = [
-        "simplejson"
-    ],
     install_requires=[
         "autobahn[twisted]>=17.6.2",
         "dictdiffer",
