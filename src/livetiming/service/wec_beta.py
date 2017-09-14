@@ -23,11 +23,12 @@ def mapFlagState(params):
         'full_yellow': FlagStatus.FCY,
         'red': FlagStatus.RED,
         'chk': FlagStatus.CHEQUERED,
-        'off': FlagStatus.NONE
+        'off': FlagStatus.NONE,
     }
-    if 'status' in params and params['status'].lower() in flagMap:
-        return flagMap[params['status'].lower()].name.lower()
-    Logger().warn("Unknown flag state {flag}", flag=params.get('status', None))
+    if 'status' in params:
+        if params['status'].lower() in flagMap:
+            return flagMap[params['status'].lower()].name.lower()
+        Logger().warn("Unknown flag state {flag}", flag=params['status'])
     return 'none'
 
 
