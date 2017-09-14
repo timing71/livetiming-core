@@ -11,6 +11,7 @@ import argparse
 import wecapp
 from twisted.internet.task import LoopingCall
 from datetime import datetime
+from urllib2 import HTTPError
 
 
 def mapFlagState(params):
@@ -48,6 +49,7 @@ def mapCarState(rawState):
 def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
+    parser.add_argument("--session", help="Use given session ID instead of finding the current session")
     return parser.parse_known_args(extra_args)
 
 
@@ -65,13 +67,21 @@ def parseTime(formattedTime):
             return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
-def get_session():
-    init_dict = wecapp.get('http://pipeline-production.netcosports.com/wec/1/init?resolve_ref=session_id%2Crace_id')
-    if 'init' in init_dict:
-        init = init_dict['init']
-        if 'session' in init:
-            init['session']['race'] = init['race']
-            return init['session']
+def get_session(session_id=None):
+    if session_id:
+        try:
+            session_data = wecapp.get('http://pipeline-production.netcosports.com/wec/1/sessions/{}?resolve_ref=race_id'.format(session_id))
+            return session_data.get('session', None)
+        except HTTPError:
+            Logger().warn("No session data found for ID {session_id}", session_id=session_id)
+            return None
+    else:
+        init_dict = wecapp.get('http://pipeline-production.netcosports.com/wec/1/init?resolve_ref=session_id%2Crace_id')
+        if 'init' in init_dict:
+            init = init_dict['init']
+            if 'session' in init:
+                init['session']['race'] = init['race']
+                return init['session']
     return None
 
 
@@ -93,7 +103,8 @@ class Service(lt_service):
         self.latest_seen_timestamp = None
         self._f = None
 
-        self.is_qualifying_mode = parse_extra_args(extra_args)[0].qualifying
+        self._parsed_extra_args = parse_extra_args(extra_args)[0]
+        self.is_qualifying_mode = self._parsed_extra_args.qualifying
 
         if self.is_qualifying_mode:
             self.log.info("Starting up in QUALIFYING mode")
@@ -108,10 +119,10 @@ class Service(lt_service):
 
     def _get_current_session(self):
         self.log.debug("Updating WEC session...")
-        self.session = get_session()
+        self.session = get_session(self._parsed_extra_args.session)
 
         if self.session:
-            self.log.debug("Using session {sessionid}", sessionid=self.session['id'])
+            self.log.info("Using session {sessionid}", sessionid=self.session['id'])
             new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
             if new_description != self.description:
                 self.description = new_description
