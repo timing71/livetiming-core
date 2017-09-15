@@ -111,6 +111,8 @@ class Service(lt_service):
 
         self.description = "World Endurance Championship"
 
+        self._last_timestamp = datetime.fromtimestamp(0)
+
         LoopingCall(self._get_current_session).start(60)
 
         self.col_map = {}
@@ -201,10 +203,19 @@ class Service(lt_service):
 
     def _handleData(self, data):
         if 'live_standing' in data:
-            if 'ranks' in data['live_standing'] and len(data['live_standing']['ranks']) > 0:
-                self.entries = data['live_standing']['ranks'][:]
-                del data['live_standing']['ranks']
-                self.params = data['live_standing']
+            try:
+                ts = data['live_standing'].get('original_timestamp', 0)
+                pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
+                if pts > self._last_timestamp:
+                    if 'ranks' in data['live_standing'] and len(data['live_standing']['ranks']) > 0:
+                        self.entries = data['live_standing']['ranks'][:]
+                        del data['live_standing']['ranks']
+                        self.params = data['live_standing']
+                    self._last_timestamp = pts
+                else:
+                    self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
+            except ValueError:
+                self.log.failure("Couldn't parse time. Sad times.")
 
         self._updateAndPublishRaceState()
 
