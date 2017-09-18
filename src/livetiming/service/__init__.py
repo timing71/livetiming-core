@@ -16,6 +16,7 @@ from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
+from twisted.web import client
 from uuid import uuid4
 
 import argparse
@@ -23,10 +24,11 @@ import copy
 import os
 import simplejson
 import txaio
-import urllib2
 
 
 sentry = sentry()
+
+client.HTTPClientFactory.noisy = False
 
 
 def create_service_session(service):
@@ -342,12 +344,8 @@ class Fetcher(object):
             url = self.url
 
         try:
-            feed = urllib2.urlopen(url)
-            if feed.getcode() == 200:
-                return feed.read()
-            else:
-                self.log.warn("HTTP {} on url {}".format(feed.getcode(), url))
-        except (Exception, urllib2.URLError) as e:
+            return client.getPage(url)
+        except Exception as e:
             self.log.failure("URL {url} returned error: {msg}", url=url, msg=str(e))
             raise
 
@@ -362,7 +360,7 @@ class Fetcher(object):
             self.log.warn("{fail}. Trying again in {backoff} seconds", fail=fail.getErrorMessage(), backoff=self.interval * self.backoff)
             self._schedule(self.interval * self.backoff)
 
-        deferred = deferToThread(self._defer)
+        deferred = self._defer()
         deferred.addCallback(cb)
         deferred.addErrback(eb)
 
