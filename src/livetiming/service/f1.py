@@ -90,7 +90,11 @@ class Service(lt_service):
         if race != "" and session != "":
             self.hasSession = True
 
-            serverIP = 'lb.softpauer.com'  # random.choice(servers.findall('Server')).get('ip')
+            servers = map(lambda s: s.get('ip'), servers.findall('Server'))
+            if 'lb.softpauer.com' in servers:
+                serverIP = 'lb.softpauer.com'
+            else:
+                serverIP = random.choice(servers)
             self.log.info("Using server {}".format(serverIP))
 
             server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
