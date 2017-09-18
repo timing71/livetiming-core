@@ -22,6 +22,7 @@ def mapFlagState(params):
         'green': FlagStatus.GREEN,
         'yellow': FlagStatus.YELLOW,
         'full_yellow': FlagStatus.FCY,
+        'safety_car': FlagStatus.SC,
         'red': FlagStatus.RED,
         'chk': FlagStatus.CHEQUERED,
         'off': FlagStatus.NONE,
