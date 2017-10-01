@@ -27,14 +27,13 @@ sentry = sentry()
 
 class Event(object):
 
-    def __init__(self, uid, name, service, serviceArgs, startDate, endDate, hidden):
+    def __init__(self, uid, name, service, serviceArgs, startDate, endDate):
         self.uid = uid
         self.name = name
         self.service = service
         self.serviceArgs = serviceArgs
         self.startDate = startDate
         self.endDate = endDate
-        self.hidden = hidden
 
     def __repr__(self, *args, **kwargs):
         return u"Event: {} (Service: {} {}) {} - {} [{}] {}".format(
