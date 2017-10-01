@@ -265,7 +265,8 @@ class Service(object):
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval() or 1,
-            "hasAnalysis": not (self.args.disable_analysis or not self.getAnalysisModules())
+            "hasAnalysis": not (self.args.disable_analysis or not self.getAnalysisModules()),
+            "hidden": self.args.hidden
         }
 
     def _getDescription(self):
@@ -408,6 +409,7 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true', help='Log to stdout rather than a file')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--disable-analysis', action='store_true')
+    parser.add_argument('-H', '--hidden', action='store_true', help='Hide this service from the UI except by UUID access')
 
     return parser.parse_known_args()
 

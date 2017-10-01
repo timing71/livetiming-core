@@ -27,23 +27,28 @@ sentry = sentry()
 
 class Event(object):
 
-    def __init__(self, uid, name, service, serviceArgs, startDate, endDate):
+    def __init__(self, uid, name, service, serviceArgs, startDate, endDate, hidden):
         self.uid = uid
         self.name = name
         self.service = service
         self.serviceArgs = serviceArgs
         self.startDate = startDate
         self.endDate = endDate
+        self.hidden = hidden
 
     def __repr__(self, *args, **kwargs):
-        return u"Event: {} (Service: {} {}) {} - {} [{}]".format(
+        return u"Event: {} (Service: {} {}) {} - {} [{}] {}".format(
             self.name,
             self.service,
             self.serviceArgs,
             self.startDate,
             self.endDate,
-            self.uid
-        )
+            self.uid,
+            '(H)' if self.is_hidden() else ''
+        ).strip()
+
+    def is_hidden(self):
+        return '--hidden' in self.serviceArgs or '-H' in self.serviceArgs
 
     @staticmethod
     def from_ical(evt, logger=None):
@@ -72,7 +77,8 @@ class Event(object):
         return {
             "id": self.uid,
             "name": self.name,
-            "startTime": time.mktime(self.startDate.utctimetuple())
+            "startTime": time.mktime(self.startDate.utctimetuple()),
+            "hidden": self.is_hidden()
         }
 
 
