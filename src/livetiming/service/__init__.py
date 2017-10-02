@@ -110,7 +110,7 @@ class Service(object):
         if self.getAnalysisModules():
             def saveAsync():
                 self.log.debug("Saving data centre state")
-                return deferToThread(lambda: self.analyser.save_data_centre())
+                return deferToThread(self.analyser.save_data_centre)
             LoopingCall(saveAsync).start(60)
 
         runner.run(session_class, auto_reconnect=True, log_level="debug" if self.args.debug else "info")
