@@ -3,7 +3,7 @@ from autobahn.wamp.types import RegisterOptions
 from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
-from twisted.internet import task
+from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 
@@ -14,6 +14,7 @@ import os
 import pytz
 import urllib2
 import time
+import twitter
 
 
 EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, ?(?P<args>[^\]]+))?\]")
@@ -81,6 +82,49 @@ class Event(object):
         }
 
 
+class Tweeter(object):
+
+    EVENT_START_MESSAGE = "Starting now: {name}. Follow live at {link}"
+
+    def __init__(self):
+        self.log = Logger()
+        self._twitter = None
+
+        consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
+        consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
+        access_token = os.getenv("TWITTER_ACCESS_TOKEN")
+        access_secret = os.getenv("TWITTER_ACCESS_SECRET")
+
+        if consumer_key and consumer_secret and access_token and access_secret:
+            self._twitter = twitter.Api(
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                access_token_key=access_token,
+                access_token_secret=access_secret
+            )
+        else:
+            self.log.info("No Twitter credentials provided (or credentials incomplete), Twitter functionality disabled.")
+
+    def _construct_message(self, template, event):
+        return template.format(
+            name=event.name,
+            link="https://timing.71wytham.org.uk/s/{}".format(event.service)
+        )
+
+    def tweet(self, text):
+        if self._twitter:
+            reactor.callInThread(self._twitter.PostUpdate, text)
+
+    def tweet_event_starting(self, event):
+        if not event.is_hidden():
+            self.tweet(
+                self._construct_message(
+                    self.EVENT_START_MESSAGE,
+                    event
+                )
+            )
+
+
 def create_scheduler_session(scheduler):
     class SchedulerSession(ApplicationSession):
         @inlineCallbacks
@@ -108,6 +152,8 @@ class Scheduler(object):
         self.calendarAddress = os.environ['LIVETIMING_CALENDAR_URL']
         self.lock = Lock()
         self._publish = None
+
+        self._tweeter = Tweeter()
 
     def start(self):
         update = task.LoopingCall(self.updateSchedule)
@@ -170,6 +216,7 @@ class Scheduler(object):
             for job in toStart:
                 try:
                     self._start_service(job.uid, job.service, job.serviceArgs)
+                    self._tweeter.tweet_event_starting(job)
                     hasChanged = True
                 except Exception:
                     self.log.failure("Exception while starting job: {log_failure}")
