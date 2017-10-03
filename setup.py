@@ -28,6 +28,7 @@ setup(
         "lzstring",
         "pyopenssl",
         "python-dotenv",
+        "python-twitter",
         "raven",
         "service_identity",
         "signalr-client",
