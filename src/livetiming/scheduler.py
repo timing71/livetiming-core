@@ -84,7 +84,7 @@ class Event(object):
 
 class Tweeter(object):
 
-    EVENT_START_MESSAGE = "Starting now: {name}. Follow live at {link}"
+    EVENT_START_MESSAGE = u"Starting now: {name}. Follow live at {link}"
 
     def __init__(self):
         self.log = Logger()
@@ -190,7 +190,7 @@ class Scheduler(object):
                         e = Event.from_ical(evt, self.log)
                         if e:
                             self.events[e.uid] = e
-                            print "Found event: {}".format(e)
+                            print u"Found event: {}".format(e)
 
                 self.log.info("Sync complete")
             except Exception:
