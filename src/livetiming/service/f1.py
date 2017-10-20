@@ -70,6 +70,7 @@ class Service(lt_service):
     log = Logger()
 
     def __init__(self, args, extra_args):
+        args.hidden = True  # Always hide F1 due to C&D from FOM
         lt_service.__init__(self, args, extra_args)
         self.carsState = []
         self.sessionState = {}

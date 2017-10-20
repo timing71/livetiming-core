@@ -190,7 +190,7 @@ class Scheduler(object):
                         e = Event.from_ical(evt, self.log)
                         if e:
                             self.events[e.uid] = e
-                            print u"Found event: {}".format(e)
+                            self.log.info(u"Found event: {evt}", evt=e)
 
                 self.log.info("Sync complete")
             except Exception:

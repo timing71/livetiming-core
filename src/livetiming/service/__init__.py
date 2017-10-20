@@ -317,7 +317,7 @@ class Service(object):
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
-        self.log.debug("Received message {msg}", msg=msg)
+        self.log.debug(u"Received message {msg}", msg=msg)
         if msg.msgClass == MessageClass.INITIALISE_DIRECTORY:
             self.log.info("Publishing manifest on request of directory service.")
             self.publishManifest()
@@ -379,7 +379,7 @@ def JSONFetcher(url, callback, interval):
             parsed_data = simplejson.loads(data)
             callback(parsed_data)
         except JSONDecodeError:
-            Logger().failure("Error parsing JSON from source {url}: {log_failure}", url=url)
+            Logger().failure("Error parsing JSON from source {url}: {log_failure}. Full source was {source}", url=url, source=data)
     return Fetcher(url, parse_then_callback, interval)
 
 
