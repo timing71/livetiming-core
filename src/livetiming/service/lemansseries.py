@@ -150,7 +150,7 @@ class Service(lt_service):
             description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
             if description:
                 self.description = description.group("desc").replace("/", "-")
-                self.log.info("Setting description: {desc}", desc=self.description)
+                self.log.info(u"Setting description: {desc}", desc=self.description)
                 self.publishManifest()
 
             self.staticData = {
