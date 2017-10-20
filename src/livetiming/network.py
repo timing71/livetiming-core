@@ -53,7 +53,7 @@ class Message(object):
         return Message(MessageClass(rawMsg['msgClass']), rawMsg['payload'])
 
     def __str__(self):
-        return "<Message class={0} payload={1}>".format(self.msgClass, self.payload)
+        return u"<Message class={0} payload={1}>".format(self.msgClass, self.payload)
 
 
 def authenticatedService(clazz):
