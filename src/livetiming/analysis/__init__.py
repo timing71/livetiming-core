@@ -54,8 +54,10 @@ class Analyser(object):
         )
 
     def save_data_centre(self):
+        start = time.time()
         with open(self._data_centre_file(), "wb") as data_dump_file:
             cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
+        self.log.info("Analysis state saved in {secs} seconds", secs=(time.time() - start))
 
     def _load_data_centre(self):
         try:
