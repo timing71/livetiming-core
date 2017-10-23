@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from autobahn.twisted.util import sleep
 from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 from datetime import datetime
 from livetiming.analysis.laptimes import LaptimeChart
@@ -9,6 +10,7 @@ from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from lzstring import LZString
+from twisted.internet.defer import Deferred
 
 import argparse
 import simplejson
@@ -211,16 +213,14 @@ def parse_extra_args(args):
     return parser.parse_args(args)
 
 
+TID_REGEX = re.compile("$[0-9a-z]{32}")
+
+
 class Service(lt_service):
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
 
         self.myArgs = parse_extra_args(extra_args)
-
-        socketURL = self.getWebSocketURL(self.getTrackID(), self.getToken())
-        factory = ReconnectingWebSocketClientFactory(socketURL)
-        factory.protocol = create_protocol(self)
-        connectWS(factory)
 
         self.carState = {}
         self.sessionState = {"flagState": "none"}
@@ -234,6 +234,17 @@ class Service(lt_service):
         self.description = ""
         self.columnSpec = map(lambda c: c[0], DEFAULT_COLUMN_SPEC)
         self.carFieldMapping = []
+
+        tidder = self.getTrackID()
+        tidder.addCallback(self._tsnl_connect)
+
+    def _tsnl_connect(self, tid):
+        self.log.info("TID: {tid}", tid=tid)
+        socketURL = self.getWebSocketURL(tid, self.getToken())
+        self.log.info("Websocket URL: {url}", url=socketURL)
+        factory = ReconnectingWebSocketClientFactory(socketURL)
+        factory.protocol = create_protocol(self)
+        connectWS(factory)
 
     def getToken(self):
         tokenData = simplejson.load(urllib2.urlopen("https://{}/lt/negotiate?clientProtocol=1.5".format(self.getHost())))
@@ -250,19 +261,30 @@ class Service(lt_service):
         By default take track ID or alias from commandline args - but
         subclasses can override this method to provide a fixed value.
         '''
-        known_tracks = {
-            'bathurst': '59225c5480a74b178deaf992976595c3',
-            'demo': 'aed5546e3b5e46aeb6ba564f6f72457d',
-            'dubai': '17047960b73e48c4a899f43a2459cc20',
-            'mugello': '237baff60dfb4291ab20f72319e79aa2',
-            'redbullring': '21e603fd091949538a85e836bff214e6',
-            'silverstone': '1568d1619bc24e53b294b694304f2b68'
-        }
+        if TID_REGEX.match(self.myArgs.tk):
+            d = Deferred()
+            d.callback(self.myArgs.tk)
+            return d
+        else:
+            return self._trackIDFromServiceName(self.myArgs.tk)
 
-        if self.myArgs.tk in known_tracks:
-            return known_tracks[self.myArgs.tk]
+    def _trackIDFromServiceName(self, service_name):
+        d = Deferred()
+        tid_matcher = re.compile("(?:new liveTiming.LiveTimingApp\()(?P<service_data>[^;]+)\);")
+        print "Searching for tid for service '{service_name}'".format(service_name=service_name)
+        while not d.called:
+            tsnl = urllib2.urlopen("https://{}/{}".format(self.getHost(), service_name)).read()
 
-        return self.myArgs.tk
+            matches = tid_matcher.search(tsnl)
+            if matches:
+                svc_data = simplejson.loads(matches.group('service_data'))
+                self.log.info("Found TSNL service data: {service_data}", service_data=svc_data)
+                d.callback(svc_data['tid'])
+                break
+            else:
+                print "No tid found, trying again in 30 seconds."
+                time.sleep(30)
+        return d
 
     def getName(self):
         return "timeservice.nl feed"
