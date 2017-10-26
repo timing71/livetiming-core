@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from livetiming.network import RPC, Realm, authenticatedService
+from livetiming.network import RPC, Realm, authenticatedService, Message,\
+    MessageClass
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -131,6 +132,11 @@ class RecordingFile(object):
 
             return state
 
+    def augmentedManifest(self):
+        man = self.manifest
+        man['duration'] = self.duration
+        return man
+
 
 def applyIntraFrame(initial, iframe):
     return {
@@ -141,69 +147,35 @@ def applyIntraFrame(initial, iframe):
 
 
 class ReplayManager(object):
-    def __init__(self, register, recordingDirectory):
+    def __init__(self, publish, recordingDirectory):
         self.log = Logger()
         self.recordingDirectory = recordingDirectory
-        self.register = register
+        self.publish = publish
         self.recordings = {}
-        self.services = {}
         self.scanTask = LoopingCall(self.scanDirectory)
         self.scanTask.start(300)
 
     def scanDirectory(self):
         (_, _, filenames) = os.walk(self.recordingDirectory).next()
         self.recordings = {}
-        for recFile in filenames:
-            fullPath = os.path.join(self.recordingDirectory, recFile)
-            with zipfile.ZipFile(fullPath, 'r', zipfile.ZIP_DEFLATED) as z:
-                try:
-                    manifest = simplejson.load(z.open("manifest.json", 'r'))
-                    self.recordings[manifest['uuid']] = (manifest, fullPath)
-                except:
-                    self.log.warn("Could not read {} as a recording (perhaps it isn't one?)".format(fullPath))
-        for recordingUUID in self.recordings.keys():
-            manifest, filename = self.recordings[recordingUUID]
-            if recordingUUID not in self.services:
-                newService = ReplayService(filename)
-                newService.connect(self.register)
-                self.log.info("New recording service for {}".format(recordingUUID))
-                self.services[recordingUUID] = newService
-            manifest["duration"] = self.services[recordingUUID].duration
-            self.recordings[recordingUUID] = (manifest, filename)
-        for service in self.services.keys():
-            if service not in self.recordings:
-                oldService = self.services.pop(service)
-                self.log.info("Removing recording service for {}".format(service))
-                oldService.disconnect()
-                self.log.info("Recording service for {} removed".format(service))
+        for recFileName in filenames:
+            fullPath = os.path.join(self.recordingDirectory, recFileName)
+            recFile = RecordingFile(fullPath)
+            manifest = recFile.augmentedManifest()
+            manifest['filename'] = recFileName
+            self.recordings[manifest['uuid']] = manifest
+        self.publish(Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
 
     def listRecordings(self):
         # Strip filenames out of listings that we return.
-        return [v[0] for v in self.recordings.values()]
-
-
-class ReplayService(object):
-    def __init__(self, recordingFile):
-        self.log = Logger()
-        self.replayer = RecordingFile(recordingFile)
-        self.duration = self.replayer.duration
-
-    def connect(self, register):
-        self.registration = register(self.requestStateAt, RPC.REQUEST_STATE.format(self.replayer.manifest['uuid']))
-
-    def disconnect(self):
-        self.registration.unregister()
-        self.log.info("Unregistered")
-
-    def requestStateAt(self, timecode):
-        return self.replayer.getStateAt(timecode)
+        return self.recordings.values()
 
 
 @authenticatedService
 class RecordingsDirectory(ApplicationSession):
     @inlineCallbacks
     def onJoin(self, details):
-        self.replayManager = ReplayManager(self.register, "recordings/")
+        self.replayManager = ReplayManager(self.publish, "recordings/")
         yield self.register(self.replayManager.listRecordings, RPC.RECORDING_LISTING)
         self.log.info("Registered recording listing RPC")
 
