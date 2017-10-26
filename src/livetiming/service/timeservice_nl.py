@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from autobahn.twisted.util import sleep
 from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 from datetime import datetime
 from livetiming.analysis.laptimes import LaptimeChart
