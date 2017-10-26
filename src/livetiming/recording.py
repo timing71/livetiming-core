@@ -168,8 +168,7 @@ class ReplayManager(object):
         self.publish(Channel.CONTROL, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
 
     def listRecordings(self):
-        # Strip filenames out of listings that we return.
-        return self.recordings.values()
+        return self.recordings
 
 
 @authenticatedService
