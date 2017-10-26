@@ -1,7 +1,7 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from livetiming import load_env
 from livetiming.network import RPC, Realm, authenticatedService, Message,\
-    MessageClass
+    MessageClass, Channel
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -165,7 +165,7 @@ class ReplayManager(object):
             manifest = recFile.augmentedManifest()
             manifest['filename'] = recFileName
             self.recordings[manifest['uuid']] = manifest
-        self.publish(Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
+        self.publish(Channel.CONTROL, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
 
     def listRecordings(self):
         # Strip filenames out of listings that we return.
