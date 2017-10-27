@@ -79,6 +79,7 @@ class Service(lt_service):
         self.messages = []
         self.hasSession = False
         self.serverTimestamp = 0
+        self.timestampLastUpdated = datetime.now()
         self.configure()
 
     def configure(self):
@@ -106,7 +107,8 @@ class Service(lt_service):
             allFetcher.start()
 
             def getCurURL():
-                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp if self.serverTimestamp > 0 else "")
+                timedelta = (datetime.now() - self.timestampLastUpdated).total_seconds()
+                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp + timedelta if self.serverTimestamp > 0 else "")
 
             curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
             curFetcher.start()
@@ -180,7 +182,8 @@ class Service(lt_service):
             "Direction",
             "Humidity",
             "Pressure",
-            "Track"
+            "Track",
+            "Updated"
         ]
 
     def getPollInterval(self):
@@ -273,10 +276,12 @@ class Service(lt_service):
                 currentTyreStats = ("", "", "")
 
             state = "RUN"
-            if "stop" in dnd:
-                state = "RET"
-            elif latestTimeLine[3][2] == "1" or latestTimeLine[3][2] == "3":
+            if latestTimeLine[3][2] == "1":
                 state = "PIT"
+            elif latestTimeLine[3][2] == "2":
+                state = "OUT"
+            elif latestTimeLine[3][2] == "3":
+                state = "STOP"
 
             fastestLapFlag = ""
             if timeLine[1] != "" and fastestLap == float(timeLine[1]):
@@ -350,7 +355,8 @@ class Service(lt_service):
                 u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
-                "Wet" if w[2] == "1" else "Dry"
+                "Wet" if w[2] == "1" else "Dry",
+                self.timestampLastUpdated.strftime("%H:%M:%S")
             ]
         return []
 
