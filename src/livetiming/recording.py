@@ -166,6 +166,7 @@ class ReplayManager(object):
             manifest['filename'] = recFileName
             self.recordings[manifest['uuid']] = manifest
         self.publish(Channel.CONTROL, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
+        self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
     def listRecordings(self):
         return self.recordings
