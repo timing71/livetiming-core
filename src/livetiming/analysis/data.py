@@ -6,6 +6,7 @@ import copy
 import re
 import sys
 import time
+import math
 
 TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
 
@@ -308,23 +309,25 @@ class DataCentre(object):
     def _get_lap_count(self, race_num, car, f, cars):
         from_timing = f.get(car, Stat.LAPS)
         if from_timing:
-            return int(from_timing)
-        else:
-            our_num = f.get(car, Stat.NUM)
-            # TSNL put lap count in the "gap" column FSR
-            leader_gap = f.get(cars[0], Stat.GAP)
-            if leader_gap:
-                tsnl = TSNL_LAP_HACK_REGEX.match(leader_gap)
-                if tsnl:
-                    # Work up until we find the lap count relevant to us
-                    lap_count = int(tsnl.group(1))
-                    for other_car in cars:
-                        tsnl = TSNL_LAP_HACK_REGEX.match(f.get(other_car, Stat.GAP))
-                        if tsnl:
-                            lap_count = int(tsnl.group(1))
-                        if f.get(other_car, Stat.NUM) == our_num:
-                            return lap_count
-            return len(self.car(race_num).laps)
+            try:
+                return math.floor(float(from_timing))
+            except ValueError:
+                pass
+        our_num = f.get(car, Stat.NUM)
+        # TSNL put lap count in the "gap" column FSR
+        leader_gap = f.get(cars[0], Stat.GAP)
+        if leader_gap:
+            tsnl = TSNL_LAP_HACK_REGEX.match(leader_gap)
+            if tsnl:
+                # Work up until we find the lap count relevant to us
+                lap_count = int(tsnl.group(1))
+                for other_car in cars:
+                    tsnl = TSNL_LAP_HACK_REGEX.match(f.get(other_car, Stat.GAP))
+                    if tsnl:
+                        lap_count = int(tsnl.group(1))
+                    if f.get(other_car, Stat.NUM) == our_num:
+                        return lap_count
+        return len(self.car(race_num).laps)
 
 
 if __name__ == '__main__':
