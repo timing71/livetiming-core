@@ -34,6 +34,7 @@ class MessageClass(Enum):
     ANALYSIS_DATA = 7
     SERVICE_DATA_COMPRESSED = 8
     ANALYSIS_DATA_COMPRESSED = 9
+    RECORDING_LISTING = 10
 
 
 class Message(object):
