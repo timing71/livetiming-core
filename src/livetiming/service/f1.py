@@ -283,7 +283,7 @@ class Service(lt_service):
             elif latestTimeLine[3][2] == "2":
                 state = "OUT"
             elif latestTimeLine[3][2] == "3":
-                state = "STOP"
+                state = "RET"
 
             fastestLapFlag = ""
             if timeLine[1] != "" and fastestLap == float(timeLine[1]):
