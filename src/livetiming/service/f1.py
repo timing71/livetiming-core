@@ -10,7 +10,6 @@ from twisted.internet import reactor
 import math
 import simplejson
 import time
-import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
@@ -93,11 +92,12 @@ class Service(lt_service):
         if race != "" and session != "":
             self.hasSession = True
 
-            servers = map(lambda s: s.get('ip'), servers.findall('Server'))
-            if 'lb.softpauer.com' in servers:
-                serverIP = 'lb.softpauer.com'
-            else:
-                serverIP = random.choice(servers)
+            # servers = map(lambda s: s.get('ip'), servers.findall('Server'))
+            # if 'lb.softpauer.com' in servers:
+            #     serverIP = 'lb.softpauer.com'
+            # else:
+            #     serverIP = random.choice(servers)
+            serverIP = 'lb.softpauer.com'
             self.log.info("Using server {}".format(serverIP))
 
             server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
