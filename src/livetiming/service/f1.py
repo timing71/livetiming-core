@@ -80,6 +80,7 @@ class Service(lt_service):
         self.hasSession = False
         self.serverTimestamp = 0
         self.timestampLastUpdated = datetime.now()
+        self.dataLastUpdated = datetime.now()
         self.configure()
 
     def configure(self):
@@ -103,6 +104,9 @@ class Service(lt_service):
 
             allURL = server_base_url + "all.js"
 
+            self.processData(urllib2.urlopen(allURL).readlines())
+            self.timestampLastUpdated = datetime.now()
+
             allFetcher = MultiLineFetcher(allURL, self.processData, 60)
             allFetcher.start()
 
@@ -112,9 +116,6 @@ class Service(lt_service):
 
             curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
             curFetcher.start()
-
-            self.processData(urllib2.urlopen(allURL).readlines())
-            self.timestampLastUpdated = datetime.now()
             return
         self.log.info("No live session found, checking again in 30 seconds.")
         reactor.callLater(30, self.configure)
@@ -129,6 +130,7 @@ class Service(lt_service):
                     self.serverTimestamp = max(self.serverTimestamp, content["T"] / 1000000)
                 if matches.group(1) == "f":
                     self.timestampLastUpdated = datetime.now()
+        self.dataLastUpdated = datetime.now()
 
     def getName(self):
         return "Formula 1"
@@ -356,7 +358,7 @@ class Service(lt_service):
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
                 "Wet" if w[2] == "1" else "Dry",
-                self.timestampLastUpdated.strftime("%H:%M:%S")
+                self.dataLastUpdated.strftime("%H:%M:%S")
             ]
         return []
 
