@@ -212,7 +212,7 @@ def parse_extra_args(args):
     return parser.parse_args(args)
 
 
-TID_REGEX = re.compile("$[0-9a-z]{32}")
+TID_REGEX = re.compile("^[0-9a-z]{32}$")
 
 
 class Service(lt_service):
