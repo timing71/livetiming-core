@@ -140,7 +140,7 @@ def shorten(nameTuple):
 def nonnegative(val):
     try:
         return max(val[0], 0)
-    except ValueError:
+    except (ValueError, IndexError):
         return val
 
 
