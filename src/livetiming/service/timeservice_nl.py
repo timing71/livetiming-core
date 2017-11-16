@@ -327,7 +327,7 @@ class Service(lt_service):
             self.carState.pop(idx)
 
     def r_l(self, body):
-        if 'h' in body:
+        if body and 'h' in body:
             # Dynamically generate column spec and mapping
             availableColumns = map(lambda h: h['c'].upper(), body['h'])
             self.carFieldMapping = []
