@@ -16,6 +16,7 @@ import simplejson
 import time
 import urllib2
 import re
+from twisted.internet import reactor
 
 
 def create_protocol(service):
@@ -238,15 +239,20 @@ class Service(lt_service):
         tidder.addCallback(self._tsnl_connect)
 
     def _tsnl_connect(self, tid):
-        self.log.info("TID: {tid}", tid=tid)
-        socketURL = self.getWebSocketURL(tid, self.getToken())
-        self.log.info("Websocket URL: {url}", url=socketURL)
-        factory = ReconnectingWebSocketClientFactory(socketURL)
-        factory.protocol = create_protocol(self)
-        connectWS(factory)
+        try:
+            self.log.info("TID: {tid}", tid=tid)
+            socketURL = self.getWebSocketURL(tid, self.getToken(tid))
+            self.log.info("Websocket URL: {url}", url=socketURL)
+            factory = ReconnectingWebSocketClientFactory(socketURL)
+            factory.protocol = create_protocol(self)
+            connectWS(factory)
+        except Exception as e:
+            self.log.exception(e)
+            self.log.info("Connection to TSNL failed, trying again in 30 seconds.")
+            reactor.callLater(30, self._tsnl_connect, tid)
 
-    def getToken(self):
-        tokenData = simplejson.load(urllib2.urlopen("https://{}/lt/negotiate?clientProtocol=1.5".format(self.getHost())))
+    def getToken(self, tid):
+        tokenData = simplejson.load(urllib2.urlopen("https://{}/lt/negotiate?clientProtocol=1.5&_tk={}".format(self.getHost(), tid)))
         return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
 
     def getWebSocketURL(self, tk, token):
