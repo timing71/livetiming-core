@@ -2,6 +2,7 @@ from autobahn.wamp import auth
 from enum import Enum
 
 import os
+import time
 
 
 class Realm:
@@ -39,19 +40,21 @@ class MessageClass(Enum):
 
 class Message(object):
 
-    def __init__(self, msgClass, payload=None):
+    def __init__(self, msgClass, payload=None, date=None):
         self.msgClass = msgClass
         self.payload = payload
+        self.date = date if date else int(time.time() * 1000)
 
     def serialise(self):
         return {
             'msgClass': self.msgClass.value,
+            'date': self.date,
             'payload': self.payload
         }
 
     @staticmethod
     def parse(rawMsg):
-        return Message(MessageClass(rawMsg['msgClass']), rawMsg['payload'])
+        return Message(MessageClass(rawMsg['msgClass']), rawMsg['payload'], int(rawMsg['date'] / 1000) if 'date' in rawMsg else None)
 
     def __str__(self):
         return u"<Message class={0} payload={1}>".format(self.msgClass, self.payload)
