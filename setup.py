@@ -39,6 +39,7 @@ setup(
     entry_points={
         'console_scripts': [
                 'livetiming-directory = livetiming.directory:main',
+                'livetiming-dvr = livetiming.dvr:main',
                 'livetiming-recordings = livetiming.recording:main',
                 'livetiming-rectool = livetiming.rectool:main',
                 'livetiming-scheduler = livetiming.scheduler:main',
