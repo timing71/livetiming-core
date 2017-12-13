@@ -64,7 +64,8 @@ class DVR(object):
                 self._store_data_frame(service_uuid, msg.payload)
             elif msg.msgClass == MessageClass.SERVICE_DATA_COMPRESSED:
                 state = simplejson.loads(LZString().decompressFromUTF16(msg.payload))
-                self._store_data_frame(service_uuid, state)
+                print msg.date, int(time.time())
+                self._store_data_frame(service_uuid, state, msg.date)
 
     def handle_control_message(self, message):
         msg = Message.parse(message)
@@ -86,8 +87,8 @@ class DVR(object):
     def _store_manifest(self, manifest):
         self._get_recording(manifest['uuid']).writeManifest(manifest)
 
-    def _store_data_frame(self, uuid, frame):
-        self._get_recording(uuid).writeState(frame)
+    def _store_data_frame(self, uuid, frame, date):
+        self._get_recording(uuid).writeState(frame, date)
 
     def _scan_for_finished_recordings(self):
         threshold = int(time.time()) - RECORDING_TIMEOUT

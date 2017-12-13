@@ -62,8 +62,9 @@ class TimingRecorder(object):
                 return True
         updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
 
-    def writeState(self, state):
-        timestamp = int(time.time())
+    def writeState(self, state, timestamp=None):
+        if not timestamp:
+            timestamp = int(time.time())
         with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
             if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
                 z.writestr("{:011d}.json".format(timestamp), simplejson.dumps(state))
