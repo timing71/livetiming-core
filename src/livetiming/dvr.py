@@ -3,13 +3,16 @@ from autobahn.wamp.types import SubscribeOptions
 from livetiming import load_env
 from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
+from livetiming.recording import TimingRecorder
+from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 
 import os
-from livetiming.recording import TimingRecorder
-from lzstring import LZString
+import shutil
 import simplejson
+import time
+from twisted.internet.task import LoopingCall
 
 
 def create_dvr_session(dvr):
@@ -26,12 +29,26 @@ def create_dvr_session(dvr):
     return authenticatedService(DVRSession)
 
 
+RECORDING_TIMEOUT = 5 * 60  # 5 minutes
+
+
 class DVR(object):
     def __init__(self):
         self.log = Logger()
         self._in_progress_recordings = {}
+        self.IN_PROGRESS_DIR = os.getenv('LIVETIMING_RECORDINGS_TEMP_DIR', './recordings-temp')
+        self.FINISHED_DIR = os.getenv('LIVETIMING_RECORDINGS_DIR', './recordings')
 
     def start(self):
+        if not os.path.isdir(self.IN_PROGRESS_DIR):
+            os.mkdir(self.IN_PROGRESS_DIR)
+
+        if not os.path.isdir(self.FINISHED_DIR):
+            os.mkdir(self.FINISHED_DIR)
+
+        finished_scan = LoopingCall(self._scan_for_finished_recordings)
+        finished_scan.start(RECORDING_TIMEOUT)
+
         session_class = create_dvr_session(self)
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
@@ -56,7 +73,7 @@ class DVR(object):
 
     def _get_recording(self, service_uuid):
         if service_uuid not in self._in_progress_recordings:
-            rec_file = "{}.zip".format(service_uuid)
+            rec_file = os.path.join(self.IN_PROGRESS_DIR, "{}.zip".format(service_uuid))
 
             if os.path.isfile(rec_file):
                 self.log.info("Resuming existing recording for UUID {uuid}", uuid=service_uuid)
@@ -71,6 +88,33 @@ class DVR(object):
 
     def _store_data_frame(self, uuid, frame):
         self._get_recording(uuid).writeState(frame)
+
+    def _scan_for_finished_recordings(self):
+        threshold = int(time.time()) - RECORDING_TIMEOUT
+
+        finished_recordings = []
+
+        for service_uuid, recording in self._in_progress_recordings.iteritems():
+            if recording.latest_frame and recording.latest_frame < threshold:
+                finished_recordings.append(service_uuid)
+
+        for uuid in finished_recordings:
+            self._finish_recording(uuid)
+
+        self.log.info("DVR state: {in_progress} in progress, {finished} finished recordings", in_progress=len(self._in_progress_recordings), finished=len(finished_recordings))
+
+    def _finish_recording(self, uuid):
+        self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
+        self._in_progress_recordings.pop(uuid)
+
+        dest = os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid))
+
+        shutil.move(
+            os.path.join(self.IN_PROGRESS_DIR, "{}.zip".format(uuid)),
+            dest
+        )
+
+        os.chmod(dest, 0664)
 
 
 def main():
