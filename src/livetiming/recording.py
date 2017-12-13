@@ -51,6 +51,7 @@ class TimingRecorder(object):
         self.log = Logger()
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
+        self.latest_frame = None
 
     def writeManifest(self, serviceRegistration):
         serviceRegistration["startTime"] = time.time()
@@ -62,14 +63,16 @@ class TimingRecorder(object):
         updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
 
     def writeState(self, state):
+        timestamp = int(time.time())
         with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
             if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
-                z.writestr("{:011d}.json".format(int(time.time())), simplejson.dumps(state))
+                z.writestr("{:011d}.json".format(timestamp), simplejson.dumps(state))
             else:  # Write an intra-frame
                 diff = self._diffState(state)
-                z.writestr("{:011d}i.json".format(int(time.time())), simplejson.dumps(diff))
+                z.writestr("{:011d}i.json".format(timestamp), simplejson.dumps(diff))
         self.frames += 1
         self.prevState = state.copy()
+        self.latest_frame = timestamp
 
     def _diffState(self, newState):
         carsDiff = dictdiffer.diff(self.prevState['cars'], newState['cars'])
