@@ -64,7 +64,6 @@ class DVR(object):
                 self._store_data_frame(service_uuid, msg.payload)
             elif msg.msgClass == MessageClass.SERVICE_DATA_COMPRESSED:
                 state = simplejson.loads(LZString().decompressFromUTF16(msg.payload))
-                print msg.date, int(time.time())
                 self._store_data_frame(service_uuid, state, msg.date)
 
     def handle_control_message(self, message):
