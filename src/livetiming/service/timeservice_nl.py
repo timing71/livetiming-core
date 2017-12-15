@@ -440,8 +440,8 @@ class Service(lt_service):
     def getRaceState(self):
         session = {}
         if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
-            if "h" in self.times and self.times["h"]:
-                session['timeRemain'] = self.times['r'] / 1000000
+            if self.times.get('h', False):  # Clock is halted
+                session['timeRemain'] = (self.times['lt'] - self.times['r']) / 1000000
             else:
                 serverNow = realToServerTime(utcnow() + self.timeOffset)
                 elapsed = (serverNow - self.times['q'] + self.times['r'])
