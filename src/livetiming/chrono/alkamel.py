@@ -72,11 +72,22 @@ def create_events(args):
             time_in_pit = parseTime(row['PIT_TIME'])
 
             if prev_row and prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
-                events.append((datestamp - lap_time + time_in_pit, PitOutEvent(_COLSPEC, race_num)))
+                events.append((int(datestamp - lap_time + time_in_pit), PitOutEvent(_COLSPEC, race_num)))
+
+            s1_time = parseTime(row[' S1'])
+            s2_time = parseTime(row[' S2'])
+            s3_time = parseTime(row[' S3'])
 
             events.append(
-                (datestamp, SectorEvent(_COLSPEC, race_num, 3, parseTime(row[' S3']), _parseFlags(row[' S3_IMPROVEMENT'])))
+                (int(datestamp - s2_time - s3_time), SectorEvent(_COLSPEC, race_num, 1, s1_time, _parseFlags(row[' S1_IMPROVEMENT'])))
             )
+            events.append(
+                (int(datestamp - s3_time), SectorEvent(_COLSPEC, race_num, 2, s2_time, _parseFlags(row[' S2_IMPROVEMENT'])))
+            )
+            events.append(
+                (datestamp, SectorEvent(_COLSPEC, race_num, 3, s3_time, _parseFlags(row[' S3_IMPROVEMENT'])))
+            )
+
             events.append(
                 (datestamp, LaptimeEvent(_COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT'])))
             )
