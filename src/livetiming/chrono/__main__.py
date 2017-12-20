@@ -67,6 +67,8 @@ def main():
 
         state = new_state
 
+    recorder.writeState(state, events[-1][0])
+
 
 def _generate_messages(generators, timestamp, old_state, new_state):
     new_messages = []
