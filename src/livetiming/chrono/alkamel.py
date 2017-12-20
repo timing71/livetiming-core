@@ -1,6 +1,6 @@
 from datetime import datetime
-from livetiming.chrono import LaptimeEvent, SectorEvent
-from livetiming.messages import FastLapMessage
+from livetiming.chrono import LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
+from livetiming.messages import FastLapMessage, CarPitMessage
 from livetiming.racing import Stat
 from livetiming.service.wec import parseTime
 
@@ -59,6 +59,8 @@ def create_events(args):
 
     with open(args.chronological_analysis, 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
+        prev_row = None
+        prev_race_num = None
         for row in reader:
             race_num = row['\xef\xbb\xbfNUMBER']
             clock_time = _parse_clock_time(row[' HOUR'])
@@ -66,12 +68,26 @@ def create_events(args):
             ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
             datestamp = calendar.timegm(ts.timetuple())
 
+            lap_time = parseTime(row[' LAP_TIME'])
+            time_in_pit = parseTime(row['PIT_TIME'])
+
+            if prev_row and prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
+                events.append((datestamp - lap_time + time_in_pit, PitOutEvent(_COLSPEC, race_num)))
+
             events.append(
                 (datestamp, SectorEvent(_COLSPEC, race_num, 3, parseTime(row[' S3']), _parseFlags(row[' S3_IMPROVEMENT'])))
             )
             events.append(
-                (datestamp, LaptimeEvent(_COLSPEC, race_num, parseTime(row[' LAP_TIME']), _parseFlags(row[' LAP_IMPROVEMENT'])))
+                (datestamp, LaptimeEvent(_COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT'])))
             )
+
+            if row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
+                events.append((datestamp, PitInEvent(_COLSPEC, race_num)))
+
+            if prev_race_num == race_num:
+                prev_row = row
+            else:
+                prev_row = None
     return events
 
 
@@ -111,5 +127,6 @@ def sort_cars(args, cars):
 
 def message_generators():
     return [
-        FastLapMessage(_COLSPEC)
+        FastLapMessage(_COLSPEC),
+        CarPitMessage(_COLSPEC)
     ]
