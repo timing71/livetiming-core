@@ -44,6 +44,7 @@ class LaptimeEvent(Event):
         self._set_field(car, Stat.LAPS, prev_lap_count + 1)
         if not prev_best or self._lap_time < prev_best[0]:
             self._set_field(car, Stat.BEST_LAP, (self._lap_time, 'pb'))
+            self._set_field(car, Stat.LAST_LAP, (self._lap_time, 'pb'))
 
         return self._updated_state(state, car)
 
