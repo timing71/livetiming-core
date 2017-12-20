@@ -71,7 +71,7 @@ def create_events(args):
             lap_time = parseTime(row[' LAP_TIME'])
             time_in_pit = parseTime(row['PIT_TIME'])
 
-            if prev_row and prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
+            if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
                 events.append((int(datestamp - lap_time + time_in_pit), PitOutEvent(_COLSPEC, race_num)))
 
             s1_time = parseTime(row[' S1'])
@@ -111,7 +111,7 @@ def create_initial_state(args):
             if race_num not in state:
                 state[race_num] = [
                     race_num,
-                    'RUN',
+                    'PIT',
                     row['CLASS'].decode('utf-8'),
                     row['DRIVER_NAME'].decode('utf-8'),
                     row['TEAM'].decode('utf-8'),
@@ -133,7 +133,7 @@ def create_initial_state(args):
 
 
 def sort_cars(args, cars):
-    return sorted(cars, key=lambda c: c[15])
+    return sorted(cars, key=lambda c: (c[15] if c[15] > 0 else 99999999, c[0]))
 
 
 def message_generators():
