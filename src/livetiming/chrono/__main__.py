@@ -1,6 +1,8 @@
 import argparse
 
 from livetiming.chrono import alkamel
+from livetiming.recording import TimingRecorder
+import uuid
 
 _FORMATS = {
     'alkamel': alkamel
@@ -21,6 +23,8 @@ def _parse_args():
         subparser.set_defaults(message_generators=format_module.message_generators)
         subparser.set_defaults(sort_cars=format_module.sort_cars)
 
+    parser.add_argument('--output', '-o', help='Output filename', default='output.zip')
+
     return parser.parse_args()
 
 
@@ -38,6 +42,15 @@ def main():
         'session': {},
         'messages': []
     }
+
+    recorder = TimingRecorder(args.output)
+    recorder.writeManifest({
+        'description': 'Converted chrono dump',
+        'name': 'converted',
+        'uuid': uuid.uuid4().hex
+    })
+    next_frame_threshold = 0
+
     for evt_time, evt in events:
         car_state = evt(car_state)
         new_state = {
@@ -48,7 +61,10 @@ def main():
 
         new_state['messages'] = _generate_messages(message_generators, evt_time, state, new_state)
 
-        print "{} State now {}".format(evt_time, new_state)
+        if evt_time > next_frame_threshold:
+            recorder.writeState(new_state, evt_time)
+            next_frame_threshold = evt_time + 1
+
         state = new_state
 
 
