@@ -80,6 +80,7 @@ class PitInEvent(Event):
     def __call__(self, state):
         car = self._get_car(state)
         self._set_field(car, Stat.STATE, "PIT")
+        self._set_field(car, Stat.PITS, self._get_field(car, Stat.PITS) + 1)
 
         return self._updated_state(state, car)
 
