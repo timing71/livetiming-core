@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from livetiming.chrono import LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
 from livetiming.messages import FastLapMessage, CarPitMessage
 from livetiming.racing import Stat
@@ -6,6 +6,7 @@ from livetiming.service.wec import parseTime
 
 import calendar
 import csv
+import re
 
 
 _COLSPEC = [
@@ -44,7 +45,10 @@ def _parse_clock_time(clock):
     try:
         return datetime.strptime(clock, "%H:%M:%S.%f").time()
     except ValueError:
-        return None
+        try:
+            return datetime.strptime(clock, "%M:%S.%f").time()
+        except ValueError:
+            return None
 
 
 def generate_parser_args(parser):
@@ -130,6 +134,24 @@ def create_initial_state(args):
                 ]
 
     return state
+
+
+def get_start_time(args):
+    start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
+
+    with open(args.chronological_analysis, 'rb') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=';')
+        row = reader.next()
+
+        clock_time = _parse_clock_time(row[' HOUR'])
+
+        ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
+
+        elapsed_raw = row[' ELAPSED']
+        elapsed = re.match("((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+\.[0-9]+)", elapsed_raw)
+        delta = timedelta(hours=int(elapsed.group('hours') or 0), minutes=int(elapsed.group('minutes')), seconds=float(elapsed.group('seconds')))
+
+        return calendar.timegm((ts - delta).timetuple()) + 1
 
 
 def sort_cars(args, cars):
