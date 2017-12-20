@@ -74,3 +74,19 @@ class SectorEvent(Event):
             self._set_field(car, bs_idx, (self._sector_time, 'pb'))
 
         return self._updated_state(state, car)
+
+
+class PitInEvent(Event):
+    def __call__(self, state):
+        car = self._get_car(state)
+        self._set_field(car, Stat.STATE, "PIT")
+
+        return self._updated_state(state, car)
+
+
+class PitOutEvent(Event):
+    def __call__(self, state):
+        car = self._get_car(state)
+        self._set_field(car, Stat.STATE, "RUN")
+
+        return self._updated_state(state, car)
