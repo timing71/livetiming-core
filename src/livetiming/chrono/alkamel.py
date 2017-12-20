@@ -88,12 +88,12 @@ def create_events(args):
                 (datestamp, SectorEvent(_COLSPEC, race_num, 3, s3_time, _parseFlags(row[' S3_IMPROVEMENT'])))
             )
 
-            events.append(
-                (datestamp, LaptimeEvent(_COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT'])))
-            )
-
             if row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
                 events.append((datestamp, PitInEvent(_COLSPEC, race_num)))
+            else:
+                events.append(
+                    (datestamp, LaptimeEvent(_COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT'])))
+                )
 
             if prev_race_num == race_num:
                 prev_row = row
