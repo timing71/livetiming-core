@@ -22,6 +22,7 @@ def _parse_args():
         subparser.set_defaults(create_initial_state=format_module.create_initial_state)
         subparser.set_defaults(message_generators=format_module.message_generators)
         subparser.set_defaults(sort_cars=format_module.sort_cars)
+        subparser.set_defaults(get_start_time=format_module.get_start_time)
 
     parser.add_argument('--output', '-o', help='Output filename', default='output.zip')
 
@@ -39,7 +40,7 @@ def main():
     car_state = initial_state
     state = {
         'cars': args.sort_cars(args, car_state.values()),
-        'session': {},
+        'session': {'timeElapsed': 0},
         'messages': []
     }
 
@@ -51,11 +52,14 @@ def main():
     })
     next_frame_threshold = 0
 
+    session_start_time = args.get_start_time(args)
+    recorder.writeState(state, session_start_time)
+
     for evt_time, evt in events:
         car_state = evt(car_state)
         new_state = {
             'cars': args.sort_cars(args, car_state.values()),
-            'session': state['session'],
+            'session': {'timeElapsed': evt_time - session_start_time},
             'messages': state['messages']
         }
 
