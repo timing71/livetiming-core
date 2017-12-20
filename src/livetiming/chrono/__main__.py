@@ -25,15 +25,13 @@ def _parse_args():
 def main():
     args = _parse_args()
     initial_state = args.create_initial_state(args)
-    print initial_state
+
     events = sorted(args.create_events(args), key=lambda e: e[0])
-    print events
 
-    state = initial_state
+    car_state = initial_state
     for evt_time, evt in events:
-        evt(state)
-
-    print state
+        car_state = evt(car_state)
+        print "{} State now {}".format(evt_time, car_state)
 
 
 main()
