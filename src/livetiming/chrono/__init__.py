@@ -81,7 +81,9 @@ class PitInEvent(Event):
         car = self._get_car(state)
         self._set_field(car, Stat.STATE, "PIT")
         current_pits = self._get_field(car, Stat.PITS) or 0
+        current_laps = self._get_field(car, Stat.LAPS) or 0
         self._set_field(car, Stat.PITS, current_pits + 1)
+        self._set_field(car, Stat.LAPS, current_laps + 1)
 
         return self._updated_state(state, car)
 
