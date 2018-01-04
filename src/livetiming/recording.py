@@ -85,7 +85,8 @@ class TimingRecorder(object):
         return {
             'cars': list(carsDiff),
             'session': list(sessionDiff),
-            'messages': messagesDiff
+            'messages': messagesDiff,
+            'highlight': newState.get('highlight', [])
         }
 
 
