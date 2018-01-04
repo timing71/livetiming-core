@@ -1,0 +1,14 @@
+[Unit]
+Description=livetiming DVR service
+After=crossbar.service
+Requires=crossbar.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/james/workspace/livetiming/
+ExecStart=/home/james/workspace/livetiming/venv/bin/livetiming-dvr
+Restart=on-failure
+EnvironmentFile=/home/james/workspace/livetiming/livetiming.env
+
+[Install]
+WantedBy=multi-user.target
