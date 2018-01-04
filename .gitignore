@@ -44,6 +44,7 @@ crossbar/.crossbar/node.key
 /recordings/
 /logs/
 /analysis/
+/state/
 /pids/
 .idea
 web/app/config/config.json
