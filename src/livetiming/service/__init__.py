@@ -277,7 +277,9 @@ class Service(object):
     def _updateRaceState(self):
         try:
             newState = self.getRaceState()
-            self.state["messages"] = (self._createMessages(self.state, newState) + self.state["messages"])[0:100]
+            new_messages = self._createMessages(self.state, newState)
+            self.state["highlight"] = [m[4] for m in new_messages if len(m) >= 5]
+            self.state["messages"] = (new_messages + self.state["messages"])[0:100]
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
 
