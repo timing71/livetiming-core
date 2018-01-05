@@ -4,6 +4,7 @@ from livetiming.analysis.lapchart import LapChart
 from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.analysis.session import Session
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
@@ -375,6 +376,7 @@ class Service(lt_service):
 
     def getAnalysisModules(self):
         return [
+            Session,
             LapChart,
             LaptimeChart,
             StintLength,
