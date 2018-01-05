@@ -10,6 +10,7 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from lzstring import LZString
 from twisted.internet.defer import Deferred
+from twisted.internet.task import LoopingCall
 
 import argparse
 import simplejson
@@ -22,11 +23,18 @@ from twisted.internet import reactor
 def create_protocol(service):
     class TimeserviceNLClientProtocol(WebSocketClientProtocol):
 
+        def __init__(self):
+            super(TimeserviceNLClientProtocol, self).__init__()
+            self._lastUpdated = None
+            self._watchdog_task = LoopingCall(self._watchdog)
+
         def onConnect(self, response):
             service.log.info("Connected to TSNL")
             self.factory.resetDelay()
+            self._watchdog_task.start(60, False)
 
         def onMessage(self, payload, isBinary):
+            self._lastUpdated = datetime.utcnow()
             data = simplejson.loads(payload)
             if "M" in data:
                 for message in data["M"]:
@@ -45,6 +53,15 @@ def create_protocol(service):
 
         def onClose(self, wasClean, code, reason):
             service.log.info("Closed connection to TSNL")
+            self._watchdog_task.stop()
+
+        def _watchdog(self):
+            now = datetime.utcnow()
+            delta = (now - self._lastUpdated).total_seconds()
+            if delta > 60:
+                service.log.warn("WATCHDOG: {delta} since last packet received, kicking connection", delta=delta)
+                self.dropConnection(abort=True)
+
     return TimeserviceNLClientProtocol
 
 
