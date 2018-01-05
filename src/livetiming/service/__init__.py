@@ -278,7 +278,7 @@ class Service(object):
         try:
             newState = self.getRaceState()
             new_messages = self._createMessages(self.state, newState)
-            self.state["highlight"] = [m[4] for m in new_messages if len(m) >= 5]
+            self.state["highlight"] = list(set([m[4] for m in new_messages if len(m) >= 5]))  # list -> set to uniquify, -> list again to serialise
             self.state["messages"] = (new_messages + self.state["messages"])[0:100]
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
