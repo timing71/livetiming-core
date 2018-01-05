@@ -181,7 +181,7 @@ class ReplayManager(object):
 class RecordingsDirectory(ApplicationSession):
     @inlineCallbacks
     def onJoin(self, details):
-        self.replayManager = ReplayManager(self.publish, "recordings/")
+        self.replayManager = ReplayManager(self.publish, os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings'))
         yield self.register(self.replayManager.listRecordings, RPC.RECORDING_LISTING)
         self.log.info("Registered recording listing RPC")
 
