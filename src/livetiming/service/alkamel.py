@@ -282,6 +282,7 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.DRIVER,
             Stat.TEAM,
             Stat.CAR,
@@ -356,7 +357,13 @@ class Service(lt_service):
 
         colspec = self.getColumnSpec()
         cars = map(lambda c: c.values(), self.currentStanding.values())
+        classes_count = {}
         for car in cars:
+
+            my_class = car[colspec.index(Stat.CLASS)]
+            classes_count[my_class] = classes_count.get(my_class, 0) + 1
+
+            car.insert(3, classes_count[my_class])
             best = car[colspec.index(Stat.BEST_LAP)]
             last = car[colspec.index(Stat.LAST_LAP)]
             s3 = car[colspec.index(Stat.S3)]
