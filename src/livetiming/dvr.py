@@ -32,6 +32,16 @@ def create_dvr_session(dvr):
 RECORDING_TIMEOUT = 5 * 60  # 5 minutes
 
 
+def dedupe(filename):
+    f, ext = os.path.splitext(filename)
+
+    d = 0
+    while os.path.exists(filename):
+        d += 1
+        filename = "{}_{}{}".format(f, d, ext)
+    return filename
+
+
 class DVR(object):
     def __init__(self):
         self.log = Logger()
@@ -84,7 +94,16 @@ class DVR(object):
         return self._in_progress_recordings[service_uuid]
 
     def _store_manifest(self, manifest):
-        self._get_recording(manifest['uuid']).writeManifest(manifest)
+        uuid = manifest['uuid']
+        rec = self._get_recording(uuid)
+        if rec.manifest:
+            # We've received a new manifest for a recording that already has one
+            # If the title or description are different, then start a new recording file
+            if rec.manifest['name'] != manifest['name'] or rec.manifest['description'] != manifest['description']:
+                self._finish_recording(uuid)
+                rec = self._get_recording(uuid)
+
+        rec.writeManifest(manifest)
 
     def _store_data_frame(self, uuid, frame, date):
         self._get_recording(uuid).writeState(frame, date)
@@ -105,12 +124,13 @@ class DVR(object):
 
     def _finish_recording(self, uuid):
         self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
-        self._in_progress_recordings.pop(uuid)
+        recording = self._in_progress_recordings.pop(uuid)
 
-        dest = os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid))
+        src = recording.recordFile
+        dest = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
 
         shutil.move(
-            os.path.join(self.IN_PROGRESS_DIR, "{}.zip".format(uuid)),
+            src,
             dest
         )
 
