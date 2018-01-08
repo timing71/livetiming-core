@@ -101,6 +101,14 @@ class DVR(object):
             # We've received a new manifest for a recording that already has one
             # If the title or description are different, then start a new recording file
             if rec.manifest['name'] != manifest['name'] or rec.manifest['description'] != manifest['description']:
+                self.log.info(
+                    "Detected manifest changes for {uuid} ({old_name} - {old_desc} to {new_name} - {new_desc}). Triggering new recording.",
+                    uuid=uuid,
+                    old_name=rec.manifest['name'],
+                    old_desc=rec.manifest['description'],
+                    new_name=manifest['name'],
+                    new_desc=manifest['description']
+                )
                 self._finish_recording(uuid)
                 rec = self._get_recording(uuid)
 
