@@ -30,6 +30,7 @@ def create_dvr_session(dvr):
 
 
 RECORDING_TIMEOUT = 5 * 60  # 5 minutes
+RECORDING_DURATION_THRESHOLD = 10 * 60  # recordings shorter than 10 minutes are thrown away
 
 
 def dedupe(filename):
@@ -127,14 +128,23 @@ class DVR(object):
         recording = self._in_progress_recordings.pop(uuid)
 
         src = recording.recordFile
-        dest = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+        if recording.duration > RECORDING_DURATION_THRESHOLD:
+            self.log.warn(
+                "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
+                uuid=uuid,
+                duration=recording.duration,
+                threshold=RECORDING_DURATION_THRESHOLD
+            )
+            os.remove(src)
+        else:
+            dest = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
 
-        shutil.move(
-            src,
-            dest
-        )
+            shutil.move(
+                src,
+                dest
+            )
 
-        os.chmod(dest, 0664)
+            os.chmod(dest, 0664)
 
 
 def main():
