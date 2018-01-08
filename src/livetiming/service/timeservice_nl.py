@@ -99,8 +99,8 @@ def mapState(raw):
 
 
 def mapFlag(raw):
-    print "Flag: {}".format(raw)
     mapp = {
+        -1: FlagStatus.NONE,  # Not started
         1: FlagStatus.NONE,  # Ready to start
         2: FlagStatus.RED,
         3: FlagStatus.SC,
