@@ -120,6 +120,7 @@ def parse_extra_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--feed", help="Feed ID")
     parser.add_argument("--caution", help="Understand 'yellow flag' to mean American-style full-course caution", action="store_true")
+    parser.add_argument("--disable-class-column", help="Don't show class or PIC in timing", action="store_true")
 
     return parser.parse_args(args)
 
@@ -210,7 +211,8 @@ class Service(lt_service):
                     self.log.warn("No active driver for {}, using first listed driver".format(participant['nr']))
                     participant['_active_driver'] = participant['drivers'][0]
                 car[cols[Stat.NUM]] = participant['nr']
-                car[cols[Stat.CLASS]] = class_for(participant['class_id'])
+                if Stat.CLASS in cols:
+                    car[cols[Stat.CLASS]] = class_for(participant['class_id'])
                 car[cols[Stat.DRIVER]] = formatDriverName(participant['_active_driver'])
                 car[cols[Stat.TEAM]] = [f for f in participant['fields'] if f['id'] == 'team'][0]['value']
                 car[cols[Stat.CAR]] = [f for f in participant['fields'] if f['id'] == 'car'][0]['value']
@@ -278,11 +280,9 @@ class Service(lt_service):
             self.flag_from_messages = None
 
     def getColumnSpec(self):
-        return [
+        base = [
             Stat.NUM,
             Stat.STATE,
-            Stat.CLASS,
-            Stat.POS_IN_CLASS,
             Stat.DRIVER,
             Stat.TEAM,
             Stat.CAR,
@@ -296,6 +296,10 @@ class Service(lt_service):
             Stat.BEST_LAP,
             Stat.PITS
         ]
+        if not self.extra_args.disable_class_column:
+            base.insert(2, Stat.CLASS)
+            base.insert(3, Stat.POS_IN_CLASS)
+        return base
 
     def getTrackDataSpec(self):
         if self.hasTrackData:
@@ -360,10 +364,11 @@ class Service(lt_service):
         classes_count = {}
         for car in cars:
 
-            my_class = car[colspec.index(Stat.CLASS)]
-            classes_count[my_class] = classes_count.get(my_class, 0) + 1
+            if Stat.CLASS in colspec:
+                my_class = car[colspec.index(Stat.CLASS)]
+                classes_count[my_class] = classes_count.get(my_class, 0) + 1
 
-            car.insert(3, classes_count[my_class])
+                car.insert(3, classes_count[my_class])
             best = car[colspec.index(Stat.BEST_LAP)]
             last = car[colspec.index(Stat.LAST_LAP)]
             s3 = car[colspec.index(Stat.S3)]
