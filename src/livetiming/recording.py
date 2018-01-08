@@ -53,6 +53,7 @@ class TimingRecorder(object):
         self.log = Logger()
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
+        self.first_frame = None
         self.latest_frame = None
         self.manifest = None
 
@@ -77,6 +78,8 @@ class TimingRecorder(object):
                 z.writestr("{:011d}i.json".format(timestamp), simplejson.dumps(diff))
         self.frames += 1
         self.prevState = state.copy()
+        if not self.first_frame:
+            self.first_frame = timestamp
         self.latest_frame = timestamp
 
     def _diffState(self, newState):
@@ -92,6 +95,12 @@ class TimingRecorder(object):
             'messages': messagesDiff,
             'highlight': newState.get('highlight', [])
         }
+
+    @property
+    def duration(self):
+        if self.first_frame and self.latest_frame:
+            return self.latest_frame - self.first_frame
+        return 0
 
 
 class RecordingFile(object):
