@@ -11,6 +11,7 @@ import dictdiffer
 import os
 import re
 import simplejson
+import shutil
 import time
 import zipfile
 import tempfile
@@ -36,7 +37,8 @@ def updateZip(zipname, filename, data, new_filename=None, new_zipname=None):
                     zout.writestr(item, zin.read(item.filename))
                     seen_filenames.append(item.filename)
 
-    # replace with the temp archive
+    # replace with the temp archive, preserving permissions
+    shutil.copymode(zipname, tmpname)
     os.remove(zipname)
     os.rename(tmpname, new_zipname if new_zipname else zipname)
 
@@ -52,6 +54,7 @@ class TimingRecorder(object):
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
         self.latest_frame = None
+        self.manifest = None
 
     def writeManifest(self, serviceRegistration):
         serviceRegistration["startTime"] = time.time()
@@ -61,6 +64,7 @@ class TimingRecorder(object):
                 z.writestr("manifest.json", simplejson.dumps(serviceRegistration))
                 return True
         updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
+        self.manifest = serviceRegistration
 
     def writeState(self, state, timestamp=None):
         if not timestamp:
