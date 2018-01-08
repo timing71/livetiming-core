@@ -128,7 +128,7 @@ class DVR(object):
         recording = self._in_progress_recordings.pop(uuid)
 
         src = recording.recordFile
-        if recording.duration > RECORDING_DURATION_THRESHOLD:
+        if recording.duration < RECORDING_DURATION_THRESHOLD:
             self.log.warn(
                 "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
                 uuid=uuid,
