@@ -40,7 +40,7 @@ def dedupe(filename):
     while os.path.exists(filename):
         d += 1
         filename = "{}_{}{}".format(f, d, ext)
-    return filename
+    return filename, d
 
 
 class DVR(object):
@@ -145,7 +145,11 @@ class DVR(object):
             )
             os.remove(src)
         else:
-            dest = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+            dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+            if disambiguator > 0:
+                manifest = recording.manifest
+                manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
+                recording.writeManifest(manifest)
 
             shutil.move(
                 src,
