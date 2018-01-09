@@ -6,13 +6,13 @@ from livetiming.network import authenticatedService, Realm, RPC, Channel,\
 from livetiming.recording import TimingRecorder
 from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
 import os
 import shutil
 import simplejson
 import time
-from twisted.internet.task import LoopingCall
 
 
 def create_dvr_session(dvr):
