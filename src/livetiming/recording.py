@@ -103,18 +103,25 @@ class TimingRecorder(object):
         return 0
 
 
+class RecordingException(Exception):
+    pass
+
+
 class RecordingFile(object):
     def __init__(self, filename, force_compat=False):
         self.filename = filename
         self.iframes = []
         self.keyframes = []
         with zipfile.ZipFile(filename, 'r', zipfile.ZIP_DEFLATED) as z:
-            self.manifest = simplejson.load(z.open("manifest.json", 'r'))
+            try:
+                self.manifest = simplejson.load(z.open("manifest.json", 'r'))
+            except KeyError:
+                raise RecordingException("File contains no manifest.json, this is not a usable recording.")
 
             if "version" not in self.manifest and not force_compat:
-                raise Exception("Unknown / pre-v1 recording file, unsupported. Try rectool convert")
+                raise RecordingException("Unknown / pre-v1 recording file, unsupported. Try rectool convert")
             if "version" in self.manifest and self.manifest['version'] != 1:
-                raise Exception("Unknown recording file version {}, cannot continue".format(self.manifest['version']))
+                raise RecordingException("Unknown recording file version {}, cannot continue".format(self.manifest['version']))
 
             minFrame = 999999999999999
             maxFrame = 0
@@ -179,11 +186,14 @@ class ReplayManager(object):
         (_, _, filenames) = os.walk(self.recordingDirectory).next()
         self.recordings = {}
         for recFileName in filenames:
-            fullPath = os.path.join(self.recordingDirectory, recFileName)
-            recFile = RecordingFile(fullPath)
-            manifest = recFile.augmentedManifest()
-            manifest['filename'] = recFileName
-            self.recordings[manifest['uuid']] = manifest
+            try:
+                fullPath = os.path.join(self.recordingDirectory, recFileName)
+                recFile = RecordingFile(fullPath)
+                manifest = recFile.augmentedManifest()
+                manifest['filename'] = recFileName
+                self.recordings[manifest['uuid']] = manifest
+            except RecordingException:
+                self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
         self.publish(Channel.CONTROL, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
