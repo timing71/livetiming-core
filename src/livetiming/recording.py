@@ -169,7 +169,7 @@ def applyIntraFrame(initial, iframe):
         'cars': dictdiffer.patch(iframe['cars'], initial['cars']),
         'session': dictdiffer.patch(iframe['session'], initial['session']),
         'messages': (iframe['messages'] + initial['messages'])[0:100],
-        'highlight': iframe['highlight']
+        'highlight': iframe.get('highlight', [])
     }
 
 
