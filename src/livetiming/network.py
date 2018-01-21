@@ -12,6 +12,7 @@ class Realm:
 class Channel:
     CONTROL = u'livetiming.control'
     DIRECTORY = u'livetiming.directory'
+    SCHEDULER = u'livetiming.scheduler'
 
 
 class RPC:

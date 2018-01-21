@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from autobahn.wamp.types import RegisterOptions
+from autobahn.wamp.types import PublishOptions
 from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
@@ -127,13 +127,8 @@ class Tweeter(object):
 
 def create_scheduler_session(scheduler):
     class SchedulerSession(ApplicationSession):
-        @inlineCallbacks
         def onJoin(self, details):
             scheduler.log.info("Scheduler session ready")
-
-            yield self.register(scheduler.listSchedule, RPC.SCHEDULE_LISTING, RegisterOptions(force_reregister=True))
-            scheduler.log.debug("Registered service listing RPC")
-
             scheduler.set_publish(self.publish)
 
         def onDisconnect(self):
@@ -152,6 +147,7 @@ class Scheduler(object):
         self.calendarAddress = os.environ['LIVETIMING_CALENDAR_URL']
         self.lock = Lock()
         self._publish = None
+        self.publish_options = PublishOptions(retain=True)
 
         self._tweeter = Tweeter()
 
@@ -196,7 +192,8 @@ class Scheduler(object):
             except Exception:
                 self.log.failure("Exception while syncing calendar: {log_failure}")
                 sentry.captureException()
-        self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
+        self.publish_schedule()
+
 
     def execute(self):
         with self.lock:
@@ -231,16 +228,23 @@ class Scheduler(object):
                     sentry.captureException()
 
         if hasChanged:
-            self.publish(Channel.CONTROL, Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise())
+            self.publish_schedule()
 
         self.log.debug("Scheduler loop complete")
+
+    def publish_schedule(self):
+        self.publish(
+            Channel.SCHEDULER,
+            Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise(),
+            options=self.publish_options
+        )
 
     def set_publish(self, func):
         self._publish = func
 
-    def publish(self, *args):
+    def publish(self, *args, **kwargs):
         if self._publish:
-            self._publish(*args)
+            self._publish(*args, **kwargs)
         else:
             self.log.debug("Call to publish with no publish function set!")
 
