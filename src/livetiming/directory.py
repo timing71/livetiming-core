@@ -1,5 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
-from autobahn.wamp.types import RegisterOptions
+from autobahn.wamp.types import RegisterOptions, PublishOptions
 from livetiming import load_env
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from os import environ
@@ -15,9 +15,7 @@ class Directory(ApplicationSession):
     def __init__(self, config):
         ApplicationSession.__init__(self, config)
         self.services = {}
-
-    def listServices(self):
-        return self.services.values()
+        self.publish_options = PublishOptions(retain=True)
 
     def removeService(self, errorArgs, serviceUUID):
         self.log.info("Removing dead service {}".format(serviceUUID))
@@ -30,7 +28,11 @@ class Directory(ApplicationSession):
             _ = self.call(RPC.LIVENESS_CHECK.format(service)).addErrback(self.removeService, serviceUUID=service)
 
     def broadcastServicesList(self):
-        self.publish(Channel.CONTROL, Message(MessageClass.DIRECTORY_LISTING, self.services.values()).serialise())
+        self.publish(
+            Channel.DIRECTORY,
+            Message(MessageClass.DIRECTORY_LISTING, self.services.values()).serialise(),
+            options=self.publish_options
+        )
 
     @inlineCallbacks
     def onJoin(self, details):
@@ -40,8 +42,7 @@ class Directory(ApplicationSession):
         self.log.debug("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.INITIALISE_DIRECTORY).serialise())
         self.log.debug("Published init message")
-        yield self.register(self.listServices, RPC.DIRECTORY_LISTING, RegisterOptions(force_reregister=True))
-        self.log.debug("Registered service listing RPC")
+        self.broadcastServicesList()
 
         liveness = task.LoopingCall(self.checkLiveness)
         liveness.start(10)
