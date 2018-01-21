@@ -194,20 +194,15 @@ class ReplayManager(object):
                 self.recordings[manifest['uuid']] = manifest
             except RecordingException:
                 self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
-        self.publish(Channel.CONTROL, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
+        self.publish(Channel.RECORDING, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
-
-    def listRecordings(self):
-        return self.recordings
 
 
 @authenticatedService
 class RecordingsDirectory(ApplicationSession):
-    @inlineCallbacks
     def onJoin(self, details):
         self.replayManager = ReplayManager(self.publish, os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings'))
-        yield self.register(self.replayManager.listRecordings, RPC.RECORDING_LISTING)
-        self.log.info("Registered recording listing RPC")
+        self.replayManager.log.info("Recordings directory service ready")
 
     def onDisconnect(self):
         self.log.info("Disconnected")

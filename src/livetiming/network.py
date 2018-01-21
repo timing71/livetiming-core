@@ -13,6 +13,7 @@ class Channel:
     CONTROL = u'livetiming.control'
     DIRECTORY = u'livetiming.directory'
     SCHEDULER = u'livetiming.scheduler'
+    RECORDING = u'livetiming.replay'
 
 
 class RPC:
