@@ -11,6 +11,7 @@ class Realm:
 
 class Channel:
     CONTROL = u'livetiming.control'
+    DIRECTORY = u'livetiming.directory'
 
 
 class RPC:
