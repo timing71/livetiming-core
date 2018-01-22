@@ -3,6 +3,8 @@ from livetiming.service.lemansseries import Service as LMS
 
 
 class Service(LMS):
+    attribution = ['ELMS', 'http://www.europeanlemansseries.com/']
+
     def __init__(self, args, extra_args):
         LMS.__init__(self, args, extra_args)
 

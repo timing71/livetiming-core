@@ -236,6 +236,8 @@ TID_REGEX = re.compile("^[0-9a-z]{32}$")
 
 
 class Service(lt_service):
+    attribution = ['&copy; TimeService', 'http://www.timeservice.nl/']
+
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
 

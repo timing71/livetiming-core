@@ -64,6 +64,7 @@ def parseFlagState(flagChar):
 
 
 class Service(lt_service):
+    attribution = ['FOWC', 'https://www.formula1.com/']
 
     DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
     log = Logger()

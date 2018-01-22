@@ -23,6 +23,8 @@ def mapFlagStates(rawState):
 
 
 class Service(lt_service):
+    attribution = ['NASCAR', 'http://www.nascar.com/']
+
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.description = ""

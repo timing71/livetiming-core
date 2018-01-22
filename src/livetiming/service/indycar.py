@@ -83,6 +83,7 @@ def parseEventName(heartbeat):
 
 
 class Service(lt_service):
+    attribution = ['IndyCar', 'http://racecontrol.indycar.com/']
     log = Logger()
 
     def __init__(self, args, extra_args):

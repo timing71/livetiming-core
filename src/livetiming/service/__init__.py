@@ -257,7 +257,7 @@ class Service(object):
 
     def _createServiceRegistration(self):
         colspec = map(lambda s: s.value if isinstance(s, Stat) else s, self.getColumnSpec())
-        return {
+        manifest = {
             "uuid": self.uuid,
             "name": self.getName(),
             "serviceClass": self.__module__[19:],  # Everything after 'livetiming.service.'
@@ -268,6 +268,13 @@ class Service(object):
             "hasAnalysis": not (self.args.disable_analysis or not self.getAnalysisModules()),
             "hidden": self.args.hidden
         }
+
+        if hasattr(self, 'attribution'):
+            manifest['source'] = self.attribution
+        else:
+            self.log.warn('No attribution specified for {service}', service=manifest['serviceClass'])
+
+        return manifest
 
     def _getDescription(self):
         if self.args.description is not None:

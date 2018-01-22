@@ -126,6 +126,8 @@ def parse_extra_args(args):
 
 
 class Service(lt_service):
+    attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
+
     def __init__(self, args, extra_args, feed=None):
         lt_service.__init__(self, args, extra_args)
 

@@ -143,6 +143,8 @@ def map_session_flag(data):
 
 
 class Service(lt_service):
+    attribution = ['Blancpain / SRO', 'https://www.blancpain-gt-series.com/']
+
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.extra_args = extra_args

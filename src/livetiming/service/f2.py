@@ -85,6 +85,8 @@ def parseFlag(rawFlag):
 
 
 class Service(lt_service):
+    attribution = ['FOWC', 'http://www.fiaformula2.com/']
+
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
         socketURL = getWebSocketURL(getToken())

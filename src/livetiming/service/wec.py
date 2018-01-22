@@ -85,6 +85,7 @@ def parse_extra_args(extra_args):
 
 class Service(lt_service):
     log = Logger()
+    attribution = ['WEC', 'http://www.fiawec.com/']
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
