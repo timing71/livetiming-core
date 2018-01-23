@@ -54,7 +54,7 @@ class TimingRecorder(object):
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
         self.first_frame = None
-        self.latest_frame = None
+        self.latest_frame = time.time()
         self.manifest = None
 
     def writeManifest(self, serviceRegistration):

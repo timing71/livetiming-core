@@ -346,10 +346,16 @@ if __name__ == '__main__':
 
         start_time = time.time()
 
-        for i in range(rec.frames + 1):
-            newState = rec.getStateAt(i * int(rec.manifest['pollInterval']))
-            dc.update_state(newState, colSpec, rec.manifest['startTime'] + (i * int(rec.manifest['pollInterval'])))
-            print "{}/{}".format(i, rec.frames)
+        frames = sorted(rec.keyframes + rec.iframes)
+        frame_count = len(frames)
+
+        for idx, frame in enumerate(frames):
+            newState = rec.getStateAtTimestamp(frame)
+            dc.update_state(newState, colSpec, frame)
+            now = time.time()
+            current_fps = float(idx) / (now - start_time)
+            eta = start_time + (frame_count / current_fps) if current_fps > 0 else 0
+            print "{}/{} ({:.2%}) {:.3f}fps eta:{:.0f}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta)
 
         stop_time = time.time()
         print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))

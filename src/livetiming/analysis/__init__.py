@@ -3,6 +3,7 @@ from livetiming import sentry
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
+from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 import simplejson
 import time
@@ -31,12 +32,15 @@ class Analyser(object):
         self.modules = OrderedDict()
         for mclass in modules:
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
-        self.doPublish = publish
+
+        if publish:
+            LoopingCall(self._publishAnalysisData).start(10)
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         self.data_centre.update_state(newState, colSpec, timestamp)
 
-        if self.doPublish and newState["session"].get("flagState", "none") != "none":
+    def _publishAnalysisData(self):
+        if self.data_centre.current_state["session"].get("flagState", "none") != "none":
             for mclass, module in self.modules.iteritems():
                 try:
                     self.publish(
@@ -62,8 +66,8 @@ class Analyser(object):
     def _load_data_centre(self):
         try:
             with open(self._data_centre_file(), "rb") as data_dump_file:
-                self.data_centre = cPickle.load(data_dump_file)
                 self.log.info("Using existing data centre dump from {}".format(os.path.realpath(data_dump_file.name)))
+                self.data_centre = cPickle.load(data_dump_file)
         except IOError:
             self.data_centre = DataCentre()
 

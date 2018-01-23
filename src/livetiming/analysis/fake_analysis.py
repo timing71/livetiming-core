@@ -8,6 +8,7 @@ from livetiming.racing import Stat
 from livetiming import load_env
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.analysis.data import *
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
@@ -26,18 +27,19 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.a = Analyser("TEST", self.publish, [StintLength, EnduranceStopAnalysis], publish=False)
-
         self.rec = RecordingFile(recFile)
 
         self.manifest = self.rec.manifest
         self.manifest['uuid'] = "TEST"
         self.manifest['name'] = "System Test"
         self.manifest['description'] = "system under test"
+        self.manifest['hidden'] = True
 
     @inlineCallbacks
     def onJoin(self, details):
         print "Joined"
+
+        self.a = Analyser("TEST", self.publish, [StintLength, EnduranceStopAnalysis], publish=True)
 
         def true():
             return True
@@ -50,11 +52,6 @@ class FakeAnalysis(ApplicationSession):
         print "All registered"
         pcs = Stat.parse_colspec(self.rec.manifest['colSpec'])
 
-        def saveAsync():
-            print "Saving data centre state"
-            return deferToThread(lambda: self.a.save_data_centre())
-        LoopingCall(saveAsync).start(60)
-
         def preprocess():
             start_time = time.time()
             for i in range(self.rec.frames + 1):
@@ -65,7 +62,7 @@ class FakeAnalysis(ApplicationSession):
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
 
-        reactor.callInThread(preprocess)
+        #reactor.callInThread(preprocess)
 
     def onDisconnect(self):
         self.log.info("Disconnected")
