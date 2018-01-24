@@ -22,7 +22,7 @@ def _make_data_message(data):
 class Analyser(object):
     log = Logger()
 
-    def __init__(self, uuid, publishFunc, modules=[], publish=False):
+    def __init__(self, uuid, publishFunc, modules=[], publish=True):
         for m in modules:
             if not issubclass(m, Analysis):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
@@ -34,7 +34,7 @@ class Analyser(object):
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
 
         if publish:
-            LoopingCall(self._publishAnalysisData).start(10)
+            LoopingCall(self._publishAnalysisData).start(10, False)
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         self.data_centre.update_state(newState, colSpec, timestamp)
@@ -44,7 +44,7 @@ class Analyser(object):
             for mclass, module in self.modules.iteritems():
                 try:
                     self.publish(
-                        u"{}/analysis/{}".format(self.uuid, mclass),
+                        u"livetiming.analysis/{}/{}".format(self.uuid, mclass[20:]),
                         _make_data_message(module.getData())
                     )
                 except Exception:
