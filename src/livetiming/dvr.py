@@ -49,6 +49,7 @@ class DVR(object):
         self._in_progress_recordings = {}
         self.IN_PROGRESS_DIR = os.getenv('LIVETIMING_RECORDINGS_TEMP_DIR', './recordings-temp')
         self.FINISHED_DIR = os.getenv('LIVETIMING_RECORDINGS_DIR', './recordings')
+        self._recordings_without_frames = []
 
     def start(self):
         if not os.path.isdir(self.IN_PROGRESS_DIR):
@@ -123,8 +124,23 @@ class DVR(object):
         finished_recordings = []
 
         for service_uuid, recording in self._in_progress_recordings.iteritems():
-            if recording.latest_frame and recording.latest_frame < threshold:
-                finished_recordings.append(service_uuid)
+            if recording.latest_frame:
+
+                if service_uuid in self._recordings_without_frames:
+                    # Take recording off probation - it now has data
+                    self._recordings_without_frames.remove(service_uuid)
+
+                if recording.latest_frame < threshold:
+                    finished_recordings.append(service_uuid)
+            else:
+                # Recording has no data yet
+                if service_uuid in self._recordings_without_frames:
+                    # It had no data last time either; kill it
+                    finished_recordings.append(service_uuid)
+                    self._recordings_without_frames.remove(service_uuid)
+                else:
+                    # Put this recording on probation
+                    self._recordings_without_frames.append(service_uuid)
 
         for uuid in finished_recordings:
             self._finish_recording(uuid)
