@@ -43,17 +43,20 @@ class MessageClass(Enum):
 
 class Message(object):
 
-    def __init__(self, msgClass, payload=None, date=None):
+    def __init__(self, msgClass, payload=None, date=None, retain=False):
         self.msgClass = msgClass
         self.payload = payload
         self.date = date if date else int(time.time() * 1000)
 
     def serialise(self):
-        return {
+        msg = {
             'msgClass': self.msgClass.value,
             'date': self.date,
             'payload': self.payload
         }
+        if retain:
+            msg['retain'] = True
+        return msg
 
     @staticmethod
     def parse(rawMsg):

@@ -1,4 +1,5 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.wamp.types import PublishOptions
 from livetiming import load_env
 from livetiming.network import RPC, Realm, authenticatedService, Message,\
     MessageClass, Channel
@@ -194,7 +195,7 @@ class ReplayManager(object):
                 self.recordings[manifest['uuid']] = manifest
             except RecordingException:
                 self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
-        self.publish(Channel.RECORDING, Message(MessageClass.RECORDING_LISTING, self.recordings).serialise())
+        self.publish(Channel.RECORDING, Message(MessageClass.RECORDING_LISTING, self.recordings, retain=True).serialise(), options=PublishOptions(retain=True))
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
 

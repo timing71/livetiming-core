@@ -194,7 +194,6 @@ class Scheduler(object):
                 sentry.captureException()
         self.publish_schedule()
 
-
     def execute(self):
         with self.lock:
             self.log.debug("Running scheduler loop...")
@@ -235,7 +234,7 @@ class Scheduler(object):
     def publish_schedule(self):
         self.publish(
             Channel.SCHEDULER,
-            Message(MessageClass.SCHEDULE_LISTING, self.listSchedule()).serialise(),
+            Message(MessageClass.SCHEDULE_LISTING, self.listSchedule(), retain=True).serialise(),
             options=self.publish_options
         )
 

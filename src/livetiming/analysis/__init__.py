@@ -1,3 +1,4 @@
+from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
 from livetiming import sentry
 from livetiming.analysis.data import DataCentre
@@ -42,11 +43,13 @@ class Analyser(object):
     def _publishAnalysisData(self):
         if self.data_centre.current_state["session"].get("flagState", "none") != "none":
             start_time = time.time()
+            publish_options = PublishOptions(retain=True)
             for mclass, module in self.modules.iteritems():
                 try:
                     self.publish(
                         u"livetiming.analysis/{}/{}".format(self.uuid, mclass[20:]),
-                        _make_data_message(module.getData())
+                        _make_data_message(module.getData()),
+                        options=publish_options
                     )
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
