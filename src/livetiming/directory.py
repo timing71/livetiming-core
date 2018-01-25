@@ -30,7 +30,7 @@ class Directory(ApplicationSession):
     def broadcastServicesList(self):
         self.publish(
             Channel.DIRECTORY,
-            Message(MessageClass.DIRECTORY_LISTING, self.services.values()).serialise(),
+            Message(MessageClass.DIRECTORY_LISTING, self.services.values(), retain=True).serialise(),
             options=self.publish_options
         )
 

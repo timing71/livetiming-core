@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.websocket import WebSocketClientFactory
-from autobahn.wamp.types import RegisterOptions
+from autobahn.wamp.types import PublishOptions, RegisterOptions
 from livetiming import load_env, sentry
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
@@ -299,7 +299,7 @@ class Service(object):
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
-        self.publish(RPC.STATE_PUBLISH.format(self.uuid), self._requestCurrentState())
+        self.publish(RPC.STATE_PUBLISH.format(self.uuid), self._requestCurrentState(), options=PublishOptions(retain=True))
 
     def _getMessageGenerators(self):
         return [
@@ -317,7 +317,7 @@ class Service(object):
         return messages
 
     def _requestCurrentState(self):
-        return Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(self.state))).serialise()
+        return Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(self.state)), retain=True).serialise()
 
     def publishManifest(self):
         self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
