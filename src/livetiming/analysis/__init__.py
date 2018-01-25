@@ -41,6 +41,7 @@ class Analyser(object):
 
     def _publishAnalysisData(self):
         if self.data_centre.current_state["session"].get("flagState", "none") != "none":
+            start_time = time.time()
             for mclass, module in self.modules.iteritems():
                 try:
                     self.publish(
@@ -50,6 +51,13 @@ class Analyser(object):
                 except Exception:
                     self.log.failure("Exception while publishing update from analysis module {mclass}: {log_failure}", mclass=mclass)
                     sentry.captureException()
+            duration = time.time() - start_time
+            if duration > 1:
+                self.log.warn("Publishing analysis data took {duration:.3f} seconds", duration=duration)
+            elif duration > 0.5:
+                self.log.info("Publishing analysis data took {duration:.3f} seconds", duration=duration)
+            else:
+                self.log.debug("Publishing analysis data took {duration:.3f} seconds", duration=duration)
 
     def _data_centre_file(self):
         return os.path.join(
