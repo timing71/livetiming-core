@@ -79,7 +79,12 @@ class Service(object):
             self.recorder = TimingRecorder(self.args.recording_file)
         else:
             self.recorder = None
-        self.analyser = Analyser(self.uuid, self.publish, self.getAnalysisModules() if not args.disable_analysis else [])
+        self.analyser = Analyser(
+            self.uuid,
+            self.publish,
+            self.getAnalysisModules() if not args.disable_analysis else [],
+            interval=self.getPollInterval()
+        )
         self._publish = None
         self.sentry.context.merge({
             'tags': {
@@ -91,9 +96,9 @@ class Service(object):
     def set_publish(self, func):
         self._publish = func
 
-    def publish(self, *args):
+    def publish(self, *args, **kwargs):
         if self._publish:
-            self._publish(*args)
+            self._publish(*args, **kwargs)
         else:
             self.log.debug("Call to publish with no publish function set!")
 

@@ -130,6 +130,7 @@ def create_scheduler_session(scheduler):
         def onJoin(self, details):
             scheduler.log.info("Scheduler session ready")
             scheduler.set_publish(self.publish)
+            scheduler.publish_schedule()
 
         def onDisconnect(self):
             scheduler.log.info("Disconnected from live timing service")

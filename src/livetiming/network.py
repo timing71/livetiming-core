@@ -47,6 +47,7 @@ class Message(object):
         self.msgClass = msgClass
         self.payload = payload
         self.date = date if date else int(time.time() * 1000)
+        self.retain = retain
 
     def serialise(self):
         msg = {
@@ -54,7 +55,7 @@ class Message(object):
             'date': self.date,
             'payload': self.payload
         }
-        if retain:
+        if self.retain:
             msg['retain'] = True
         return msg
 
