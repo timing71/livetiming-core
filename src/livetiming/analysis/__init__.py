@@ -15,15 +15,17 @@ import os
 
 sentry = sentry()
 
+ANALYSIS_PUBLISH_INTERVAL = 10
+
 
 def _make_data_message(data):
-    return Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(data))).serialise()
+    return Message(MessageClass.ANALYSIS_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(data)), retain=True).serialise()
 
 
 class Analyser(object):
     log = Logger()
 
-    def __init__(self, uuid, publishFunc, modules=[], publish=True):
+    def __init__(self, uuid, publishFunc, modules=[], publish=True, interval=ANALYSIS_PUBLISH_INTERVAL):
         for m in modules:
             if not issubclass(m, Analysis):
                 raise RuntimeError("Supplied {} is not derived from class Analysis".format(m.__name__))
@@ -35,7 +37,7 @@ class Analyser(object):
             self.modules[_fullname(mclass)] = mclass(self.data_centre)
 
         if publish:
-            LoopingCall(self._publishAnalysisData).start(10, False)
+            LoopingCall(self._publishAnalysisData).start(max(interval, ANALYSIS_PUBLISH_INTERVAL), False)
 
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         self.data_centre.update_state(newState, colSpec, timestamp)
