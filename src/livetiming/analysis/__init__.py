@@ -15,7 +15,7 @@ import os
 
 sentry = sentry()
 
-ANALYSIS_PUBLISH_INTERVAL = 10
+ANALYSIS_PUBLISH_INTERVAL = 60
 
 
 def _make_data_message(data):
