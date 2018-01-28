@@ -19,7 +19,8 @@ class Directory(ApplicationSession):
 
     def removeService(self, errorArgs, serviceUUID):
         self.log.info("Removing dead service {}".format(serviceUUID))
-        self.services.pop(serviceUUID)
+        if serviceUUID in self.services:
+            self.services.pop(serviceUUID)
         self.broadcastServicesList()
 
     def checkLiveness(self):
