@@ -7,7 +7,7 @@ from livetiming.analysis.driver import StintLength
 from livetiming.analysis.session import Session
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
+from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
 from lzstring import LZString
 from twisted.internet.defer import Deferred
 from twisted.internet.task import LoopingCall
@@ -25,16 +25,15 @@ def create_protocol(service):
 
         def __init__(self):
             super(TimeserviceNLClientProtocol, self).__init__()
-            self._lastUpdated = None
-            self._watchdog_task = LoopingCall(self._watchdog)
+            self._watchdog = Watchdog(60, self.dropConnection, abort=True)
 
         def onConnect(self, response):
             service.log.info("Connected to TSNL")
             self.factory.resetDelay()
-            self._watchdog_task.start(60, False)
+            self._watchdog.start()
 
         def onMessage(self, payload, isBinary):
-            self._lastUpdated = datetime.utcnow()
+            self._watchdog.notify()
             data = simplejson.loads(payload)
             if "M" in data:
                 for message in data["M"]:
@@ -53,14 +52,7 @@ def create_protocol(service):
 
         def onClose(self, wasClean, code, reason):
             service.log.info("Closed connection to TSNL")
-            self._watchdog_task.stop()
-
-        def _watchdog(self):
-            now = datetime.utcnow()
-            delta = (now - self._lastUpdated).total_seconds()
-            if delta > 60:
-                service.log.warn("WATCHDOG: {delta} since last packet received, kicking connection", delta=delta)
-                self.dropConnection(abort=True)
+            self._watchdog.stop()
 
     return TimeserviceNLClientProtocol
 
