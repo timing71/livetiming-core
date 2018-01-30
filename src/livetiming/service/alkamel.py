@@ -166,17 +166,23 @@ class Service(lt_service):
 
     def session(self, data):
 
+        newSession = (
+            ("session_name" in data and "session_name" not in self.sessionData) or
+            ("event_name" in data and "event_name" not in self.sessionData) or
+            ("category" in data and "category" not in self.sessionData)
+        )
         sessionChange = (
-            ("session_name" in data and ("session_name" not in self.sessionData or data["session_name"] != self.sessionData["session_name"])) or
-            ("event_name" in data and ("event_name" not in self.sessionData or data["event_name"] != self.sessionData["event_name"])) or
-            ("category" in data and ("category" not in self.sessionData or data["category"] != self.sessionData["category"]))
+            ("session_name" in data and ("session_name" in self.sessionData and data["session_name"] != self.sessionData["session_name"])) or
+            ("event_name" in data and ("event_name" in self.sessionData and data["event_name"] != self.sessionData["event_name"])) or
+            ("category" in data and ("category" in self.sessionData and data["category"] != self.sessionData["category"]))
         )
 
         self.sessionData.update(data)
 
         if sessionChange:
+            self.analyser.reset()  # Don't reset if this is the first session call since we started up, else we might accidentally delete data when we're restarted :()
+        if sessionChange or newSession:
             self.publishManifest()  # since our description might have changed
-            self.analyser.reset()
             self.participants = {}
             self.currentStanding = {}
 
