@@ -18,7 +18,7 @@ def create_ws_protocol(log, handler):
             self.factory.resetDelay()
 
         def onMessage(self, payload, isBinary):
-            log.info('Received message: {msg}', msg=payload)
+            log.debug('Received message: {msg}', msg=payload)
 
             if payload == '<NotFound />\r\n':
                 log.warn('Timing feed not found. Delaying reconnection attempt')
@@ -99,10 +99,14 @@ class NatsoftState(object):
         'CategoryList': 'children',
         'CompetitorList': 'children',
         'Grid': 'ignore',
+        'H': 'ignore',
         'Leaderboard': 'children',
+        'L': 'children',
+        'OS': 'children',
         'Passing': 'ignore',
         'PointsSeries': 'ignore',
         'PointsTeam': 'ignore',
+        'RL': 'children',
         'Sectors': 'ignore',
         'Track': 'ignore'
     }
@@ -156,11 +160,44 @@ class NatsoftState(object):
     def handle_meeting(self, xml):
         self._name = xml.get('Description')
 
+    def handle_m(self, xml):
+        self._name = xml.get('D')
+
     def handle_event(self, xml):
         self._description = xml.get('Description1')
 
+    def handle_e(self, xml):
+        self._description = xml.get('D')
+
     def handle_category(self, xml):
         self._categories[xml.get('ID')] = xml.get('Code')
+
+    def handle_o(self, o):
+        self._categories[o.get('ID')] = o.get('C')
+
+    def handle_g(self, g):
+        # <G C="" R="" T="1517565375.4542" />
+        pass
+
+    def handle_a(self, a):
+        # <A C="1" I="128.5909" I1="52.0654" I2="86.7373" S1="52.0654" S2="33.7138" S3="41.4021" T="1517561801.8834" Y="f" />
+        self._session.setdefault('sb', [0, 0, 0, 0])
+        self._session['sb'][0] = float(a.get('I', self._session['sb'][0]))
+        self._session['sb'][1] = float(a.get('S1', self._session['sb'][1]))
+        self._session['sb'][2] = float(a.get('S2', self._session['sb'][2]))
+        self._session['sb'][3] = float(a.get('S3', self._session['sb'][3]))
+        # ET.dump(a)
+
+    def handle_r(self, competitor):
+        # ET.dump(competitor)
+        cat = competitor.get('S')
+        self._competitors[competitor.get('ID')] = {
+            'category': self._categories.get(cat, cat),
+            'name': '',
+            'number': competitor.get('N'),
+            'vehicle': competitor.get('V'),
+            'drivers': {d.get('ID'): d.get('N').replace('_', ' ') for d in competitor.findall('V')}
+        }
 
     def handle_competitor(self, competitor):
         self._competitors[competitor.get('ID')] = {
@@ -178,9 +215,8 @@ class NatsoftState(object):
         pos['competitor'] = competitor
         pos['driver'] = competitor['drivers'][position.get('Driv')]
 
-        self.process_position_detail(pos, position.find('Detail'))
+        detail = position.find('Detail')
 
-    def process_position_detail(self, pos, detail):
         pos['tyre'] = detail.get('TyreType', pos.get('tyre', ''))
         pos['laps'] = detail.get('LastLap', pos.get('laps', ''))
         pos['s1'] = detail.get('LastSec1Time', pos.get('s1', ''))
@@ -202,12 +238,60 @@ class NatsoftState(object):
 
         pos['state'] = detail.get('PitLaneFlag', pos.get('state', ''))
 
+    def handle_p(self, position):
+        # <P L="1" LL="1" P="1" LP="1" C="50" D="1" T="0">
+        # <D LT="0" L="1" I="380.2088" T="1517558793.5776" PN="1" I1="107.8246" I2="175.1511" S1="107.8246" S2="67.3265" S3="0.0000"
+        # LL="2" P="N" LLP="1" LDC="0" LCD="1" FL="1" FTY="" FI="380.2088" FT="1517558793.5776" F1="107.8246" F2="175.1511" FS1="107.8246"
+        # FS2="67.3265" FS3="181.4917" GL="0" GI="0.0000" GNL="0" GNI="0.0000" LGL="0" LGI="0.0000" LGNL="0" LGNI="0.0000" PS="1" PF=""
+        # PI="0.0000" PT="44.2534" LP="6" TY="" TSL="0" />
+        # </P>
+
+        competitor = self._competitors[position.get('C')]
+        pos = self._positions.setdefault(int(position.get('L')), {})
+
+        pos['competitor'] = competitor
+        pos['driver'] = competitor['drivers'][position.get('D')]
+
+        detail = position.find('D')
+
+        data = competitor.setdefault('data', {})
+
+        data['tyre'] = detail.get('TY', data.get('tyre', ''))
+        data['laps'] = detail.get('L', data.get('laps', ''))
+        data['s1'] = detail.get('S1', data.get('s1', ''))
+        data['s2'] = detail.get('S2', data.get('s2', ''))
+        data['s3'] = detail.get('S3', data.get('s3', ''))
+        data['bs1'] = detail.get('FS1', data.get('bs1', ''))
+        data['bs2'] = detail.get('FS2', data.get('bs2', ''))
+        data['bs3'] = detail.get('FS3', data.get('bs3', ''))
+        data['last'] = detail.get('I', data.get('last', ''))
+        data['best'] = detail.get('FI', data.get('best', ''))
+
+        data['gap_laps'] = detail.get('GapLeadLap', data.get('gap_laps', 0))
+        data['int_laps'] = detail.get('GapNextLap', data.get('int_laps', 0))
+
+        data['gap_time'] = detail.get('LGI', data.get('gap_time', 0))
+        data['int_time'] = detail.get('LGNI', data.get('int_time', 0))
+
+        data['pits'] = int(detail.get('PS', data.get('pits', 0)))
+
+        data['state'] = detail.get('PF', data.get('state', ''))
+
     def handle_counters(self, counters):
         raw_flag = counters.get('Status', None)
         if raw_flag:
             self._session['flag'] = map_flag(raw_flag)
         self._session['elapsed'] = (int(counters.get('Elapsed')), time.time())
         self._session['counter'] = (int(counters.get('Count')), counters.get('Type'))
+
+    def handle_c(self, c):
+        self._session['elapsed'] = (int(c.get('E')), time.time())
+        self._session['counter'] = (int(c.get('C')), c.get('Y'))
+
+    def handle_s(self, s):
+        raw_flag = s.get('S', None)
+        if raw_flag:
+            self._session['flag'] = map_flag(raw_flag)
 
 
 def parse_extra_args(extra_args):
@@ -223,6 +307,7 @@ def parse_extra_args(extra_args):
 def map_car_state(state):
     mapp = {
         'P': 'PIT',
+        'T': 'OUT',
         '': 'RUN'
     }
     if state in mapp:
@@ -258,54 +343,11 @@ def format_gap(laps, time):
         return time
 
 
-def map_car(car):
-    competitor = car['competitor']
-
-    s1 = float(car.get('s1', 0))
-    s2 = float(car.get('s2', 0))
-    s3 = float(car.get('s3', 0))
-    bs1 = float(car.get('bs1', 0))
-    bs2 = float(car.get('bs2', 0))
-    bs3 = float(car.get('bs3', 0))
-
-    s1_flag = 'pb' if s1 == bs1 else ''
-    s2_flag = 'pb' if s2 == bs2 else ''
-    s3_flag = 'pb' if s3 == bs3 else ''
-
+def maybe_float(f):
     try:
-        last = float(car.get('last', 0))
+        return float(f)
     except ValueError:
-        last = 0
-
-    try:
-        best = float(car.get('best', 0))
-    except ValueError:
-        best = 0
-
-    last_flag = 'pb' if last == best else ''
-    pits = car.get('pits', 0)
-
-    return [
-        competitor['number'],
-        map_car_state(car.get('state', '')),
-        competitor['category'],
-        car['driver'],
-        competitor['name'],
-        competitor['vehicle'],
-        car.get('laps', ''),
-        map_tyre(car.get('tyre', '')),
-        format_gap(car.get('gap_laps', 0), car.get('gap_time', 0)),
-        format_gap(car.get('int_laps', 0), car.get('int_time', 0)),
-        (s1, s1_flag) if s1 > 0 else '',
-        (car.get('bs1', ''), 'old'),
-        (s2, s2_flag) if s2 > 0 else '',
-        (car.get('bs2', ''), 'old'),
-        (s3, s3_flag) if s3 > 0 else '',
-        (car.get('bs3', ''), 'old'),
-        (last, last_flag) if last > 0 else '',
-        (best, '') if best > 0 else '',
-        pits if pits > 0 else ''
-    ]
+        return 0
 
 
 class Service(lt_service):
@@ -370,7 +412,6 @@ class Service(lt_service):
 
     def getRaceState(self):
         if not self._state.has_data:
-            print "State has no data"
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
             return {
                 'cars': [],
@@ -380,19 +421,83 @@ class Service(lt_service):
                 }
             }
 
-        elapsed = self._state._session['elapsed']
-
         session = {
             'flagState': self._state._session['flag'].name.lower(),
-            'timeElapsed': int(elapsed[0] + (time.time() - elapsed[1]))
         }
+
+        if 'elapsed' in self._state._session:
+            elapsed = self._state._session['elapsed']
+            session['timeElapsed'] = int(elapsed[0] + (time.time() - elapsed[1]))
 
         if 'counter' in self._state._session:
             value, count_type = self._state._session['counter']
-            if count_type == 'Laps':
-                session['lapsRemain'] = value
+            if count_type[0] == 'L':
+                if 'elapsed' in self._state._session:
+                    session['lapsRemain'] = value - (time.time() - elapsed[1])
+                else:
+                    session['lapsRemain'] = value
+            if count_type[0] == 'T':
+                session['timeRemain'] = value
 
         return {
-            'cars': map(map_car, [value for (key, value) in sorted(self._state._positions.items())]),
+            'cars': map(self.map_car, [value for (key, value) in sorted(self._state._positions.items())]),
             'session': session
         }
+
+    def map_car(self, car):
+        competitor = car['competitor']
+        data = competitor['data']
+
+        s1 = maybe_float(data.get('s1', 0))
+        s2 = maybe_float(data.get('s2', 0))
+        s3 = maybe_float(data.get('s3', 0))
+        bs1 = maybe_float(data.get('bs1', 0))
+        bs2 = maybe_float(data.get('bs2', 0))
+        bs3 = maybe_float(data.get('bs3', 0))
+
+        sbs = self._state._session.get('sb', [0, 0, 0, 0])
+
+        s1_flag = 'sb' if s1 == sbs[1] else 'pb' if s1 == bs1 else ''
+        s2_flag = 'sb' if s2 == sbs[2] else 'pb' if s2 == bs2 else ''
+        s3_flag = 'sb' if s3 == sbs[3] else 'pb' if s3 == bs3 else ''
+
+        try:
+            last = float(data.get('last', 0))
+        except ValueError:
+            last = 0
+
+        try:
+            best = float(data.get('best', 0))
+        except ValueError:
+            best = 0
+
+        if last == best:
+            last_flag = 'sb-new' if last == sbs[0] and s3 > 0 else 'pb'
+        else:
+            last_flag = ''
+
+        best_flag = 'sb' if best == sbs[0] else ''
+
+        pits = data.get('pits', 0)
+
+        return [
+            competitor['number'],
+            map_car_state(data.get('state', '')),
+            competitor['category'],
+            car['driver'],
+            competitor['name'],
+            competitor['vehicle'],
+            data.get('laps', ''),
+            map_tyre(data.get('tyre', '')),
+            format_gap(data.get('gap_laps', 0), data.get('gap_time', 0)),
+            format_gap(data.get('int_laps', 0), data.get('int_time', 0)),
+            (s1, s1_flag) if s1 > 0 else '',
+            (bs1, 'old') if bs1 > 0 else '',
+            (s2, s2_flag) if s2 > 0 else '',
+            (bs2, 'old') if bs2 > 0 else '',
+            (s3, s3_flag) if s3 > 0 else '',
+            (bs3, 'old') if bs3 > 0 else '',
+            (last, last_flag) if last > 0 else '',
+            (best, best_flag) if best > 0 else '',
+            pits if pits > 0 else ''
+        ]
