@@ -165,9 +165,10 @@ class NatsoftState(object):
     def handle_competitor(self, competitor):
         self._competitors[competitor.get('ID')] = {
             'category': self._categories[competitor.get('Category')],
-            'name': competitor.get('TeamName'),
+            'name': competitor.get('TeamName').replace('_', ' '),
+            'number': competitor.get('Number'),
             'vehicle': competitor.get('Vehicle'),
-            'drivers': {d.get('ID'): d.get('Name') for d in competitor.findall('Driver')}
+            'drivers': {d.get('ID'): d.get('Name').replace('_', ' ') for d in competitor.findall('Driver')}
         }
 
     def handle_position(self, position):
@@ -285,6 +286,7 @@ def map_car(car):
     pits = car.get('pits', 0)
 
     return [
+        competitor['number'],
         map_car_state(car.get('state', '')),
         competitor['category'],
         car['driver'],
@@ -342,6 +344,7 @@ class Service(lt_service):
 
     def getColumnSpec(self):
         return [
+            Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
             Stat.DRIVER,
