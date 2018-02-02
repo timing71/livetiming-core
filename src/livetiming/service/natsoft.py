@@ -1,4 +1,8 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
+from livetiming.analysis.driver import StintLength
+from livetiming.analysis.pits import EnduranceStopAnalysis
+from livetiming.analysis.session import Session
+from livetiming.messages import RaceControlMessage
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
@@ -100,6 +104,7 @@ class NatsoftState(object):
         'CompetitorList': 'children',
         'Grid': 'ignore',
         'H': 'ignore',
+        'Heartbeat': 'ignore',
         'Leaderboard': 'children',
         'L': 'children',
         'OS': 'children',
@@ -126,6 +131,7 @@ class NatsoftState(object):
         self._competitors = {}
         self._name = ''
         self._description = ''
+        self.messages = []
 
     def handle(self, xml):
         if xml.tag in self.HANDLERS:
@@ -175,17 +181,38 @@ class NatsoftState(object):
     def handle_o(self, o):
         self._categories[o.get('ID')] = o.get('C')
 
+    def handle_message(self, message):
+        r = message.get('Control', None)
+        if r:
+            self.messages.append(r)
+        c = message.get('Corporate', None)
+        if c:
+            self.messages.append(c)
+
     def handle_g(self, g):
         # <G C="" R="" T="1517565375.4542" />
-        pass
+        r = g.get('R', None)
+        if r:
+            self.messages.append(r)
+        c = g.get('C', None)
+        if c:
+            self.messages.append(c)
+
+    def handle_fastest(self, f):
+        sb = self._session.setdefault('sb', [0, 0, 0, 0])
+        sb[0] = float(f.get('LapTime', sb[0]))
+        sb[1] = float(f.get('Sec1Time', sb[1]))
+        sb[2] = float(f.get('Sec2Time', sb[2]))
+        sb[3] = float(f.get('Sec3Time', sb[3]))
+        # ET.dump(f)
 
     def handle_a(self, a):
         # <A C="1" I="128.5909" I1="52.0654" I2="86.7373" S1="52.0654" S2="33.7138" S3="41.4021" T="1517561801.8834" Y="f" />
-        self._session.setdefault('sb', [0, 0, 0, 0])
-        self._session['sb'][0] = float(a.get('I', self._session['sb'][0]))
-        self._session['sb'][1] = float(a.get('S1', self._session['sb'][1]))
-        self._session['sb'][2] = float(a.get('S2', self._session['sb'][2]))
-        self._session['sb'][3] = float(a.get('S3', self._session['sb'][3]))
+        sb = self._session.setdefault('sb', [0, 0, 0, 0])
+        sb[0] = float(a.get('I', sb[0]))
+        sb[1] = float(a.get('S1', sb[1]))
+        sb[2] = float(a.get('S2', sb[2]))
+        sb[3] = float(a.get('S3', sb[3]))
         # ET.dump(a)
 
     def handle_r(self, competitor):
@@ -210,33 +237,38 @@ class NatsoftState(object):
 
     def handle_position(self, position):
         competitor = self._competitors[position.get('Comp')]
-        pos = self._positions.setdefault(int(position.get('Pos')), {})
+
+        try:
+            pos = self._positions.setdefault(int(position.get('Pos')), {})
+        except ValueError:
+            pos = self._positions.setdefault(int(position.get('Line')), {})
 
         pos['competitor'] = competitor
         pos['driver'] = competitor['drivers'][position.get('Driv')]
 
         detail = position.find('Detail')
+        data = competitor.setdefault('data', {})
 
-        pos['tyre'] = detail.get('TyreType', pos.get('tyre', ''))
-        pos['laps'] = detail.get('LastLap', pos.get('laps', ''))
-        pos['s1'] = detail.get('LastSec1Time', pos.get('s1', ''))
-        pos['s2'] = detail.get('LastSec2Time', pos.get('s2', ''))
-        pos['s3'] = detail.get('LastSec3Time', pos.get('s3', ''))
-        pos['bs1'] = detail.get('FastSec1Time', pos.get('bs1', ''))
-        pos['bs2'] = detail.get('FastSec2Time', pos.get('bs2', ''))
-        pos['bs3'] = detail.get('FastSec3Time', pos.get('bs3', ''))
-        pos['last'] = detail.get('LastTime', pos.get('last', ''))
-        pos['best'] = detail.get('FastTime', pos.get('best', ''))
+        data['tyre'] = detail.get('TyreType', data.get('tyre', ''))
+        data['laps'] = detail.get('LastLap', data.get('laps', ''))
+        data['s1'] = detail.get('LastSec1Time', data.get('s1', ''))
+        data['s2'] = detail.get('LastSec2Time', data.get('s2', ''))
+        data['s3'] = detail.get('LastSec3Time', data.get('s3', ''))
+        data['bs1'] = detail.get('FastSec1Time', data.get('bs1', ''))
+        data['bs2'] = detail.get('FastSec2Time', data.get('bs2', ''))
+        data['bs3'] = detail.get('FastSec3Time', data.get('bs3', ''))
+        data['last'] = detail.get('LastTime', data.get('last', ''))
+        data['best'] = detail.get('FastTime', data.get('best', ''))
 
-        pos['gap_laps'] = detail.get('GapLeadLap', pos.get('gap_laps', 0))
-        pos['int_laps'] = detail.get('GapNextLap', pos.get('int_laps', 0))
+        data['gap_laps'] = detail.get('GapLeadLap', data.get('gap_laps', 0))
+        data['int_laps'] = detail.get('GapNextLap', data.get('int_laps', 0))
 
-        pos['gap_time'] = detail.get('GapLeadTime', pos.get('gap_time', 0))
-        pos['int_time'] = detail.get('GapNextTime', pos.get('int_time', 0))
+        data['gap_time'] = detail.get('GapLeadTime', data.get('gap_time', 0))
+        data['int_time'] = detail.get('GapNextTime', data.get('int_time', 0))
 
-        pos['pits'] = int(detail.get('PitStops', pos.get('pits', 0)))
+        data['pits'] = int(detail.get('PitStops', data.get('pits', 0)))
 
-        pos['state'] = detail.get('PitLaneFlag', pos.get('state', ''))
+        data['state'] = detail.get('PitLaneFlag', data.get('state', ''))
 
     def handle_p(self, position):
         # <P L="1" LL="1" P="1" LP="1" C="50" D="1" T="0">
@@ -287,6 +319,11 @@ class NatsoftState(object):
     def handle_c(self, c):
         self._session['elapsed'] = (int(c.get('E')), time.time())
         self._session['counter'] = (int(c.get('C')), c.get('Y'))
+
+    def handle_status(self, s):
+        raw_flag = s.get('Status', None)
+        if raw_flag:
+            self._session['flag'] = map_flag(raw_flag)
 
     def handle_s(self, s):
         raw_flag = s.get('S', None)
@@ -410,6 +447,18 @@ class Service(lt_service):
     def getPollInterval(self):
         return 1
 
+    def getExtraMessageGenerators(self):
+        return [
+            RaceControlMessage(self._state.messages)
+        ]
+
+    def getAnalysisModules(self):
+        return [
+            Session,
+            EnduranceStopAnalysis,
+            StintLength
+        ]
+
     def getRaceState(self):
         if not self._state.has_data:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
@@ -432,12 +481,12 @@ class Service(lt_service):
         if 'counter' in self._state._session:
             value, count_type = self._state._session['counter']
             if count_type[0] == 'L':
-                if 'elapsed' in self._state._session:
-                    session['lapsRemain'] = value - (time.time() - elapsed[1])
-                else:
-                    session['lapsRemain'] = value
+                    session['lapsRemain'] = max(0, value)
             if count_type[0] == 'T':
-                session['timeRemain'] = value
+                if 'elapsed' in self._state._session:
+                    session['timeRemain'] = max(value - (time.time() - elapsed[1]), 0)
+                else:
+                    session['timeRemain'] = value
 
         return {
             'cars': map(self.map_car, [value for (key, value) in sorted(self._state._positions.items())]),
