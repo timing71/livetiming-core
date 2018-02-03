@@ -299,8 +299,8 @@ class NatsoftState(object):
         data['last'] = detail.get('I', data.get('last', ''))
         data['best'] = detail.get('FI', data.get('best', ''))
 
-        data['gap_laps'] = detail.get('GapLeadLap', data.get('gap_laps', 0))
-        data['int_laps'] = detail.get('GapNextLap', data.get('int_laps', 0))
+        data['gap_laps'] = detail.get('LGL', data.get('gap_laps', 0))
+        data['int_laps'] = detail.get('LGNL', data.get('int_laps', 0))
 
         data['gap_time'] = detail.get('LGI', data.get('gap_time', 0))
         data['int_time'] = detail.get('LGNI', data.get('int_time', 0))
@@ -368,11 +368,11 @@ def map_tyre(tyreChar):
 
 def format_gap(laps, time):
     try:
-        lap_int = int(laps)
-        if lap_int == 1:
+        lap_float = float(laps)
+        if lap_float == 1:
             return '1 lap'
-        elif lap_int > 1:
-            return '{} laps'.format(laps)
+        elif lap_float > 1:
+            return '{:d1} laps'.format(laps)
         if float(time) > 0:
             return time
         return ''
