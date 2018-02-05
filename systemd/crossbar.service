@@ -8,7 +8,7 @@ StandardInput=null
 StandardOutput=journal
 StandardError=journal
 WorkingDirectory=/home/james/workspace/livetiming/crossbar/
-ExecStart=/opt/crossbar/bin/crossbar start --cbdir=/home/james/workspace/livetiming/crossbar/ --logdir /var/log/crossbar --logtofile
+ExecStart=/opt/crossbar/bin/crossbar start --cbdir=/home/james/workspace/livetiming/crossbar/ --logformat syslogd
 Restart=on-abort
 EnvironmentFile=/home/james/workspace/livetiming/livetiming.env
 
