@@ -101,6 +101,12 @@
           "classname": "authenticator.AuthenticatorSession",
           "realm": "timing",
           "role": "authenticator"
+        },
+        {
+          "type": "class",
+          "classname": "livetiming.dvr.DVRSession",
+          "realm": "timing",
+          "role": "services"
         }
       ]
     }

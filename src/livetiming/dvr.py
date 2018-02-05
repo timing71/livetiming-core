@@ -15,18 +15,26 @@ import simplejson
 import time
 
 
-def create_dvr_session(dvr):
-    class DVRSession(ApplicationSession):
-        @inlineCallbacks
-        def onJoin(self, _):
-            dvr.log.info("DVR session ready")
-            yield self.subscribe(dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match=u'prefix', details_arg='details'))
-            yield self.subscribe(dvr.handle_control_message, Channel.CONTROL)
+@authenticatedService
+class DVRSession(ApplicationSession):
 
-        def onDisconnect(self):
-            dvr.log.info("Disconnected from live timing service")
+    def __init__(self, config=None, dvr=None):
+        super(DVRSession, self).__init__(config)
+        if dvr:
+            self.dvr = dvr
+        else:
+            self.dvr = DVR(False)
 
-    return authenticatedService(DVRSession)
+    @inlineCallbacks
+    def onJoin(self, _):
+        if not self.dvr.started:
+            self.dvr.start()
+        self.dvr.log.info("DVR session ready")
+        yield self.subscribe(self.dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match=u'prefix', details_arg='details'))
+        yield self.subscribe(self.dvr.handle_control_message, Channel.CONTROL)
+
+    def onDisconnect(self):
+        self.dvr.log.info("Disconnected from live timing service")
 
 
 RECORDING_TIMEOUT = 5 * 60  # 5 minutes
@@ -44,14 +52,20 @@ def dedupe(filename):
 
 
 class DVR(object):
-    def __init__(self):
-        self.log = Logger()
+    log = Logger()
+
+    def __init__(self, standalone=True):
+        self.standalone = standalone
+        self.started = False
         self._in_progress_recordings = {}
         self.IN_PROGRESS_DIR = os.getenv('LIVETIMING_RECORDINGS_TEMP_DIR', './recordings-temp')
         self.FINISHED_DIR = os.getenv('LIVETIMING_RECORDINGS_DIR', './recordings')
         self._recordings_without_frames = []
 
     def start(self):
+        if self.started:
+            return
+
         if not os.path.isdir(self.IN_PROGRESS_DIR):
             os.mkdir(self.IN_PROGRESS_DIR)
 
@@ -61,11 +75,18 @@ class DVR(object):
         finished_scan = LoopingCall(self._scan_for_finished_recordings)
         finished_scan.start(RECORDING_TIMEOUT)
 
-        session_class = create_dvr_session(self)
-        router = unicode(os.environ["LIVETIMING_ROUTER"])
-        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-        runner.run(session_class, auto_reconnect=True)
-        self.log.info("DVR terminated.")
+        self.started = True
+
+        if self.standalone:
+            class MyDVRSession(DVRSession):
+                def __init__(elf, config=None):
+                    super(MyDVRSession, elf).__init__(config, dvr=self)
+
+            session_class = MyDVRSession
+            router = unicode(os.environ["LIVETIMING_ROUTER"])
+            runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+            runner.run(session_class, auto_reconnect=True)
+            self.log.info("DVR terminated.")
 
     def handle_service_message(self, message, details=None):
         if details and details.topic:
