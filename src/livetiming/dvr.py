@@ -23,7 +23,7 @@ class DVRSession(ApplicationSession):
         if dvr:
             self.dvr = dvr
         else:
-            self.dvr = DVR(False)
+            self.dvr = DVR()
 
     @inlineCallbacks
     def onJoin(self, _):
@@ -54,8 +54,7 @@ def dedupe(filename):
 class DVR(object):
     log = Logger()
 
-    def __init__(self, standalone=True):
-        self.standalone = standalone
+    def __init__(self):
         self.started = False
         self._in_progress_recordings = {}
         self.IN_PROGRESS_DIR = os.getenv('LIVETIMING_RECORDINGS_TEMP_DIR', './recordings-temp')
@@ -76,17 +75,6 @@ class DVR(object):
         finished_scan.start(RECORDING_TIMEOUT)
 
         self.started = True
-
-        if self.standalone:
-            class MyDVRSession(DVRSession):
-                def __init__(elf, config=None):
-                    super(MyDVRSession, elf).__init__(config, dvr=self)
-
-            session_class = MyDVRSession
-            router = unicode(os.environ["LIVETIMING_ROUTER"])
-            runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-            runner.run(session_class, auto_reconnect=True)
-            self.log.info("DVR terminated.")
 
     def handle_service_message(self, message, details=None):
         if details and details.topic:
@@ -196,10 +184,27 @@ class DVR(object):
             os.chmod(dest, 0664)
 
 
+class StandaloneDVR(DVR):
+    def start(self):
+        if self.started:
+            return
+        super(StandaloneDVR, self).start()
+
+        class MyDVRSession(DVRSession):
+            def __init__(elf, config=None):
+                super(MyDVRSession, elf).__init__(config, dvr=self)
+
+        session_class = MyDVRSession
+        router = unicode(os.environ["LIVETIMING_ROUTER"])
+        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+        runner.run(session_class, auto_reconnect=True)
+        self.log.info("DVR terminated.")
+
+
 def main():
     load_env()
-    Logger().info("Starting DVR service...")
-    dvr = DVR()
+    Logger().info("Starting DVR service in standalone mode...")
+    dvr = StandaloneDVR()
     dvr.start()
 
 
