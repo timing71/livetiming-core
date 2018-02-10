@@ -1,50 +1,20 @@
-from livetiming.analysis import Analysis
-from collections import defaultdict
-from livetiming.analysis.data import FieldExtractor
-from livetiming.racing import Stat
+from livetiming.racing import FlagStatus
 
 
-def _map_flag_period(fp):
-    return [fp[0].value] + fp[1:]
+def receiveStateUpdate(dc, old_state, new_state, colspec, timestamp):
+    flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
+    old_flag = FlagStatus.fromString(old_state["session"].get("flagState", "none"))
+    if flag != old_flag or not dc.session.this_period:
+        dc.flag_change(flag, timestamp)
+        return True
+    return False
 
 
-class Session(Analysis):
-    def getName(self):
-        return "Session stats"
+def get_data(dc):
+    results = {
+        'currentTimestamp': dc.latest_timestamp,
+        'flagStats': dc.session.flag_periods,
+        'leaderLap': dc.leader_lap
+    }
 
-    def getData(self):
-        results = {}
-
-        flag_stats = {}
-
-        for flag, start_lap, start_time, stop_lap, stop_time in self.data_centre.session.flag_periods:
-            if flag not in flag_stats:
-                flag_stats[flag.value] = {
-                    'time': 0,
-                    'count': 0,
-                    'laps': 0
-                }
-            flag_stats[flag.value]['count'] += 1
-
-            if stop_time:
-                flag_stats[flag.value]['time'] += (stop_time - start_time)
-            else:
-                flag_stats[flag.value]['time'] += (self.data_centre.latest_timestamp - start_time)
-
-            if stop_lap:
-                flag_stats[flag.value]['laps'] += (stop_lap - start_lap)
-            else:
-                flag_stats[flag.value]['laps'] += (self.data_centre.leader_lap - start_lap)
-
-        car_per_state = defaultdict(int)
-        f = FieldExtractor(self.data_centre.column_spec)
-        for car in self.data_centre.current_state['cars']:
-            car_per_state[f.get(car, Stat.STATE)] += 1
-
-        results['flagStats'] = flag_stats
-        results['carPerState'] = car_per_state
-        results['currentFlagPeriod'] = _map_flag_period(self.data_centre.session.flag_periods[-1]) if self.data_centre.session.flag_periods else None
-        results['currentTimestamp'] = self.data_centre.latest_timestamp
-        results['leaderLap'] = self.data_centre.leader_lap
-
-        return results
+    return results
