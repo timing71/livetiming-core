@@ -216,24 +216,10 @@ class DataCentre(object):
         self.leader_lap = 0
         self.lap_chart = LaptimeChart()
 
-    def car(self, race_num):
-        if race_num not in self._cars:
-            self._cars[race_num] = Car(race_num)
-        return self._cars[race_num]
-
-    @property
-    def cars(self):
-        return sorted(self._cars.values(), key=lambda c: tryInt(c.race_num))
-
-    def update_state(self, newState, colSpec, timestamp=None):
-        if timestamp is None:
-            timestamp = time.time()
-        if newState["session"].get("flagState", "none") != "none":
-            self._update_cars(self.current_state, newState, colSpec, timestamp)
-            self._update_session(self.current_state, newState, colSpec, timestamp)
-        self.latest_timestamp = timestamp
-        self.current_state = copy.deepcopy(newState)
-        self.column_spec = colSpec
+    def flag_change(self, new_flag, timestamp):
+        self.session.flag_change(new_flag, self.leader_lap, timestamp)
+        for car in self._cars.values():
+            car.see_flag(new_flag)
 
     def _update_cars(self, oldState, newState, colSpec, timestamp):
         f = FieldExtractor(colSpec)
@@ -300,12 +286,6 @@ class DataCentre(object):
                 else:
                     car.set_driver(driver)
 
-    def _update_session(self, oldState, newState, colSpec, timestamp):
-        flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
-        old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
-        if flag != old_flag or not self.session.this_period:
-            self.session.flag_change(flag, self.leader_lap, timestamp)
-
     def _get_lap_count(self, race_num, car, f, cars):
         from_timing = f.get(car, Stat.LAPS)
         if from_timing:
@@ -328,34 +308,3 @@ class DataCentre(object):
                     if f.get(other_car, Stat.NUM) == our_num:
                         return lap_count
         return len(self.car(race_num).laps)
-
-
-if __name__ == '__main__':
-    filename = sys.argv[1]
-    dc = None
-
-    if filename.endswith(".data.p"):
-        with open(filename, "rb") as data_dump_file:
-            dc = cPickle.load(data_dump_file)
-
-    else:
-        dc = DataCentre()
-        rec = RecordingFile(filename)
-
-        colSpec = Stat.parse_colspec(rec.manifest['colSpec'])
-
-        start_time = time.time()
-
-        frames = sorted(rec.keyframes + rec.iframes)
-        frame_count = len(frames)
-
-        for idx, frame in enumerate(frames):
-            newState = rec.getStateAtTimestamp(frame)
-            dc.update_state(newState, colSpec, frame)
-            now = time.time()
-            current_fps = float(idx) / (now - start_time)
-            eta = start_time + (frame_count / current_fps) if current_fps > 0 else 0
-            print "{}/{} ({:.2%}) {:.3f}fps eta:{:.0f}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta)
-
-        stop_time = time.time()
-        print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from datetime import datetime
 from livetiming.analysis import Analyser
 from livetiming.recording import RecordingFile
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
     authenticatedService
 from livetiming.racing import Stat
 from livetiming import load_env
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.data import *
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -39,14 +38,11 @@ class FakeAnalysis(ApplicationSession):
     def onJoin(self, details):
         print "Joined"
 
-        self.a = Analyser("TEST", self.publish, [StintLength, EnduranceStopAnalysis], publish=True)
+        self.a = Analyser("TEST", self.publish)
 
         def true():
             return True
         yield self.register(true, RPC.LIVENESS_CHECK.format("TEST"))
-        yield self.register(self.a.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format("TEST"))
-        yield self.register(self.a.getData, RPC.REQUEST_ANALYSIS_DATA.format("TEST"))
-        yield self.register(self.a.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format("TEST"))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
         print "All registered"
@@ -54,15 +50,22 @@ class FakeAnalysis(ApplicationSession):
 
         def preprocess():
             start_time = time.time()
-            for i in range(self.rec.frames + 1):
-                newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
-                self.a.receiveStateUpdate(newState, pcs, self.rec.manifest['startTime'] + (i * int(self.manifest['pollInterval'])))
-                print "{}/{} ({})".format(i, self.rec.frames, i / (time.time() - start_time))
+            frames = sorted(self.rec.keyframes + self.rec.iframes)
+            frame_count = len(frames)
+
+            for idx, frame in enumerate(frames):
+                newState = self.rec.getStateAtTimestamp(frame)
+                self.a.receiveStateUpdate(newState, pcs, frame)
+
+                now = time.time()
+                current_fps = float(idx) / (now - start_time)
+                eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
+                print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
                 # time.sleep(4)
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
 
-        #reactor.callInThread(preprocess)
+        reactor.callInThread(preprocess)
 
     def onDisconnect(self):
         self.log.info("Disconnected")
