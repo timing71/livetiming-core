@@ -51,7 +51,7 @@ class Analyser(object):
             timestamp = time.time()
         if self._current_state:
             for key, module in PROCESSING_MODULES.iteritems():
-                if module.receiveStateUpdate(self.data_centre, self._current_state, newState, colSpec, timestamp):
+                if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
                     self._publish_data(key, module.get_data(self.data_centre))
 
         self._current_state = copy.deepcopy(newState)
