@@ -308,3 +308,12 @@ class DataCentre(object):
                     if f.get(other_car, Stat.NUM) == our_num:
                         return lap_count
         return len(self.car(race_num).laps)
+
+
+if __name__ == '__main__':
+    filename = sys.argv[1]
+    dc = None
+
+    if filename.endswith(".data.p"):
+        with open(filename, "rb") as data_dump_file:
+            dc = cPickle.load(data_dump_file)
