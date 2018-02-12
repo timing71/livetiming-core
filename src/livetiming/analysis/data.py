@@ -183,19 +183,6 @@ class Session(object):
         return self._flag_periods
 
 
-class FieldExtractor(object):
-    def __init__(self, colSpec):
-        self.mapping = {}
-        for idx, col in enumerate(colSpec):
-            self.mapping[col] = idx
-
-    def get(self, car, field, default=None):
-        try:
-            return car[self.mapping[field]]
-        except KeyError:
-            return default
-
-
 def tryInt(val):
     try:
         return int(val)
@@ -220,6 +207,11 @@ class DataCentre(object):
         self.session.flag_change(new_flag, self.leader_lap, timestamp)
         for car in self._cars.values():
             car.see_flag(new_flag)
+
+    def car(self, race_num):
+        if race_num not in self._cars:
+            self._cars[race_num] = Car(race_num)
+        return self._cars[race_num]
 
     def _update_cars(self, oldState, newState, colSpec, timestamp):
         f = FieldExtractor(colSpec)
