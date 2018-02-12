@@ -2,7 +2,7 @@ from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
 from livetiming import sentry
 from livetiming.analysis.data import DataCentre
-from livetiming.analysis import session
+from livetiming.analysis import driver, session
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
@@ -29,7 +29,15 @@ def _make_data_message(data):
 
 
 PROCESSING_MODULES = {
+    'driver': driver,
     'session': session
+}
+
+EMPTY_STATE = {
+    'cars': [],
+    'session': {
+        'flagState': 'none'
+    }
 }
 
 
@@ -38,7 +46,7 @@ class Analyser(object):
     publish_options = PublishOptions(retain=True)
 
     def __init__(self, uuid, publishFunc, interval=ANALYSIS_PUBLISH_INTERVAL):
-        self._current_state = None
+        self._current_state = copy.copy(EMPTY_STATE)
         self.uuid = uuid
         self.publish = publishFunc
         self.interval = interval
@@ -49,10 +57,9 @@ class Analyser(object):
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         if not timestamp:
             timestamp = time.time()
-        if self._current_state:
-            for key, module in PROCESSING_MODULES.iteritems():
-                if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
-                    self._publish_data(key, module.get_data(self.data_centre))
+        for key, module in PROCESSING_MODULES.iteritems():
+            if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
+                self._publish_data(key, module.get_data(self.data_centre))
 
         self._current_state = copy.deepcopy(newState)
         self.data_centre.latest_timestamp = timestamp
@@ -97,17 +104,4 @@ class Analyser(object):
         self.data_centre.reset()
         self._pending_publishes = {}
         self._last_published = {}
-
-
-def per_car(func):
-    def inner(dc, old_state, new_state, colspec, timestamp):
-        f = FieldExtractor(colSpec)
-        result = False
-        for idx, new_car in enumerate(newState['cars']):
-            race_num = f.get(new_car, Stat.NUM)
-            if race_num:
-                old_car = next(iter([c for c in oldState["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-                if old_car:
-                    result = result or func(dc, old_car, new_car, f, timestamp)
-        return result
-    return inner
+        self._current_state = copy.copy(EMPTY_STATE)

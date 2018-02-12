@@ -14,6 +14,7 @@ from twisted.internet.defer import inlineCallbacks
 import os
 import sys
 import time
+import txaio
 from twisted.internet.threads import deferToThread
 from twisted.internet.task import LoopingCall
 
@@ -61,7 +62,7 @@ class FakeAnalysis(ApplicationSession):
                 current_fps = float(idx) / (now - start_time)
                 eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
                 print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
-                # time.sleep(4)
+                time.sleep(1)
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
 
@@ -77,6 +78,7 @@ def main():
     load_env()
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+    txaio.start_logging(level='debug')
     runner.run(FakeAnalysis)
 
 
