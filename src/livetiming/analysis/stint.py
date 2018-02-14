@@ -5,7 +5,7 @@ PIT_STATES = ["PIT", "FUEL", "N/S"]
 
 
 @per_car
-def receive_state_update(dc, race_num, old_car, new_car, f, flag, timestamp):
+def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
     old_car_state = f.get(old_car, Stat.STATE)
     new_car_state = f.get(new_car, Stat.STATE)
     car = dc.car(race_num)

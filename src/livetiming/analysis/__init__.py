@@ -27,9 +27,10 @@ def _make_data_message(data):
     ).serialise()
 
 
-PROCESSING_MODULES = [
+PROCESSING_MODULES = [  # Order is important!
     'car',
     'driver',
+    'lap',
     'stint',
     'session'
 ]
@@ -134,6 +135,6 @@ def per_car(func):
             race_num = f.get(new_car, Stat.NUM)
             if race_num:
                 old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-                result = func(dc, race_num, old_car, new_car, f, flag, timestamp) or result
+                result = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or result
         return result
     return inner
