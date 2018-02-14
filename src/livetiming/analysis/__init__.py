@@ -1,6 +1,5 @@
 from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
-from livetiming import sentry
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from livetiming.racing import Stat
@@ -16,8 +15,6 @@ import copy
 import cPickle
 import os
 
-
-sentry = sentry()
 
 ANALYSIS_PUBLISH_INTERVAL = 60
 
