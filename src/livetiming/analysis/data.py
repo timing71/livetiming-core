@@ -159,7 +159,7 @@ class Car(object):
     def drivers(self):
         if not self.current_stint:
             return [self.initial_driver]
-        return set(map(lambda stint: stint.driver, self.stints))
+        return list(set(map(lambda stint: stint.driver, self.stints)))
 
     def driver_name(self):
         try:

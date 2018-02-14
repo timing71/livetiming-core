@@ -2,7 +2,7 @@ from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
-from livetiming.racing import Stat
+from livetiming.racing import FlagStatus, Stat
 from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -30,6 +30,7 @@ def _make_data_message(data):
 PROCESSING_MODULES = [
     'car',
     'driver',
+    'stint',
     'session'
 ]
 
@@ -126,12 +127,13 @@ class FieldExtractor(object):
 
 def per_car(func):
     def inner(dc, old_state, new_state, colspec, timestamp):
+        flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
         f = FieldExtractor(colspec)
         result = False
         for idx, new_car in enumerate(new_state['cars']):
             race_num = f.get(new_car, Stat.NUM)
             if race_num:
                 old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-                result = func(dc, race_num, old_car, new_car, f, timestamp) or result
+                result = func(dc, race_num, old_car, new_car, f, flag, timestamp) or result
         return result
     return inner

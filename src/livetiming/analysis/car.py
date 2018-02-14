@@ -3,7 +3,7 @@ from livetiming.analysis import per_car
 
 
 @per_car
-def receive_state_update(dc, race_num, old_car, new_car, f, timestamp):
+def receive_state_update(dc, race_num, old_car, new_car, f, flag, timestamp):
     if race_num not in dc._cars:
         c = dc.car(race_num)
         c.race_class = f.get(new_car, Stat.CLASS)
