@@ -3,7 +3,7 @@ from livetiming.analysis import per_car
 
 
 @per_car
-def receive_state_update(dc, race_num, old_car, new_car, f, flag, timestamp):
+def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
     old_driver = f.get(old_car, Stat.DRIVER)
     new_driver = f.get(new_car, Stat.DRIVER)
 
