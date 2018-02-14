@@ -2,12 +2,14 @@ from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
 from livetiming import sentry
 from livetiming.analysis.data import DataCentre
-from livetiming.analysis import driver, session
 from livetiming.network import Message, MessageClass
+from livetiming.racing import Stat
 from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
+
+import importlib
 import simplejson
 import time
 import copy
@@ -28,10 +30,10 @@ def _make_data_message(data):
     ).serialise()
 
 
-PROCESSING_MODULES = {
-    'driver': driver,
-    'session': session
-}
+PROCESSING_MODULES = [
+    'driver',
+    'session'
+]
 
 EMPTY_STATE = {
     'cars': [],
@@ -54,10 +56,12 @@ class Analyser(object):
         self._pending_publishes = {}
         self._last_published = {}
 
+        self._modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
+
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         if not timestamp:
             timestamp = time.time()
-        for key, module in PROCESSING_MODULES.iteritems():
+        for key, module in self._modules.iteritems():
             if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
                 self._publish_data(key, module.get_data(self.data_centre))
 
@@ -105,3 +109,31 @@ class Analyser(object):
         self._pending_publishes = {}
         self._last_published = {}
         self._current_state = copy.copy(EMPTY_STATE)
+
+
+class FieldExtractor(object):
+    def __init__(self, colSpec):
+        self.mapping = {}
+        for idx, col in enumerate(colSpec):
+            self.mapping[col] = idx
+
+    def get(self, car, field, default=None):
+        if car:
+            try:
+                return car[self.mapping[field]]
+            except KeyError:
+                return default
+        return default
+
+
+def per_car(func):
+    def inner(dc, old_state, new_state, colspec, timestamp):
+        f = FieldExtractor(colspec)
+        result = False
+        for idx, new_car in enumerate(new_state['cars']):
+            race_num = f.get(new_car, Stat.NUM)
+            if race_num:
+                old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
+                result = func(dc, race_num, old_car, new_car, f, timestamp) or result
+        return result
+    return inner
