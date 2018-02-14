@@ -8,8 +8,10 @@ def receive_state_update(dc, race_num, old_car, new_car, f, timestamp):
     new_driver = f.get(new_car, Stat.DRIVER)
 
     if old_driver != new_driver or race_num not in dc._cars:
-        dc.car(race_num).set_driver(new_driver)
-        return True
+        c = dc.car(race_num)
+        is_new = new_driver not in c.drivers
+        c.set_driver(new_driver)
+        return is_new
     return False
 
 
