@@ -93,6 +93,11 @@ class Car(object):
         self.initial_driver = None
         self.fuel_times = []
 
+        # Public static data
+        self.race_class = None
+        self.team = None
+        self.vehicle = None
+
     def add_lap(self, laptime, position, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
 
@@ -161,6 +166,9 @@ class Car(object):
             return next(iter(self.drivers))
         except StopIteration:
             return ""
+
+    def for_json(self):
+        return [self.race_class, self.team, self.vehicle]
 
 
 class Session(object):

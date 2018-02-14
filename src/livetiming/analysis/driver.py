@@ -1,5 +1,5 @@
 from livetiming.racing import Stat
-from livetiming.analysis import FieldExtractor, per_car
+from livetiming.analysis import per_car
 
 
 @per_car

@@ -28,6 +28,7 @@ def _make_data_message(data):
 
 
 PROCESSING_MODULES = [
+    'car',
     'driver',
     'session'
 ]
