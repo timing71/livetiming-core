@@ -74,8 +74,9 @@ class Analyser(object):
 
     def _publish_pending(self):
         now = time.time()
-        for key, data in copy.copy(self._pending_publishes.iteritems()):
+        for key, data in copy.copy(self._pending_publishes).iteritems():
             if self._last_published.get(key, 0) + self.interval < now:
+                self.log.debug("Publishing queued data for {key}", key=key)
                 self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
                     _make_data_message(data),
