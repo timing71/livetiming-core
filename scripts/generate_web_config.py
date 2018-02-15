@@ -1,3 +1,4 @@
+from livetiming.analysis import PROCESSING_MODULES as ANALYSIS_MODULES
 from livetiming.network import MessageClass, RPC, Realm, Channel
 from livetiming.racing import FlagStatus
 import simplejson
@@ -6,6 +7,7 @@ import simplejson
 WEB_CONFIG_FILE = "app/config/config.json"
 
 config = {}
+
 
 def document_class(clazz, transform=lambda x: x):
     key = clazz.__name__
@@ -23,6 +25,8 @@ document_class(Realm)
 document_class(Channel)
 
 document_class(FlagStatus)
+
+config['ANALYSIS_MODULES'] = ANALYSIS_MODULES
 
 
 with open(WEB_CONFIG_FILE, 'w') as confFile:
