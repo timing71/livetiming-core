@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.lapchart import LapChart
-from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, JSONFetcher
 from twisted.internet import reactor
@@ -138,13 +135,6 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return None
-
-    def getAnalysisModules(self):
-        return [
-            LapChart,
-            EnduranceStopAnalysis,
-            StintLength
-        ]
 
     def setStaticData(self):
         self.log.info("Retrieving static data...")

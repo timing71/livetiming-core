@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.lapchart import LapChart
-from livetiming.analysis.pits import EnduranceStopAnalysis
-from livetiming.analysis.session import Session
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, Fetcher
 from twisted.logger import Logger
@@ -193,14 +189,6 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return None  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
-
-    def getAnalysisModules(self):
-        return [
-            Session,
-            LapChart,
-            EnduranceStopAnalysis,
-            StintLength
-        ]
 
     def _handleData(self, data):
         if 'live_standing' in data:
