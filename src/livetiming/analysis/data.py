@@ -70,6 +70,10 @@ class Stint(object):
     def yellow_laps(self):
         return len([l for l in self.laps if l.flag >= FlagStatus.YELLOW])
 
+    @property
+    def best_lap_time(self):
+        return min(map(lambda l: l.laptime, self.laps))
+
     def __repr__(self, *args, **kwargs):
         return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
             self.driver,

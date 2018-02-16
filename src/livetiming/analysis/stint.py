@@ -46,6 +46,7 @@ def _map_stint_with(car, timestamp):
             stint.end_time if not stint.in_progress else timestamp,
             stint.in_progress,
             drivers.index(stint.driver) if stint.driver in drivers else -1,
+            stint.best_lap_time,
             stint.yellow_laps
         ]
     return map_stint
