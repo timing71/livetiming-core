@@ -72,7 +72,7 @@ class Stint(object):
 
     @property
     def best_lap_time(self):
-        return min(map(lambda l: l.laptime, self.laps))
+        return min(map(lambda l: l.laptime, self.laps)) if len(self.laps) > 0 else None
 
     def __repr__(self, *args, **kwargs):
         return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
