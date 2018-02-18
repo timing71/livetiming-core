@@ -158,7 +158,9 @@ class Car(object):
     @property
     def current_stint(self):
         if len(self.stints) > 0:
-            return self.stints[-1]
+            latest = self.stints[-1]
+            if latest.in_progress:
+                return latest
         return None
 
     @property
