@@ -139,3 +139,20 @@ def per_car(func):
                 result = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or result
         return result
     return inner
+
+
+def map_stint_with(car, timestamp):
+    drivers = car.drivers
+
+    def map_stint(stint):
+        return [
+            stint.start_lap,
+            stint.start_time,
+            stint.end_lap if not stint.in_progress else car.current_lap,
+            stint.end_time if not stint.in_progress else timestamp,
+            stint.in_progress,
+            drivers.index(stint.driver) if stint.driver in drivers else -1,
+            stint.best_lap_time,
+            stint.yellow_laps
+        ]
+    return map_stint

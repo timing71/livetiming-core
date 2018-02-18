@@ -1,5 +1,5 @@
 from livetiming.racing import Stat
-from livetiming.analysis import per_car
+from livetiming.analysis import map_stint_with, per_car
 
 
 @per_car
@@ -18,13 +18,15 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
             if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
                 car.add_lap(new_lap[0], position, driver, timestamp, flag, tyre)
                 dc.lap_chart.tally(race_num, car.laps[-1])
+                return True
         except Exception:  # Non-tuple case (do any services still not use tuples?)
             if old_lap != new_lap or old_lap_num != new_lap_num:
                 car.add_lap(new_lap, position, driver, timestamp, flag, tyre)
                 dc.lap_chart.tally(race_num, car.laps[-1])
+                return True
 
-    return False  # We don't want to send out lap data from this module - as it quickly gets huge
+    return False
 
 
 def get_data(dc):
-    return None
+    return {car.race_num: [map_stint_with(car, dc.latest_timestamp)(car.current_stint), car.last_pass] for car in dc._cars.values()}
