@@ -48,6 +48,9 @@ class Directory(ApplicationSession):
         liveness = task.LoopingCall(self.checkLiveness)
         liveness.start(10)
 
+        broadcast = task.LoopingCall(self.broadcastServicesList)
+        broadcast.start(60)
+
     def onControlMessage(self, message):
         msg = Message.parse(message)
         self.log.debug("Received message {msg}", msg=msg)
