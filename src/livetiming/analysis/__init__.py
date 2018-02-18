@@ -145,6 +145,8 @@ def map_stint_with(car, timestamp):
     drivers = car.drivers
 
     def map_stint(stint):
+        if not stint:
+            return None
         return [
             stint.start_lap,
             stint.start_time,
