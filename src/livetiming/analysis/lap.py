@@ -21,14 +21,12 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
                 car.current_lap = _get_lap_count(car, new_car, f, dc.current_state['cars'])
                 car.add_lap(new_lap[0], position, driver, timestamp, flag, tyre)
                 dc.lap_chart.tally(race_num, car.laps[-1])
-                print "New lap!", car.current_lap
                 return True
         except Exception:  # Non-tuple case (do any services still not use tuples?)
             if old_lap != new_lap or old_lap_num != new_lap_num:
                 car.current_lap = _get_lap_count(car, new_car, f, dc.current_state['cars'])
                 car.add_lap(new_lap, position, driver, timestamp, flag, tyre)
                 dc.lap_chart.tally(race_num, car.laps[-1])
-                print "New lap (old way)!"
                 return True
 
     return False
