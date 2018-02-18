@@ -61,11 +61,12 @@ class Analyser(object):
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         if not timestamp:
             timestamp = time.time()
+        self.data_centre.current_state = copy.deepcopy(newState)
         for key, module in self._modules.iteritems():
             if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
                 self._publish_data(key, module.get_data(self.data_centre))
 
-        self._current_state = copy.deepcopy(newState)
+        self._current_state = self.data_centre.current_state
         self.data_centre.latest_timestamp = timestamp
 
     def _publish_data(self, key, data):
