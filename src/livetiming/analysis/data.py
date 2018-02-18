@@ -96,6 +96,7 @@ class Car(object):
         self._current_lap_flags = [FlagStatus.NONE]
         self.initial_driver = None
         self.fuel_times = []
+        self.last_pass = None
 
         # Public static data
         self.race_class = None
@@ -125,6 +126,7 @@ class Car(object):
 
         self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
+        self.last_pass = timestamp
 
     def see_flag(self, flag):
         self._current_lap_flags.append(flag)
