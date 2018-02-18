@@ -71,6 +71,7 @@ class Analyser(object):
     def _publish_data(self, key, data):
         self.log.debug("Queueing publish of data '{key}': {data}", key=key, data=data)
         self._pending_publishes[key] = data
+        self._publish_pending()
 
     def _publish_pending(self):
         now = time.time()
