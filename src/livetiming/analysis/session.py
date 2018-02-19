@@ -1,13 +1,21 @@
 from livetiming.racing import FlagStatus
 
+_prev_leader_lap = 0
+
 
 def receive_state_update(dc, old_state, new_state, colspec, timestamp):
+    global _prev_leader_lap
+
+    changed = False
     flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
     old_flag = FlagStatus.fromString(old_state["session"].get("flagState", "none"))
     if flag != old_flag or not dc.session.this_period:
         dc.flag_change(flag, timestamp)
-        return True
-    return False
+        changed = True
+    if dc.leader_lap != _prev_leader_lap:
+        _prev_leader_lap = dc.leader_lap
+        changed = True
+    return changed
 
 
 def get_data(dc):

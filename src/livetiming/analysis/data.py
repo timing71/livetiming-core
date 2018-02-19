@@ -8,8 +8,6 @@ import sys
 import time
 import math
 
-TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
-
 
 class LaptimeChart(object):
     def __init__(self):
@@ -228,94 +226,6 @@ class DataCentre(object):
         if race_num not in self._cars:
             self._cars[race_num] = Car(race_num)
         return self._cars[race_num]
-
-    def _update_cars(self, oldState, newState, colSpec, timestamp):
-        f = FieldExtractor(colSpec)
-        flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
-        old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
-
-        pit_states = ["PIT", "FUEL", "N/S"]
-
-        for idx, new_car in enumerate(newState['cars']):
-            race_num = f.get(new_car, Stat.NUM)
-            if race_num:
-                car = self.car(race_num)
-                car.current_lap = self._get_lap_count(race_num, new_car, f, newState['cars'])
-                new_leader_lap = max(self.leader_lap, car.current_lap)
-                if new_leader_lap != self.leader_lap:
-                    self.leader_lap = new_leader_lap
-                    self.session.flag_change(flag, new_leader_lap, timestamp)
-                driver = f.get(new_car, Stat.DRIVER)
-                tyre = f.get(new_car, Stat.TYRE)
-
-                if old_flag != flag:
-                    car.see_flag(flag)
-                new_car_state = f.get(new_car, Stat.STATE)
-
-                old_car = next(iter([c for c in oldState["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-
-                if old_car:
-
-                    old_lap = f.get(old_car, Stat.LAST_LAP)
-                    new_lap = f.get(new_car, Stat.LAST_LAP)
-                    old_lap_num = f.get(old_car, Stat.LAPS)
-                    new_lap_num = f.get(new_car, Stat.LAPS)
-
-                    try:
-                        if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap[0], idx + 1, driver, timestamp, flag, tyre)
-                            self.lap_chart.tally(race_num, car.laps[-1])
-                    except Exception:  # Non-tuple case (do any services still not use tuples?)
-                        if old_lap != new_lap or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap, idx + 1, driver, timestamp, flag, tyre)
-                            self.lap_chart.tally(race_num, car.laps[-1])
-
-                    old_car_state = f.get(old_car, Stat.STATE)
-
-                    if new_car_state in pit_states and old_car_state not in pit_states:
-                        car.pit_in(timestamp)
-                    elif new_car_state not in pit_states and old_car_state in pit_states:
-                        car.pit_out(timestamp, driver, flag)
-
-                    if new_car_state == "FUEL" and old_car_state != "FUEL":
-                        car.fuel_start(timestamp)
-                    elif new_car_state != "FUEL" and old_car_state == "FUEL":
-                        car.fuel_stop(timestamp)
-
-                    if car.current_stint and (tyre != f.get(old_car, Stat.TYRE) or tyre != car.current_stint.tyre):
-                        car.current_stint.tyre = tyre
-
-                    old_driver = f.get(old_car, Stat.DRIVER)
-                    if old_driver and old_driver != driver:
-                        car.set_driver(driver)
-
-                elif new_car_state not in pit_states:
-                    car.pit_out(timestamp, driver, flag)
-                else:
-                    car.set_driver(driver)
-
-    def _get_lap_count(self, race_num, car, f, cars):
-        from_timing = f.get(car, Stat.LAPS)
-        if from_timing:
-            try:
-                return math.floor(float(from_timing))
-            except ValueError:
-                pass
-        our_num = f.get(car, Stat.NUM)
-        # TSNL put lap count in the "gap" column FSR
-        leader_gap = f.get(cars[0], Stat.GAP)
-        if leader_gap:
-            tsnl = TSNL_LAP_HACK_REGEX.match(str(leader_gap))
-            if tsnl:
-                # Work up until we find the lap count relevant to us
-                lap_count = int(tsnl.group(1))
-                for other_car in cars:
-                    tsnl = TSNL_LAP_HACK_REGEX.match(str(f.get(other_car, Stat.GAP)))
-                    if tsnl:
-                        lap_count = int(tsnl.group(1))
-                    if f.get(other_car, Stat.NUM) == our_num:
-                        return lap_count
-        return len(self.car(race_num).laps)
 
 
 if __name__ == '__main__':
