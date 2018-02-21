@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.wamp.types import PublishOptions
 from datetime import datetime
 from livetiming.analysis import Analyser
 from livetiming.recording import RecordingFile
@@ -8,10 +9,12 @@ from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
 from livetiming.racing import Stat
 from livetiming import load_env
 from livetiming.analysis.data import *
+from lzstring import LZString
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
 import os
+import simplejson
 import sys
 import time
 import txaio
@@ -57,6 +60,12 @@ class FakeAnalysis(ApplicationSession):
             for idx, frame in enumerate(frames):
                 newState = self.rec.getStateAtTimestamp(frame)
                 self.a.receiveStateUpdate(newState, pcs, frame)
+                if (idx % 100 == 0):
+                    self.publish(
+                        RPC.STATE_PUBLISH.format("TEST"),
+                        Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(newState)), retain=True).serialise(),
+                        options=PublishOptions(retain=True)
+                    )
 
                 now = time.time()
                 current_fps = float(idx) / (now - start_time)
@@ -78,7 +87,7 @@ def main():
     load_env()
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    txaio.start_logging(level='debug')
+    # txaio.start_logging(level='debug')
     runner.run(FakeAnalysis)
 
 
