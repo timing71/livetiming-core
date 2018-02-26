@@ -32,7 +32,8 @@ def _apply_car_lap(dc, race_num, car, new_car, new_lap, position, f, timestamp, 
     tyre = f.get(new_car, Stat.TYRE)
     car.current_lap = _get_lap_count(car, new_car, f, dc.current_state['cars'])
     car.add_lap(new_lap, position, driver, timestamp, flag, tyre)
-    dc.lap_chart.tally(race_num, car.laps[-1])
+    if len(car.laps) > 0:
+        dc.lap_chart.tally(race_num, car.laps[-1])
 
     new_leader_lap = max(dc.leader_lap, car.current_lap)
     if new_leader_lap != dc.leader_lap:

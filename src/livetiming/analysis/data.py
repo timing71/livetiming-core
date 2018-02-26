@@ -122,7 +122,7 @@ class Car(object):
                 )
             )
 
-        self.current_stint.laps.append(self.laps[-1])
+            self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
         self.last_pass = timestamp
 
