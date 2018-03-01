@@ -32,7 +32,7 @@ class Service(lt_service):
                 self.log.failure("Failed parsing JSON. Exception was {log_failure}. Data was {data}.", data=e.doc)
                 self.sentry.captureException()
 
-        fetcher = Fetcher("http://www.softpauer.com/f1/2017/testsessions/TestResults.js", setData, 30)
+        fetcher = Fetcher("http://www.softpauer.com/f1/2018/testsessions/TestResults.js", setData, 30)
         fetcher.start()
 
     def getName(self):
@@ -86,8 +86,7 @@ class Service(lt_service):
         return {
             "session": {
                 "flagState": "none",
-                "timeElapsed": 0,
-                "timeRemain": -1
+                "timeElapsed": 0
             },
             "cars": cars
         }
