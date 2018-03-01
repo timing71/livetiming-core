@@ -333,10 +333,8 @@ class NatsoftState(object):
 
 
 def _get_websocket_url(http_url):
-    request = urllib2.Request(http_url)
-    opener = urllib2.build_opener()
-    f = opener.open(request)
-    ws_url = f.url
+    response = urllib2.urlopen(http_url.rstrip('/'))
+    ws_url = response.geturl()
 
     if '?' in ws_url:
         ws_url = ws_url[0:ws_url.index('?')]
