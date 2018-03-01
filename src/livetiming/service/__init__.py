@@ -280,6 +280,9 @@ class Service(object):
         else:
             self.log.warn('No attribution specified for {service}', service=manifest['serviceClass'])
 
+        if self.args.do_not_record:
+            manifest['doNotRecord'] = True
+
         return manifest
 
     def _getDescription(self):
@@ -451,6 +454,7 @@ def parse_args():
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--disable-analysis', action='store_true')
     parser.add_argument('-H', '--hidden', action='store_true', help='Hide this service from the UI except by UUID access')
+    parser.add_argument('-N', '--do-not-record', action='store_true', help='Tell the DVR not to keep the recording of this service')
 
     return parser.parse_known_args()
 
