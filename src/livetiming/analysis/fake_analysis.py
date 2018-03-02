@@ -42,7 +42,7 @@ class FakeAnalysis(ApplicationSession):
     def onJoin(self, details):
         print "Joined"
 
-        self.a = Analyser("TEST", self.publish)
+        self.a = Analyser("TEST", self.publish, interval=5)
 
         def true():
             return True
