@@ -90,6 +90,7 @@ def map_flag(raw):
         'Green': FlagStatus.GREEN,
         'Red': FlagStatus.RED,
         'Checkered': FlagStatus.CHEQUERED,
+        'Ended': FlagStatus.CHEQUERED,
         'WaitStart': FlagStatus.NONE
     }
     if raw in mapp:
@@ -108,12 +109,14 @@ class NatsoftState(object):
         'Heartbeat': 'ignore',
         'Leaderboard': 'children',
         'L': 'children',
+        'OL': 'ignore',  # Lap record
         'OS': 'children',
         'Passing': 'ignore',
         'PointsSeries': 'ignore',
         'PointsTeam': 'ignore',
         'RL': 'children',
         'Sectors': 'ignore',
+        'T': 'ignore',  # Timing point IDs and names
         'Track': 'ignore'
     }
 
@@ -330,6 +333,13 @@ class NatsoftState(object):
         raw_flag = s.get('S', None)
         if raw_flag:
             self._session['flag'] = map_flag(raw_flag)
+
+    # For our purposes, <Flag> / <F> are the same as <Status> / <S>.
+    def handle_flag(self, flag):
+        self.handle_status(flag)
+
+    def handle_f(self, f):
+        self.handle_s(f)
 
 
 def _get_websocket_url(http_url):
