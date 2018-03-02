@@ -38,14 +38,14 @@ class Lap(object):
             self.lap_num,
             self.laptime,
             self.position,
-            self.driver,
+            # self.driver,
             self.timestamp,
             self.flag,
             self.tyre
         ]
 
     def __repr__(self, *args, **kwargs):
-        return "<Lap {}: {} pos {} {} {} {} {}>".format(*self.for_json())
+        return u"<Lap {}: {} pos {} {} {} {}>".format(*self.for_json())
 
 
 class Stint(object):
@@ -73,7 +73,7 @@ class Stint(object):
         return min(map(lambda l: l.laptime, self.laps)) if len(self.laps) > 0 else None
 
     def __repr__(self, *args, **kwargs):
-        return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
+        return u"<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
             self.driver,
             self.start_lap,
             self.end_lap,
@@ -90,7 +90,7 @@ class Car(object):
         self.laps = []
         self.stints = []
         self.inPit = True
-        self.current_lap = 0
+        self.current_lap = 1
         self._current_lap_flags = [FlagStatus.NONE]
         self.initial_driver = None
         self.fuel_times = []
@@ -104,7 +104,7 @@ class Car(object):
     def add_lap(self, laptime, position, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
 
-        if not self.current_stint:
+        if not (self.current_stint or self.inPit):
             self.stints.append(Stint(self.current_lap, timestamp, driver, current_flag))
 
         if laptime > 0:
@@ -122,7 +122,13 @@ class Car(object):
                 )
             )
 
-            self.current_stint.laps.append(self.laps[-1])
+            if self.inPit and self.stints:
+                # Sometimes the finish line is crossed in the pit lane - the lap should be added to the previous stint
+                prev_stint = self.stints[-1]
+                prev_stint.laps.append(self.laps[-1])
+                prev_stint.end_lap = self.current_lap
+            else:
+                self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
         self.last_pass = timestamp
 
@@ -143,7 +149,8 @@ class Car(object):
 
     def pit_out(self, timestamp, driver, flag):
         if self.inPit:
-            self.stints.append(Stint(self.current_lap, timestamp, driver, flag))
+            prev_stint_end_lap = self.stints[-1].end_lap if self.stints and self.stints[-1].end_lap else self.current_lap - 1
+            self.stints.append(Stint(prev_stint_end_lap + 1, timestamp, driver, flag))
             self.inPit = False
 
     def fuel_start(self, timestamp):
