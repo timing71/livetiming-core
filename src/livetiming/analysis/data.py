@@ -127,7 +127,7 @@ class Car(object):
                 prev_stint = self.stints[-1]
                 prev_stint.laps.append(self.laps[-1])
                 prev_stint.end_lap = self.current_lap
-            else:
+            elif self.current_stint:
                 self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
         self.last_pass = timestamp
@@ -150,7 +150,7 @@ class Car(object):
     def pit_out(self, timestamp, driver, flag):
         if self.inPit:
             prev_stint_end_lap = self.stints[-1].end_lap if self.stints and self.stints[-1].end_lap else self.current_lap - 1
-            self.stints.append(Stint(prev_stint_end_lap + 1, timestamp, driver, flag))
+            self.stints.append(Stint(max(1, prev_stint_end_lap + 1), timestamp, driver, flag))
             self.inPit = False
 
     def fuel_start(self, timestamp):
