@@ -45,6 +45,8 @@ def create_protocol(service):
                 initialState = simplejson.loads(LZString().decompressFromUTF16(body))
                 for submessage in initialState:
                     self.handleMessage(submessage)
+            elif msgType == "$_Reload":
+                self.dropConnection(abort=True)
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
                 getattr(service, msgType)(body)
             else:
