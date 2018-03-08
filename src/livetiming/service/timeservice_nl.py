@@ -450,7 +450,7 @@ class Service(lt_service):
 
     def getRaceState(self):
         session = {}
-        if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
+        if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset is not None:
             if self.times.get('h', False):  # Clock is halted
                 session['timeRemain'] = (self.times['lt'] - self.times['r']) / 1000000
             else:
