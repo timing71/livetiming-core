@@ -4,6 +4,10 @@ from livetiming.analysis.data import FieldExtractor
 from livetiming.racing import Stat
 
 
+def _map_flag_period(fp):
+    return [fp[0].value] + fp[1:]
+
+
 class Session(Analysis):
     def getName(self):
         return "Session stats"
@@ -15,22 +19,22 @@ class Session(Analysis):
 
         for flag, start_lap, start_time, stop_lap, stop_time in self.data_centre.session.flag_periods:
             if flag not in flag_stats:
-                flag_stats[flag] = {
+                flag_stats[flag.value] = {
                     'time': 0,
                     'count': 0,
                     'laps': 0
                 }
-            flag_stats[flag]['count'] += 1
+            flag_stats[flag.value]['count'] += 1
 
             if stop_time:
-                flag_stats[flag]['time'] += (stop_time - start_time)
+                flag_stats[flag.value]['time'] += (stop_time - start_time)
             else:
-                flag_stats[flag]['time'] += (self.data_centre.latest_timestamp - start_time)
+                flag_stats[flag.value]['time'] += (self.data_centre.latest_timestamp - start_time)
 
             if stop_lap:
-                flag_stats[flag]['laps'] += (stop_lap - start_lap)
+                flag_stats[flag.value]['laps'] += (stop_lap - start_lap)
             else:
-                flag_stats[flag]['laps'] += (self.data_centre.leader_lap - start_lap)
+                flag_stats[flag.value]['laps'] += (self.data_centre.leader_lap - start_lap)
 
         car_per_state = defaultdict(int)
         f = FieldExtractor(self.data_centre.column_spec)
@@ -39,7 +43,7 @@ class Session(Analysis):
 
         results['flagStats'] = flag_stats
         results['carPerState'] = car_per_state
-        results['currentFlagPeriod'] = self.data_centre.session.flag_periods[-1] if self.data_centre.session.flag_periods else None
+        results['currentFlagPeriod'] = _map_flag_period(self.data_centre.session.flag_periods[-1]) if self.data_centre.session.flag_periods else None
         results['currentTimestamp'] = self.data_centre.latest_timestamp
         results['leaderLap'] = self.data_centre.leader_lap
 
