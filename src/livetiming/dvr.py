@@ -169,6 +169,12 @@ class DVR(object):
                 threshold=RECORDING_DURATION_THRESHOLD
             )
             os.remove(src)
+        elif recording.manifest.get('doNotRecord', False):
+            self.log.warn(
+                "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
+                uuid=uuid,
+            )
+            os.remove(src)
         else:
             dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
             if disambiguator > 0:

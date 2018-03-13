@@ -4,6 +4,7 @@ from livetiming import sentry
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from lzstring import LZString
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 import simplejson
@@ -42,13 +43,14 @@ class Analyser(object):
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         self.data_centre.update_state(newState, colSpec, timestamp)
 
+    @inlineCallbacks
     def _publishAnalysisData(self):
         if self.data_centre.current_state["session"].get("flagState", "none") != "none":
             start_time = time.time()
             publish_options = PublishOptions(retain=True)
             for mclass, module in self.modules.iteritems():
                 try:
-                    self.publish(
+                    yield self.publish(
                         u"livetiming.analysis/{}/{}".format(self.uuid, mclass[20:]),
                         _make_data_message(module.getData()),
                         options=publish_options
