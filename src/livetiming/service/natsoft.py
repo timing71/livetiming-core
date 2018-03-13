@@ -11,6 +11,7 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import argparse
 import re
 import time
+import urllib2
 import xml.etree.ElementTree as ET
 
 
@@ -89,6 +90,7 @@ def map_flag(raw):
         'Green': FlagStatus.GREEN,
         'Red': FlagStatus.RED,
         'Checkered': FlagStatus.CHEQUERED,
+        'Ended': FlagStatus.CHEQUERED,
         'WaitStart': FlagStatus.NONE
     }
     if raw in mapp:
@@ -107,12 +109,14 @@ class NatsoftState(object):
         'Heartbeat': 'ignore',
         'Leaderboard': 'children',
         'L': 'children',
+        'OL': 'ignore',  # Lap record
         'OS': 'children',
         'Passing': 'ignore',
         'PointsSeries': 'ignore',
         'PointsTeam': 'ignore',
         'RL': 'children',
         'Sectors': 'ignore',
+        'T': 'ignore',  # Timing point IDs and names
         'Track': 'ignore'
     }
 
@@ -330,10 +334,28 @@ class NatsoftState(object):
         if raw_flag:
             self._session['flag'] = map_flag(raw_flag)
 
+    # For our purposes, <Flag> / <F> are the same as <Status> / <S>.
+    def handle_flag(self, flag):
+        self.handle_status(flag)
+
+    def handle_f(self, f):
+        self.handle_s(f)
+
+
+def _get_websocket_url(http_url):
+    response = urllib2.urlopen(http_url.rstrip('/'))
+    ws_url = response.geturl()
+
+    if '?' in ws_url:
+        ws_url = ws_url[0:ws_url.index('?')]
+
+    return re.sub('^https?:', 'ws:', ws_url)
+
 
 def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--url', help='WebSocket URL to connect to')
+    parser.add_argument('-u', '--url', help='HTTP URL to connect to (and derive WS URL from)')
+    parser.add_argument('-w', '--ws', help='WebSocket URL to connect to')
     parser.add_argument('--host', help='Host to connect to for a TCP connection')
     parser.add_argument('-p', '--port', help='Port to connect to for a TCP connection', type=int)
     parser.add_argument('-n', '--name', help='Service name', default='Natsoft timing feed')
@@ -397,15 +419,32 @@ class Service(lt_service):
         self._state = NatsoftState(self.log, self.onSessionChange)
 
         if self._extra.url:
-            factory = ReconnectingWebSocketClientFactory(self._extra.url)
+            ws = _get_websocket_url(self._extra.url)
+            self.log.info("Derived WebSocket URL {url}", url=ws)
+            self._connectWS(ws)
+        elif self._extra.ws:
+            self.log.info("Using given WebSocket URL {url}", url=self._extra.ws)
+            self._connectWS(self._extra.ws)
+        elif self._extra.host and self._extra.port:
+            self.log.info("Connecting to {host}:{port}", host=self._extra.host, port=self._extra.port)
+            self._connectTCP(self._extra.host, self._extra.port)
+        else:
+            url = _get_websocket_url(self.getDefaultUrl())
+            self.log.info("Using defaulted URL {url}", url=url)
+            self._connectWS(url)
+
+    def _connectWS(self, url):
+            factory = ReconnectingWebSocketClientFactory(url)
             factory.protocol = create_ws_protocol(self.log, self._state.handle)
             connectWS(factory)
-        elif self._extra.host and self._extra.port:
+
+    def _connectTCP(self, host, port):
             factory = ReconnectingClientFactory()
             factory.protocol = create_tcp_protocol(self.log, self._state.handle)
-            reactor.connectTCP(self._extra.host, self._extra.port, factory)
-        else:
-            raise Exception("Either websocket URL or host/port must be specified")
+            reactor.connectTCP(host, port, factory)
+
+    def getDefaultUrl(self):
+        raise Exception("Either HTTP or websocket URL, or host/port, must be specified")
 
     def onSessionChange(self):
         self.analyser.reset()

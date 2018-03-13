@@ -45,6 +45,8 @@ def create_protocol(service):
                 initialState = simplejson.loads(LZString().decompressFromUTF16(body))
                 for submessage in initialState:
                     self.handleMessage(submessage)
+            elif msgType == "$_Reload":
+                self.dropConnection(abort=True)
             elif hasattr(service, msgType) and callable(getattr(service, msgType)):
                 getattr(service, msgType)(body)
             else:
@@ -450,7 +452,7 @@ class Service(lt_service):
 
     def getRaceState(self):
         session = {}
-        if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset:
+        if "lt" in self.times and "r" in self.times and "q" in self.times and self.timeOffset is not None:
             if self.times.get('h', False):  # Clock is halted
                 session['timeRemain'] = (self.times['lt'] - self.times['r']) / 1000000
             else:

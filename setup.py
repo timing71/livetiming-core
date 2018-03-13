@@ -18,7 +18,7 @@ setup(
     author_email='jamesremuscat@gmail.com',
     url='https://github.com/jamesremuscat/livetiming',
     packages=find_packages('src', exclude=["*.tests"]) + [''],
-    package_dir = {'':'src'},
+    package_dir={'': 'src'},
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
         "autobahn[twisted]>=17.6.2",
@@ -38,13 +38,13 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-                'livetiming-directory = livetiming.directory:main',
-                'livetiming-dvr = livetiming.dvr:main',
-                'livetiming-recordings = livetiming.recording:main',
-                'livetiming-rectool = livetiming.rectool:main',
-                'livetiming-scheduler = livetiming.scheduler:main',
-                'livetiming-service = livetiming.service:main',
-                'livetiming-service-manager = livetiming.servicemanager:main',
-            ],
-        }
-      )
+            'livetiming-directory = livetiming.directory:main',
+            'livetiming-dvr = livetiming.dvr:main',
+            'livetiming-recordings = livetiming.recording:main',
+            'livetiming-rectool = livetiming.rectool:main',
+            'livetiming-scheduler = livetiming.scheduler:main',
+            'livetiming-service = livetiming.service:main',
+            'livetiming-service-manager = livetiming.servicemanager:main',
+        ],
+    }
+)
