@@ -12,11 +12,11 @@ from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.session import Session
 
-
-SRO_ROOT_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SEASON_JSON.json?s=3&t=0"
-SRO_SCHEDULE_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_SCHEDULE_{meeting}_JSON.json"
-SRO_SESSION_TIMING_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_TIMING_{session}_JSON.json"
-SRO_SESSION_DATA_URL = "http://livecache.sportresult.com/node/db/RA_PROD/SRO_2017_COMP_DETAIL_{session}_JSON.json"
+SRO_URL_BASE = "http://uat-livecache.sportresult.com/node/db/RAC_TEST/SRO_2018_"
+SRO_ROOT_URL = SRO_URL_BASE + "SEASON_JSON.json?s=3&t=0"
+SRO_SCHEDULE_URL = SRO_URL_BASE + "SCHEDULE_{meeting}_JSON.json"
+SRO_SESSION_TIMING_URL = SRO_URL_BASE + "TIMING_{session}_JSON.json"
+SRO_SESSION_DATA_URL = SRO_URL_BASE + "COMP_DETAIL_{session}_JSON.json"
 
 
 STATE_LIVE = 1
@@ -291,7 +291,7 @@ class Service(lt_service):
             competitor = self._session_data['Competitors'][entry['CompetitorId']]
             driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
             if 'ClassId' in competitor:
-                clazz = self._session_data['Classes'][competitor['ClassId']]['ShortName'] if competitor['ClassId'] in self._session_data['Classes'] else competitor['ClassId']
+                clazz = self._session_data['Classes'][competitor['ClassId']].get('ShortName', '') if competitor['ClassId'] in self._session_data['Classes'] else competitor['ClassId']
             else:
                 clazz = ''
 
@@ -302,7 +302,7 @@ class Service(lt_service):
                 map_car_state(main_result['Status'], competitor['InPitLane']),
                 clazz,
                 u"{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
-                competitor['CarTypeName'],
+                competitor.get('CarTypeName', ''),
                 competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
                 main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,
                 main_result['Behind'] if 'Behind' in main_result else '',
