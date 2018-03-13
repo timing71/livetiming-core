@@ -299,7 +299,12 @@ class Service(object):
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
 
-            self.analyser.receiveStateUpdate(newState, self.getColumnSpec())
+            reactor.callInThread(  # This could take some time, let's be sure to not block the reactor
+                self.analyser.receiveStateUpdate,
+                newState,
+                self.getColumnSpec()
+            )
+
             self._saveState()
         except Exception:
             self.log.failure("Exception while updating race state: {log_failure}")
