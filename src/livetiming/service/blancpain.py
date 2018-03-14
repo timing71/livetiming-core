@@ -34,6 +34,7 @@ def parse_extra_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--meeting", help="Meeting ID")
     parser.add_argument("--session", help="Session ID")
+    parser.add_argument("--tz", type=int, help='Timezone offset in minutes from UTC', default=0)
 
     return parser.parse_known_args(args)
 
@@ -149,6 +150,7 @@ class Service(lt_service):
         super(Service, self).__init__(args, extra_args)
         self.extra_args = extra_args
 
+        self._tz_offset = 0
         self._timing_data = None
         self._session_data = None
         self._messages = []
@@ -162,6 +164,7 @@ class Service(lt_service):
     def _init_session(self):
         ea, _ = parse_extra_args(self.extra_args)
 
+        self._tz_offset = ea.tz
         self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
 
         if self.sro_session:
@@ -326,7 +329,7 @@ class Service(lt_service):
         session = {
             'flagState': map_session_flag(unt),
             'timeRemain': parse_session_time(unt['RemainingTime']),
-            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds() if 'StartRealTime' in unt else 0  # Let's just assume UTC here
+            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds() + (60 * self._tz_offset) if 'StartRealTime' in unt else 0
         }
 
         return {'cars': cars, 'session': session}
