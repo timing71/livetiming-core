@@ -20,7 +20,11 @@ ANALYSIS_PUBLISH_INTERVAL = 60
 
 
 def _make_data_message(data):
-    return Message(MessageClass.ANALYSIS_DATA, data, retain=True).serialise()
+    return Message(
+        MessageClass.ANALYSIS_DATA,
+        simplejson.loads(simplejson.dumps(data)),
+        retain=True
+    ).serialise()
 
 
 class Analyser(object):
