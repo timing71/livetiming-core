@@ -3,16 +3,18 @@ from autobahn.wamp.types import SubscribeOptions
 from livetiming import load_env
 from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
-from livetiming.recording import TimingRecorder
+from livetiming.recording import TimingRecorder, INTRA_FRAMES
 from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
+from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
 
 import os
 import shutil
 import simplejson
 import time
+import zipfile
 
 
 @authenticatedService
@@ -49,6 +51,54 @@ def dedupe(filename):
         d += 1
         filename = "{}_{}{}".format(f, d, ext)
     return filename, d
+
+
+class DirectoryTimingRecorder(TimingRecorder):
+    def __init__(self, recordFile):
+        deduped_recfile, _ = dedupe(recordFile)
+        super(DirectoryTimingRecorder, self).__init__(deduped_recfile)
+        os.mkdir(deduped_recfile)
+        self._finalised = False
+
+    def writeManifest(self, serviceRegistration):
+        if self._finalised:
+            raise Exception("Cannot write manifest to a finalised DTR")
+        serviceRegistration["startTime"] = self.first_frame or time.time()
+        serviceRegistration["version"] = 1
+        self.manifest = serviceRegistration
+
+        manifest_file = os.path.join(self.recordFile, 'manifest.json')
+        with open(manifest_file, 'w') as mf:
+            simplejson.dump(serviceRegistration, mf)
+
+    def writeState(self, state, timestamp=None):
+        if self._finalised:
+            raise Exception("Cannot write state to a finalised DTR")
+        if not timestamp:
+            timestamp = int(time.time())
+
+        if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
+            with open(os.path.join(self.recordFile, "{:011d}.json".format(timestamp)), 'w') as frame_file:
+                simplejson.dump(state, frame_file)
+        else:  # Write an intra-frame
+            diff = self._diffState(state)
+            with open(os.path.join(self.recordFile, "{:011d}i.json".format(timestamp)), 'w') as frame_file:
+                simplejson.dump(diff, frame_file)
+        self.frames += 1
+        self.prevState = state.copy()
+        if not self.first_frame:
+            self.first_frame = timestamp
+        self.latest_frame = timestamp
+
+    def finalise(self):
+        zip_name = "{}.zip".format(self.recordFile)
+        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zout:
+            for root, _, files in os.walk(self.recordFile):
+                for file in files:
+                    zout.write(os.path.join(root, file))
+        shutil.rmtree(self.recordFile)
+        self._finalised = True
+        return zip_name
 
 
 class DVR(object):
@@ -94,13 +144,13 @@ class DVR(object):
 
     def _get_recording(self, service_uuid):
         if service_uuid not in self._in_progress_recordings:
-            rec_file = os.path.join(self.IN_PROGRESS_DIR, "{}.zip".format(service_uuid))
+            rec_file = os.path.join(self.IN_PROGRESS_DIR, "{}".format(service_uuid))
 
             if os.path.isfile(rec_file):
                 self.log.info("Resuming existing recording for UUID {uuid}", uuid=service_uuid)
             else:
                 self.log.info("Starting new recording for UUID {uuid}", uuid=service_uuid)
-            self._in_progress_recordings[service_uuid] = TimingRecorder(rec_file)
+            self._in_progress_recordings[service_uuid] = DirectoryTimingRecorder(rec_file)
 
         return self._in_progress_recordings[service_uuid]
 
@@ -160,34 +210,37 @@ class DVR(object):
         self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
         recording = self._in_progress_recordings.pop(uuid)
 
-        src = recording.recordFile
-        if recording.duration < RECORDING_DURATION_THRESHOLD:
-            self.log.warn(
-                "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
-                uuid=uuid,
-                duration=recording.duration,
-                threshold=RECORDING_DURATION_THRESHOLD
-            )
-            os.remove(src)
-        elif recording.manifest.get('doNotRecord', False):
-            self.log.warn(
-                "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
-                uuid=uuid,
-            )
-            os.remove(src)
-        else:
-            dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
-            if disambiguator > 0:
-                manifest = recording.manifest
-                manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
-                recording.writeManifest(manifest)
+        def do_finalise(src):
+            if recording.duration < RECORDING_DURATION_THRESHOLD:
+                self.log.warn(
+                    "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
+                    uuid=uuid,
+                    duration=recording.duration,
+                    threshold=RECORDING_DURATION_THRESHOLD
+                )
+                os.remove(src)
+            elif recording.manifest.get('doNotRecord', False):
+                self.log.warn(
+                    "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
+                    uuid=uuid,
+                )
+                os.remove(src)
+            else:
+                dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+                if disambiguator > 0:
+                    manifest = recording.manifest
+                    manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
+                    recording.writeManifest(manifest)
 
-            shutil.move(
-                src,
-                dest
-            )
+                shutil.move(
+                    src,
+                    dest
+                )
 
-            os.chmod(dest, 0664)
+                os.chmod(dest, 0664)
+
+        d = deferToThread(recording.finalise)  # This could take a long time!
+        d.addCallback(do_finalise)
 
 
 class StandaloneDVR(DVR):
