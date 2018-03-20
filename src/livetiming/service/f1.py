@@ -15,7 +15,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 
 
-_F1_SERVICE_YEAR = 2017
+_F1_SERVICE_YEAR = 2018
 
 
 def mapTimeFlag(color):
@@ -38,11 +38,13 @@ def renderGapOrLaps(raw):
 
 def parseTyre(tyreChar):
     tyreMap = {
+        "D": ("SH", "tyre-shard"),
         "H": ("H", "tyre-hard"),
         "M": ("M", "tyre-med"),
         "S": ("S", "tyre-soft"),
         "V": ("SS", "tyre-ssoft"),
         "E": ("US", "tyre-usoft"),
+        "F": ("HS", "tyre-hsoft"),
         "I": ("I", "tyre-inter"),
         "W": ("W", "tyre-wet"),
         "U": ("U", "tyre-development")
