@@ -95,7 +95,7 @@ class DirectoryTimingRecorder(TimingRecorder):
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zout:
             for root, _, files in os.walk(self.recordFile):
                 for file in files:
-                    zout.write(os.path.join(root, file))
+                    zout.write(os.path.join(root, file), os.path.basename(file))
         shutil.rmtree(self.recordFile)
         self._finalised = True
         return zip_name
