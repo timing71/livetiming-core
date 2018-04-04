@@ -75,6 +75,9 @@ class FakeAnalysis(ApplicationSession):
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
             self.a.save_data_centre()
+            # Republish all data at the end
+            for key, module in self.a._modules.iteritems():
+                self.a._publish_data(key, module.get_data(self.a.data_centre))
 
         reactor.callInThread(preprocess)
 
