@@ -95,6 +95,7 @@ class Car(object):
         self.initial_driver = None
         self.fuel_times = []
         self.last_pass = None
+        self.drivers = []
 
         # Public static data
         self.race_class = None
@@ -140,6 +141,8 @@ class Car(object):
             self.current_stint.driver = driver
         else:
             self.initial_driver = driver
+        if driver not in self.drivers:
+            self.drivers.append(driver)
 
     def pit_in(self, timestamp):
         if len(self.stints) > 0:
@@ -167,12 +170,6 @@ class Car(object):
             if latest.in_progress:
                 return latest
         return None
-
-    @property
-    def drivers(self):
-        if not self.current_stint:
-            return [self.initial_driver]
-        return list(set(map(lambda stint: stint.driver, self.stints)))
 
     def driver_name(self):
         try:
