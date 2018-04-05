@@ -16,11 +16,12 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
         car = dc.car(race_num)
 
         try:
-            if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
+            if new_lap and (old_lap[0] != new_lap[0] or old_lap_num != new_lap_num):
                 _apply_car_lap(dc, race_num, car, new_car, new_lap[0], position, f, timestamp, flag)
                 return True
-        except Exception:  # Non-tuple case (do any services still not use tuples?)
-            if old_lap != new_lap or old_lap_num != new_lap_num:
+        except Exception as e:  # Non-tuple case (do any services still not use tuples?)
+            # print "We got an exception for {}, {}, car {}".format(old_lap, new_lap, new_car)
+            if new_lap and (old_lap != new_lap or old_lap_num != new_lap_num):
                 _apply_car_lap(dc, race_num, car, new_car, new_lap, position, f, timestamp, flag)
                 return True
 
