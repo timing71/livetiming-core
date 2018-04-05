@@ -72,6 +72,19 @@ class Stint(object):
     def best_lap_time(self):
         return min(map(lambda l: l.laptime, self.laps)) if len(self.laps) > 0 else None
 
+    @property
+    def average_lap_time(self):
+        if len(self.laps) == 1:
+            return None
+        if self.in_progress:
+            # Exclude first lap (out lap)
+            return sum(map(lambda l: l.laptime, self.laps[1:])) / (len(self.laps) - 1)
+        else:
+            # Exclude first (out) and last (in) laps
+            if len(self.laps) == 2:
+                return None
+            return sum(map(lambda l: l.laptime, self.laps[1:-1])) / (len(self.laps) - 2)
+
     def __repr__(self, *args, **kwargs):
         return u"<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
             self.driver,
