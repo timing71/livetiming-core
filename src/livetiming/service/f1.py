@@ -302,6 +302,8 @@ class Service(lt_service):
                 interval = ourBestTime - fasterCarTime
                 gap = ourBestTime - fastestCarTime
 
+            last_lap = float(latestTimeLine[1])
+
             cars.append([
                 driver["Num"],
                 state,
@@ -318,8 +320,8 @@ class Service(lt_service):
                 [timeLine[7], 'old'],
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
-                [float(latestTimeLine[1]), "sb-new" if fastestLapFlag == "sb-new" else mapTimeFlag(colorFlags[0])],
-                [float(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else [0.0, ""],
+                [last_lap if last_lap > 0 else '', "sb-new" if fastestLapFlag == "sb-new" else mapTimeFlag(colorFlags[0])],
+                [float(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else ['', ''],
                 latestTimeLine[3][0]
             ])
 
