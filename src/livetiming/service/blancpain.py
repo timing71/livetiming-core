@@ -12,7 +12,7 @@ from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.driver import StintLength
 from livetiming.analysis.session import Session
 
-SRO_URL_BASE = "https://livecache.sportresult.com/node/db/RAC_PROD/SRO_2018_"
+SRO_URL_BASE = "http://livecache.sportresult.com/node/db/RAC_PROD/SRO_2018_"
 SRO_ROOT_URL = SRO_URL_BASE + "SEASON_JSON.json"
 SRO_SCHEDULE_URL = SRO_URL_BASE + "SCHEDULE_{meeting}_JSON.json"
 SRO_SESSION_TIMING_URL = SRO_URL_BASE + "TIMING_{session}_JSON.json"
