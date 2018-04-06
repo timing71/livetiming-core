@@ -48,7 +48,7 @@ def mapCarState(rawState):
 
 def parseTime(formattedTime):
     if formattedTime == "" or formattedTime is None:
-        return 0
+        return ''
     try:
         return float(formattedTime)
     except ValueError:
@@ -105,7 +105,7 @@ class Service(lt_service):
         self.session_id = None
 
         def data_url():
-            return "http://www.fiawec.com/ecm/live/WEC/__data.json?_={}".format(int(1000 * time.time()))
+            return "http://www.fiawec.com/assets/live/WEC/__data.json?_={}".format(int(1000 * time.time()))
 
         fetcher = JSONFetcher(data_url, self._handleData, 10)
         fetcher.start()
@@ -183,30 +183,21 @@ class Service(lt_service):
 
     def _handleData(self, data):
         if "params" in data:
-            try:
-                new_params = simplejson.loads(data["params"])
-                if self._data_is_newer(new_params):
-                    self.params = new_params
-                    if 'eventName' in self.params and self.params['eventName'] != self.description:
-                        self.description = self.params['eventName']
-                        self.publishManifest()
-                        self.analyser.reset()
-                    if "sessionId" in new_params and new_params['sessionId'] != self.session_id:
-                        self.session_id = new_params['sessionId']
-                        self.analyser.reset()
+            params = data['params']
+            if self._data_is_newer(params):
+                self.params = params
+                if 'eventName' in self.params and self.params['eventName'] != self.description:
+                    self.description = self.params['eventName']
+                    self.publishManifest()
+                    self.analyser.reset()
+                if "sessionId" in params and params['sessionId'] != self.session_id:
+                    self.session_id = params['sessionId']
+                    self.analyser.reset()
 
-                    self.latest_seen_timestamp = self.params.get("timestamp", None)
+                self.latest_seen_timestamp = self.params.get("timestamp", None)
 
-                if "entries" in data:
-                    try:
-                        self.entries = simplejson.loads(data["entries"])
-                    except JSONDecodeError:
-                        self.sentry.captureException()
-                        self.log.failure("Failed to parse WEC entry data {entries}: {log_failure}", entries=data['entries'])
-
-            except JSONDecodeError:
-                self.sentry.captureException()
-                self.log.failure("Failed to parse WEC subdata {params}: {log_failure}", params=data['params'])
+            if "entries" in data:
+                self.entries = data['entries']
             self._updateAndPublishRaceState()
 
     def getRaceState(self):
