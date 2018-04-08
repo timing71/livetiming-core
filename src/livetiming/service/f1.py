@@ -49,7 +49,7 @@ def parseTyre(tyreChar):
         "W": ("W", "tyre-wet"),
         "U": ("U", "tyre-development")
     }
-    return tyreMap[tyreChar]
+    return tyreMap.get(tyreChar, '?')
 
 
 def parseFlagState(flagChar):
@@ -310,8 +310,8 @@ class Service(lt_service):
                 driver["FullName"].title(),
                 math.floor(float(sq[0])) if sq[0] != "" else 0,
                 currentTyre,
-                currentTyreStats[1],
-                currentTyreStats[2],
+                currentTyreStats[1] if len(currentTyreStats) > 1 else '?',
+                currentTyreStats[2] if len(currentTyreStats) > 2 else '?',
                 gap,
                 interval,
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
