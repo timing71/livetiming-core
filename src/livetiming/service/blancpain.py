@@ -166,6 +166,7 @@ class Service(lt_service):
 
         self._tz_offset = ea.tz
         self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
+        self.publishManifest()
 
         if self.sro_session:
             self._previous_laps = {}
