@@ -221,8 +221,8 @@ class Service(lt_service):
         for pos in sorted(carKeys, key=lambda i: int(i)):
             car = rawCarData[pos]
             engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]}
-            voiture = self.staticData["tabVehicules"][str(engage['voiture'])] if str(engage['voiture']) in self.staticData["tabVehicules"] else {"nom": "Unknown", "marque": -1}
-            marque = self.staticData["tabMarques"][str(voiture['marque'])] if str(voiture['marque']) in self.staticData["tabMarques"] else "Unknown"
+            voiture = self.staticData["tabVehicules"][str(engage['voiture'])] if str(engage['voiture']) in self.staticData["tabVehicules"] else {"nom": "", "marque": -1}
+            marque = self.staticData["tabMarques"][str(voiture['marque'])] if str(voiture['marque']) in self.staticData["tabMarques"] else ""
             driver = self.staticData["tabPilotes"][car["5"]] if car["5"] in self.staticData["tabPilotes"] else {"prenom": "Driver", "nom": car["5"]}
             team = self.staticData["tabTeams"][str(engage["team"])] if str(engage["team"]) in self.staticData["tabTeams"] else {"nom": "Unknown"}
             classe = engage["categorie"]
@@ -235,12 +235,12 @@ class Service(lt_service):
                 mapClasses(classe),
                 team["nom"],
                 u"{}, {}".format(driver["nom"].upper(), driver['prenom']),
-                u"{} {}".format(marque, voiture["nom"]),
+                u"{} {}".format(marque, voiture["nom"]).strip(),
                 car["6"],
                 car["13"],
                 car["4"],  # gap
-                [lastLap, getFlags(classe, lastLap, bestLap)],
-                [bestLap, getFlags(classe, bestLap, -1)],
+                [lastLap, getFlags(classe, lastLap, bestLap)] if lastLap > 0 else ['', ''],
+                [bestLap, getFlags(classe, bestLap, -1)] if bestLap > 0 else ['', ''],
                 car["1"],  # ave speed
                 car["16"]  # pits
             ])
