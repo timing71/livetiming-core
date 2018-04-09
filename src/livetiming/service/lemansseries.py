@@ -220,11 +220,11 @@ class Service(lt_service):
 
         for pos in sorted(carKeys, key=lambda i: int(i)):
             car = rawCarData[pos]
-            engage = self.staticData["tabEngages"][car["2"]] if car["2"] in self.staticData["tabEngages"] else {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]}
-            voiture = self.staticData["tabVehicules"][str(engage['voiture'])] if str(engage['voiture']) in self.staticData["tabVehicules"] else {"nom": "", "marque": -1}
-            marque = self.staticData["tabMarques"][str(voiture['marque'])] if str(voiture['marque']) in self.staticData["tabMarques"] else ""
-            driver = self.staticData["tabPilotes"][car["5"]] if car["5"] in self.staticData["tabPilotes"] else {"prenom": "Driver", "nom": car["5"]}
-            team = self.staticData["tabTeams"][str(engage["team"])] if str(engage["team"]) in self.staticData["tabTeams"] else {"nom": "Unknown"}
+            engage = self.staticData["tabEngages"].get(car["2"], {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]})
+            voiture = self.staticData["tabVehicules"].get(str(engage['voiture']), {"nom": "", "marque": -1})
+            marque = self.staticData["tabMarques"].get(str(voiture['marque']), "")
+            driver = self.staticData["tabPilotes"].get(car["5"], {"prenom": "Driver", "nom": car["5"]})
+            team = self.staticData["tabTeams"].get(str(engage["team"]), {"nom": "Unknown"})
             classe = engage["categorie"]
             lastLap = parseTime(car["12"])
             bestLap = parseTime(car["8"])
