@@ -101,7 +101,7 @@ class Service(lt_service):
                 int(time.time() / 15)
             )
 
-        fetcher = JSONFetcher(feedUrl, self.setRawData, self.getPollInterval())
+        fetcher = JSONFetcher(feedUrl, self.setRawData, 15)
         fetcher.start()
 
     def getDefaultDescription(self):
@@ -136,7 +136,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return 15
+        return None
 
     def getAnalysisModules(self):
         return [
@@ -175,6 +175,7 @@ class Service(lt_service):
     def setRawData(self, data):
         self.rawData = data
         self._last_update = datetime.utcnow()
+        self._updateAndPublishRaceState()
 
     def getRaceState(self):
         if self.staticData is None or self.rawData is None:
