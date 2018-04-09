@@ -92,6 +92,7 @@ class Service(lt_service):
         self.description = self.getName()
         self.staticData = None
         self.rawData = None
+        self._last_update = None
         self.setStaticData()
 
         def feedUrl():
@@ -130,7 +131,8 @@ class Service(lt_service):
             "Humidity",
             "Wind Speed",
             "Wind Direction",
-            "Weather"
+            "Weather",
+            "Last updated"
         ]
 
     def getPollInterval(self):
@@ -172,6 +174,7 @@ class Service(lt_service):
 
     def setRawData(self, data):
         self.rawData = data
+        self._last_update = datetime.utcnow()
 
     def getRaceState(self):
         if self.staticData is None or self.rawData is None:
@@ -256,7 +259,8 @@ class Service(lt_service):
                 "{}%".format(trackData["2"]),
                 "{}kph".format(trackData["8"]),
                 u"{}°".format(trackData["0"]),
-                trackData["1"].replace("_", " ").title()
+                trackData["1"].replace("_", " ").title(),
+                self._last_update.strftime("%H:%M:%S UTC") if self._last_update else "-"
             ]
         }
 
