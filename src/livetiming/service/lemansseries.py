@@ -90,8 +90,9 @@ class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.description = self.getName()
-        self.setStaticData()
+        self.staticData = None
         self.rawData = None
+        self.setStaticData()
 
         def feedUrl():
             return self.getRawFeedDataUrl().format(
@@ -149,13 +150,14 @@ class Service(lt_service):
         if re.search("No race actually", raw):
             self.log.warn("No static data available. Has the session started yet?")
             reactor.callLater(30, self.setStaticData)
-            self.staticData = None
         else:
             description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
             if description:
-                self.description = description.group("desc").replace("/", "-").decode('utf-8')
-                self.log.info(u"Setting description: {desc}", desc=self.description)
-                self.publishManifest()
+                new_description = description.group("desc").replace("/", "-").decode('utf-8')
+                if self.description != new_description:
+                    self.description = new_description
+                    self.log.info(u"Setting description: {desc}", desc=self.description)
+                    self.publishManifest()
 
             self.staticData = {
                 "tabPays": hackDataFromJSONP(raw, "tabPays"),
@@ -166,6 +168,7 @@ class Service(lt_service):
                 "tabPilotes": hackDataFromJSONP(raw, "tabPilotes"),
                 "tabEngages": hackDataFromJSONP(raw, "tabEngages")
             }
+            reactor.callLater(120, self.setStaticData)  # Refresh the static data every two minutes
 
     def setRawData(self, data):
         self.rawData = data
