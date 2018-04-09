@@ -118,6 +118,7 @@ class Service(lt_service):
             Stat.TYRE,
             Stat.LAPS,
             Stat.GAP,
+            Stat.INT,
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.SPEED,
@@ -230,6 +231,18 @@ class Service(lt_service):
             lastLap = parseTime(car["12"])
             bestLap = parseTime(car["8"])
 
+            gap = 0
+            prev_car_gap = cars[-1][8] if len(cars) > 0 else 0
+            try:
+                gap = 0 if car["4"] == '' else float(car["4"])
+            except ValueError:
+                gap = car["4"]
+
+            interval = 0
+            if gap > 0:
+                if isinstance(prev_car_gap, float) and isinstance(gap, float):
+                    interval = gap - prev_car_gap
+
             cars.append([
                 engage["num"],
                 mapCarState(car["9"]),
@@ -239,7 +252,8 @@ class Service(lt_service):
                 u"{} {}".format(marque, voiture["nom"]).strip(),
                 car["6"],
                 car["13"],
-                car["4"],  # gap
+                gap if gap > 0 else '',
+                interval if interval > 0 else '',
                 [lastLap, getFlags(classe, lastLap, bestLap)] if lastLap > 0 else ['', ''],
                 [bestLap, getFlags(classe, bestLap, -1)] if bestLap > 0 else ['', ''],
                 car["1"],  # ave speed
