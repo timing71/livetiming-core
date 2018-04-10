@@ -17,6 +17,7 @@ import os
 
 
 ANALYSIS_PUBLISH_INTERVAL = 60
+MIN_PUBLISH_INTERVAL = 10
 
 
 def _make_data_message(data):
@@ -51,7 +52,7 @@ class Analyser(object):
         self._current_state = copy.copy(EMPTY_STATE)
         self.uuid = uuid
         self.publish = publishFunc
-        self.interval = interval
+        self.interval = max(interval, MIN_PUBLISH_INTERVAL)
         self._load_data_centre()
         self._pending_publishes = {}
         self._last_published = {}

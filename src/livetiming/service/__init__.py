@@ -99,7 +99,8 @@ class Service(object):
 
     def publish(self, *args, **kwargs):
         if self._publish:
-            return self._publish(*args, **kwargs)
+            self._publish(*args, **kwargs)
+            return True
         else:
             self.log.debug("Call to publish with no publish function set!")
             return False
