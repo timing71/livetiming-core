@@ -242,6 +242,8 @@ class Service(lt_service):
             if gap > 0:
                 if isinstance(prev_car_gap, float) and isinstance(gap, float):
                     interval = gap - prev_car_gap
+            if prev_car_gap == '':
+                interval = gap
 
             cars.append([
                 engage["num"],
