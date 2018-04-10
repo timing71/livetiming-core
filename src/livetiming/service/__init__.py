@@ -99,9 +99,10 @@ class Service(object):
 
     def publish(self, *args, **kwargs):
         if self._publish:
-            self._publish(*args, **kwargs)
+            return self._publish(*args, **kwargs)
         else:
             self.log.debug("Call to publish with no publish function set!")
+            return False
 
     def start(self):
         session_class = create_service_session(self)

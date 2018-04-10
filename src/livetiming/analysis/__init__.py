@@ -80,13 +80,14 @@ class Analyser(object):
         for key, data in copy.copy(self._pending_publishes).iteritems():
             if self._last_published.get(key, 0) + (self.interval or 1) < now:
                 self.log.debug("Publishing queued data for {key}", key=key)
-                yield self.publish(
+                did_publish = yield self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
                     _make_data_message(data),
                     options=self.publish_options
                 )
-                self._pending_publishes.pop(key)
-                self._last_published[key] = now
+                if did_publish:
+                    self._pending_publishes.pop(key)
+                    self._last_published[key] = now
 
     def _data_centre_file(self):
         return os.path.join(
