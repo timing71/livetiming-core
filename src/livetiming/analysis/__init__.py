@@ -100,7 +100,13 @@ class Analyser(object):
         start = time.time()
         with open(self._data_centre_file(), "wb") as data_dump_file:
             cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
-        self.log.info("Analysis state saved in {secs} seconds", secs=(time.time() - start))
+        duration = time.time() - start
+        if duration < 0.5:
+            self.log.debug("Analysis state saved in {secs} seconds", secs=duration)
+        elif duration < 1:
+            self.log.info("Analysis state saved in {secs} seconds", secs=duration)
+        else:
+            self.log.warn("Analysis state saved in {secs} seconds", secs=duration)
 
     def _load_data_centre(self):
         try:
