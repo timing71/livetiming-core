@@ -15,4 +15,4 @@ class Service(LMS):
         return "http://www.lemanscup.com/en/live"
 
     def getRawFeedDataUrl(self):
-        return "http://www.lemanscup.com/ecm/live/LMC/data.js?tx={}&t={}"
+        return "http://www.lemanscup.com/live/LMC/data.js?tx={}&t={}"
