@@ -8,8 +8,6 @@ import sys
 import time
 import math
 
-TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
-
 
 class LaptimeChart(object):
     def __init__(self):
@@ -40,14 +38,14 @@ class Lap(object):
             self.lap_num,
             self.laptime,
             self.position,
-            self.driver,
+            # self.driver,
             self.timestamp,
             self.flag,
             self.tyre
         ]
 
     def __repr__(self, *args, **kwargs):
-        return "<Lap {}: {} pos {} {} {} {} {}>".format(*self.for_json())
+        return u"<Lap {}: {} pos {} {} {} {}>".format(*self.for_json())
 
 
 class Stint(object):
@@ -70,8 +68,25 @@ class Stint(object):
     def yellow_laps(self):
         return len([l for l in self.laps if l.flag >= FlagStatus.YELLOW])
 
+    @property
+    def best_lap_time(self):
+        return min(map(lambda l: l.laptime, self.laps)) if len(self.laps) > 0 else None
+
+    @property
+    def average_lap_time(self):
+        if len(self.laps) == 1:
+            return None
+        if self.in_progress:
+            # Exclude first lap (out lap)
+            return sum(map(lambda l: l.laptime, self.laps[1:])) / (len(self.laps) - 1)
+        else:
+            # Exclude first (out) and last (in) laps
+            if len(self.laps) == 2:
+                return None
+            return sum(map(lambda l: l.laptime, self.laps[1:-1])) / (len(self.laps) - 2)
+
     def __repr__(self, *args, **kwargs):
-        return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
+        return u"<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
             self.driver,
             self.start_lap,
             self.end_lap,
@@ -88,15 +103,22 @@ class Car(object):
         self.laps = []
         self.stints = []
         self.inPit = True
-        self.current_lap = 0
+        self.current_lap = 1
         self._current_lap_flags = [FlagStatus.NONE]
         self.initial_driver = None
         self.fuel_times = []
+        self.last_pass = None
+        self.drivers = []
+
+        # Public static data
+        self.race_class = None
+        self.team = None
+        self.vehicle = None
 
     def add_lap(self, laptime, position, driver, timestamp, current_flag=FlagStatus.NONE, tyre=None):
         max_flag = max(self._current_lap_flags)
 
-        if not self.current_stint:
+        if not (self.current_stint or self.inPit):
             self.stints.append(Stint(self.current_lap, timestamp, driver, current_flag))
 
         if laptime > 0:
@@ -114,8 +136,15 @@ class Car(object):
                 )
             )
 
-        self.current_stint.laps.append(self.laps[-1])
+            if self.inPit and self.stints:
+                # Sometimes the finish line is crossed in the pit lane - the lap should be added to the previous stint
+                prev_stint = self.stints[-1]
+                prev_stint.laps.append(self.laps[-1])
+                prev_stint.end_lap = self.current_lap
+            elif self.current_stint:
+                self.current_stint.laps.append(self.laps[-1])
         self._current_lap_flags = [current_flag]
+        self.last_pass = timestamp
 
     def see_flag(self, flag):
         self._current_lap_flags.append(flag)
@@ -125,6 +154,8 @@ class Car(object):
             self.current_stint.driver = driver
         else:
             self.initial_driver = driver
+        if driver not in self.drivers:
+            self.drivers.append(driver)
 
     def pit_in(self, timestamp):
         if len(self.stints) > 0:
@@ -134,7 +165,8 @@ class Car(object):
 
     def pit_out(self, timestamp, driver, flag):
         if self.inPit:
-            self.stints.append(Stint(self.current_lap, timestamp, driver, flag))
+            prev_stint_end_lap = self.stints[-1].end_lap if self.stints and self.stints[-1].end_lap else self.current_lap - 1
+            self.stints.append(Stint(max(1, prev_stint_end_lap + 1), timestamp, driver, flag))
             self.inPit = False
 
     def fuel_start(self, timestamp):
@@ -147,20 +179,19 @@ class Car(object):
     @property
     def current_stint(self):
         if len(self.stints) > 0:
-            return self.stints[-1]
+            latest = self.stints[-1]
+            if latest.in_progress:
+                return latest
         return None
-
-    @property
-    def drivers(self):
-        if not self.current_stint:
-            return [self.initial_driver]
-        return set(map(lambda stint: stint.driver, self.stints))
 
     def driver_name(self):
         try:
             return next(iter(self.drivers))
         except StopIteration:
             return ""
+
+    def for_json(self):
+        return [self.race_class, self.team, self.vehicle]
 
 
 class Session(object):
@@ -183,19 +214,6 @@ class Session(object):
         return self._flag_periods
 
 
-class FieldExtractor(object):
-    def __init__(self, colSpec):
-        self.mapping = {}
-        for idx, col in enumerate(colSpec):
-            self.mapping[col] = idx
-
-    def get(self, car, field, default=None):
-        try:
-            return car[self.mapping[field]]
-        except KeyError:
-            return default
-
-
 def tryInt(val):
     try:
         return int(val)
@@ -216,118 +234,15 @@ class DataCentre(object):
         self.leader_lap = 0
         self.lap_chart = LaptimeChart()
 
+    def flag_change(self, new_flag, timestamp):
+        self.session.flag_change(new_flag, self.leader_lap, timestamp)
+        for car in self._cars.values():
+            car.see_flag(new_flag)
+
     def car(self, race_num):
         if race_num not in self._cars:
             self._cars[race_num] = Car(race_num)
         return self._cars[race_num]
-
-    @property
-    def cars(self):
-        return sorted(self._cars.values(), key=lambda c: tryInt(c.race_num))
-
-    def update_state(self, newState, colSpec, timestamp=None):
-        if timestamp is None:
-            timestamp = time.time()
-        if newState["session"].get("flagState", "none") != "none":
-            self._update_cars(self.current_state, newState, colSpec, timestamp)
-            self._update_session(self.current_state, newState, colSpec, timestamp)
-        self.latest_timestamp = timestamp
-        self.current_state = copy.deepcopy(newState)
-        self.column_spec = colSpec
-
-    def _update_cars(self, oldState, newState, colSpec, timestamp):
-        f = FieldExtractor(colSpec)
-        flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
-        old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
-
-        pit_states = ["PIT", "FUEL", "N/S"]
-
-        for idx, new_car in enumerate(newState['cars']):
-            race_num = f.get(new_car, Stat.NUM)
-            if race_num:
-                car = self.car(race_num)
-                car.current_lap = self._get_lap_count(race_num, new_car, f, newState['cars'])
-                new_leader_lap = max(self.leader_lap, car.current_lap)
-                if new_leader_lap != self.leader_lap:
-                    self.leader_lap = new_leader_lap
-                    self.session.flag_change(flag, new_leader_lap, timestamp)
-                driver = f.get(new_car, Stat.DRIVER)
-                tyre = f.get(new_car, Stat.TYRE)
-
-                if old_flag != flag:
-                    car.see_flag(flag)
-                new_car_state = f.get(new_car, Stat.STATE)
-
-                old_car = next(iter([c for c in oldState["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-
-                if old_car:
-
-                    old_lap = f.get(old_car, Stat.LAST_LAP)
-                    new_lap = f.get(new_car, Stat.LAST_LAP)
-                    old_lap_num = f.get(old_car, Stat.LAPS)
-                    new_lap_num = f.get(new_car, Stat.LAPS)
-
-                    try:
-                        if old_lap[0] != new_lap[0] or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap[0], idx + 1, driver, timestamp, flag, tyre)
-                            self.lap_chart.tally(race_num, car.laps[-1])
-                    except Exception:  # Non-tuple case (do any services still not use tuples?)
-                        if old_lap != new_lap or old_lap_num != new_lap_num:
-                            car.add_lap(new_lap, idx + 1, driver, timestamp, flag, tyre)
-                            self.lap_chart.tally(race_num, car.laps[-1])
-
-                    old_car_state = f.get(old_car, Stat.STATE)
-
-                    if new_car_state in pit_states and old_car_state not in pit_states:
-                        car.pit_in(timestamp)
-                    elif new_car_state not in pit_states and old_car_state in pit_states:
-                        car.pit_out(timestamp, driver, flag)
-
-                    if new_car_state == "FUEL" and old_car_state != "FUEL":
-                        car.fuel_start(timestamp)
-                    elif new_car_state != "FUEL" and old_car_state == "FUEL":
-                        car.fuel_stop(timestamp)
-
-                    if car.current_stint and (tyre != f.get(old_car, Stat.TYRE) or tyre != car.current_stint.tyre):
-                        car.current_stint.tyre = tyre
-
-                    old_driver = f.get(old_car, Stat.DRIVER)
-                    if old_driver and old_driver != driver:
-                        car.set_driver(driver)
-
-                elif new_car_state not in pit_states:
-                    car.pit_out(timestamp, driver, flag)
-                else:
-                    car.set_driver(driver)
-
-    def _update_session(self, oldState, newState, colSpec, timestamp):
-        flag = FlagStatus.fromString(newState["session"].get("flagState", "none"))
-        old_flag = FlagStatus.fromString(oldState["session"].get("flagState", "none"))
-        if flag != old_flag or not self.session.this_period:
-            self.session.flag_change(flag, self.leader_lap, timestamp)
-
-    def _get_lap_count(self, race_num, car, f, cars):
-        from_timing = f.get(car, Stat.LAPS)
-        if from_timing:
-            try:
-                return math.floor(float(from_timing))
-            except ValueError:
-                pass
-        our_num = f.get(car, Stat.NUM)
-        # TSNL put lap count in the "gap" column FSR
-        leader_gap = f.get(cars[0], Stat.GAP)
-        if leader_gap:
-            tsnl = TSNL_LAP_HACK_REGEX.match(str(leader_gap))
-            if tsnl:
-                # Work up until we find the lap count relevant to us
-                lap_count = int(tsnl.group(1))
-                for other_car in cars:
-                    tsnl = TSNL_LAP_HACK_REGEX.match(str(f.get(other_car, Stat.GAP)))
-                    if tsnl:
-                        lap_count = int(tsnl.group(1))
-                    if f.get(other_car, Stat.NUM) == our_num:
-                        return lap_count
-        return len(self.car(race_num).laps)
 
 
 if __name__ == '__main__':
@@ -337,25 +252,3 @@ if __name__ == '__main__':
     if filename.endswith(".data.p"):
         with open(filename, "rb") as data_dump_file:
             dc = cPickle.load(data_dump_file)
-
-    else:
-        dc = DataCentre()
-        rec = RecordingFile(filename)
-
-        colSpec = Stat.parse_colspec(rec.manifest['colSpec'])
-
-        start_time = time.time()
-
-        frames = sorted(rec.keyframes + rec.iframes)
-        frame_count = len(frames)
-
-        for idx, frame in enumerate(frames):
-            newState = rec.getStateAtTimestamp(frame)
-            dc.update_state(newState, colSpec, frame)
-            now = time.time()
-            current_fps = float(idx) / (now - start_time)
-            eta = start_time + (frame_count / current_fps) if current_fps > 0 else 0
-            print "{}/{} ({:.2%}) {:.3f}fps eta:{:.0f}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta)
-
-        stop_time = time.time()
-        print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))

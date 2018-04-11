@@ -47,9 +47,6 @@ def create_service_session(service):
 
             yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid), register_opts)
             yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid), register_opts)
-            yield self.register(service.analyser.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format(service.uuid), register_opts)
-            yield self.register(service.analyser.getData, RPC.REQUEST_ANALYSIS_DATA.format(service.uuid), register_opts)
-            yield self.register(service.analyser.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format(service.uuid), register_opts)
             yield self.subscribe(service.onControlMessage, Channel.CONTROL)
             self.log.info("Subscribed to control channel")
             yield service.publishManifest()
@@ -69,6 +66,7 @@ def create_service_session(service):
 
 class Service(object):
     log = Logger()
+    auto_poll = True
 
     def __init__(self, args, extra_args={}):
         sentry.context.activate()
@@ -80,12 +78,15 @@ class Service(object):
             self.recorder = TimingRecorder(self.args.recording_file)
         else:
             self.recorder = None
-        self.analyser = Analyser(
-            self.uuid,
-            self.publish,
-            self.getAnalysisModules() if not args.disable_analysis else [],
-            interval=self.getPollInterval()
-        )
+
+        if self.args.disable_analysis:
+            self.analyser = None
+        else:
+            self.analyser = Analyser(
+                self.uuid,
+                self.publish,
+                interval=self.getPollInterval()
+            )
         self._publish = None
         self.sentry.context.merge({
             'tags': {
@@ -100,24 +101,27 @@ class Service(object):
     def publish(self, *args, **kwargs):
         if self._publish:
             self._publish(*args, **kwargs)
+            return True
         else:
             self.log.debug("Call to publish with no publish function set!")
+            return False
 
     def start(self):
         session_class = create_service_session(self)
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
 
-        if self.getPollInterval():
+        if self.auto_poll:
             updater = LoopingCall(self._updateAndPublishRaceState)
             updater.start(self.getPollInterval(), False)
             self.log.info("Race state updates started")
 
-        if self.getAnalysisModules():
+        if self.analyser:
             def saveAsync():
                 self.log.debug("Saving data centre state")
                 return deferToThread(self.analyser.save_data_centre)
             LoopingCall(saveAsync).start(60)
+            LoopingCall(self.analyser._publish_pending).start(60)
 
         runner.run(session_class, auto_reconnect=True, log_level="debug" if self.args.debug else "info")
         self.log.info("Service terminated.")
@@ -216,13 +220,6 @@ class Service(object):
         '''
         return []
 
-    def getAnalysisModules(self):
-        '''
-        May be overridden by subclasses to provide a list of analysis modules
-        (by class) for this service.
-        '''
-        return []
-
     ######################################################
     # These methods MUST NOT be overridden by subclasses #
     ######################################################
@@ -271,7 +268,7 @@ class Service(object):
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval() or 1,
-            "hasAnalysis": not (self.args.disable_analysis or not self.getAnalysisModules()),
+            "hasAnalysis": not self.args.disable_analysis,
             "hidden": self.args.hidden
         }
 
