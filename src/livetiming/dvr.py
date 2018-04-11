@@ -169,8 +169,14 @@ class DVR(object):
                     new_name=manifest['name'],
                     new_desc=manifest['description']
                 )
-                self._finish_recording(uuid)
-                rec = self._get_recording(uuid)
+
+                def save_new_manifest():
+                    # This needs to happen after _finish_recording else we might end up deleting the new manifest
+                    # and we might not get a second chance to see it :(
+                    # Or else we might try writing the manifest to the already-finalised DTR and that's just as sad.
+                    self._get_recording(uuid).writeManifest(manifest)
+
+                self._finish_recording(uuid).addCallback(save_new_manifest)
 
         rec.writeManifest(manifest)
 
@@ -219,6 +225,11 @@ class DVR(object):
                     threshold=RECORDING_DURATION_THRESHOLD
                 )
                 os.remove(src)
+            elif not recording.manifest:
+                self.log.error(
+                    "Recording for UUID {uuid} has no manifest. Leaving you to solve this one manually!",
+                    uuid=uuid
+                )
             elif recording.manifest.get('doNotRecord', False):
                 self.log.warn(
                     "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
