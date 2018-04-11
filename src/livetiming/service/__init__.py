@@ -66,6 +66,7 @@ def create_service_session(service):
 
 class Service(object):
     log = Logger()
+    auto_poll = True
 
     def __init__(self, args, extra_args={}):
         sentry.context.activate()
@@ -110,7 +111,7 @@ class Service(object):
         router = unicode(os.environ["LIVETIMING_ROUTER"])
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
 
-        if self.getPollInterval():
+        if self.auto_poll:
             updater = LoopingCall(self._updateAndPublishRaceState)
             updater.start(self.getPollInterval(), False)
             self.log.info("Race state updates started")
