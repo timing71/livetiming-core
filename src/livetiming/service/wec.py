@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.lapchart import LapChart
-from livetiming.analysis.pits import EnduranceStopAnalysis
-from livetiming.analysis.session import Session
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, JSONFetcher
 from simplejson.scanner import JSONDecodeError
@@ -86,6 +82,7 @@ def parse_extra_args(extra_args):
 class Service(lt_service):
     log = Logger()
     attribution = ['WEC', 'http://www.fiawec.com/']
+    auto_poll = False  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
@@ -164,15 +161,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return None  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
-
-    def getAnalysisModules(self):
-        return [
-            Session,
-            LapChart,
-            EnduranceStopAnalysis,
-            StintLength
-        ]
+        return 10
 
     def _data_is_newer(self, params):
         if self.latest_seen_timestamp is None:

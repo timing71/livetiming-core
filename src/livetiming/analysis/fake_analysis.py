@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.wamp.types import PublishOptions
+from datetime import datetime
 from livetiming.analysis import Analyser
 from livetiming.recording import RecordingFile
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
     authenticatedService
 from livetiming.racing import Stat
 from livetiming import load_env
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.analysis.data import *
+from lzstring import LZString
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
 import os
+import simplejson
 import sys
 import time
+import txaio
 from twisted.internet.threads import deferToThread
 from twisted.internet.task import LoopingCall
 
@@ -39,14 +42,11 @@ class FakeAnalysis(ApplicationSession):
     def onJoin(self, details):
         print "Joined"
 
-        self.a = Analyser("TEST", self.publish, [StintLength, EnduranceStopAnalysis], publish=True)
+        self.a = Analyser("TEST", self.publish, interval=5)
 
         def true():
             return True
         yield self.register(true, RPC.LIVENESS_CHECK.format("TEST"))
-        yield self.register(self.a.getManifest, RPC.REQUEST_ANALYSIS_MANIFEST.format("TEST"))
-        yield self.register(self.a.getData, RPC.REQUEST_ANALYSIS_DATA.format("TEST"))
-        yield self.register(self.a.getCars, RPC.REQUEST_ANALYSIS_CAR_LIST.format("TEST"))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
         print "All registered"
@@ -54,15 +54,32 @@ class FakeAnalysis(ApplicationSession):
 
         def preprocess():
             start_time = time.time()
-            for i in range(self.rec.frames + 1):
-                newState = self.rec.getStateAt(i * int(self.manifest['pollInterval']))
-                self.a.receiveStateUpdate(newState, pcs, self.rec.manifest['startTime'] + (i * int(self.manifest['pollInterval'])))
-                print "{}/{} ({})".format(i, self.rec.frames, i / (time.time() - start_time))
-                # time.sleep(4)
+            frames = sorted(self.rec.keyframes + self.rec.iframes)
+            frame_count = len(frames)
+
+            for idx, frame in enumerate(frames):
+                newState = self.rec.getStateAtTimestamp(frame)
+                self.a.receiveStateUpdate(newState, pcs, frame)
+                if (idx % 100 == 0):
+                    self.publish(
+                        RPC.STATE_PUBLISH.format("TEST"),
+                        Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(newState)), retain=True).serialise(),
+                        options=PublishOptions(retain=True)
+                    )
+
+                now = time.time()
+                current_fps = float(idx) / (now - start_time)
+                eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
+                print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
+                # time.sleep(1)
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
+            self.a.save_data_centre()
+            # Republish all data at the end
+            for key, module in self.a._modules.iteritems():
+                self.a._publish_data(key, module.get_data(self.a.data_centre))
 
-        #reactor.callInThread(preprocess)
+        reactor.callInThread(preprocess)
 
     def onDisconnect(self):
         self.log.info("Disconnected")
@@ -74,6 +91,7 @@ def main():
     load_env()
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
+    # txaio.start_logging(level='debug')
     runner.run(FakeAnalysis)
 
 

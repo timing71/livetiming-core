@@ -1,6 +1,4 @@
 from datetime import datetime
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.laptimes import LaptimeChart
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.logger import Logger
@@ -174,9 +172,3 @@ class Service(lt_service):
         feed = urllib2.urlopen(feed_url)
         lines = feed.readlines()
         return simplejson.loads(lines[1])
-
-    def getAnalysisModules(self):
-        return [
-            LaptimeChart,
-            StintLength
-        ]

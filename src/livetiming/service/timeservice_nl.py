@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 from datetime import datetime
-from livetiming.analysis.laptimes import LaptimeChart
-from livetiming.analysis.pits import EnduranceStopAnalysis
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.session import Session
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
@@ -476,12 +472,4 @@ class Service(lt_service):
     def getExtraMessageGenerators(self):
         return [
             RaceControlMessage(self.messages)
-        ]
-
-    def getAnalysisModules(self):
-        return [
-            Session,
-            LaptimeChart,
-            EnduranceStopAnalysis,
-            StintLength
         ]

@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.analysis.driver import StintLength
-from livetiming.analysis.lapchart import LapChart
-from livetiming.analysis.pits import EnduranceStopAnalysis
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, JSONFetcher
 from twisted.internet import reactor
@@ -87,6 +84,8 @@ def parseSessionTime(formattedTime):
 
 
 class Service(lt_service):
+    auto_poll = False
+
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.description = self.getName()
@@ -137,14 +136,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return None
-
-    def getAnalysisModules(self):
-        return [
-            LapChart,
-            EnduranceStopAnalysis,
-            StintLength
-        ]
+        return 15
 
     def setStaticData(self):
         self.log.info("Retrieving static data...")
