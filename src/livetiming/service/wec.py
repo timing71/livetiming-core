@@ -207,6 +207,8 @@ class Service(lt_service):
             s3 = parseTime(car['currentSector3'])
             bs3 = parseTime(car['bestSector3'])
 
+            state = mapCarState(car['state'])
+
             if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
                 bestSectorsByClass[1][category] = (car['number'], bs1)
             if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
@@ -216,7 +218,7 @@ class Service(lt_service):
 
             common_cols = [
                 car['number'],
-                mapCarState(car['state']),
+                state,
                 category,
                 car['categoryPosition'],
                 car['team'],
@@ -272,7 +274,7 @@ class Service(lt_service):
                         car[self.col_map[Stat.DRIVER_2_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0], 'sb')
                 else:
                     car[self.col_map[Stat.BEST_LAP]] = (car[self.col_map[Stat.BEST_LAP]][0], 'sb')
-                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time:
+                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time and state == 'RUN':
                     car[self.col_map[Stat.LAST_LAP]] = (car[self.col_map[Stat.LAST_LAP]][0], 'sb-new')
 
             # Best sectors
