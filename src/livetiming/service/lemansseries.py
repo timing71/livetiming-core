@@ -197,9 +197,9 @@ class Service(lt_service):
         except AttributeError:
             pass  # can happen if rawCarData is empty - server returns list rather than empty object in that case
 
-        def getFlags(carClass, last, best):
+        def getFlags(carClass, state, last, best):
             if carClass in fastLapsPerClass and last == fastLapsPerClass[carClass]:
-                if last == best:
+                if last == best and state == "RUN":
                     return "sb-new"
                 return "sb"
             elif last == best and last > 0:
@@ -238,9 +238,11 @@ class Service(lt_service):
             if prev_car_gap == '':
                 interval = gap
 
+            state = mapCarState(car["9"])
+
             cars.append([
                 engage["num"],
-                mapCarState(car["9"]),
+                state,
                 mapClasses(classe),
                 team["nom"],
                 u"{}, {}".format(driver["nom"].upper(), driver['prenom']),
@@ -249,8 +251,8 @@ class Service(lt_service):
                 car["13"],
                 gap if gap > 0 else '',
                 interval if interval > 0 else '',
-                [lastLap, getFlags(classe, lastLap, bestLap)] if lastLap > 0 else ['', ''],
-                [bestLap, getFlags(classe, bestLap, -1)] if bestLap > 0 else ['', ''],
+                [lastLap, getFlags(classe, state, lastLap, bestLap)] if lastLap > 0 else ['', ''],
+                [bestLap, getFlags(classe, state, bestLap, -1)] if bestLap > 0 else ['', ''],
                 car["1"],  # ave speed
                 car["16"]  # pits
             ])
