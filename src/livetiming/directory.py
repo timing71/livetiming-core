@@ -24,7 +24,9 @@ class Directory(ApplicationSession):
         self.broadcastServicesList()
 
     def checkLiveness(self):
-        self.log.info("Checking liveness of {} service(s)".format(len(self.services)))
+        count = len(self.services)
+        if count > 0:
+            self.log.info("Checking liveness of {} service(s)".format(count))
         for service in self.services.keys():
             _ = self.call(RPC.LIVENESS_CHECK.format(service)).addErrback(self.removeService, serviceUUID=service)
 
