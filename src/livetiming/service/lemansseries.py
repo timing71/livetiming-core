@@ -92,6 +92,7 @@ class Service(lt_service):
         self.staticData = None
         self.rawData = None
         self._last_update = None
+        self._previous_flag_state = None
         self.setStaticData()
 
         def feedUrl():
@@ -272,5 +273,10 @@ class Service(lt_service):
                 self._last_update.strftime("%H:%M:%S UTC") if self._last_update else "-"
             ]
         }
+
+        if self._previous_flag_state == FlagStatus.CHEQUERED.name.lower() and state['flagState'] != self._previous_flag_state and state['flagState'] != 'none':
+            # We often get the previous session's results on the timing screen before it ticks over to the new session.
+            self.analyser.reset()
+        self._previous_flag_state = state['flagState']
 
         return {"cars": cars, "session": state}
