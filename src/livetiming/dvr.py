@@ -252,6 +252,7 @@ class DVR(object):
 
         d = deferToThread(recording.finalise)  # This could take a long time!
         d.addCallback(do_finalise)
+        return d
 
 
 class StandaloneDVR(DVR):
