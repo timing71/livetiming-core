@@ -170,7 +170,7 @@ class DVR(object):
                     new_desc=manifest['description']
                 )
 
-                def save_new_manifest():
+                def save_new_manifest(_):
                     # This needs to happen after _finish_recording else we might end up deleting the new manifest
                     # and we might not get a second chance to see it :(
                     # Or else we might try writing the manifest to the already-finalised DTR and that's just as sad.
