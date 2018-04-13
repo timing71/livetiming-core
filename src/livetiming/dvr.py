@@ -210,7 +210,8 @@ class DVR(object):
         for uuid in finished_recordings:
             self._finish_recording(uuid)
 
-        self.log.info("DVR state: {in_progress} in progress, {finished} finished recordings", in_progress=len(self._in_progress_recordings), finished=len(finished_recordings))
+        if len(self._in_progress_recordings) + len(finished_recordings) > 0:
+            self.log.info("DVR state: {in_progress} in progress, {finished} finished recordings", in_progress=len(self._in_progress_recordings), finished=len(finished_recordings))
 
     def _finish_recording(self, uuid):
         self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
