@@ -128,7 +128,7 @@ class FastLapMessage(PerCarMessage):
             oldFlags = oldTime[1]
             newFlags = newTime[1]
 
-            if newTime[0] > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
+            if (newTime[0] or 0) > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
                 if newFlags == "pb" and (oldFlags == "" or newTime[0] < oldTime[0]):
                     return [clazz, u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
                 elif newFlags == "sb-new":
