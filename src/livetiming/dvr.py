@@ -55,6 +55,7 @@ def dedupe(filename):
 
 class DirectoryTimingRecorder(TimingRecorder):
     def __init__(self, recordFile):
+        timestamped_recfile = "{}_{}".format(recordFile, time.strftime("%Y%m%d%H%M%S"))
         deduped_recfile, _ = dedupe(recordFile)
         super(DirectoryTimingRecorder, self).__init__(deduped_recfile)
         os.mkdir(deduped_recfile)
@@ -170,13 +171,8 @@ class DVR(object):
                     new_desc=manifest['description']
                 )
 
-                def save_new_manifest(_):
-                    # This needs to happen after _finish_recording else we might end up deleting the new manifest
-                    # and we might not get a second chance to see it :(
-                    # Or else we might try writing the manifest to the already-finalised DTR and that's just as sad.
-                    self._get_recording(uuid).writeManifest(manifest)
-
-                self._finish_recording(uuid).addCallback(save_new_manifest)
+                rec = self._get_recording(uuid)
+                self._finish_recording(uuid)
 
         rec.writeManifest(manifest)
 
@@ -208,7 +204,10 @@ class DVR(object):
                     self._recordings_without_frames.append(service_uuid)
 
         for uuid in finished_recordings:
-            self._finish_recording(uuid)
+            try:
+                self._finish_recording(uuid)
+            except Exception:
+                self.log.exception("Exception while finishing recording for {uuid}", uuid=uuid)
 
         if len(self._in_progress_recordings) + len(finished_recordings) > 0:
             self.log.info("DVR state: {in_progress} in progress, {finished} finished recordings", in_progress=len(self._in_progress_recordings), finished=len(finished_recordings))
