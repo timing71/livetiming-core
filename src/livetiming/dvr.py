@@ -217,6 +217,12 @@ class DVR(object):
         self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
         recording = self._in_progress_recordings.pop(uuid)
 
+        dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+        if disambiguator > 0:
+            manifest = recording.manifest
+            manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
+            recording.writeManifest(manifest)
+
         def do_finalise(src):
             if recording.duration < RECORDING_DURATION_THRESHOLD:
                 self.log.warn(
@@ -238,18 +244,13 @@ class DVR(object):
                 )
                 os.remove(src)
             else:
-                dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
-                if disambiguator > 0:
-                    manifest = recording.manifest
-                    manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
-                    recording.writeManifest(manifest)
-
                 shutil.move(
                     src,
                     dest
                 )
 
                 os.chmod(dest, 0664)
+                self.log.info("Saved recording to {dest}", dest=dest)
 
         d = deferToThread(recording.finalise)  # This could take a long time!
         d.addCallback(do_finalise)
