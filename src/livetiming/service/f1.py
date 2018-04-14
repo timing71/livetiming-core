@@ -290,8 +290,8 @@ class Service(lt_service):
             interval = renderGapOrLaps(latestTimeLine[14])
 
             if gap == "" and len(cars) > 0 and timeLine[1] != "":
-                fasterCarTime = cars[-1][16][0]
-                fastestCarTime = cars[0][16][0]
+                fasterCarTime = cars[-1][16][0] or 0
+                fastestCarTime = cars[0][16][0] or 0
                 ourBestTime = float(timeLine[1])
                 interval = ourBestTime - fasterCarTime
                 gap = ourBestTime - fastestCarTime
