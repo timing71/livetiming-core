@@ -53,6 +53,8 @@ def parseTime(formattedTime):
 
 
 def parseGap(raw):
+    if raw == '':
+        return raw
     if raw[0] == 'R':
         laps = int(raw[1:])
         return '{} laps' if laps > 1 else '1 lap'
@@ -111,6 +113,7 @@ def mapCar(car):
 
 class Service(lt_service):
     attribution = ['wige', 'http://www.wige-livetiming.de']
+    auto_poll = False
 
     def __init__(self, args, extra):
         lt_service.__init__(self, args, extra)
