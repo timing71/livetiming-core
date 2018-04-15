@@ -143,8 +143,8 @@ class DVR(object):
         if msg.msgClass == MessageClass.SERVICE_REGISTRATION:
             self._store_manifest(msg.payload)
 
-    def _get_recording(self, service_uuid):
-        if service_uuid not in self._in_progress_recordings:
+    def _get_recording(self, service_uuid, force_new=False):
+        if service_uuid not in self._in_progress_recordings or force_new:
             rec_file = os.path.join(self.IN_PROGRESS_DIR, "{}".format(service_uuid))
 
             if os.path.isfile(rec_file):
@@ -171,8 +171,8 @@ class DVR(object):
                     new_desc=manifest['description']
                 )
 
-                rec = self._get_recording(uuid)
                 self._finish_recording(uuid)
+                rec = self._get_recording(uuid, True)
 
         rec.writeManifest(manifest)
 
@@ -207,7 +207,7 @@ class DVR(object):
             try:
                 self._finish_recording(uuid)
             except Exception:
-                self.log.exception("Exception while finishing recording for {uuid}", uuid=uuid)
+                self.log.failure("Exception while finishing recording for {uuid}", uuid=uuid)
 
         if len(self._in_progress_recordings) + len(finished_recordings) > 0:
             self.log.info("DVR state: {in_progress} in progress, {finished} finished recordings", in_progress=len(self._in_progress_recordings), finished=len(finished_recordings))
