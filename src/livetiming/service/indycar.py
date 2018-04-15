@@ -105,6 +105,12 @@ class Service(lt_service):
             Stat.PUSH_TO_PASS,
             Stat.GAP,
             Stat.INT,
+            Stat.S1,
+            Stat.BS1,
+            Stat.S2,
+            Stat.BS2,
+            Stat.S3,
+            Stat.BS3,
             Stat.LAST_LAP,
             Stat.SPEED,
             Stat.BEST_LAP,
@@ -112,7 +118,7 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return 20
+        return 5
 
     def getRaceState(self):
         raw = self.getRawFeedData()
@@ -120,9 +126,26 @@ class Service(lt_service):
         timingResults = raw['timing_results']
         seen = set()
         filtered = [seen.add(car["no"]) or car for car in timingResults["Item"] if car["no"] not in seen]
+
+        fastSectors = [[9999, None], [9999, None], [9999, None]]
+        fastLap = [9999, None]
+
         for car in sorted(filtered, key=lambda car: int(car["rank"])):
             lastLapTime = parseTime(car["lastLapTime"])
             bestLapTime = parseTime(car["bestLapTime"])
+
+            bs1 = parseTime(car['Best_I1'])
+            if bs1 < fastSectors[0][0]:
+                fastSectors[0] = [bs1, car['no']]
+            bs2 = parseTime(car['Best_I2'])
+            if bs2 < fastSectors[1][0]:
+                fastSectors[1] = [bs2, car['no']]
+            bs3 = parseTime(car['Best_I3'])
+            if bs3 < fastSectors[2][0]:
+                fastSectors[2] = [bs3, car['no']]
+            if bestLapTime < fastLap[0]:
+                fastLap = [bestLapTime, car['no']]
+
             cars.append([
                 car["no"],
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
@@ -132,17 +155,30 @@ class Service(lt_service):
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"] if "diff" in car else "",
                 car["gap"] if "gap" in car else "",
+                [car['I1'], 'pb' if car['I1'] == car['Best_I1'] else ''],
+                [car['Best_I1'], 'old'],
+                [car['I2'], 'pb' if car['I2'] == car['Best_I2'] else ''],
+                [car['Best_I2'], 'old'],
+                [car['I3'], 'pb' if car['I3'] == car['Best_I3'] else ''],
+                [car['Best_I3'], 'old'],
                 [lastLapTime, "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
                 [bestLapTime, ""],
                 car["pitStops"]
             ])
 
-        byFastestLap = sorted(cars, key=lambda c: float(c[10][0]) if c[10][0] != 0 else 9999)
-        if byFastestLap:
-            purpleCar = byFastestLap[0]
-            purpleCar[10][1] = "sb"
-            purpleCar[8][1] = "sb-new" if purpleCar[8][0] == purpleCar[10][0] and purpleCar[10][0] > 0 and purpleCar[1] != "PIT" else ""
+        for car in cars:
+            num = car[0]
+            if num == fastLap[1]:
+                car[16] = [car[16][0], 'sb']
+                if car[16][0] == car[14][0]:
+                    car[14] = [car[14][0], 'sb-new' if car[12][0] != '' else 'sb']
+            if num == fastSectors[0][1]:
+                car[9] = [car[9][0], 'sb']
+            if num == fastSectors[1][1]:
+                car[11] = [car[11][0], 'sb']
+            if num == fastSectors[1][1]:
+                car[13] = [car[13][0], 'sb']
 
         heartbeat = timingResults['heartbeat']
 
