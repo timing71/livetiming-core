@@ -134,17 +134,21 @@ class Service(lt_service):
             lastLapTime = parseTime(car["lastLapTime"])
             bestLapTime = parseTime(car["bestLapTime"])
 
-            bs1 = parseTime(car['Best_I1'])
-            if bs1 < fastSectors[0][0]:
+            bs1 = parseTime(car.get('Best_I1', 0))
+            if bs1 > 0 and bs1 < fastSectors[0][0]:
                 fastSectors[0] = [bs1, car['no']]
-            bs2 = parseTime(car['Best_I2'])
-            if bs2 < fastSectors[1][0]:
+            bs2 = parseTime(car.get('Best_I2', 0))
+            if bs2 > 0 and bs2 < fastSectors[1][0]:
                 fastSectors[1] = [bs2, car['no']]
-            bs3 = parseTime(car['Best_I3'])
-            if bs3 < fastSectors[2][0]:
+            bs3 = parseTime(car.get('Best_I3', 0))
+            if bs3 > 0 and bs3 < fastSectors[2][0]:
                 fastSectors[2] = [bs3, car['no']]
-            if bestLapTime < fastLap[0]:
+            if bestLapTime > 0 and bestLapTime < fastLap[0]:
                 fastLap = [bestLapTime, car['no']]
+
+            s1 = car.get('I1', '')
+            s2 = car.get('I2', '')
+            s3 = car.get('I3', '')
 
             cars.append([
                 car["no"],
@@ -155,11 +159,11 @@ class Service(lt_service):
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"] if "diff" in car else "",
                 car["gap"] if "gap" in car else "",
-                [car['I1'], 'pb' if car['I1'] == car['Best_I1'] else ''],
+                [s1, 'pb' if s1 == car['Best_I1'] else ''],
                 [car['Best_I1'], 'old'],
-                [car['I2'], 'pb' if car['I2'] == car['Best_I2'] else ''],
-                [car['Best_I2'], 'old'],
-                [car['I3'], 'pb' if car['I3'] == car['Best_I3'] else ''],
+                [s2, 'pb' if s2 == car['Best_I2'] else ''],
+                [car.get('Best_I2', ''), 'old'],
+                [s3, 'pb' if s3 == car['Best_I3'] else ''],
                 [car['Best_I3'], 'old'],
                 [lastLapTime, "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
@@ -175,10 +179,16 @@ class Service(lt_service):
                     car[14] = [car[14][0], 'sb-new' if car[12][0] != '' else 'sb']
             if num == fastSectors[0][1]:
                 car[9] = [car[9][0], 'sb']
+                if car[8][0] == car[9][0]:
+                    car[8] = [car[8][0], 'sb']
             if num == fastSectors[1][1]:
                 car[11] = [car[11][0], 'sb']
+                if car[10][0] == car[11][0]:
+                    car[10] = [car[10][0], 'sb']
             if num == fastSectors[1][1]:
                 car[13] = [car[13][0], 'sb']
+                if car[12][0] == car[13][0]:
+                    car[12] = [car[12][0], 'sb']
 
         heartbeat = timingResults['heartbeat']
 
