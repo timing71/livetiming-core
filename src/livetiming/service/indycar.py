@@ -35,6 +35,8 @@ def parseTime(formattedTime):
                 return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
             except ValueError:
                 return formattedTime
+    except TypeError:
+        return formattedTime  # which might actually be a number
 
 
 def parseSessionTime(formattedTime):
