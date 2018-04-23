@@ -82,6 +82,18 @@ def parseEventName(heartbeat):
     return event
 
 
+def map_tyre(raw_tyre):
+    mapp = {
+        'P': ["P", "tyre-medium"],
+        'A': ["O", "tyre-ssoft"],
+        'W': ["W", "tyre-wet"],
+        'WX': ["W", "tyre-wet"]
+    }
+    if raw_tyre in mapp:
+        return mapp[raw_tyre]
+    return raw_tyre
+
+
 class Service(lt_service):
     attribution = ['IndyCar', 'http://racecontrol.indycar.com/']
     log = Logger()
@@ -157,7 +169,7 @@ class Service(lt_service):
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
                 "{0} {1}".format(car.get("firstName", ""), car.get("lastName", "")),
                 car["laps"],
-                (["P", "tyre-medium"] if car["Tire"] == "P" else ["O", "tyre-ssoft"]) if "Tire" in car else "",
+                map_tyre(car.get('Tire', ''))
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
                 car["diff"] if "diff" in car else "",
                 car["gap"] if "gap" in car else "",
