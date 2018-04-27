@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
@@ -100,6 +101,7 @@ class Service(lt_service):
         self.lastTimeUpdate = datetime.utcnow()
         self.sessionFeed = None
         self.trackFeed = None
+        self.weatherFeed = {}
 
         self.description = self.getName()
 
@@ -129,6 +131,17 @@ class Service(lt_service):
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
+        ]
+
+    def getTrackDataSpec(self):
+        return [
+            "Track Temp",
+            "Air Temp",
+            "Wind Speed",
+            "Direction",
+            "Humidity",
+            "Pressure",
+            "Track"
         ]
 
     def onTimingPayload(self, payload):
@@ -167,17 +180,17 @@ class Service(lt_service):
             if "timefeed" in payload["R"]:
                 self.timeLeft = parseSessionTime(payload["R"]["timefeed"][2])
                 self.lastTimeUpdate = datetime.utcnow()
+            if "weatherfeed" in payload["R"]:
+                self.weatherFeed.update(payload["R"]["weatherfeed"][1])
         elif payload:  # is not empty
             print "What is {}?".format(payload)
 
     def handleTimingMessage(self, message):
         messageType = message["M"]
-        print "Message of type {}".format(messageType)
         if messageType == "datafeed":
             data = message["A"][2]
             for line in data["lines"]:
                 car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
-                print "Data feed with {}".format(line.keys())
                 if "sectors" in line:
                     for sector in line["sectors"]:
                         car[int(sector["Id"]) + 5] = parseTime(sector)
@@ -223,6 +236,9 @@ class Service(lt_service):
         if messageType == "trackfeed":
             self.trackFeed = message["A"][1]["Value"]
 
+        if messageType == "weatherfeed":
+            self.weatherFeed[message["A"][1]] = message["A"][2]
+
         self._updateRaceState()
 
     def _setDescription(self, description):
@@ -234,6 +250,26 @@ class Service(lt_service):
         self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
         if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
             self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
+        elif self.sessionFeed == 'Aborted':
+            self.sessionState["flagState"] = FlagStatus.RED.name.lower()
         else:
             self.sessionState["flagState"] = parseFlag(self.trackFeed)
+
+        self.sessionState["trackData"] = self._getTrackData()
+
         return {"cars": sorted(self.carState, key=lambda car: car[-1]), "session": self.sessionState}
+
+    def _getTrackData(self):
+
+        def maybeValue(key, formatString):
+            return formatString.format(self.weatherFeed[key]) if key in self.weatherFeed else None
+
+        return [
+            maybeValue('tracktemp', u"{}°C"),
+            maybeValue('airtemp', u"{}°C"),
+            maybeValue('windspeed', "{}m/s"),
+            maybeValue('winddir', u"{}°"),
+            maybeValue('humidity', "{}%"),
+            maybeValue('pressure', "{}mBar"),
+            'Wet' if self.weatherFeed.get('rainfall', 0) == 1 else 'Dry'
+        ]
