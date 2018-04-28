@@ -352,7 +352,7 @@ class Service(lt_service):
             return [
                 u"{}°C".format(w[0]),
                 u"{}°C".format(w[1]),
-                "{} kph".format(w[3]),
+                "{}m/s".format(w[3]),
                 u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
