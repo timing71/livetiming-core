@@ -1,6 +1,6 @@
-from livetiming.service.sportresult import Service as SportResultService
+from livetiming.service.swisstiming import Service as SwissTimingService
 
 
-class Service(SportResultService):
+class Service(SwissTimingService):
     attribution = ['ADAC / SportResult', 'https://www.adac.de/']
     URL_BASE = "http://livecache.sportresult.com/node/db/RAC_PROD/ADAC_2018_"
