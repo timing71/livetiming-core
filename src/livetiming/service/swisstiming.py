@@ -231,7 +231,7 @@ class Service(lt_service):
             for message in self._session_data['Messages']:
                 msg_time = datetime.strptime(message['Time'], "%d.%m.%Y %H:%M:%S")
                 if not self.mostRecentMessage or self.mostRecentMessage < msg_time:
-                    self._messages.append(message['Text'])
+                    self._messages.append(message['Text'].upper())
                     self.mostRecentMessage = msg_time
 
     def _receive_timing(self, data):
