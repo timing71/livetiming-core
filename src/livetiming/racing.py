@@ -52,6 +52,10 @@ class Stat(Enum):
     DRIVER_2_BEST_LAP = ("D2 Best", "time", "Driver 2 best lap")
     AGGREGATE_BEST_LAP = ("Average", "time", "Average of best laps")
     POS_IN_CLASS = ("PIC", "numeric", "Position in class")
+    T1_SPEED = ("T1Spd", "numeric", "Turn 1 speed")
+    BEST_T1_SPEED = ("BT1S", "numeric", "Best turn 1 speed")
+    T3_SPEED = ("T3Spd", "numeric", "Turn 3 speed")
+    BEST_T3_SPEED = ("BT3S", "numeric", "Best turn 3 speed")
 
     def __init__(self, title, ttype, description=None):
         self.title = title
