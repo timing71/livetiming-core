@@ -245,6 +245,9 @@ class Service(lt_service):
                     [car.get('Best_I3', ''), 'old']
                 ]
 
+            diff = car.get('diff', '-')
+            gap = car.get('gap', 0)
+
             cars.append([
                 car["no"],
                 "PIT" if (car["status"] == "In Pit" or car["onTrack"] == "False") else "RUN",
@@ -252,12 +255,12 @@ class Service(lt_service):
                 car["laps"],
                 map_tyre(car.get('Tire', '')),
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
-                car["diff"] if "diff" in car else "",
-                car["gap"] if "gap" in car else ""
+                diff if diff[0] != '-' and diff != '0.0000' else '',
+                gap if gap > 0 and gap != '0.0000' else '',
             ] + sector_cols + [
-                [lastLapTime, "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
+                [lastLapTime if lastLapTime > 0 else '', "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
-                [bestLapTime, ""],
+                [bestLapTime if bestLapTime > 0 else '', ""],
                 car["pitStops"]
             ])
 
