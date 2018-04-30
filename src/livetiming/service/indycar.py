@@ -133,6 +133,7 @@ class Service(lt_service):
             Stat.LAST_LAP,
             Stat.SPEED,
             Stat.BEST_LAP,
+            Stat.BEST_SPEED,
             Stat.PITS
         ]
 
@@ -261,6 +262,7 @@ class Service(lt_service):
                 [lastLapTime if lastLapTime > 0 else '', "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
                 [bestLapTime if bestLapTime > 0 else '', ""],
+                car.get('BestSpeed', ''),
                 car["pitStops"]
             ])
 
