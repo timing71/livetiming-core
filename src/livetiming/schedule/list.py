@@ -1,7 +1,7 @@
 from livetiming.schedule import get_events
 
 
-def run(service):
+def run(service, _):
     events = get_events(service)
 
     if events:

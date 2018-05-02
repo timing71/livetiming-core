@@ -10,6 +10,7 @@ load_env()
 service = get_gcal_service()
 
 COMMANDS = [
+    'assist',
     'check',
     'list'
 ]
@@ -28,4 +29,4 @@ for cmd in COMMANDS:
 
 args = parser.parse_args()
 
-args.func(service)
+args.func(service, args)

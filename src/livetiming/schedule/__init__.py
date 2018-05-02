@@ -58,3 +58,10 @@ def get_events(service):
         timeMin=now,
         singleEvents=True
     ).execute().get('items', [])
+
+
+def create_event(service, event_body):
+    service.events().insert(
+        calendarId=os.environ['LIVETIMING_CALENDAR_ID'],
+        body=event_body
+    ).execute()
