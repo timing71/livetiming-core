@@ -8,7 +8,7 @@ class BadEventException(Exception):
     pass
 
 
-def run(service):
+def run(service, _):
     events = get_events(service)
 
     all_ok = True
