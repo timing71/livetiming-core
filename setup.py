@@ -42,6 +42,7 @@ setup(
             'livetiming-dvr = livetiming.dvr:main',
             'livetiming-recordings = livetiming.recording:main',
             'livetiming-rectool = livetiming.rectool:main',
+            'livetiming-schedule = livetiming.schedule.__main__',
             'livetiming-scheduler = livetiming.scheduler:main',
             'livetiming-service = livetiming.service:main',
             'livetiming-service-manager = livetiming.servicemanager:main',
