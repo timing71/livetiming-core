@@ -287,6 +287,8 @@ class Service(lt_service):
             # Second pass to highlight sb/sb-new
             car_num = car[0]
             category = car[2]
+            state = car[self.col_map[Stat.STATE]]
+            s3 = car[self.col_map[Stat.S3]][0]
 
             # Best lap
             if category in bestLapsByClass and bestLapsByClass[category][0] == car_num:
@@ -298,7 +300,7 @@ class Service(lt_service):
                         car[self.col_map[Stat.DRIVER_2_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0], 'sb')
                 else:
                     car[self.col_map[Stat.BEST_LAP]] = (car[self.col_map[Stat.BEST_LAP]][0], 'sb')
-                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time:
+                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time and state == 'RUN' and s3 > 0:
                     car[self.col_map[Stat.LAST_LAP]] = (car[self.col_map[Stat.LAST_LAP]][0], 'sb-new')
 
             # Best sectors
