@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, Fetcher
+from livetiming.service import Service as lt_service, Fetcher, JSONFetcher
 from twisted.internet import threads
 from twisted.logger import Logger
 
 import argparse
 import wecapp
+from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from datetime import datetime
+import time
 
 
 class FieldExtractor(object):
@@ -118,6 +120,7 @@ class Service(lt_service):
         self._last_timestamp = None
         self._last_retrieved = None
         self._app_fetcher = None
+        self._web_fetcher = None
 
         self._parsed_extra_args = parse_extra_args(extra_args)[0]
         self.is_qualifying_mode = self._parsed_extra_args.qualifying
@@ -126,6 +129,11 @@ class Service(lt_service):
             self.log.info("Starting up in QUALIFYING mode")
 
         self.description = "World Endurance Championship"
+
+        def data_url():
+            return "http://www.fiawec.com/assets/live/WEC/__data.json?_={}".format(int(1000 * time.time()))
+
+        self._web_fetcher = JSONFetcher(data_url, self._handleWebData, 10)
 
         LoopingCall(self._get_current_session).start(60)
 
@@ -146,10 +154,14 @@ class Service(lt_service):
                     10
                 )
                 self._app_fetcher.start()
+                reactor.callLater(5, self._web_fetcher.start)  # Stagger the retrieval
+
         else:
             self.log.info("No WEC session found!")
             if self._app_fetcher:
                 self._app_fetcher.stop()
+            if self._web_fetcher:
+                self._web_fetcher.stop()
 
     def getName(self):
         return "WEC (gamma)"
@@ -283,6 +295,9 @@ class Service(lt_service):
                 self._last_retrieved = datetime.utcnow()
             except ValueError:
                 self.log.failure("Couldn't parse time. Sad times.")
+
+    def _handleWebData(self, data):
+        pass
 
     def getRaceState(self):
 
