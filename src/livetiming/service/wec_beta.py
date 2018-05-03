@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, Fetcher
-from twisted.internet.defer import Deferred
+from twisted.internet import threads
 from twisted.logger import Logger
 
 import argparse
@@ -85,9 +85,7 @@ def get_session(session_id=None):
 
 class WECFetcher(Fetcher):
     def _defer(self):
-        d = Deferred()
-        d.callback(wecapp.get(self.url))
-        return d
+        return threads.deferToThread(wecapp.get, self.url)
 
 
 TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
