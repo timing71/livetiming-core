@@ -169,8 +169,8 @@ class Service(lt_service):
         shouldRepublish = False
         trackType = heartbeat.get('trackType', None)
         if trackType == "I" or trackType == "O":
+            shouldRepublish = not self._oval_mode
             self._oval_mode = True
-            shouldRepublish = True
         if "Series" in heartbeat and heartbeat["Series"] != self.name:
             self.name = heartbeat["Series"]
             shouldRepublish = True
