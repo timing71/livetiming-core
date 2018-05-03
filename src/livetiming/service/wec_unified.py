@@ -331,17 +331,23 @@ class Service(lt_service):
             last_lap = car['last_lap']
 
             def sector_time(sector):
-                time = car['s{}'.format(sector)]
+                stime = car['s{}'.format(sector)]
                 best = car['bs{}'.format(sector)]
 
-                if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == car_num:
-                    flag = 'sb'
-                elif time == best:
-                    flag = 'pb'
+                if stime == best:
+                    if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == car_num:
+                        flag = 'sb'
+                    else:
+                        flag = 'pb'
                 else:
                     flag = ''
 
-                return (time if time > 0 else '', flag)
+                return (stime if stime > 0 else '', flag)
+
+            def bs_flag(bsector):
+                if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == car_num:
+                    return 'sb'
+                return 'old'
 
             common_cols = [
                 race_num,
@@ -356,11 +362,11 @@ class Service(lt_service):
                 car['gap'],
                 car['int'],
                 sector_time(1),
-                (bs1 if bs1 > 0 else '', 'old' if s1 != bs1 else ''),
+                (bs1 if bs1 > 0 else '', bs_flag(1)),
                 sector_time(2),
-                (bs2 if bs2 > 0 else '', 'old' if s2 != bs2 else ''),
+                (bs2 if bs2 > 0 else '', bs_flag(2)),
                 sector_time(3),
-                (bs3 if bs3 > 0 else '', 'old' if s3 != bs3 else '')
+                (bs3 if bs3 > 0 else '', bs_flag(3))
             ]
 
             we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == car_num)
