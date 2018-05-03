@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, Fetcher
+from twisted.internet.defer import Deferred
 from twisted.logger import Logger
 
 import argparse
@@ -84,14 +85,16 @@ def get_session(session_id=None):
 
 class WECFetcher(Fetcher):
     def _defer(self):
-        return wecapp.get(self.url)
+        d = Deferred()
+        d.callback(wecapp.get(self.url))
+        return d
 
 
 TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
 
 
 class Service(lt_service):
-    log = Logger()
+    auto_poll = False
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
@@ -108,7 +111,7 @@ class Service(lt_service):
 
         self.description = "World Endurance Championship"
 
-        self._last_timestamp = datetime.fromtimestamp(0)
+        self._last_timestamp = None
 
         LoopingCall(self._get_current_session).start(60)
 
@@ -195,7 +198,7 @@ class Service(lt_service):
             try:
                 ts = data['live_standing'].get('original_timestamp', 0)
                 pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
-                if pts > self._last_timestamp:
+                if not self._last_timestamp or pts > self._last_timestamp:
                     if 'ranks' in data['live_standing'] and len(data['live_standing']['ranks']) > 0:
                         self.entries = data['live_standing']['ranks'][:]
                         del data['live_standing']['ranks']
@@ -234,6 +237,9 @@ class Service(lt_service):
             if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
                 bestSectorsByClass[3][category] = (race_num, bs3)
 
+            brand = car['participation']['car'].get('brand', {})
+            model = car['participation']['car'].get('model', '')
+
             common_cols = [
                 race_num,
                 mapCarState(car['status']),
@@ -241,17 +247,17 @@ class Service(lt_service):
                 car['rank_by_category'],
                 car['participation']['team']['name_id'],
                 car['current_pilot'],
-                u'{} {}'.format(car['participation']['car']['brand']['name_id'], car['participation']['car']['model'] if 'model' in car['participation']['car'] else ''),
+                u'{} {}'.format(brand.get('name_id', ''), model).strip(),
                 car['current_tyres'],
                 car['current_lap'],
                 car['gap'],
                 car['gap_prev'],
-                (s1, 'pb' if s1 == bs1 else ''),
-                (bs1, 'old' if s1 != bs1 else ''),
-                (s2, 'pb' if s2 == bs2 else ''),
-                (bs2, 'old' if s2 != bs2 else ''),
-                (s3, 'pb' if s3 == bs3 else ''),
-                (bs3, 'old' if s3 != bs3 else '')
+                (s1 if s1 > 0 else '', 'pb' if s1 == bs1 else ''),
+                (bs1 if bs1 > 0 else '', 'old' if s1 != bs1 else ''),
+                (s2 if s2 > 0 else '', 'pb' if s2 == bs2 else ''),
+                (bs2 if bs2 > 0 else '', 'old' if s2 != bs2 else ''),
+                (s3 if s3 > 0 else '', 'pb' if s3 == bs3 else ''),
+                (bs3 if bs3 > 0 else '', 'old' if s3 != bs3 else '')
             ]
 
             if self.is_qualifying_mode:
@@ -261,7 +267,7 @@ class Service(lt_service):
                 av_lap = car['av_time']
 
                 cars.append(common_cols + [
-                    (last_lap, 'pb' if last_lap == best_lap else ''),
+                    (last_lap if last_lap > 0 else '', 'pb' if last_lap == best_lap else ''),
                     (d1_lap or '', 'pb' if best_lap == d1_lap else ''),
                     (d2_lap or '', 'pb' if best_lap == d2_lap else ''),
                     (av_lap or '', '')
@@ -269,8 +275,8 @@ class Service(lt_service):
             else:
                 best_lap = parseTime(car['best_lap'])
                 cars.append(common_cols + [
-                    (last_lap, 'pb' if last_lap == best_lap else ''),
-                    (best_lap, ''),
+                    (last_lap if last_lap > 0 else '', 'pb' if last_lap == best_lap else ''),
+                    (best_lap if best_lap > 0 else '', ''),
                     car['pitstop']
                 ])
 
