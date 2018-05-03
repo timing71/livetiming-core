@@ -107,6 +107,8 @@ TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}
 
 
 class Service(lt_service):
+    attribution = ['WEC', 'http://www.fiawec.com/']
+
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
 
@@ -114,6 +116,7 @@ class Service(lt_service):
         self._cars = {}
 
         self._last_timestamp = None
+        self._last_retrieved = None
         self._app_fetcher = None
 
         self._parsed_extra_args = parse_extra_args(extra_args)[0]
@@ -196,7 +199,8 @@ class Service(lt_service):
             "Wind Speed",
             "Wind Direction",
             "Weather",
-            "Updated"
+            "Updated",
+            "Retrieved"
         ]
 
     def getPollInterval(self):
@@ -275,10 +279,10 @@ class Service(lt_service):
                     self._last_timestamp = pts
                 else:
                     self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
+
+                self._last_retrieved = datetime.utcnow()
             except ValueError:
                 self.log.failure("Couldn't parse time. Sad times.")
-
-        self._updateAndPublishRaceState()
 
     def getRaceState(self):
 
@@ -337,7 +341,7 @@ class Service(lt_service):
                 else:
                     flag = ''
 
-                return (time, flag)
+                return (time if time > 0 else '', flag)
 
             common_cols = [
                 race_num,
@@ -400,7 +404,8 @@ class Service(lt_service):
             "{}kph".format(self._session_data['windSpeed']),
             u"{}°".format(self._session_data['windDirection']),
             self._session_data['weather'].replace('_', ' ').title(),
-            self._last_timestamp.strftime("%H:%I:%S")
+            self._last_timestamp.strftime("%H:%I:%S") if self._last_timestamp else '',
+            self._last_retrieved.strftime("%H:%I:%S") if self._last_retrieved else ''
         ]
 
         return {
