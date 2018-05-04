@@ -204,6 +204,7 @@ class Service(lt_service):
         return 5
 
     def _handleAppData(self, data):
+        self._last_retrieved = datetime.utcnow()
         if 'live_standing' in data:
             ls = data['live_standing']
             try:
@@ -276,13 +277,69 @@ class Service(lt_service):
                     self._last_timestamp = pts
                 else:
                     self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
-
-                self._last_retrieved = datetime.utcnow()
             except ValueError:
                 self.log.failure("Couldn't parse time. Sad times.")
 
     def _handleWebData(self, data):
-        pass
+        self._last_retrieved = datetime.utcnow()
+        if "params" in data:
+            params = data['params']
+            ts = params.get('timestamp', 0)
+            pts = datetime.fromtimestamp(ts)
+            if not self._last_timestamp or pts > self._last_timestamp:
+                for car_data in data.get('entries', []):
+                    race_num = car_data['number']
+                    car = self._cars.setdefault(race_num, {})
+
+                    # These fields should always be set from either data source
+                    car['rank'] = car_data['position']
+                    car['race_num'] = race_num
+                    car['state'] = mapCarState(car_data['state'])
+                    car['pos_in_class'] = car_data['category_position']
+                    car['s1'] = car_data['currentSector1'] or 0
+                    car['bs1'] = car_data['bestSector1'] or 0
+                    car['s2'] = car_data['currentSector2'] or 0
+                    car['bs2'] = car_data['bestSector2'] or 0
+                    car['s3'] = car_data['currentSector3'] or 0
+                    car['bs3'] = car_data['bestSector3'] or 0
+
+                    car['last_lap'] = parseTime(car_data['lastlap'])
+                    car['best_lap'] = parseTime(car_data['bestlap'])
+
+                    car['driver'] = car_data['driver']
+                    car['tyre'] = car_data['tyre']
+                    car['lap'] = car_data['lap']
+                    car['gap'] = car_data['gap']
+                    car['int'] = car_data['gapPrev']
+                    car['pits'] = car_data['pitstop']
+
+                    # Quali fields
+                    car['d1l1'] = parseTime(car_data.get('d1l1', ''))
+                    car['d2l1'] = parseTime(car_data.get('d2l1', ''))
+                    car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
+                    car['av_lap'] = car_data.get('av_time', None)
+
+                    # These fields should override data from the app
+                    car['category'] = car_data['category']
+                    car['team'] = car_data['team']
+                    car['car'] = car_data['car']
+
+                sd = self._session_data
+
+                sd['trackTemp'] = params['trackTemp']
+                sd['airTemp'] = params['airTemp']
+                sd['humidity'] = params['humidity']
+                sd['windSpeed'] = params['windSpeed']
+                sd['windDirection'] = params['windDirection']
+                sd['pressure'] = params['pressure']
+                sd['weather'] = params['weather']
+
+                sd['status'] = params['racestate']
+                sd['safety_car'] = params.get('safetycar', 'false') == "true"
+                sd['elapsed'] = params.get('elapsed', 0)
+                sd['remain'] = params.get('remaining', 0)
+
+                self._last_timestamp = pts
 
     def getRaceState(self):
 
