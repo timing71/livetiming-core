@@ -10,6 +10,7 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from datetime import datetime
 import time
+from threading import Lock
 
 
 def mapFlagState(params):
@@ -109,6 +110,8 @@ class Service(lt_service):
         self._app_fetcher = None
         self._web_fetcher = None
 
+        self._data_lock = Lock()
+
         self._parsed_extra_args = parse_extra_args(extra_args)[0]
         self.is_qualifying_mode = self._parsed_extra_args.qualifying
 
@@ -206,144 +209,146 @@ class Service(lt_service):
         return 5
 
     def _handleAppData(self, data):
-        self._last_retrieved = datetime.utcnow()
-        if 'live_standing' in data:
-            ls = data['live_standing']
-            try:
-                ts = ls.get('original_timestamp', 0)
-                print "App timestamp: {}".format(ts)
-                pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
-                if not self._last_timestamp or pts > self._last_timestamp:
-                    if 'ranks' in ls and len(ls['ranks']) > 0:
+        with self._data_lock:
+            self._last_retrieved = datetime.utcnow()
+            if 'live_standing' in data:
+                ls = data['live_standing']
+                try:
+                    ts = ls.get('original_timestamp', 0)
+                    print "App timestamp: {}".format(ts)
+                    pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    if not self._last_timestamp or pts > self._last_timestamp:
+                        if 'ranks' in ls and len(ls['ranks']) > 0:
 
-                        for car_data in ls['ranks']:
-                            race_num = car_data['car_number']
-                            car = self._cars.setdefault(race_num, {})
+                            for car_data in ls['ranks']:
+                                race_num = car_data['car_number']
+                                car = self._cars.setdefault(race_num, {})
 
-                            # These fields should always be set from either data source
-                            car['rank'] = car_data['rank']
-                            car['race_num'] = race_num
-                            car['state'] = mapCarState(car_data['status'])
-                            car['pos_in_class'] = car_data['rank_by_category']
-                            car['s1'] = car_data['sectors']['0']['current'] or 0
-                            car['bs1'] = car_data['sectors']['0']['best'] or 0
-                            car['s2'] = car_data['sectors']['1']['current'] or 0
-                            car['bs2'] = car_data['sectors']['1']['best'] or 0
-                            car['s3'] = car_data['sectors']['2']['current'] or 0
-                            car['bs3'] = car_data['sectors']['2']['best'] or 0
+                                # These fields should always be set from either data source
+                                car['rank'] = car_data['rank']
+                                car['race_num'] = race_num
+                                car['state'] = mapCarState(car_data['status'])
+                                car['pos_in_class'] = car_data['rank_by_category']
+                                car['s1'] = car_data['sectors']['0']['current'] or 0
+                                car['bs1'] = car_data['sectors']['0']['best'] or 0
+                                car['s2'] = car_data['sectors']['1']['current'] or 0
+                                car['bs2'] = car_data['sectors']['1']['best'] or 0
+                                car['s3'] = car_data['sectors']['2']['current'] or 0
+                                car['bs3'] = car_data['sectors']['2']['best'] or 0
 
-                            car['last_lap'] = parseTime(car_data['last_lap'])
-                            car['best_lap'] = parseTime(car_data['best_lap'])
+                                car['last_lap'] = parseTime(car_data['last_lap'])
+                                car['best_lap'] = parseTime(car_data['best_lap'])
 
-                            car['driver'] = car_data['current_pilot']
-                            car['tyre'] = car_data['current_tyres']
-                            car['lap'] = car_data['current_lap']
-                            car['gap'] = car_data['gap']
-                            car['int'] = car_data['gap_prev']
-                            car['pits'] = car_data['pitstop']
+                                car['driver'] = car_data['current_pilot']
+                                car['tyre'] = car_data['current_tyres']
+                                car['lap'] = car_data['current_lap']
+                                car['gap'] = car_data['gap']
+                                car['int'] = car_data['gap_prev']
+                                car['pits'] = car_data['pitstop']
 
-                            # Quali fields
-                            car['d1l1'] = parseTime(car_data.get('d1l1', ''))
-                            car['d2l1'] = parseTime(car_data.get('d2l1', ''))
-                            car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
-                            car['av_lap'] = car_data.get('av_time', None)
+                                # Quali fields
+                                car['d1l1'] = parseTime(car_data.get('d1l1', ''))
+                                car['d2l1'] = parseTime(car_data.get('d2l1', ''))
+                                car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
+                                car['av_lap'] = car_data.get('av_time', None)
 
-                            # These fields should not override data from the website if available
-                            if 'category' not in car:
-                                car['category'] = car_data['participation']['category']['name_id'].replace(" ", "")
+                                # These fields should not override data from the website if available
+                                if 'category' not in car:
+                                    car['category'] = car_data['participation']['category']['name_id'].replace(" ", "")
 
-                            if 'team' not in car:
-                                car['team'] = car_data['participation']['team']['name_id']
+                                if 'team' not in car:
+                                    car['team'] = car_data['participation']['team']['name_id']
 
-                            if 'car' not in car:
-                                brand = car_data['participation']['car'].get('brand', {})
-                                model = car_data['participation']['car'].get('model', '')
-                                car['car'] = u'{} {}'.format(brand.get('name_id', ''), model).strip()
+                                if 'car' not in car:
+                                    brand = car_data['participation']['car'].get('brand', {})
+                                    model = car_data['participation']['car'].get('model', '')
+                                    car['car'] = u'{} {}'.format(brand.get('name_id', ''), model).strip()
 
-                        sd = self._session_data
+                            sd = self._session_data
 
-                        sd['trackTemp'] = ls['track_temp']
-                        sd['airTemp'] = ls['air_temp']
-                        sd['humidity'] = ls['humidity']
-                        sd['windSpeed'] = ls['wind_speed']
-                        sd['windDirection'] = ls['wind_direction']
-                        sd['pressure'] = ls['pressure']
-                        sd['weather'] = ls['weather']
+                            sd['trackTemp'] = ls['track_temp']
+                            sd['airTemp'] = ls['air_temp']
+                            sd['humidity'] = ls['humidity']
+                            sd['windSpeed'] = ls['wind_speed']
+                            sd['windDirection'] = ls['wind_direction']
+                            sd['pressure'] = ls['pressure']
+                            sd['weather'] = ls['weather']
 
-                        sd['status'] = ls['status']
-                        sd['safety_car'] = ls.get('safety_car', 0) == 1
-                        sd['elapsed'] = ls.get('elapsed', 0)
-                        sd['remain'] = self.session['duration_seconds'] - ls.get('elapsed', 0)
+                            sd['status'] = ls['status']
+                            sd['safety_car'] = ls.get('safety_car', 0) == 1
+                            sd['elapsed'] = ls.get('elapsed', 0)
+                            sd['remain'] = self.session['duration_seconds'] - ls.get('elapsed', 0)
 
-                        sd['alkamel_session_id'] = ls['alkamel_session_id']
+                            sd['alkamel_session_id'] = ls['alkamel_session_id']
 
-                    self._last_timestamp = pts
-                else:
-                    self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
-            except ValueError:
-                self.log.failure("Couldn't parse time. Sad times.")
+                        self._last_timestamp = pts
+                    else:
+                        self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
+                except ValueError:
+                    self.log.failure("Couldn't parse time. Sad times.")
 
     def _handleWebData(self, data):
-        self._last_retrieved = datetime.utcnow()
-        if "params" in data:
-            params = data['params']
-            ts = int(params.get('timestamp', '0')) / 1000
-            pts = datetime.utcfromtimestamp(ts)
-            print "Web timestamp: {}".format(pts)
-            if not self._last_timestamp or pts > self._last_timestamp:
-                for car_data in data.get('entries', []):
-                    race_num = car_data['number']
-                    car = self._cars.setdefault(race_num, {})
+        with self._data_lock:
+            self._last_retrieved = datetime.utcnow()
+            if "params" in data:
+                params = data['params']
+                ts = int(params.get('timestamp', '0')) / 1000
+                pts = datetime.utcfromtimestamp(ts)
+                print "Web timestamp: {}".format(pts)
+                if not self._last_timestamp or pts > self._last_timestamp:
+                    for car_data in data.get('entries', []):
+                        race_num = car_data['number']
+                        car = self._cars.setdefault(race_num, {})
 
-                    # These fields should always be set from either data source
-                    car['rank'] = car_data['ranking']
-                    car['race_num'] = race_num
-                    car['state'] = mapCarState(car_data['state'])
-                    car['pos_in_class'] = car_data['categoryPosition']
-                    car['s1'] = parseTime(car_data['currentSector1'])
-                    car['bs1'] = parseTime(car_data['bestSector1'])
-                    car['s2'] = parseTime(car_data['currentSector2'])
-                    car['bs2'] = parseTime(car_data['bestSector2'])
-                    car['s3'] = parseTime(car_data['currentSector3'])
-                    car['bs3'] = parseTime(car_data['bestSector3'])
+                        # These fields should always be set from either data source
+                        car['rank'] = car_data['ranking']
+                        car['race_num'] = race_num
+                        car['state'] = mapCarState(car_data['state'])
+                        car['pos_in_class'] = car_data['categoryPosition']
+                        car['s1'] = parseTime(car_data['currentSector1'])
+                        car['bs1'] = parseTime(car_data['bestSector1'])
+                        car['s2'] = parseTime(car_data['currentSector2'])
+                        car['bs2'] = parseTime(car_data['bestSector2'])
+                        car['s3'] = parseTime(car_data['currentSector3'])
+                        car['bs3'] = parseTime(car_data['bestSector3'])
 
-                    car['last_lap'] = parseTime(car_data['lastlap'])
-                    car['best_lap'] = parseTime(car_data['bestlap'])
+                        car['last_lap'] = parseTime(car_data['lastlap'])
+                        car['best_lap'] = parseTime(car_data['bestlap'])
 
-                    car['driver'] = car_data['driver']
-                    car['tyre'] = car_data['tyre']
-                    car['lap'] = car_data['lap']
-                    car['gap'] = car_data['gap']
-                    car['int'] = car_data['gapPrev']
-                    car['pits'] = car_data['pitstop']
+                        car['driver'] = car_data['driver']
+                        car['tyre'] = car_data['tyre']
+                        car['lap'] = car_data['lap']
+                        car['gap'] = car_data['gap']
+                        car['int'] = car_data['gapPrev']
+                        car['pits'] = car_data['pitstop']
 
-                    # Quali fields
-                    car['d1l1'] = parseTime(car_data.get('d1l1', ''))
-                    car['d2l1'] = parseTime(car_data.get('d2l1', ''))
-                    car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
-                    car['av_lap'] = car_data.get('av_time', None)
+                        # Quali fields
+                        car['d1l1'] = parseTime(car_data.get('d1l1', ''))
+                        car['d2l1'] = parseTime(car_data.get('d2l1', ''))
+                        car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
+                        car['av_lap'] = car_data.get('av_time', None)
 
-                    # These fields should override data from the app
-                    car['category'] = car_data['category']
-                    car['team'] = car_data['team']
-                    car['car'] = car_data['car']
+                        # These fields should override data from the app
+                        car['category'] = car_data['category']
+                        car['team'] = car_data['team']
+                        car['car'] = car_data['car']
 
-                sd = self._session_data
+                    sd = self._session_data
 
-                sd['trackTemp'] = params['trackTemp']
-                sd['airTemp'] = params['airTemp']
-                sd['humidity'] = params['humidity']
-                sd['windSpeed'] = params['windSpeed']
-                sd['windDirection'] = params['windDirection']
-                sd['pressure'] = params['pressure']
-                sd['weather'] = params['weather']
+                    sd['trackTemp'] = params['trackTemp']
+                    sd['airTemp'] = params['airTemp']
+                    sd['humidity'] = params['humidity']
+                    sd['windSpeed'] = params['windSpeed']
+                    sd['windDirection'] = params['windDirection']
+                    sd['pressure'] = params['pressure']
+                    sd['weather'] = params['weather']
 
-                sd['status'] = params['racestate']
-                sd['safety_car'] = params.get('safetycar', 'false') == "true"
-                sd['elapsed'] = params.get('elapsed', 0)
-                sd['remain'] = params.get('remaining', 0)
+                    sd['status'] = params['racestate']
+                    sd['safety_car'] = params.get('safetycar', 'false') == "true"
+                    sd['elapsed'] = params.get('elapsed', 0)
+                    sd['remain'] = params.get('remaining', 0)
 
-                self._last_timestamp = pts
+                    self._last_timestamp = pts
 
     def getRaceState(self):
 
@@ -353,130 +358,132 @@ class Service(lt_service):
         bestLapsByClass = {}
         bestSectorsByClass = {1: {}, 2: {}, 3: {}}
 
-        # First pass: identify fastest sectors/lap per class
-        for car in self._cars.values():
-            race_num = car['race_num']
-            category = car['category']
-            s1 = car['s1']
-            bs1 = car['bs1']
-            s2 = car['s2']
-            bs2 = car['bs2']
-            s3 = car['s3']
-            bs3 = car['bs3']
+        with self._data_lock:
 
-            if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
-                bestSectorsByClass[1][category] = (race_num, bs1)
-            if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
-                bestSectorsByClass[2][category] = (race_num, bs2)
-            if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
-                bestSectorsByClass[3][category] = (race_num, bs3)
+            # First pass: identify fastest sectors/lap per class
+            for car in self._cars.values():
+                race_num = car['race_num']
+                category = car['category']
+                s1 = car['s1']
+                bs1 = car['bs1']
+                s2 = car['s2']
+                bs2 = car['bs2']
+                s3 = car['s3']
+                bs3 = car['bs3']
 
-            if self.is_qualifying_mode:
-                best_lap = car['aggregate_best']
-            else:
-                best_lap = car['best_lap']
+                if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
+                    bestSectorsByClass[1][category] = (race_num, bs1)
+                if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
+                    bestSectorsByClass[2][category] = (race_num, bs2)
+                if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
+                    bestSectorsByClass[3][category] = (race_num, bs3)
 
-            if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
-                    bestLapsByClass[category] = (race_num, best_lap)
-
-        # Second pass: assemble cars in order
-        for car in sorted(self._cars.values(), key=lambda c: c['rank']):
-            race_num = car['race_num']
-            category = car['category']
-            s1 = car['s1']
-            bs1 = car['bs1']
-            s2 = car['s2']
-            bs2 = car['bs2']
-            s3 = car['s3']
-            bs3 = car['bs3']
-            last_lap = car['last_lap']
-
-            def sector_time(sector):
-                stime = car['s{}'.format(sector)]
-                best = car['bs{}'.format(sector)]
-
-                if stime == best:
-                    if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == race_num:
-                        flag = 'sb'
-                    else:
-                        flag = 'pb'
+                if self.is_qualifying_mode:
+                    best_lap = car['aggregate_best']
                 else:
-                    flag = ''
+                    best_lap = car['best_lap']
 
-                return (stime if stime > 0 else '', flag)
+                if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
+                        bestLapsByClass[category] = (race_num, best_lap)
 
-            def bs_flag(bsector):
-                if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == race_num:
-                    return 'sb'
-                return 'old'
+            # Second pass: assemble cars in order
+            for car in sorted(self._cars.values(), key=lambda c: c['rank']):
+                race_num = car['race_num']
+                category = car['category']
+                s1 = car['s1']
+                bs1 = car['bs1']
+                s2 = car['s2']
+                bs2 = car['bs2']
+                s3 = car['s3']
+                bs3 = car['bs3']
+                last_lap = car['last_lap']
 
-            common_cols = [
-                race_num,
-                car['state'],
-                category,
-                car['pos_in_class'],
-                car['team'],
-                car['driver'],
-                car['car'],
-                car['tyre'],
-                car['lap'],
-                car['gap'],
-                car['int'],
-                sector_time(1),
-                (bs1 if bs1 > 0 else '', bs_flag(1)),
-                sector_time(2),
-                (bs2 if bs2 > 0 else '', bs_flag(2)),
-                sector_time(3),
-                (bs3 if bs3 > 0 else '', bs_flag(3))
+                def sector_time(sector):
+                    stime = car['s{}'.format(sector)]
+                    best = car['bs{}'.format(sector)]
+
+                    if stime == best:
+                        if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == race_num:
+                            flag = 'sb'
+                        else:
+                            flag = 'pb'
+                    else:
+                        flag = ''
+
+                    return (stime if stime > 0 else '', flag)
+
+                def bs_flag(bsector):
+                    if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == race_num:
+                        return 'sb'
+                    return 'old'
+
+                common_cols = [
+                    race_num,
+                    car['state'],
+                    category,
+                    car['pos_in_class'],
+                    car['team'],
+                    car['driver'],
+                    car['car'],
+                    car['tyre'],
+                    car['lap'],
+                    car['gap'],
+                    car['int'],
+                    sector_time(1),
+                    (bs1 if bs1 > 0 else '', bs_flag(1)),
+                    sector_time(2),
+                    (bs2 if bs2 > 0 else '', bs_flag(2)),
+                    sector_time(3),
+                    (bs3 if bs3 > 0 else '', bs_flag(3))
+                ]
+
+                we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
+                fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
+                last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
+
+                if self.is_qualifying_mode:
+                    d1_lap = car['d1l1']
+                    d2_lap = car['d2l1']
+                    best_lap = car['aggregate_best']
+                    av_lap = car['av_time']
+
+                    d1_flag = 'sb' if we_have_fastest and d1_lap == fastest else 'sb' if d1_lap == best_lap else ''
+                    d2_flag = 'sb' if we_have_fastest and d2_lap == fastest else 'sb' if d2_lap == best_lap else ''
+
+                    cars.append(common_cols + [
+                        (last_lap if last_lap > 0 else '', last_flag),
+                        (d1_lap or '', d1_flag),
+                        (d2_lap or '', d2_flag),
+                        (av_lap or '', '')
+                    ])
+                else:
+                    best_lap = parseTime(car['best_lap'])
+                    cars.append(common_cols + [
+                        (last_lap if last_lap > 0 else '', last_flag),
+                        (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
+                        car['pits']
+                    ])
+
+            session['flagState'] = mapFlagState(self._session_data)
+
+            delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
+            print "Delta: {}".format(delta)
+
+            session['timeElapsed'] = self._session_data['elapsed'] + delta
+            session['timeRemain'] = self._session_data['remain'] - delta
+            session['trackData'] = [
+                u"{}°C".format(self._session_data['trackTemp']),
+                u"{}°C".format(self._session_data['airTemp']),
+                "{}%".format(self._session_data['humidity']),
+                "{}mbar".format(self._session_data['pressure']),
+                "{}kph".format(self._session_data['windSpeed']),
+                u"{}°".format(self._session_data['windDirection']),
+                self._session_data['weather'].replace('_', ' ').title(),
+                self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
+                self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
             ]
 
-            we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
-            fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
-            last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
-
-            if self.is_qualifying_mode:
-                d1_lap = car['d1l1']
-                d2_lap = car['d2l1']
-                best_lap = car['aggregate_best']
-                av_lap = car['av_time']
-
-                d1_flag = 'sb' if we_have_fastest and d1_lap == fastest else 'sb' if d1_lap == best_lap else ''
-                d2_flag = 'sb' if we_have_fastest and d2_lap == fastest else 'sb' if d2_lap == best_lap else ''
-
-                cars.append(common_cols + [
-                    (last_lap if last_lap > 0 else '', last_flag),
-                    (d1_lap or '', d1_flag),
-                    (d2_lap or '', d2_flag),
-                    (av_lap or '', '')
-                ])
-            else:
-                best_lap = parseTime(car['best_lap'])
-                cars.append(common_cols + [
-                    (last_lap if last_lap > 0 else '', last_flag),
-                    (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
-                    car['pits']
-                ])
-
-        session['flagState'] = mapFlagState(self._session_data)
-
-        delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
-        print "Delta: {}".format(delta)
-
-        session['timeElapsed'] = self._session_data['elapsed'] + delta
-        session['timeRemain'] = self._session_data['remain'] - delta
-        session['trackData'] = [
-            u"{}°C".format(self._session_data['trackTemp']),
-            u"{}°C".format(self._session_data['airTemp']),
-            "{}%".format(self._session_data['humidity']),
-            "{}mbar".format(self._session_data['pressure']),
-            "{}kph".format(self._session_data['windSpeed']),
-            u"{}°".format(self._session_data['windDirection']),
-            self._session_data['weather'].replace('_', ' ').title(),
-            self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
-            self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
-        ]
-
-        return {
-            "cars": cars,
-            "session": session
-        }
+            return {
+                "cars": cars,
+                "session": session
+            }
