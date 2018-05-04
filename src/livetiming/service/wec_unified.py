@@ -110,6 +110,7 @@ class Service(lt_service):
         self._last_retrieved = None
         self._app_fetcher = None
         self._web_fetcher = None
+        self._last_source = 'N'
 
         self._data_lock = Lock()
 
@@ -216,7 +217,7 @@ class Service(lt_service):
                 ls = data['live_standing']
                 try:
                     ts = ls.get('original_timestamp', 0)
-                    print "App timestamp: {}".format(ts)
+                    self.log.debug("App timestamp: {ts}", ts=ts)
                     pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
                     if not self._last_timestamp or pts >= self._last_timestamp:
                         if 'ranks' in ls and len(ls['ranks']) > 0:
@@ -283,6 +284,7 @@ class Service(lt_service):
                             sd['alkamel_session_id'] = ls['alkamel_session_id']
 
                         self._last_timestamp = pts
+                        self._last_source = 'A'
                     else:
                         self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
                 except ValueError:
@@ -295,8 +297,12 @@ class Service(lt_service):
                 params = data['params']
                 ts = int(params.get('timestamp', '0')) / 1000
                 pts = datetime.utcfromtimestamp(ts)
-                print "Web timestamp: {}".format(pts)
-                if not self._last_timestamp or pts >= self._last_timestamp:
+                self.log.debug("Web timestamp: {pts}", pts=pts)
+
+                data_new_enough = (not self._last_timestamp or pts >= self._last_timestamp)
+                correct_session = ('alkamel_session_id' not in self._session_data or self._session_data['alkamel_session_id'] == params['sessionId'])
+
+                if data_new_enough and correct_session:
                     for car_data in data.get('entries', []):
                         race_num = car_data['number']
                         car = self._cars.setdefault(race_num, {})
@@ -340,7 +346,7 @@ class Service(lt_service):
                     sd['airTemp'] = params['airTemp']
                     sd['humidity'] = params['humidity']
                     sd['windSpeed'] = params['windSpeed']
-                    sd['windDirection'] = params['windDirection']
+                    sd['windDirection'] = float(params['windDirection'])
                     sd['pressure'] = params['pressure']
                     sd['weather'] = params['weather']
 
@@ -350,6 +356,7 @@ class Service(lt_service):
                     sd['remain'] = params.get('remaining', 0)
 
                     self._last_timestamp = pts
+                    self._last_source = 'B'
 
     def getRaceState(self):
 
@@ -468,10 +475,13 @@ class Service(lt_service):
             session['flagState'] = mapFlagState(self._session_data)
 
             delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
-            print "Delta: {}".format(delta)
+            self.log.debug("Delta: {delta}", delta=delta)
 
             session['timeElapsed'] = self._session_data['elapsed'] + delta
             session['timeRemain'] = self._session_data['remain'] - delta
+
+            last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
+
             session['trackData'] = [
                 u"{}°C".format(self._session_data['trackTemp']),
                 u"{}°C".format(self._session_data['airTemp']),
@@ -481,7 +491,7 @@ class Service(lt_service):
                 u"{}°".format(self._session_data['windDirection']),
                 self._session_data['weather'].replace('_', ' ').title(),
                 self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
-                self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
+                '{} {}'.format(self._last_source, last_retrieved_time)
             ]
 
             return {
