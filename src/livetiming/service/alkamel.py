@@ -58,7 +58,8 @@ def mapState(rawState):
         'o': 'OUT',
         'r': 'RUN',
         's': 'RET',
-        'c': 'FIN'
+        'c': 'FIN',
+        'p': 'FIN'
     }
     if rawState in stateMap:
         return stateMap[rawState]
