@@ -102,7 +102,7 @@ class Service(lt_service):
         self.session_id = None
 
         def data_url():
-            return "http://www.fiawec.com/assets/live/WEC/__data.json?_={}".format(int(1000 * time.time()))
+            return "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__data.json?_t={}".format(int(1000 * time.time()))
 
         fetcher = JSONFetcher(data_url, self._handleData, 10)
         fetcher.start()
