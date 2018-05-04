@@ -270,7 +270,7 @@ class Service(lt_service):
                 self.messages.append(msg['txt'])
 
             if msg['txt'] == "FULL COURSE YELLOW":
-                flags_in_messages.append(FlagStatus.FCY)
+                flags_in_messages.append(FlagStatus.CAUTION if self.extra_args.caution else FlagStatus.FCY)
             elif msg['txt'] == "SAFETY CAR":
                 flags_in_messages.append(FlagStatus.SC)
             elif msg['txt'] == "CODE 60":
