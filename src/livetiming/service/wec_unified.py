@@ -11,6 +11,7 @@ from twisted.internet.task import LoopingCall
 from datetime import datetime
 import time
 from threading import Lock
+from urllib2 import HTTPError
 
 
 def mapFlagState(params):
@@ -217,7 +218,7 @@ class Service(lt_service):
                     ts = ls.get('original_timestamp', 0)
                     print "App timestamp: {}".format(ts)
                     pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
-                    if not self._last_timestamp or pts > self._last_timestamp:
+                    if not self._last_timestamp or pts >= self._last_timestamp:
                         if 'ranks' in ls and len(ls['ranks']) > 0:
 
                             for car_data in ls['ranks']:
@@ -247,10 +248,10 @@ class Service(lt_service):
                                 car['pits'] = car_data['pitstop']
 
                                 # Quali fields
-                                car['d1l1'] = parseTime(car_data.get('d1l1', ''))
-                                car['d2l1'] = parseTime(car_data.get('d2l1', ''))
+                                car['d1l1'] = parseTime(car_data.get('average_d1_l1', ''))
+                                car['d2l1'] = parseTime(car_data.get('average_d2_l1', ''))
                                 car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
-                                car['av_lap'] = car_data.get('av_time', None)
+                                car['av_lap'] = car_data.get('average_time', None)
 
                                 # These fields should not override data from the website if available
                                 if 'category' not in car:
@@ -295,7 +296,7 @@ class Service(lt_service):
                 ts = int(params.get('timestamp', '0')) / 1000
                 pts = datetime.utcfromtimestamp(ts)
                 print "Web timestamp: {}".format(pts)
-                if not self._last_timestamp or pts > self._last_timestamp:
+                if not self._last_timestamp or pts >= self._last_timestamp:
                     for car_data in data.get('entries', []):
                         race_num = car_data['number']
                         car = self._cars.setdefault(race_num, {})
@@ -445,10 +446,10 @@ class Service(lt_service):
                     d1_lap = car['d1l1']
                     d2_lap = car['d2l1']
                     best_lap = car['aggregate_best']
-                    av_lap = car['av_time']
+                    av_lap = car['av_lap']
 
-                    d1_flag = 'sb' if we_have_fastest and d1_lap == fastest else 'sb' if d1_lap == best_lap else ''
-                    d2_flag = 'sb' if we_have_fastest and d2_lap == fastest else 'sb' if d2_lap == best_lap else ''
+                    d1_flag = 'sb' if we_have_fastest and d1_lap == fastest else 'pb' if d1_lap == best_lap else ''
+                    d2_flag = 'sb' if we_have_fastest and d2_lap == fastest else 'pb' if d2_lap == best_lap else ''
 
                     cars.append(common_cols + [
                         (last_lap if last_lap > 0 else '', last_flag),
