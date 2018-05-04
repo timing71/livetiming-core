@@ -12,21 +12,6 @@ from datetime import datetime
 import time
 
 
-class FieldExtractor(object):
-    def __init__(self, colSpec):
-        self.mapping = {}
-        for idx, col in enumerate(colSpec):
-            self.mapping[col] = idx
-
-    def get(self, car, field, default=None):
-        if car:
-            try:
-                return car[self.mapping[field]]
-            except KeyError:
-                return default
-        return default
-
-
 def mapFlagState(params):
     if 'safetycar' in params and params['safetycar'] == "true":
         return FlagStatus.SC.name.lower()
