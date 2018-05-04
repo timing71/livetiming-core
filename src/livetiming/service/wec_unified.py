@@ -13,7 +13,7 @@ import time
 
 
 def mapFlagState(params):
-    if 'safetycar' in params and params['safetycar'] == "true":
+    if 'safety_car' in params and params['safety_car'] == "true":
         return FlagStatus.SC.name.lower()
 
     flagMap = {
