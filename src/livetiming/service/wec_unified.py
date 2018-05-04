@@ -90,7 +90,9 @@ class WECAppFetcher(Fetcher):
         return threads.deferToThread(wecapp.get, self.url)
 
 
-TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
+APP_TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
+
+WEB_TIMING_URL = "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__data.json?_t={}"
 
 
 class Service(lt_service):
@@ -116,7 +118,7 @@ class Service(lt_service):
         self.description = "World Endurance Championship"
 
         def data_url():
-            return "http://www.fiawec.com/assets/live/WEC/__data.json?_={}".format(int(1000 * time.time()))
+            return WEB_TIMING_URL.format(int(1000 * time.time()))
 
         self._web_fetcher = JSONFetcher(data_url, self._handleWebData, 10)
 
@@ -134,7 +136,7 @@ class Service(lt_service):
                 self.publishManifest()
             if not self._app_fetcher:
                 self._app_fetcher = WECAppFetcher(
-                    TIMING_URL.format(self.session['id']),
+                    APP_TIMING_URL.format(self.session['id']),
                     self._handleAppData,
                     10
                 )
@@ -149,7 +151,7 @@ class Service(lt_service):
                 self._web_fetcher.stop()
 
     def getName(self):
-        return "WEC (gamma)"
+        return "WEC (beta)"
 
     def getDefaultDescription(self):
         return self.description
@@ -209,6 +211,7 @@ class Service(lt_service):
             ls = data['live_standing']
             try:
                 ts = ls.get('original_timestamp', 0)
+                print "App timestamp: {}".format(ts)
                 pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
                 if not self._last_timestamp or pts > self._last_timestamp:
                     if 'ranks' in ls and len(ls['ranks']) > 0:
@@ -284,24 +287,25 @@ class Service(lt_service):
         self._last_retrieved = datetime.utcnow()
         if "params" in data:
             params = data['params']
-            ts = params.get('timestamp', 0)
-            pts = datetime.fromtimestamp(ts)
+            ts = int(params.get('timestamp', '0')) / 1000
+            pts = datetime.utcfromtimestamp(ts)
+            print "Web timestamp: {}".format(pts)
             if not self._last_timestamp or pts > self._last_timestamp:
                 for car_data in data.get('entries', []):
                     race_num = car_data['number']
                     car = self._cars.setdefault(race_num, {})
 
                     # These fields should always be set from either data source
-                    car['rank'] = car_data['position']
+                    car['rank'] = car_data['ranking']
                     car['race_num'] = race_num
                     car['state'] = mapCarState(car_data['state'])
-                    car['pos_in_class'] = car_data['category_position']
-                    car['s1'] = car_data['currentSector1'] or 0
-                    car['bs1'] = car_data['bestSector1'] or 0
-                    car['s2'] = car_data['currentSector2'] or 0
-                    car['bs2'] = car_data['bestSector2'] or 0
-                    car['s3'] = car_data['currentSector3'] or 0
-                    car['bs3'] = car_data['bestSector3'] or 0
+                    car['pos_in_class'] = car_data['categoryPosition']
+                    car['s1'] = parseTime(car_data['currentSector1'])
+                    car['bs1'] = parseTime(car_data['bestSector1'])
+                    car['s2'] = parseTime(car_data['currentSector2'])
+                    car['bs2'] = parseTime(car_data['bestSector2'])
+                    car['s3'] = parseTime(car_data['currentSector3'])
+                    car['bs3'] = parseTime(car_data['bestSector3'])
 
                     car['last_lap'] = parseTime(car_data['lastlap'])
                     car['best_lap'] = parseTime(car_data['bestlap'])
@@ -354,11 +358,11 @@ class Service(lt_service):
             race_num = car['race_num']
             category = car['category']
             s1 = car['s1']
-            bs1 = car['s1']
+            bs1 = car['bs1']
             s2 = car['s2']
-            bs2 = car['s2']
+            bs2 = car['bs2']
             s3 = car['s3']
-            bs3 = car['s3']
+            bs3 = car['bs3']
 
             if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
                 bestSectorsByClass[1][category] = (race_num, bs1)
@@ -380,11 +384,11 @@ class Service(lt_service):
             race_num = car['race_num']
             category = car['category']
             s1 = car['s1']
-            bs1 = car['s1']
+            bs1 = car['bs1']
             s2 = car['s2']
-            bs2 = car['s2']
+            bs2 = car['bs2']
             s3 = car['s3']
-            bs3 = car['s3']
+            bs3 = car['bs3']
             last_lap = car['last_lap']
 
             def sector_time(sector):
@@ -392,7 +396,7 @@ class Service(lt_service):
                 best = car['bs{}'.format(sector)]
 
                 if stime == best:
-                    if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == car_num:
+                    if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == race_num:
                         flag = 'sb'
                     else:
                         flag = 'pb'
@@ -402,7 +406,7 @@ class Service(lt_service):
                 return (stime if stime > 0 else '', flag)
 
             def bs_flag(bsector):
-                if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == car_num:
+                if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == race_num:
                     return 'sb'
                 return 'old'
 
@@ -426,7 +430,7 @@ class Service(lt_service):
                 (bs3 if bs3 > 0 else '', bs_flag(3))
             ]
 
-            we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == car_num)
+            we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
             fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
             last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
 
@@ -456,6 +460,7 @@ class Service(lt_service):
         session['flagState'] = mapFlagState(self._session_data)
 
         delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
+        print "Delta: {}".format(delta)
 
         session['timeElapsed'] = self._session_data['elapsed'] + delta
         session['timeRemain'] = self._session_data['remain'] - delta
@@ -467,8 +472,8 @@ class Service(lt_service):
             "{}kph".format(self._session_data['windSpeed']),
             u"{}°".format(self._session_data['windDirection']),
             self._session_data['weather'].replace('_', ' ').title(),
-            self._last_timestamp.strftime("%H:%I:%S") if self._last_timestamp else '',
-            self._last_retrieved.strftime("%H:%I:%S") if self._last_retrieved else ''
+            self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
+            self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
         ]
 
         return {
