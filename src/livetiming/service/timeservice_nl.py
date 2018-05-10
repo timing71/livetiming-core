@@ -138,13 +138,6 @@ def ident(val):
     return val[0]
 
 
-def shorten(nameTuple):
-    name = nameTuple[0]
-    if len(name) > 20:
-        return u"{}…".format(name[0:20])
-    return name
-
-
 def nonnegative(val):
     try:
         return max(val[0], 0)
@@ -179,15 +172,15 @@ DEFAULT_COLUMN_SPEC = [
     (Stat.STATE, "M", lambda i: mapState(i[0])),
     (Stat.CLASS, "CLS", ident),
     (Stat.POS_IN_CLASS, "PIC", ident),
-    (Stat.TEAM, "TEAM", shorten),
-    (Stat.TEAM, "TEAM NAME", shorten),
+    (Stat.TEAM, "TEAM", ident),
+    (Stat.TEAM, "TEAM NAME", ident),
     (Stat.DRIVER, "DRIVER IN CAR", ident),
     (Stat.DRIVER, "DRIVER", ident),
     (Stat.DRIVER, "NAME", ident),
     (Stat.TEAM, "NAME", ident),
-    (Stat.CAR, "CAR", shorten),
-    (Stat.CAR, "BRAND", shorten),
-    (Stat.CAR, "VEHICLE", shorten),
+    (Stat.CAR, "CAR", ident),
+    (Stat.CAR, "BRAND", ident),
+    (Stat.CAR, "VEHICLE", ident),
     (Stat.LAPS, "LAPS", nonnegative),
     (Stat.GAP, "GAP", parse_gap),
     (Stat.INT, "DIFF", lambda i: parseTime(i[0])),
