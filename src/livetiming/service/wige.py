@@ -70,7 +70,7 @@ def parseGap(raw):
         return raw
 
 
-def mapState(raw):
+def mapState(raw, ontrack):
     states = {
         '1': 'RUN',
         '2': 'RUN',
@@ -80,18 +80,23 @@ def mapState(raw):
         '6': 'RUN',
         '7': 'PIT',
         '8': 'PIT',
-        '9': 'OUT'
+        '9': 'OUT',
+        '10': 'RUN',  # This and below are guesses
+        '11': 'RUN',
+        '14': 'PIT'
     }
+    if not ontrack:
+        return 'PIT'
     if raw in states:
         return states[raw]
     print "Unknown state: {}".format(raw)
-    return '???'
+    return "? {}".format(raw)
 
 
 def mapCar(car):
     return [
         car['STNR'],
-        mapState(car['LASTINTERMEDIATENUMBER']),
+        mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
         # car['LASTINTERMEDIATENUMBER'],
         car['CLASSNAME'],
         car['CLASSRANK'],
