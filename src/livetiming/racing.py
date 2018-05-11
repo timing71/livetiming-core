@@ -13,6 +13,8 @@ class FlagStatus(IntEnum):
     SC = 8
     CAUTION = 9
     RED = 10
+    SLOW_ZONE = 11
+    CODE_60_ZONE = 12
 
     @staticmethod
     def fromString(string):
