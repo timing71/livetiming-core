@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
-from livetiming.messages import RaceControlMessage
+from livetiming.messages import TimingMessage
 from livetiming.nurburgring_utils import Nurburgring
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
@@ -11,6 +11,7 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import argparse
 import copy
 import simplejson
+import time
 
 
 def create_ws_protocol(log, handler, eventID):
@@ -120,6 +121,61 @@ def mapCar(car):
     ]
 
 
+class SlowZoneMessage(TimingMessage):
+    def __init__(self, prevZones, currentZones):
+        self._prev = prevZones
+        self._curr = currentZones
+
+    def process(self, oldState, newState):
+        msgs = []
+
+        for zone, state in self._curr.iteritems():
+            severity, mp, location = state
+            if zone not in self._prev:
+                if severity == '60':
+                    msgs.append([
+                        int(time.time()),
+                        "Track",
+                        "New Code 60 zone at MP{} ({})".format(mp, location),
+                        "code60"
+                    ])
+                elif severity == '120':
+                    msgs.append([
+                        int(time.time()),
+                        "Track",
+                        "New slow zone zone at MP{} ({})".format(mp, location),
+                        "yellow"
+                    ])
+            else:
+                prev_severity = self._prev[zone][0]
+                if prev_severity == '60' and severity == '120':
+                    msgs.append([
+                        int(time.time()),
+                        "Track",
+                        "Code 60 zone downgraded to slow at MP{} ({})".format(mp, location),
+                        "yellow"
+                    ])
+                elif prev_severity == '120' and severity == '60':
+                    msgs.append([
+                        int(time.time()),
+                        "Track",
+                        "Slow zone upgraded to Code 60 at MP{} ({})".format(mp, location),
+                        "code60"
+                    ])
+
+        for zone, state in self._prev.iteritems():
+            if zone not in self._curr:
+                severity, mp, location = state
+                msgs.append([
+                    int(time.time()),
+                    "Track",
+                    "Track clear at MP{} ({})".format(mp, location),
+                    "green"
+                ])
+
+        return msgs
+
+
 class Service(lt_service):
     attribution = ['wige', 'http://www.wige-livetiming.de']
     auto_poll = False
@@ -185,9 +241,17 @@ class Service(lt_service):
             'Code 60 zones'
         ]
 
+    def getExtraMessageGenerators(self):
+        return [
+            SlowZoneMessage(self._current_zones, self._last_zones)
+        ]
+
     def getRaceState(self):
-        self._last_zones = copy.copy(self._current_zones)
-        self._current_zones = self._nbr.active_zones()
+        self._last_zones.clear()
+        self._last_zones.update(self._current_zones)
+        self._current_zones.clear()
+        self._current_zones.update(self._nbr.active_zones())
+
         slow_zones = 0
         code60_zones = 0
         for z in self._current_zones:
