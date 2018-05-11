@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
+from livetiming.nurburgring_utils import Nurburgring
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 
 import argparse
+import copy
 import simplejson
 
 
@@ -72,6 +75,7 @@ def parseGap(raw):
 
 def mapState(raw, ontrack):
     states = {
+        '0': 'N/S',
         '1': 'RUN',
         '2': 'RUN',
         '3': 'RUN',
@@ -105,11 +109,11 @@ def mapCar(car):
         car['CAR'],
         parseGap(car['GAP']),
         parseGap(car['INT']),
-        (parseTime(car['S1TIME']), ''),
-        (parseTime(car['S2TIME']), ''),
-        (parseTime(car['S3TIME']), ''),
-        (parseTime(car['S4TIME']), ''),
-        (parseTime(car['S5TIME']), ''),
+        (parseTime(car.get('S1TIME', '')), ''),
+        (parseTime(car.get('S2TIME', '')), ''),
+        (parseTime(car.get('S3TIME', '')), ''),
+        (parseTime(car.get('S4TIME', '')), ''),
+        (parseTime(car.get('S5TIME', '')), ''),
         (parseTime(car['LASTLAPTIME']), ''),
         (parseTime(car['FASTESTLAP']), ''),
         car['PITSTOPCOUNT']
@@ -125,6 +129,9 @@ class Service(lt_service):
         self._extra = parse_extra_args(extra)
 
         self._data = {}
+        self._nbr = Nurburgring()
+        self._current_zones = {}
+        self._last_zones = {}
 
         self.log.info("Using WebSocket URL {url}", url=self._extra.ws)
         self._connectWS(self._extra.ws, self._extra.event_id)
@@ -172,11 +179,41 @@ class Service(lt_service):
             Stat.PITS
         ]
 
+    def getTrackDataSpec(self):
+        return [
+            'Slow zones',
+            'Code 60 zones'
+        ]
+
     def getRaceState(self):
+        self._last_zones = copy.copy(self._current_zones)
+        self._current_zones = self._nbr.active_zones()
+        slow_zones = 0
+        code60_zones = 0
+        for z in self._current_zones:
+            speed = z[0]
+            if z[0] == '60':
+                code60_zones += 1
+            elif z[0] == '120':
+                slow_zones += 1
+
+        if 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
+            flag = FlagStatus.NONE
+        elif code60_zones > 0:
+            flag = FlagStatus.CODE_60_ZONE
+        elif slow_zones > 0:
+            flag = FlagStatus.SLOW_ZONE
+        else:
+            flag = FlagStatus.GREEN
+
         return {
             'cars': map(mapCar, self._data.get('RESULT', {})),
             'session': {
-                "flagState": "none",
+                "flagState": flag.name.lower(),
                 "timeElapsed": 0,
+                'trackData': [
+                    slow_zones,
+                    code60_zones
+                ]
             }
         }
