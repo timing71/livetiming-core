@@ -141,8 +141,8 @@ def postprocess_cars(cars):
 
         if race_num == fastest[1]:
             car[15] = (best[0], 'sb')
-        if last[0] == best[0] and s5[0] != '':
-            car[14] = (last[0], 'sb-new')
+            if last[0] == best[0] and s5[0] != '':
+                car[14] = (last[0], 'sb-new')
 
     return cars
 
@@ -224,7 +224,17 @@ class Service(lt_service):
             connectWS(factory)
 
     def handle(self, data):
+        needs_republish = False
+        if data.get('CUP', None) != self._data.get('CUP'):
+            needs_republish = True
+        if data.get('HEAT', None) != self._data.get('HEAT'):
+            needs_republish = True
+
         self._data = data
+
+        if needs_republish:
+            self.analyser.reset()
+            self.publishManifest()
         self._updateAndPublishRaceState()
 
     def getName(self):
