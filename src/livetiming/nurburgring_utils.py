@@ -250,8 +250,9 @@ def _parse_objects(data):
 
 
 class Nurburgring(object):
-    def __init__(self):
+    def __init__(self, verbose=False):
         self._zones = {}
+        self._verbose = verbose
         client.getPage(MARSHAL_POST_ADDRESS_URL).addCallback(self._parse_addresses)
 
     def _parse_addresses(self, data):
@@ -282,11 +283,13 @@ class Nurburgring(object):
             for zone in zones:
                 post_num = self._marshal_posts.get(zone, '')
                 self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
+        if self._verbose:
+            print self._zones
 
     def active_zones(self):
         return copy.copy(self._zones)
 
 
 if __name__ == '__main__':
-    n = Nurburgring()
+    n = Nurburgring(True)
     reactor.run()
