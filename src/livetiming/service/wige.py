@@ -121,6 +121,32 @@ def mapCar(car):
     ]
 
 
+def postprocess_cars(cars):
+    fastest = (None, None)
+    for car in cars:
+        race_num = car[0]
+        last = car[14]
+        best = car[15]
+
+        if last[0] == best[0]:
+            car[14] = (last[0], 'pb')
+        if not fastest[0] or best[0] < fastest[0]:
+            fastest = (best[0], race_num)
+
+    for car in cars:
+        race_num = car[0]
+        last = car[14]
+        best = car[15]
+        s5 = car[13]
+
+        if race_num == fastest[1]:
+            car[15] = (best[0], 'sb')
+        if last[0] == best[0] and s5[0] != '':
+            car[14] = (last[0], 'sb-new')
+
+    return cars
+
+
 class SlowZoneMessage(TimingMessage):
     def __init__(self, prevZones, currentZones):
         self._prev = prevZones
@@ -271,7 +297,7 @@ class Service(lt_service):
             flag = FlagStatus.GREEN
 
         return {
-            'cars': map(mapCar, self._data.get('RESULT', {})),
+            'cars': postprocess_cars(map(mapCar, self._data.get('RESULT', {}))),
             'session': {
                 "flagState": flag.name.lower(),
                 "timeElapsed": 0,
