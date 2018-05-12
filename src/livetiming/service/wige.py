@@ -203,7 +203,7 @@ class SlowZoneMessage(TimingMessage):
 
 
 class Service(lt_service):
-    attribution = ['wige', 'http://www.wige-livetiming.de']
+    attribution = ['wige / GPSauge']
     auto_poll = False
 
     def __init__(self, args, extra):
