@@ -169,7 +169,7 @@ class SlowZoneMessage(TimingMessage):
                     msgs.append([
                         int(time.time()),
                         "Track",
-                        "New slow zone zone at MP{} ({})".format(mp, location),
+                        "New slow zone at MP{} ({})".format(mp, location),
                         "yellow"
                     ])
             else:
@@ -283,7 +283,7 @@ class Service(lt_service):
 
     def getExtraMessageGenerators(self):
         return [
-            SlowZoneMessage(self._current_zones, self._last_zones)
+            SlowZoneMessage(self._last_zones, self._current_zones)
         ]
 
     def getRaceState(self):
@@ -294,7 +294,7 @@ class Service(lt_service):
 
         slow_zones = 0
         code60_zones = 0
-        for z in self._current_zones:
+        for z in self._current_zones.values():
             speed = z[0]
             if z[0] == '60':
                 code60_zones += 1
