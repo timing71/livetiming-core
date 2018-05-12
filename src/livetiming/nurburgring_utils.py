@@ -276,10 +276,11 @@ class Nurburgring(object):
         client.getPage(ACTIVE_ZONES_URL).addCallback(self._parse_zones)
 
     def _parse_zones(self, data):
-        zone_types = simplejson.loads(data).get('zones', [])
+        parsed_data = simplejson.loads(data)
+        zone_types = map(str, parsed_data.get('zones', []))
         self._zones = {}
         for zt in zone_types:
-            zones = data.get(zt, [])
+            zones = parsed_data.get(zt, [])
             for zone in zones:
                 post_num = self._marshal_posts.get(zone, '')
                 self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
