@@ -303,6 +303,8 @@ class Service(lt_service):
 
         if 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
             flag = FlagStatus.NONE
+        elif len(self._current_zones) == 209 and self._current_zones.values()[0][0] == '80':
+            flag = FlagStatus.RED
         elif code60_zones > 0:
             flag = FlagStatus.CODE_60_ZONE
         elif slow_zones > 0:
