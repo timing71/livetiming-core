@@ -225,20 +225,15 @@ class Service(lt_service):
 
     def handle(self, data):
         needs_republish = False
-        needs_analysis_reset = False
         if data.get('CUP', None) != self._data.get('CUP', None):
             needs_republish = True
         if data.get('HEAT', None) != self._data.get('HEAT', None):
             needs_republish = True
-            if 'HEAT' in self._data:
-                needs_analysis_reset = True
 
         self._data = data
 
         if needs_republish:
             self.publishManifest()
-        if needs_analysis_reset:
-            self.analyser.reset()
         self._updateAndPublishRaceState()
 
     def getName(self):
