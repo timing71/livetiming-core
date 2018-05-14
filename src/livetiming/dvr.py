@@ -216,44 +216,45 @@ class DVR(object):
         self.log.info("Finishing recording for UUID {uuid}", uuid=uuid)
         recording = self._in_progress_recordings.pop(uuid)
 
-        dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
-        if disambiguator > 0:
-            manifest = recording.manifest
-            manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
-            recording.writeManifest(manifest)
+        if recording.manifest:
 
-        def do_finalise(src):
-            if recording.duration < RECORDING_DURATION_THRESHOLD:
-                self.log.warn(
-                    "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
-                    uuid=uuid,
-                    duration=recording.duration,
-                    threshold=RECORDING_DURATION_THRESHOLD
-                )
-                os.remove(src)
-            elif not recording.manifest:
-                self.log.error(
-                    "Recording for UUID {uuid} has no manifest. Leaving you to solve this one manually!",
-                    uuid=uuid
-                )
-            elif recording.manifest.get('doNotRecord', False):
-                self.log.warn(
-                    "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
-                    uuid=uuid,
-                )
-                os.remove(src)
-            else:
-                shutil.move(
-                    src,
-                    dest
-                )
+            dest, disambiguator = dedupe(os.path.join(self.FINISHED_DIR, "{}.zip".format(uuid)))
+            if disambiguator > 0:
+                manifest = recording.manifest
+                manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
+                recording.writeManifest(manifest)
 
-                os.chmod(dest, 0664)
-                self.log.info("Saved recording to {dest}", dest=dest)
+            def do_finalise(src):
+                if recording.duration < RECORDING_DURATION_THRESHOLD:
+                    self.log.warn(
+                        "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
+                        uuid=uuid,
+                        duration=recording.duration,
+                        threshold=RECORDING_DURATION_THRESHOLD
+                    )
+                    os.remove(src)
+                elif recording.manifest.get('doNotRecord', False):
+                    self.log.warn(
+                        "Recording for UUID {uuid} marked do-not-record, deleting recording file.",
+                        uuid=uuid,
+                    )
+                    os.remove(src)
+                else:
+                    shutil.move(
+                        src,
+                        dest
+                    )
 
-        d = deferToThread(recording.finalise)  # This could take a long time!
-        d.addCallback(do_finalise)
-        return d
+                    os.chmod(dest, 0664)
+                    self.log.info("Saved recording to {dest}", dest=dest)
+
+            d = deferToThread(recording.finalise)  # This could take a long time!
+            d.addCallback(do_finalise)
+        else:
+            self.log.error(
+                "Recording for UUID {uuid} has no manifest. Leaving you to solve this one manually!",
+                uuid=uuid
+            )
 
 
 class StandaloneDVR(DVR):
