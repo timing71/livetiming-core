@@ -133,6 +133,9 @@ def map_session_flag(data):
 
 
 class Service(lt_service):
+
+    default_name = "Swiss Timing feed"
+
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self.extra_args = extra_args
@@ -154,23 +157,35 @@ class Service(lt_service):
         self.name = None
         self.description = None
 
+        self.sro_session = None
+
         self._init_session()
 
     def _init_session(self):
         ea, _ = parse_extra_args(self.extra_args)
+
+        previous_session = self.sro_session
 
         self._tz_offset = ea.tz
         self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
         self.publishManifest()
 
         if self.sro_session:
-            self._previous_laps = {}
+            if previous_session and self.sro_session != previous_session:
+                self.analyser.reset()
+                self._previous_laps = {}
+                self.session_fetcher.stop()
+                self.timing_fetcher.stop()
 
-            session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
-            session_fetcher.start()
+            self.session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
+            self.session_fetcher.start()
 
-            timing_fetcher = JSONFetcher(uncache(self.SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
-            timing_fetcher.start()
+            self.timing_fetcher = JSONFetcher(uncache(self.SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
+            self.timing_fetcher.start()
+
+            if not ea.session:
+                # Check for a session change every minute if we've not been given one explicitly
+                reactor.callLater(60, self._init_session)
 
         else:
             self.log.info("No session found, checking again in 30 seconds.")
@@ -261,7 +276,7 @@ class Service(lt_service):
         return 10
 
     def getName(self):
-        return self.name if self.name else "SportResult feed"
+        return self.name if self.name else self.default_name
 
     def getDefaultDescription(self):
         return self.description if self.description else ""
