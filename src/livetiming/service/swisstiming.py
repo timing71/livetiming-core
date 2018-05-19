@@ -153,6 +153,7 @@ class Service(lt_service):
         self._session_data = None
         self._messages = []
         self.mostRecentMessage = None
+        self._previous_laps = {}
 
         self.name = None
         self.description = None
@@ -172,6 +173,7 @@ class Service(lt_service):
 
         if self.sro_session:
             if previous_session and self.sro_session != previous_session:
+                self.log.info("Changing session from {old} to {new}", old=previous_session, new=self.sro_session)
                 self.analyser.reset()
                 self._previous_laps = {}
                 self.session_fetcher.stop()
@@ -215,7 +217,7 @@ class Service(lt_service):
                 session = None
                 if sessionID and sessionID.lower() in sessions:
                     self.log.info("Found requested session {sessionID}", sessionID=sessionID.lower())
-                    session = sessions[sessionID]
+                    session = sessions[sessionID.lower()]
                 else:
                     live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] != TYPE_AGGREGATE]
                     if live_sessions:
