@@ -178,6 +178,8 @@ class Service(lt_service):
                 self._previous_laps = {}
                 self.session_fetcher.stop()
                 self.timing_fetcher.stop()
+                self._session_data = None
+                self._timing_data = None
 
             self.session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
             self.session_fetcher.start()
@@ -190,6 +192,7 @@ class Service(lt_service):
                 reactor.callLater(60, self._init_session)
 
         else:
+            self.sro_session = previous_session  # Restore old session if we don't have a newer one
             self.log.info("No session found, checking again in 30 seconds.")
             reactor.callLater(30, self._init_session)
 
