@@ -256,7 +256,7 @@ class Service(lt_service):
                 car["laps"],
                 map_tyre(car.get('Tire', '')),
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
-                diff if diff[0] != '-' and diff != '0.0000' else '',
+                diff if len(diff) > 0 and diff[0] != '-' and diff != '0.0000' else '',
                 gap if gap > 0 and gap != '0.0000' else '',
             ] + sector_cols + [
                 [lastLapTime if lastLapTime > 0 else '', "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
