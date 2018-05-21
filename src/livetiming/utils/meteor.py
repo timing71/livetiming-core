@@ -49,6 +49,9 @@ class CollectionData(object):
     def remove_data(self, collection, id):
         del self.data[collection][id]
 
+    def collections(self):
+        return self.data.keys()
+
     def __repr__(self):
         result = u""
         for coll, data in self.data.iteritems():
@@ -90,7 +93,7 @@ def DDPProtoclFactory(handler):
             self._handler_call('connect', self)
 
         def onMessage(self, payload, isBinary):
-            print "<<<", payload
+            self.log.debug("<<< {payload}", payload=payload)
             if payload[0] != 'a':
                 return
 
@@ -176,7 +179,7 @@ def DDPProtoclFactory(handler):
 
         def send(self, obj):
             message = encode(obj)
-            print ">>> {}".format(message)
+            self.log.debug(">>> {message}", message=message)
             self.sendMessage(message)
 
         def call(self, method, params, callback=None):
@@ -214,6 +217,7 @@ def DDPProtoclFactory(handler):
 
 class MeteorClient(object):
     def __init__(self):
+        self.log = Logger()
         self.collection_data = CollectionData()
         self.subscriptions = {}
 
