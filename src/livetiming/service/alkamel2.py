@@ -50,6 +50,7 @@ class AlkamelV2Client(MeteorClient):
     def set_session(self, session_info):
         self.log.info("Session info chosen: {info}", info=session_info)
         self._current_session_id = session_info['session']
+        self.session_type = session_info.get('type', 'UNKNOWN')
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id], self.recv_session_status)
@@ -131,6 +132,65 @@ def map_flag(flag, isFinished):
     return 'none'
 
 
+def _parse_loops(loops):
+    splits = loops.split(';')
+    t = {}
+
+    for r in xrange(0, len(splits) - 1, 2):
+        t[int(splits[r])] = int(splits[r + 1])
+    return t
+
+
+def e(t, n, r):
+    """ Line 43659-43661 of Al Kamel's JS """
+    if t < r:
+        if t < 0:
+            return n['currentLapStartTime']
+        elif n['currentLoops'][t]:
+            return n['currentLapStartTime'] + n['currentLoops'][t]
+        else:
+            return n['currentLapStartTime']
+    elif t > r:
+        if r == -1 and len(n['previousLoops']) == 0:
+            return n['currentLapStartTime']
+        else:
+            return n['currentLapStartTime'] - n['previousLoops'][-1] + n['previousLoops'][t]
+    elif t < 0:
+        return n['currentLapStartTime']
+    return n['currentLapStartTime'] + n['currentLoops'][t]
+
+
+def calculate_gap(first, second):
+    if not first:
+        return ''
+
+    if not second.get('isRunning', False):
+        return ''
+
+    if second.get('currentLapNumber', -1) != -1:
+        laps_different = first['currentLapNumber'] - second['currentLapNumber']
+    else:
+        laps_different = first['laps'] - second['laps']
+
+    if laps_different == 1:
+        return "{} lap".format(laps_different)
+    elif laps_different > 1:
+        return "{} laps".format(laps_different)
+
+    a = len(second['currentLoops']) - 1
+    s = second['currentLapStartTime'] + (0 if a < 0 else second['currentLoops'][a])
+    o = len(first['currentLoops']) - 1
+    l = e(a, first, o)
+
+    return abs(s - l) / 1000.0
+
+
+def calculate_practice_gap(first, second):
+    if first and second and first.get('bestLapTime', 0) > 0 and second.get('bestLapTime', 0) > 0:
+        return max(0, second['bestLapTime'] - first['bestLapTime'])
+    return ''
+
+
 class Service(lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
 
@@ -171,6 +231,7 @@ class Service(lt_service):
         }
 
     def _map_standings(self):
+        gap_func = calculate_gap if self._client.session_type == 'RACE' else calculate_practice_gap
         standings_data = self._client.find_one('standings', {'session': self._client._current_session_id})
         entries_data = self._client.find_one('session_entry', {'session': self._client._current_session_id})
 
@@ -180,6 +241,8 @@ class Service(lt_service):
 
             if standings and entries:
                 cars = []
+                prev_car = None
+                lead_car = None
                 for position in sorted(map(int, standings.keys())):
                     data = standings[str(position)]
                     if 'data' in data:
@@ -188,6 +251,15 @@ class Service(lt_service):
                         entry = entries.get(race_num, {})
 
                         sectors = parse_sectors(data.get('currentSectors', ';;;;;;'))
+
+                        data_with_loops = {
+                            'currentLoops': _parse_loops(data.get('currentLoopSectors')),
+                            'previousLoops': _parse_loops(data.get('previousLoopSectors')),
+                            'currentLapStartTime': int(standing_data[7]) or 0,
+                            'currentLapNumber': int(standing_data[9]) or 0,
+                            'laps': int(standing_data[4]) or 0
+                        }
+                        data_with_loops.update(data)
 
                         status = standing_data[2]
                         trackStatus = standing_data[8]
@@ -201,8 +273,8 @@ class Service(lt_service):
                             entry.get('team', ''),
                             entry.get('vehicle', ''),
                             standing_data[4],
-                            'gap',
-                            'int',
+                            gap_func(lead_car, data_with_loops),
+                            gap_func(prev_car, data_with_loops),
                             sectors[1],
                             sectors[2],
                             sectors[3],
@@ -210,6 +282,10 @@ class Service(lt_service):
                             (data.get('bestLapTime', 0) / 1000.0, ''),
                             standing_data[5]
                         ])
+
+                    prev_car = data_with_loops
+                    if not lead_car:
+                        lead_car = data_with_loops
 
                 return cars
 
@@ -247,7 +323,7 @@ class Service(lt_service):
                 if startTime > 0:
                     startTimestamp = datetime.utcfromtimestamp(startTime)
                     if stopTime > 0:
-                        result['timeElapsed'] =
+                        result['timeElapsed'] = (stopTime - startTime)
                     else:
                         result['timeElapsed'] = (now - startTimestamp).total_seconds() - status.get('stoppedSeconds', 0) + delta
 
