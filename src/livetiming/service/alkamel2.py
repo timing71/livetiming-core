@@ -70,26 +70,27 @@ class AlkamelV2Client(MeteorClient):
 def parse_sectors(sectorString):
     sectors = {}
     parts = sectorString.split(';')
-
+    len_parts = len(parts)
     for i in range(3):
         idx = 6 * i
-        sector = int(parts[idx])
-        time = int(parts[idx + 1])
-        isPB = parts[idx + 2] == 'true'
-        isSB = parts[idx + 3] == 'true'
-        isClassBest = parts[idx + 4] == 'true'
-        isShowingWhileInPit = parts[idx + 5] == 'true'
+        if len_parts > idx and parts[idx] != '':
+            sector = int(parts[idx])
+            time = int(parts[idx + 1])
+            isPB = parts[idx + 2] == 'true'
+            isSB = parts[idx + 3] == 'true'
+            isClassBest = parts[idx + 4] == 'true'
+            isShowingWhileInPit = parts[idx + 5] == 'true'
 
-        if isSB:
-            flag = 'sb'
-        elif isPB:
-            flag = 'pb'
-        elif isShowingWhileInPit:
-            flag = 'old'
-        else:
-            flag = ''
+            if isSB:
+                flag = 'sb'
+            elif isPB:
+                flag = 'pb'
+            elif isShowingWhileInPit:
+                flag = 'old'
+            else:
+                flag = ''
 
-        sectors[sector] = (time / 1000.0, flag)
+            sectors[sector] = (time / 1000.0, flag)
 
     return sectors
 
@@ -154,7 +155,7 @@ def e(t, n, r):
     if t < r:
         if t < 0:
             return n['currentLapStartTime']
-        elif n['currentLoops'][t]:
+        elif t in n['currentLoops']:
             return n['currentLapStartTime'] + n['currentLoops'][t]
         else:
             return n['currentLapStartTime']
@@ -165,7 +166,7 @@ def e(t, n, r):
             return n['currentLapStartTime'] - n['previousLoops'][-1] + n['previousLoops'][t]
     elif t < 0:
         return n['currentLapStartTime']
-    return n['currentLapStartTime'] + n['currentLoops'][t]
+    return n['currentLapStartTime'] + n['currentLoops'].get(t, 0)
 
 
 def calculate_gap(first, second):
@@ -186,7 +187,7 @@ def calculate_gap(first, second):
         return "{} laps".format(laps_different)
 
     a = len(second['currentLoops']) - 1
-    s = second['currentLapStartTime'] + (0 if a < 0 else second['currentLoops'][a])
+    s = second['currentLapStartTime'] + (0 if a < 0 else second['currentLoops'].get(a, 0))
     o = len(first['currentLoops']) - 1
     l = e(a, first, o)
 
@@ -356,9 +357,9 @@ class Service(lt_service):
                             standing_data[4],
                             gap_func(lead_car, data_with_loops),
                             gap_func(prev_car, data_with_loops),
-                            sectors[1],
-                            sectors[2],
-                            sectors[3],
+                            sectors.get(1, ''),
+                            sectors.get(2, ''),
+                            sectors.get(3, ''),
                             (last_lap, last_lap_flag),
                             (best_lap, best_lap_flag),
                             standing_data[5]
