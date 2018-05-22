@@ -11,6 +11,7 @@ class AlkamelV2Client(MeteorClient):
 
         self._current_session_id = None
         self.session_status_timestamp = None
+        self.session_type = 'NONE'
 
         self._feed_name = feed_name
         self._factory = ReconnectingWebSocketClientFactory('wss://livetiming.alkamelsystems.com/sockjs/261/t48ms2xd/websocket')
@@ -48,12 +49,13 @@ class AlkamelV2Client(MeteorClient):
             self.set_session(live_sessions[0])
 
     def set_session(self, session_info):
-        self.log.info("Session info chosen: {info}", info=session_info)
         self._current_session_id = session_info['session']
         self.session_type = session_info.get('type', 'UNKNOWN')
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id], self.recv_session_status)
+
+        self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
 
     def recv_session_status(self, _):
         self.session_status_timestamp = datetime.utcnow()
@@ -196,14 +198,18 @@ class Service(lt_service):
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
-
+        self._prev_session_id = None
         self._client = AlkamelV2Client('fiaformulae')
+        self._client.on('session_change', self.on_session_change)
+
+        self._name = 'Al Kamel Timing'
+        self._description = ''
 
     def getName(self):
-        return "Al Kamel v2"
+        return self._name
 
     def getDefaultDescription(self):
-        return 'Testing'
+        return self._description
 
     def getColumnSpec(self):
         return [
@@ -222,6 +228,19 @@ class Service(lt_service):
             Stat.BEST_LAP,
             Stat.PITS
         ]
+
+    def on_session_change(self, new_session, session_info):
+        print new_session, session_info
+        if self._prev_session_id and new_session['id'] != self._prev_session_id:
+            self.analyser.reset()
+        info = session_info.get('info', {})
+        self._name = info.get('champName', 'Al Kamel Timing')
+        self._description = "{} - {}".format(
+            info.get('eventName', ''),
+            new_session.get('name', '')
+        )
+        self._prev_session_id = new_session['id']
+        self.publishManifest()
 
     def getRaceState(self):
         # print self._client.collection_data
