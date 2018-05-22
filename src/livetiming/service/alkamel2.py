@@ -1,5 +1,6 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
-from livetiming.racing import Stat
+from datetime import datetime
+from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
 
@@ -9,6 +10,7 @@ class AlkamelV2Client(MeteorClient):
         MeteorClient.__init__(self)
 
         self._current_session_id = None
+        self.session_status_timestamp = None
 
         self._feed_name = feed_name
         self._factory = ReconnectingWebSocketClientFactory('wss://livetiming.alkamelsystems.com/sockjs/261/t48ms2xd/websocket')
@@ -50,7 +52,10 @@ class AlkamelV2Client(MeteorClient):
         self._current_session_id = session_info['session']
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
-        self.subscribe('sessionStatus', [self._current_session_id])
+        self.subscribe('sessionStatus', [self._current_session_id], self.recv_session_status)
+
+    def recv_session_status(self, _):
+        self.session_status_timestamp = datetime.utcnow()
 
 
 def parse_sectors(sectorString):
@@ -109,6 +114,23 @@ def map_car_state(status, trackStatus, isRunning, isCheckered):
     return '???'
 
 
+FLAG_STATES = {
+    'YF': FlagStatus.YELLOW,
+    'FCY': FlagStatus.FCY,
+    'RF': FlagStatus.RED,
+    'SC': FlagStatus.SC,
+    'GF': FlagStatus.GREEN
+}
+
+
+def map_flag(flag, isFinished):
+    if isFinished:
+        return FlagStatus.CHEQUERED.name.lower()
+    if flag in FLAG_STATES:
+        return FLAG_STATES[flag].name.lower()
+    return 'none'
+
+
 class Service(lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
 
@@ -144,9 +166,7 @@ class Service(lt_service):
     def getRaceState(self):
         # print self._client.collection_data
         return {
-            'session': {
-                'flagState': 'none'
-            },
+            'session': self._map_session(),
             'cars': self._map_standings()
         }
 
@@ -194,3 +214,41 @@ class Service(lt_service):
                 return cars
 
         return []
+
+    def _map_session(self):
+        result = {'flagState': 'none', 'timeElapsed': 0}
+
+        status_data = self._client.find_one('session_status', {'session': self._client._current_session_id})
+        if status_data:
+            status = status_data.get('status')
+            if status:
+                result['flagState'] = map_flag(status.get('currentFlag', 'none'), status.get('isFinished', False))
+
+                startTime = status.get('startTime', 0)
+                stopTime = status.get('stopTime', 0)
+                finalTime = status.get('finalTime', 0)
+                stoppedSeconds = status.get('stoppedSeconds', 0)
+                sessionRunning = status.get('isSessionRunning', False)
+                now = datetime.utcnow()
+
+                if sessionRunning and self._client.session_status_timestamp:
+                    delta = (now - self._client.session_status_timestamp).total_seconds()
+                else:
+                    delta = 0
+
+                if status.get('isForcedByTime', False) or status.get('finalType') == "BY_TIME" or status.get('finalType') == "BY_TIME_PLUS_LAPS":
+                    if sessionRunning:
+                        result['timeRemain'] = finalTime - (startTime - stoppedSeconds) - delta
+                    else:
+                        result['timeRemain'] = finalTime - (stopTime - startTime - stoppedSeconds)
+                else:
+                    result['lapsRemain'] = max(0, status.get('finalLaps', 0) - status.get('elapsedLaps', 0))
+
+                if startTime > 0:
+                    startTimestamp = datetime.utcfromtimestamp(startTime)
+                    if stopTime > 0:
+                        result['timeElapsed'] =
+                    else:
+                        result['timeElapsed'] = (now - startTimestamp).total_seconds() - status.get('stoppedSeconds', 0) + delta
+
+        return result
