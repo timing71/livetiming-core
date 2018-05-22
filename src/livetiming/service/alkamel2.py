@@ -3,6 +3,7 @@ from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
+from twisted.internet.task import LoopingCall
 
 
 class AlkamelV2Client(MeteorClient):
@@ -195,6 +196,7 @@ def calculate_practice_gap(first, second):
 
 class Service(lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
+    auto_poll = False
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
@@ -204,6 +206,20 @@ class Service(lt_service):
 
         self._name = 'Al Kamel Timing'
         self._description = ''
+
+        self._due_publish_state = False
+
+        def set_due_publish():
+            self._due_publish_state = True
+
+        self._client.on_collection_change('standings', set_due_publish)
+        self._client.on_collection_change('session_status', set_due_publish)
+
+        def maybePublish():
+            if self._due_publish_state:
+                self._updateAndPublishRaceState()
+                self._due_publish_state = False
+        LoopingCall(maybePublish).start(1)
 
     def getName(self):
         return self._name
