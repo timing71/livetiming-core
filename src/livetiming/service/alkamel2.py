@@ -54,7 +54,7 @@ class AlkamelV2Client(MeteorClient):
 
     def set_session(self, session_info):
         self._current_session_id = session_info['session']
-        self.session_type = session_info.get('type', 'UNKNOWN')
+        self.session_type = session_info.get('info', {}).get('type', 'UNKNOWN')
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id])
@@ -190,7 +190,7 @@ def calculate_gap(first, second):
 
 def calculate_practice_gap(first, second):
     if first and second and first.get('bestLapTime', 0) > 0 and second.get('bestLapTime', 0) > 0:
-        return max(0, second['bestLapTime'] - first['bestLapTime'])
+        return max(0, second['bestLapTime'] - first['bestLapTime']) / 1000.0
     return ''
 
 
