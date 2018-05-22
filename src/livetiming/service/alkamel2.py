@@ -98,7 +98,7 @@ class RaceControlMessage(TimingMessage):
         return []
 
 
-def parse_sectors(sectorString):
+def parse_sectors(sectorString, defaultFlag=''):
     sectors = {}
     parts = sectorString.split(';')
     len_parts = len(parts)
@@ -119,7 +119,7 @@ def parse_sectors(sectorString):
             elif isShowingWhileInPit:
                 flag = 'old'
             else:
-                flag = ''
+                flag = defaultFlag
 
             sectors[sector] = (time / 1000.0, flag)
 
@@ -377,7 +377,8 @@ class Service(lt_service):
                         race_num = standing_data[1]
                         entry = entries.get(race_num, {})
 
-                        sectors = parse_sectors(data.get('currentSectors', ';;;;;;'))
+                        current_sectors = parse_sectors(data.get('currentSectors', ''))
+                        previous_sectors = parse_sectors(data.get('lastSectors', ''), 'old')
 
                         data_with_loops = {
                             'currentLoops': _parse_loops(data.get('currentLoopSectors')),
@@ -399,7 +400,7 @@ class Service(lt_service):
                         last_lap_flag = 'pb' if data.get('isLastLapBestPersonal', False) else ''
                         if overall_best_lap.get('participantNumber') == race_num:
                             best_lap_flag = 'sb'
-                            if last_lap == best_lap:
+                            if last_lap == best_lap and 3 in current_sectors:
                                 last_lap_flag = 'sb-new'
                         else:
                             best_lap_flag = ''
@@ -413,9 +414,9 @@ class Service(lt_service):
                             standing_data[4],
                             gap_func(lead_car, data_with_loops),
                             gap_func(prev_car, data_with_loops),
-                            sectors.get(1, ''),
-                            sectors.get(2, ''),
-                            sectors.get(3, ''),
+                            current_sectors.get(1, previous_sectors.get(1, '')),
+                            current_sectors.get(2, previous_sectors.get(2, '')),
+                            current_sectors.get(3, previous_sectors.get(3, '')),
                             (last_lap, last_lap_flag),
                             (best_lap, best_lap_flag),
                             standing_data[5]
