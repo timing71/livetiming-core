@@ -60,6 +60,7 @@ class AlkamelV2Client(MeteorClient):
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id])
         self.subscribe('weather', [self._current_session_id])
+        self.subscribe('bestResults', [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
 
@@ -217,6 +218,7 @@ class Service(lt_service):
         self._client.on_collection_change('standings', set_due_publish)
         self._client.on_collection_change('session_status', set_due_publish)
         self._client.on_collection_change('weather', set_due_publish)
+        self._client.on_collection_change('best_results', set_due_publish)
 
     def start(self):
         def maybePublish():
@@ -283,6 +285,9 @@ class Service(lt_service):
         standings_data = self._client.find_one('standings', {'session': self._client._current_session_id})
         entries_data = self._client.find_one('session_entry', {'session': self._client._current_session_id})
 
+        best_lap_data = self._client.find_one('best_results', {'session': self._client._current_session_id})
+        overall_best_lap = best_lap_data.get('bestResults', {}).get('bestLap', {}) if best_lap_data else {}
+
         if standings_data and entries_data:
             standings = standings_data.get('standings', {}).get('standings', {})
             entries = entries_data.get('entry', {})
@@ -314,6 +319,17 @@ class Service(lt_service):
 
                         state = map_car_state(status, trackStatus, data.get('isRunning', False), data.get('isCheckered', False))
 
+                        last_lap = data.get('lastLapTime', 0) / 1000.0
+                        best_lap = data.get('bestLapTime', 0) / 1000.0
+
+                        last_lap_flag = 'pb' if data.get('isLastLapBestPersonal', False) else ''
+                        if overall_best_lap.get('participantNumber') == race_num:
+                            best_lap_flag = 'sb'
+                            if last_lap == best_lap:
+                                last_lap_flag = 'sb-new'
+                        else:
+                            best_lap_flag = ''
+
                         cars.append([
                             race_num,
                             state,
@@ -326,8 +342,8 @@ class Service(lt_service):
                             sectors[1],
                             sectors[2],
                             sectors[3],
-                            (data.get('lastLapTime', 0) / 1000.0, 'pb' if data.get('isLastLapBestPersonal', False) else ''),
-                            (data.get('bestLapTime', 0) / 1000.0, ''),
+                            (last_lap, last_lap_flag),
+                            (best_lap, best_lap_flag),
                             standing_data[5]
                         ])
 
