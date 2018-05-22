@@ -215,11 +215,14 @@ class Service(lt_service):
         self._client.on_collection_change('standings', set_due_publish)
         self._client.on_collection_change('session_status', set_due_publish)
 
+    def start(self):
         def maybePublish():
             if self._due_publish_state:
                 self._updateAndPublishRaceState()
                 self._due_publish_state = False
         LoopingCall(maybePublish).start(1)
+
+        super(Service, self).start()
 
     def getName(self):
         return self._name
