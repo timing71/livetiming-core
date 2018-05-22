@@ -6,6 +6,8 @@ from livetiming.service import Service as lt_service, ReconnectingWebSocketClien
 from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
 from twisted.internet.task import LoopingCall
 
+import argparse
+
 
 class AlkamelV2Client(MeteorClient):
     def __init__(self, feed_name):
@@ -197,14 +199,21 @@ def calculate_practice_gap(first, second):
     return ''
 
 
+def parse_extra_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--feed", help="Feed ID")
+    return parser.parse_args(args)
+
+
 class Service(lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
     auto_poll = False
 
-    def __init__(self, args, extra_args):
+    def __init__(self, args, extra_args, feed=None):
         lt_service.__init__(self, args, extra_args)
+        self.feed = feed
         self._prev_session_id = None
-        self._client = AlkamelV2Client('fiaformulae')
+        self._client = AlkamelV2Client(self._getFeedName(parse_extra_args(extra_args)))
         self._client.on('session_change', self.on_session_change)
 
         self._name = 'Al Kamel Timing'
@@ -219,6 +228,14 @@ class Service(lt_service):
         self._client.on_collection_change('session_status', set_due_publish)
         self._client.on_collection_change('weather', set_due_publish)
         self._client.on_collection_change('best_results', set_due_publish)
+
+    def _getFeedName(self, args):
+        if self.feed:
+            return self.feed
+        elif args.feed:
+            return args.feed
+        else:
+            raise RuntimeError("No feed ID specified for Al Kamel! Cannot continue.")
 
     def start(self):
         def maybePublish():
