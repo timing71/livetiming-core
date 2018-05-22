@@ -57,7 +57,7 @@ def mapState(rawState):
         'i': 'PIT',
         'o': 'OUT',
         'r': 'RUN',
-        's': 'RET',
+        's': 'STOP',
         'c': 'FIN',
         'p': 'FIN'
     }
