@@ -26,6 +26,7 @@ setup(
         "enum34",
         "icalendar",
         "lzstring",
+        "meteor-ejson",
         "pyopenssl",
         "python-dotenv",
         "python-twitter",
