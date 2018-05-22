@@ -59,6 +59,19 @@ class CollectionData(object):
         return result
 
 
+class EventEmitter(object):
+    def __init__(self):
+        super(EventEmitter, self).__init__()
+        self._event_handlers = {}
+
+    def on(self, event, handler):
+        self._event_handlers.setdefault(event, []).append(handler)
+
+    def emit(self, event, *args, **kwargs):
+        for handler in self._event_handlers.get(event, []):
+            handler(*args, **kwargs)
+
+
 def DDPProtoclFactory(handler):
     class DDPProtocol(WebSocketClientProtocol):
         """ A translation into Twisted of https://github.com/hharnisc/python-ddp/blob/master/DDPClient.py (or at least the relevant bits). """
@@ -215,8 +228,9 @@ def DDPProtoclFactory(handler):
     return DDPProtocol
 
 
-class MeteorClient(object):
+class MeteorClient(EventEmitter):
     def __init__(self):
+        super(MeteorClient, self).__init__()
         self.log = Logger()
         self.collection_data = CollectionData()
         self.subscriptions = {}
