@@ -38,7 +38,7 @@ class AlkamelV2Client(MeteorClient):
         self.log.debug("Found feeds: {feeds}", feeds=map(lambda f: f['name'], feeds))
 
         if len(feeds) == 0:
-            raise 'No valid feeds found'
+            raise Exception('No valid feeds found')
         elif len(feeds) > 1:
             self.log.warn("Multiple feeds returned ({feeds}), using {first}", feeds=feeds, first=feeds[0])
 
@@ -98,7 +98,8 @@ def parse_sectors(sectorString):
 CAR_TRACK_STATES = {
     'BOX': 'PIT',
     'OUT_LAP': 'OUT',
-    'STOPPED': 'STOP'
+    'STOPPED': 'STOP',
+    'TRACK': 'RUN'
 }
 
 CAR_STATES = {
@@ -115,12 +116,10 @@ def map_car_state(status, trackStatus, isRunning, isCheckered):
     if 'CLASSIFIED' == status.upper():
         if isCheckered:
             return 'FIN'
-        if isRunning:
-            return 'RUN'
-    if trackStatus.upper() in CAR_TRACK_STATES:
-        return CAR_TRACK_STATES[trackStatus.upper()]
     if status.upper() in CAR_STATES:
         return CAR_STATES[status.upper()]
+    if trackStatus.upper() in CAR_TRACK_STATES:
+        return CAR_TRACK_STATES[trackStatus.upper()]
     return '???'
 
 
@@ -219,6 +218,7 @@ class Service(lt_service):
 
         self._name = 'Al Kamel Timing'
         self._description = ''
+        self._has_classes = False
 
         self._due_publish_state = False
 
@@ -254,7 +254,7 @@ class Service(lt_service):
         return self._description
 
     def getColumnSpec(self):
-        return [
+        base = [
             Stat.NUM,
             Stat.STATE,
             Stat.DRIVER,
@@ -270,6 +270,11 @@ class Service(lt_service):
             Stat.BEST_LAP,
             Stat.PITS
         ]
+
+        if self._has_classes:
+            base.insert(2, Stat.CLASS)
+
+        return base
 
     def getTrackDataSpec(self):
         return [
@@ -291,6 +296,11 @@ class Service(lt_service):
         self._prev_session_id = new_session['id']
         self.publishManifest()
 
+    def _set_has_classes(self, has_classes):
+        if has_classes != self._has_classes:
+            self._has_classes = has_classes
+            self.publishManifest()
+
     def getRaceState(self):
         # print self._client.collection_data
         return {
@@ -307,6 +317,10 @@ class Service(lt_service):
         overall_best_lap = best_lap_data.get('bestResults', {}).get('bestLap', {}) if best_lap_data else {}
 
         if standings_data and entries_data:
+
+            has_classes = standings_data.get('standings', {}).get('hasClasses', False)
+            self._set_has_classes(has_classes)
+
             standings = standings_data.get('standings', {}).get('standings', {})
             entries = entries_data.get('entry', {})
 
@@ -348,7 +362,7 @@ class Service(lt_service):
                         else:
                             best_lap_flag = ''
 
-                        cars.append([
+                        car = [
                             race_num,
                             state,
                             u"{}, {}".format(entry.get('lastname', ''), entry.get('firstname', '')),
@@ -363,7 +377,12 @@ class Service(lt_service):
                             (last_lap, last_lap_flag),
                             (best_lap, best_lap_flag),
                             standing_data[5]
-                        ])
+                        ]
+
+                        if self._has_classes:
+                            car.insert(2, entry.get('class', ''))
+
+                        cars.append(car)
 
                     prev_car = data_with_loops
                     if not lead_car:
