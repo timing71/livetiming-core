@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
@@ -58,6 +59,7 @@ class AlkamelV2Client(MeteorClient):
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id])
+        self.subscribe('weather', [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
 
@@ -214,6 +216,7 @@ class Service(lt_service):
 
         self._client.on_collection_change('standings', set_due_publish)
         self._client.on_collection_change('session_status', set_due_publish)
+        self._client.on_collection_change('weather', set_due_publish)
 
     def start(self):
         def maybePublish():
@@ -246,6 +249,14 @@ class Service(lt_service):
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
+        ]
+
+    def getTrackDataSpec(self):
+        return [
+            'Air Temp',
+            'Track Temp',
+            'Humidity',
+            'Wind Speed'
         ]
 
     def on_session_change(self, new_session, session_info):
@@ -329,7 +340,11 @@ class Service(lt_service):
         return []
 
     def _map_session(self):
-        result = {'flagState': 'none', 'timeElapsed': 0}
+        result = {
+            'flagState': 'none',
+            'timeElapsed': 0,
+            'trackData': self._map_track_data()
+        }
 
         status_data = self._client.find_one('session_status', {'session': self._client._current_session_id})
         if status_data:
@@ -365,3 +380,16 @@ class Service(lt_service):
                         result['timeElapsed'] = (now - startTimestamp).total_seconds() - status.get('stoppedSeconds', 0) + delta
 
         return result
+
+    def _map_track_data(self):
+        weather_data = self._client.find_one('weather', {'session': self._client._current_session_id})
+        if weather_data:
+            weather = weather_data.get('weather')
+            if weather:
+                return [
+                    u"{:.3g}°C".format(weather.get('ambientTemperature', '')),
+                    u"{:.3g}°C".format(weather.get('trackTemperature', '')),
+                    "{}%".format(weather.get('humidity', '')),
+                    "{:.2g} km/h".format(weather.get('windSpeed', '')),
+                ]
+        return []
