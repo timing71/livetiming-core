@@ -66,6 +66,7 @@ class AlkamelV2Client(MeteorClient):
         self.subscribe('weather', [self._current_session_id])
         self.subscribe('bestResults', [self._current_session_id])
         self.subscribe('raceControl', [self._current_session_id])
+        self.subscribe('sessionBestResultsByClass', [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
 
@@ -263,6 +264,7 @@ class Service(lt_service):
         self._client.on_collection_change('weather', set_due_publish)
         self._client.on_collection_change('best_results', set_due_publish)
         self._client.on_collection_change('race_control', set_due_publish)
+        self._client.on_collection_change('sessionBestResultsByClass', set_due_publish)
 
     def _getFeedName(self, args):
         if self.feed:
@@ -356,6 +358,9 @@ class Service(lt_service):
         best_lap_data = self._client.find_one('best_results', {'session': self._client._current_session_id})
         overall_best_lap = best_lap_data.get('bestResults', {}).get('bestLap', {}) if best_lap_data else {}
 
+        best_class_lap_data = self._client.find_one('sessionBestResultsByClass', {'session': self._client._current_session_id})
+        class_best_laps = best_class_lap_data.get('bestResultsByClass', {}).get('bestLapsByClass', {}) if best_class_lap_data else {}
+
         if standings_data and entries_data:
 
             has_classes = standings_data.get('standings', {}).get('hasClasses', False)
@@ -376,6 +381,7 @@ class Service(lt_service):
                         standing_data = data['data'].split(";")
                         race_num = standing_data[1]
                         entry = entries.get(race_num, {})
+                        clazz = entry.get('class', '')
 
                         current_sectors = parse_sectors(data.get('currentSectors', ''))
                         previous_sectors = parse_sectors(data.get('lastSectors', ''), 'old')
@@ -398,7 +404,11 @@ class Service(lt_service):
                         best_lap = data.get('bestLapTime', 0) / 1000.0
 
                         last_lap_flag = 'pb' if data.get('isLastLapBestPersonal', False) else ''
-                        if overall_best_lap.get('participantNumber') == race_num:
+
+                        has_overall_best = overall_best_lap.get('participantNumber') == race_num
+                        has_class_best = clazz and class_best_laps.get(clazz, {}).get('participantNumber') == race_num
+
+                        if has_overall_best or has_class_best:
                             best_lap_flag = 'sb'
                             if last_lap == best_lap and 3 in current_sectors:
                                 last_lap_flag = 'sb-new'
@@ -423,7 +433,6 @@ class Service(lt_service):
                         ]
 
                         if self._has_classes:
-                            clazz = entry.get('class', '')
                             class_count[clazz] = class_count.get(clazz, 0) + 1
                             car.insert(2, clazz)
                             car.insert(3, class_count[clazz])
