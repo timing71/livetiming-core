@@ -362,14 +362,24 @@ class MeteorClient(EventEmitter):
 
     def added(self, collection, id, fields):
         self.collection_data.add_data(collection, id, fields)
+        self.emit('collection_changed', collection)
 
     def changed(self, collection, id, fields, cleared):
         self.collection_data.change_data(collection, id, fields, cleared)
+        self.emit('collection_changed', collection)
 
     def removed(self, collection, id):
         self.collection_data.remove_data(collection, id)
+        self.emit('collection_changed', collection)
 
     # Extra hooks
 
     def onConnect(self):
         pass
+
+    def on_collection_change(self, collection, handler):
+        def maybe_handle(changed_coll, *args, **kwargs):
+            if changed_coll == collection:
+                handler(*args, **kwargs)
+
+        self.on('collection_changed', maybe_handle)
