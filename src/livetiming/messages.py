@@ -99,6 +99,8 @@ class CarPitMessage(PerCarMessage):
                 return [clazz, u"#{} ({}) has entered the fuelling area".format(carNum, driver), "pit"]
             elif newStatus == "RET":
                 return [clazz, u"#{} ({}) has retired".format(carNum, driver), ""]
+            elif newStatus == 'STOP':
+                return [clazz, u"#{} ({}) is running slowly or stopped".format(carNum, driver), ""]
 
 
 # Emits a message if the driver of a car changes.
