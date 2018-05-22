@@ -307,6 +307,7 @@ class Service(lt_service):
 
         if self._has_classes:
             base.insert(2, Stat.CLASS)
+            base.insert(3, Stat.POS_IN_CLASS)
 
         return base
 
@@ -367,6 +368,8 @@ class Service(lt_service):
                 cars = []
                 prev_car = None
                 lead_car = None
+                class_count = {}
+
                 for position in sorted(map(int, standings.keys())):
                     data = standings[str(position)]
                     if 'data' in data:
@@ -419,7 +422,10 @@ class Service(lt_service):
                         ]
 
                         if self._has_classes:
-                            car.insert(2, entry.get('class', ''))
+                            clazz = entry.get('class', '')
+                            class_count[clazz] = class_count.get(clazz, 0) + 1
+                            car.insert(2, clazz)
+                            car.insert(3, class_count[clazz])
 
                         cars.append(car)
 
