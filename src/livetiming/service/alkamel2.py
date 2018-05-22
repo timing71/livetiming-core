@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
+from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
 from twisted.internet.task import LoopingCall
 
 import argparse
+import re
 
 
 class AlkamelV2Client(MeteorClient):
@@ -63,8 +65,37 @@ class AlkamelV2Client(MeteorClient):
         self.subscribe('sessionStatus', [self._current_session_id])
         self.subscribe('weather', [self._current_session_id])
         self.subscribe('bestResults', [self._current_session_id])
+        self.subscribe('raceControl', [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
+
+
+class RaceControlMessage(TimingMessage):
+
+    CAR_NUMBER_REGEX = re.compile("car (?P<race_num>[0-9]+)", re.IGNORECASE)
+
+    def __init__(self, client):
+        self._client = client
+        self._mostRecentTimestamp = 0
+
+    def process(self, _, __):
+        rc = self._client.find_one('race_control', {'session': self._client._current_session_id})
+        if rc:
+            messages = rc.get('raceControlMessages', {})
+            new_messages = [m for m in messages.values() if m.get('date', 0) > self._mostRecentTimestamp]
+
+            msgs = []
+
+            for msg in new_messages:
+                hasCarNum = self.CAR_NUMBER_REGEX.search(msg['message'])
+                if hasCarNum:
+                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'], "raceControl", hasCarNum.group('race_num')])
+                else:
+                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'], "raceControl"])
+
+                self._mostRecentTimestamp = max(self._mostRecentTimestamp, msg['date'])
+            return sorted(msgs, key=lambda m: -m[0])
+        return []
 
 
 def parse_sectors(sectorString):
@@ -220,6 +251,8 @@ class Service(lt_service):
         self._description = ''
         self._has_classes = False
 
+        self._rcMessageGenerator = RaceControlMessage(self._client)
+
         self._due_publish_state = False
 
         def set_due_publish():
@@ -229,6 +262,7 @@ class Service(lt_service):
         self._client.on_collection_change('session_status', set_due_publish)
         self._client.on_collection_change('weather', set_due_publish)
         self._client.on_collection_change('best_results', set_due_publish)
+        self._client.on_collection_change('race_control', set_due_publish)
 
     def _getFeedName(self, args):
         if self.feed:
@@ -282,6 +316,11 @@ class Service(lt_service):
             'Track Temp',
             'Humidity',
             'Wind Speed'
+        ]
+
+    def getExtraMessageGenerators(self):
+        return [
+            self._rcMessageGenerator
         ]
 
     def on_session_change(self, new_session, session_info):
