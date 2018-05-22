@@ -18,6 +18,12 @@ class AlkamelV2Client(MeteorClient):
         self._factory.protocol = DDPProtoclFactory(self)
         connectWS(self._factory)
 
+        def setSessionStatusTimestamp():
+            self.session_status_timestamp = datetime.utcnow()
+
+        self.on_collection_change('session_info', self.recv_session_info)
+        self.on_collection_change('session_status', setSessionStatusTimestamp)
+
     def onConnect(self):
         self.subscribe('livetimingFeed', [self._feed_name], self.recv_feeds)
         self.subscribe('sessionClasses', [None])
@@ -32,13 +38,10 @@ class AlkamelV2Client(MeteorClient):
         elif len(feeds) > 1:
             self.log.warn("Multiple feeds returned ({feeds}), using {first}", feeds=feeds, first=feeds[0])
 
-        self.subscribe('sessions', [feeds[0]['sessions']], self.recv_sessions)
-        self.subscribe('sessionInfo', [feeds[0]['sessions']], self.recv_session_info)
+        self.subscribe('sessions', [feeds[0]['sessions']])
+        self.subscribe('sessionInfo', [feeds[0]['sessions']])
 
-    def recv_sessions(self, _):
-        pass
-
-    def recv_session_info(self, _):
+    def recv_session_info(self):
         sessionInfo = self.find('session_info')
 
         live_sessions = [s for s in sessionInfo if not s.get('info', {}).get('closed', False)]
@@ -53,12 +56,9 @@ class AlkamelV2Client(MeteorClient):
         self.session_type = session_info.get('type', 'UNKNOWN')
         self.subscribe('entry', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
-        self.subscribe('sessionStatus', [self._current_session_id], self.recv_session_status)
+        self.subscribe('sessionStatus', [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
-
-    def recv_session_status(self, _):
-        self.session_status_timestamp = datetime.utcnow()
 
 
 def parse_sectors(sectorString):
@@ -230,7 +230,6 @@ class Service(lt_service):
         ]
 
     def on_session_change(self, new_session, session_info):
-        print new_session, session_info
         if self._prev_session_id and new_session['id'] != self._prev_session_id:
             self.analyser.reset()
         info = session_info.get('info', {})
