@@ -22,6 +22,7 @@ setup(
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
         "autobahn[twisted]>=17.6.2",
+        "crossbar==18.4.1",  # Latest version that supports Python 2.7
         "dictdiffer",
         "enum34",
         "icalendar",
@@ -35,7 +36,8 @@ setup(
         "signalr-client",
         "simplejson",
         "socketio-client",
-        "subprocess32"
+        "subprocess32",
+        "twisted==17.9.0"  # Latest version supported by Crossbar
     ],
     entry_points={
         'console_scripts': [
