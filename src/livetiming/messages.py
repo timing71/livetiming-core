@@ -101,6 +101,8 @@ class CarPitMessage(PerCarMessage):
                 return [clazz, u"#{} ({}) has retired".format(carNum, driver), ""]
             elif newStatus == 'STOP':
                 return [clazz, u"#{} ({}) is running slowly or stopped".format(carNum, driver), ""]
+            elif oldStatus == 'STOP' and newStatus == 'RUN':
+                return [clazz, u"#{} ({}) has resumed".format(carNum, driver), ""]
 
 
 # Emits a message if the driver of a car changes.
