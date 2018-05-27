@@ -208,6 +208,9 @@ def calculate_gap(first, second):
     if not second.get('isRunning', False):
         return ''
 
+    if second.get('currentLapStartTime', 0) == 0 and len(second.get('currentLoops', [])) == 0:
+        return ''
+
     if second.get('currentLapNumber', -1) != -1:
         laps_different = first['currentLapNumber'] - second['currentLapNumber']
     else:
@@ -461,8 +464,8 @@ class Service(lt_service):
                             gap_func(lead_car, data_with_loops),
                             gap_func(prev_car, data_with_loops)
                         ] + sector_cols + [
-                            (last_lap, last_lap_flag),
-                            (best_lap, best_lap_flag),
+                            (last_lap if last_lap > 0 else '', last_lap_flag),
+                            (best_lap if best_lap > 0 else '', best_lap_flag),
                             standing_data[5]
                         ]
 
