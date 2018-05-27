@@ -9,6 +9,7 @@ from twisted.internet.task import LoopingCall
 
 import argparse
 import re
+import time
 
 
 class AlkamelV2Client(MeteorClient):
@@ -25,7 +26,7 @@ class AlkamelV2Client(MeteorClient):
         connectWS(self._factory)
 
         def setSessionStatusTimestamp():
-            self.session_status_timestamp = datetime.utcnow()
+            self.session_status_timestamp = time.time()
 
         self.on_collection_change('session_info', self.recv_session_info)
         self.on_collection_change('session_status', setSessionStatusTimestamp)
@@ -33,7 +34,6 @@ class AlkamelV2Client(MeteorClient):
     def onConnect(self):
         self.subscribe('livetimingFeed', [self._feed_name], self.recv_feeds)
         self.subscribe('sessionClasses', [None])
-        self.subscribe('trackInfo', [None])
 
     def recv_feeds(self, _):
         feeds = self.find('feeds')
@@ -61,6 +61,7 @@ class AlkamelV2Client(MeteorClient):
         self._current_session_id = session_info['session']
         self.session_type = session_info.get('info', {}).get('type', 'UNKNOWN')
         self.subscribe('entry', [self._current_session_id])
+        self.subscribe('trackInfo', [self._current_session_id])
         self.subscribe('standings', [self._current_session_id])
         self.subscribe('sessionStatus', [self._current_session_id])
         self.subscribe('weather', [self._current_session_id])
@@ -82,7 +83,7 @@ class RaceControlMessage(TimingMessage):
     def process(self, _, __):
         rc = self._client.find_one('race_control', {'session': self._client._current_session_id})
         if rc:
-            messages = rc.get('raceControlMessages', {})
+            messages = rc.get('raceControlMessages', {}).get('log', {})
             new_messages = [m for m in messages.values() if m.get('date', 0) > self._mostRecentTimestamp]
 
             msgs = []
@@ -103,7 +104,7 @@ def parse_sectors(sectorString, defaultFlag=''):
     sectors = {}
     parts = sectorString.split(';')
     len_parts = len(parts)
-    for i in range(3):
+    for i in range(len_parts / 6):
         idx = 6 * i
         if len_parts > idx and parts[idx] != '':
             sector = int(parts[idx])
@@ -237,6 +238,22 @@ def parse_extra_args(args):
     return parser.parse_args(args)
 
 
+def maybe_int(mint, default=0):
+    try:
+        return int(mint)
+    except ValueError:
+        return default
+
+
+SECTOR_STATS = [
+    Stat.S1,
+    Stat.S2,
+    Stat.S3,
+    Stat.S4,
+    Stat.S5,
+]
+
+
 class Service(lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
     auto_poll = False
@@ -251,6 +268,7 @@ class Service(lt_service):
         self._name = 'Al Kamel Timing'
         self._description = ''
         self._has_classes = False
+        self._num_sectors = 3
 
         self._rcMessageGenerator = RaceControlMessage(self._client)
 
@@ -265,6 +283,7 @@ class Service(lt_service):
         self._client.on_collection_change('best_results', set_due_publish)
         self._client.on_collection_change('race_control', set_due_publish)
         self._client.on_collection_change('sessionBestResultsByClass', set_due_publish)
+        self._client.on_collection_change('track_info', self.on_track_info_change)
 
     def _getFeedName(self, args):
         if self.feed:
@@ -298,10 +317,8 @@ class Service(lt_service):
             Stat.CAR,
             Stat.LAPS,
             Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.S2,
-            Stat.S3,
+            Stat.INT
+        ] + SECTOR_STATS[0:self._num_sectors] + [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -338,13 +355,26 @@ class Service(lt_service):
         self._prev_session_id = new_session['id']
         self.publishManifest()
 
+    def on_track_info_change(self):
+        track_info = self._client.find_one('track_info', {'session': self._client._current_session_id})
+        if track_info:
+            sector_count = len(track_info.get('track', {}).get('sectors', {}))
+            if sector_count != self._num_sectors:
+                self.log.info('Reconfiguring with {num} track sectors', num=sector_count)
+                if sector_count > 5:
+                    self.log.warn('Too many sectors! Limiting to 5.')
+                    self._num_sectors = 5
+                else:
+                    self._num_sectors = sector_count
+                self.publishManifest()
+
     def _set_has_classes(self, has_classes):
         if has_classes != self._has_classes:
             self._has_classes = has_classes
             self.publishManifest()
 
     def getRaceState(self):
-        # print self._client.collection_data
+        # print self._client.collection_data.collections()
         return {
             'session': self._map_session(),
             'cars': self._map_standings()
@@ -389,9 +419,9 @@ class Service(lt_service):
                         data_with_loops = {
                             'currentLoops': _parse_loops(data.get('currentLoopSectors')),
                             'previousLoops': _parse_loops(data.get('previousLoopSectors')),
-                            'currentLapStartTime': int(standing_data[7]) or 0,
-                            'currentLapNumber': int(standing_data[9]) or 0,
-                            'laps': int(standing_data[4]) or 0
+                            'currentLapStartTime': maybe_int(standing_data[7], 0),
+                            'currentLapNumber': maybe_int(standing_data[9], 0),
+                            'laps': maybe_int(standing_data[4], 0)
                         }
                         data_with_loops.update(data)
 
@@ -415,18 +445,22 @@ class Service(lt_service):
                         else:
                             best_lap_flag = ''
 
+                        sector_cols = []
+                        for i in range(self._num_sectors):
+                            sector_cols.append(
+                                current_sectors.get(i + 1, previous_sectors.get(i + 1, ''))
+                            )
+
                         car = [
                             race_num,
                             state,
-                            u"{}, {}".format(entry.get('lastname', ''), entry.get('firstname', '')),
+                            u"{}, {}".format(entry.get('lastname', ''), entry.get('firstname', '').title()),
                             entry.get('team', ''),
                             entry.get('vehicle', ''),
                             standing_data[4],
                             gap_func(lead_car, data_with_loops),
-                            gap_func(prev_car, data_with_loops),
-                            current_sectors.get(1, previous_sectors.get(1, '')),
-                            current_sectors.get(2, previous_sectors.get(2, '')),
-                            current_sectors.get(3, previous_sectors.get(3, '')),
+                            gap_func(prev_car, data_with_loops)
+                        ] + sector_cols + [
                             (last_lap, last_lap_flag),
                             (best_lap, best_lap_flag),
                             standing_data[5]
@@ -465,18 +499,18 @@ class Service(lt_service):
                 finalTime = status.get('finalTime', 0)
                 stoppedSeconds = status.get('stoppedSeconds', 0)
                 sessionRunning = status.get('isSessionRunning', False)
-                now = datetime.utcnow()
+                now = time.time()
 
                 if sessionRunning and self._client.session_status_timestamp:
-                    delta = (now - self._client.session_status_timestamp).total_seconds()
+                    delta = now - self._client.session_status_timestamp
                 else:
                     delta = 0
 
                 if status.get('isForcedByTime', False) or status.get('finalType') == "BY_TIME" or status.get('finalType') == "BY_TIME_PLUS_LAPS":
                     if sessionRunning:
-                        result['timeRemain'] = finalTime - (startTime - stoppedSeconds) - delta
+                        result['timeRemain'] = (startTime + finalTime) - now - stoppedSeconds - delta
                     else:
-                        result['timeRemain'] = finalTime - (stopTime - startTime - stoppedSeconds)
+                        result['timeRemain'] = (startTime + finalTime) - stopTime - now - stoppedSeconds
                 else:
                     result['lapsRemain'] = max(0, status.get('finalLaps', 0) - status.get('elapsedLaps', 0))
 
@@ -485,7 +519,7 @@ class Service(lt_service):
                     if stopTime > 0:
                         result['timeElapsed'] = (stopTime - startTime)
                     else:
-                        result['timeElapsed'] = (now - startTimestamp).total_seconds() - status.get('stoppedSeconds', 0) + delta
+                        result['timeElapsed'] = (now - startTime) - status.get('stoppedSeconds', 0) + delta
 
         return result
 
