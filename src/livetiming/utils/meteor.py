@@ -228,6 +228,10 @@ def DDPProtoclFactory(handler):
     return DDPProtocol
 
 
+class MeteorClientException(Exception):
+    pass
+
+
 class MeteorClient(EventEmitter):
     def __init__(self):
         super(MeteorClient, self).__init__()
@@ -268,14 +272,13 @@ class MeteorClient(EventEmitter):
             if callback:
                 callback(None)
 
-        if name in self.subscriptions:
-            raise MeteorClientException('Already subcribed to {}'.format(name))
-
-        sub_id = self.ddp_client.subscribe(name, params, subscribed)
-        self.subscriptions[name] = {
-            'id': sub_id,
-            'params': params
-        }
+        if name not in self.subscriptions:
+            # Don't resubscribe unnecessarily
+            sub_id = self.ddp_client.subscribe(name, params, subscribed)
+            self.subscriptions[name] = {
+                'id': sub_id,
+                'params': params
+            }
 
     def unsubscribe(self, name):
         """Unsubscribe from a collection
