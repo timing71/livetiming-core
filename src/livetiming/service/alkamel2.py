@@ -137,7 +137,7 @@ CAR_TRACK_STATES = {
 
 CAR_STATES = {
     'RETIRED': 'RET',
-    'NOT_CLASSIFIED': 'N/C',
+    'NOT_CLASSIFIED': 'DNF',
     'NOT_STARTED': 'N/S',
     'DISQUALIFIED': 'DSQ',
     'EXCLUDED': 'DSQ'
