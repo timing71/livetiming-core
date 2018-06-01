@@ -172,20 +172,21 @@ class Service(lt_service):
         self.publishManifest()
 
         if self.sro_session:
-            if previous_session and self.sro_session != previous_session:
-                self.log.info("Changing session from {old} to {new}", old=previous_session, new=self.sro_session)
-                self.analyser.reset()
-                self._previous_laps = {}
-                self.session_fetcher.stop()
-                self.timing_fetcher.stop()
-                self._session_data = None
-                self._timing_data = None
+            if self.sro_session != previous_session:
+                if previous_session:
+                    self.log.info("Changing session from {old} to {new}", old=previous_session, new=self.sro_session)
+                    self.analyser.reset()
+                    self._previous_laps = {}
+                    self.session_fetcher.stop()
+                    self.timing_fetcher.stop()
+                    self._session_data = None
+                    self._timing_data = None
 
-            self.session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
-            self.session_fetcher.start()
+                self.session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
+                self.session_fetcher.start()
 
-            self.timing_fetcher = JSONFetcher(uncache(self.SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
-            self.timing_fetcher.start()
+                self.timing_fetcher = JSONFetcher(uncache(self.SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
+                self.timing_fetcher.start()
 
             if not ea.session:
                 # Check for a session change every minute if we've not been given one explicitly
