@@ -371,21 +371,22 @@ class Fetcher(object):
             raise
 
     def _run(self):
-        def cb(data):
-            self.backoff = 0
-            if self.running:
-                self.callback(data)
-                self._schedule(self.interval)
+        if self.running:
+            def cb(data):
+                self.backoff = 0
+                if self.running:
+                    self.callback(data)
+                    self._schedule(self.interval)
 
-        def eb(fail):
-            if self.running:
-                self.backoff += 1
-                self.log.warn("{fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.interval * self.backoff)
-                self._schedule(self.interval * self.backoff)
+            def eb(fail):
+                if self.running:
+                    self.backoff += 1
+                    self.log.warn("{fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.interval * self.backoff)
+                    self._schedule(self.interval * self.backoff)
 
-        deferred = self._defer()
-        deferred.addCallback(cb)
-        deferred.addErrback(eb)
+            deferred = self._defer()
+            deferred.addCallback(cb)
+            deferred.addErrback(eb)
 
     def start(self):
         self.running = True
