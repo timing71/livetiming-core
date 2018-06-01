@@ -245,18 +245,24 @@ class Service(lt_service):
 
     def _receive_session(self, data):
         self.log.debug("Received session data")
-        self._session_data = data['content']['full']
+        if data['content']['full'].get('UnitId', '').upper() == self.sro_session:
+            self._session_data = data['content']['full']
 
-        if 'Messages' in self._session_data:
-            for message in self._session_data['Messages']:
-                msg_time = datetime.strptime(message['Time'], "%d.%m.%Y %H:%M:%S")
-                if not self.mostRecentMessage or self.mostRecentMessage < msg_time:
-                    self._messages.append(message['Text'].upper())
-                    self.mostRecentMessage = msg_time
+            if 'Messages' in self._session_data:
+                for message in self._session_data['Messages']:
+                    msg_time = datetime.strptime(message['Time'], "%d.%m.%Y %H:%M:%S")
+                    if not self.mostRecentMessage or self.mostRecentMessage < msg_time:
+                        self._messages.append(message['Text'].upper())
+                        self.mostRecentMessage = msg_time
+        else:
+            self.log.warn("Received data for {this}, expecting {that}", this=data['content']['full'].get('UnitId'), that=self.sro_session)
 
     def _receive_timing(self, data):
         self.log.debug("Received timing data")
-        self._timing_data = data['content']['full']
+        if data['content']['full'].get('UnitId', '').upper() == self.sro_session:
+            self._timing_data = data['content']['full']
+        else:
+            self.log.warn("Received data for {this}, expecting {that}", this=data['content']['full'].get('UnitId'), that=self.sro_session)
 
     def getColumnSpec(self):
         return [
