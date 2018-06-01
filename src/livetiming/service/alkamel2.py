@@ -8,6 +8,7 @@ from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
 from twisted.internet.task import LoopingCall
 
 import argparse
+import math
 import re
 import time
 
@@ -504,14 +505,9 @@ class Service(lt_service):
                 sessionRunning = status.get('isSessionRunning', False)
                 now = time.time()
 
-                if sessionRunning and self._client.session_status_timestamp:
-                    delta = now - self._client.session_status_timestamp
-                else:
-                    delta = 0
-
                 if status.get('isForcedByTime', False) or status.get('finalType') == "BY_TIME" or status.get('finalType') == "BY_TIME_PLUS_LAPS":
                     if sessionRunning:
-                        result['timeRemain'] = (startTime + finalTime) - now - stoppedSeconds - delta
+                        result['timeRemain'] = (startTime + finalTime) - now - stoppedSeconds
                     else:
                         result['timeRemain'] = (startTime + finalTime) - stopTime - now - stoppedSeconds
                 else:
@@ -519,10 +515,10 @@ class Service(lt_service):
 
                 if startTime > 0:
                     startTimestamp = datetime.utcfromtimestamp(startTime)
-                    if stopTime > 0:
+                    if stopTime > 0 and not sessionRunning:
                         result['timeElapsed'] = (stopTime - startTime)
                     else:
-                        result['timeElapsed'] = (now - startTime) - status.get('stoppedSeconds', 0) + delta
+                        result['timeElapsed'] = (now - startTime) - status.get('stoppedSeconds', 0)
 
         return result
 
