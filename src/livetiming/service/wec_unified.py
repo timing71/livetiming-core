@@ -99,6 +99,7 @@ WEB_TIMING_URL = "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__d
 
 class Service(lt_service):
     attribution = ['WEC', 'http://www.fiawec.com/']
+    initial_description = 'World Endurance Championship'
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
@@ -120,7 +121,7 @@ class Service(lt_service):
         if self.is_qualifying_mode:
             self.log.info("Starting up in QUALIFYING mode")
 
-        self.description = "World Endurance Championship"
+        self.description = self.initial_description
 
         def data_url():
             return WEB_TIMING_URL.format(int(1000 * time.time()))
