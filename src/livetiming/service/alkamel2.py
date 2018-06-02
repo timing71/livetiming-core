@@ -14,6 +14,18 @@ import time
 
 
 class AlkamelV2Client(MeteorClient):
+
+    SESSION_SUBSCRIPTIONS = [
+        'entry',
+        'trackInfo',
+        'standings',
+        'sessionStatus',
+        'weather',
+        'bestResults',
+        'raceControl',
+        'sessionBestResultsByClass'
+    ]
+
     def __init__(self, feed_name):
         MeteorClient.__init__(self)
 
@@ -56,19 +68,19 @@ class AlkamelV2Client(MeteorClient):
             self.log.warn("No live sessions detected, instead arbitrarily using {sid}", sid=sessionInfo[0]['session'])
             self.set_session(sessionInfo[0])
         else:
+            self.log.info("Using live session ID {sid}", sid=live_sessions[0]['session'])
             self.set_session(live_sessions[0])
 
     def set_session(self, session_info):
+        if self._current_session_id:
+            for topic in self.SESSION_SUBSCRIPTIONS:
+                self.unsubscribe(topic)
+
         self._current_session_id = session_info['session']
         self.session_type = session_info.get('info', {}).get('type', 'UNKNOWN')
-        self.subscribe('entry', [self._current_session_id])
-        self.subscribe('trackInfo', [self._current_session_id])
-        self.subscribe('standings', [self._current_session_id])
-        self.subscribe('sessionStatus', [self._current_session_id])
-        self.subscribe('weather', [self._current_session_id])
-        self.subscribe('bestResults', [self._current_session_id])
-        self.subscribe('raceControl', [self._current_session_id])
-        self.subscribe('sessionBestResultsByClass', [self._current_session_id])
+
+        for topic in self.SESSION_SUBSCRIPTIONS:
+            self.subscribe(topic, [self._current_session_id])
 
         self.emit('session_change', self.find_one('sessions', {'_id': self._current_session_id}), session_info)
 
@@ -193,10 +205,11 @@ def e(t, n, r):
         else:
             return n['currentLapStartTime']
     elif t > r:
-        if r == -1 and len(n['previousLoops']) == 0:
+        if r == -1 or len(n['previousLoops']) == 0:
             return n['currentLapStartTime']
         else:
-            return n['currentLapStartTime'] - n['previousLoops'][-1] + n['previousLoops'][t]
+            finalLoopIndex = max(n['previousLoops'].keys())
+            return n['currentLapStartTime'] - n['previousLoops'][finalLoopIndex] + n['previousLoops'][t]
     elif t < 0:
         return n['currentLapStartTime']
     return n['currentLapStartTime'] + n['currentLoops'].get(t, 0)
