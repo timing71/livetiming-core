@@ -480,15 +480,15 @@ class Service(lt_service):
             session['timeElapsed'] = self._session_data.get('elapsed', 0) + delta
             session['timeRemain'] = self._session_data.get('remain', 0) - delta
 
-            last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
+            last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
 
             session['trackData'] = [
-                u"{}°C".format(self._session_data.get('trackTemp', '')),
-                u"{}°C".format(self._session_data.get('airTemp', '')),
-                "{}%".format(self._session_data.get('humidity', '')),
-                "{}mbar".format(self._session_data.get('pressure', '')),
-                "{}kph".format(self._session_data.get('windSpeed', '')),
-                u"{}°".format(self._session_data.get('windDirection', '')),
+                u"{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
+                u"{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
+                "{}%".format(self._session_data['humidity']) if 'humidity' in self._session_data else '',
+                "{}mbar".format(self._session_data['pressure']) if 'pressure' in self._session_data else '',
+                "{}kph".format(self._session_data['windSpeed']) if 'windSpeed' in self._session_data else '',
+                u"{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
                 self._session_data.get('weather', '').replace('_', ' ').title(),
                 self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
                 '{} {}'.format(self._last_source, last_retrieved_time)
