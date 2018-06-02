@@ -300,7 +300,7 @@ class Service(lt_service):
                 self.log.debug("Web timestamp: {pts}", pts=pts)
 
                 data_new_enough = (not self._last_timestamp or pts >= self._last_timestamp)
-                correct_session = ('alkamel_session_id' not in self._session_data or self._session_data['alkamel_session_id'] == params['sessionId'])
+                correct_session = self._session_data.get('alkamel_session_id') == params.get('sessionId')
 
                 if data_new_enough and correct_session:
                     for car_data in data.get('entries', []):
