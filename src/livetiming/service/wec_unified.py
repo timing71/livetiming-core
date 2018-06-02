@@ -156,7 +156,7 @@ class Service(lt_service):
                 self._web_fetcher.stop()
 
     def getName(self):
-        return "WEC (beta)"
+        return "WEC"
 
     def getDefaultDescription(self):
         return self.description
