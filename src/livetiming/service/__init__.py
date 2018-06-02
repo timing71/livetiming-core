@@ -380,8 +380,8 @@ class Fetcher(object):
 
             def eb(fail):
                 if self.running:
-                    self.backoff += 1
-                    self.log.warn("{fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.interval * self.backoff)
+                    self.backoff = max(1, self.backoff * 2)
+                    self.log.warn("Fetcher failed: {fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.backoff)
                     self._schedule(self.interval * self.backoff)
 
             deferred = self._defer()
