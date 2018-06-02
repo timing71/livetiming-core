@@ -458,7 +458,7 @@ class Service(lt_service):
                         car = [
                             race_num,
                             state,
-                            u"{}, {}".format(entry.get('lastname', ''), entry.get('firstname', '').title()),
+                            u"{}, {}".format(entry.get('lastname', '').upper(), entry.get('firstname', '').title()),
                             entry.get('team', ''),
                             entry.get('vehicle', ''),
                             standing_data[4],
