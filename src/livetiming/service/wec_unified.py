@@ -106,7 +106,7 @@ class Service(lt_service):
         self._session_data = {}
         self._cars = {}
 
-        self._last_timestamp = None
+        self._last_timestamp = datetime.utcfromtimestamp(0)
         self._last_retrieved = None
         self._app_fetcher = None
         self._web_fetcher = None
@@ -477,19 +477,19 @@ class Service(lt_service):
             delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
             self.log.debug("Delta: {delta}", delta=delta)
 
-            session['timeElapsed'] = self._session_data['elapsed'] + delta
-            session['timeRemain'] = self._session_data['remain'] - delta
+            session['timeElapsed'] = self._session_data.get('elapsed', 0) + delta
+            session['timeRemain'] = self._session_data.get('remain', 0) - delta
 
             last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else ''
 
             session['trackData'] = [
-                u"{}°C".format(self._session_data['trackTemp']),
-                u"{}°C".format(self._session_data['airTemp']),
-                "{}%".format(self._session_data['humidity']),
-                "{}mbar".format(self._session_data['pressure']),
-                "{}kph".format(self._session_data['windSpeed']),
-                u"{}°".format(self._session_data['windDirection']),
-                self._session_data['weather'].replace('_', ' ').title(),
+                u"{}°C".format(self._session_data.get('trackTemp', '')),
+                u"{}°C".format(self._session_data.get('airTemp', '')),
+                "{}%".format(self._session_data.get('humidity', '')),
+                "{}mbar".format(self._session_data.get('pressure', '')),
+                "{}kph".format(self._session_data.get('windSpeed', '')),
+                u"{}°".format(self._session_data.get('windDirection', '')),
+                self._session_data.get('weather', '').replace('_', ' ').title(),
                 self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
                 '{} {}'.format(self._last_source, last_retrieved_time)
             ]
