@@ -508,8 +508,10 @@ class Service(lt_service):
                 if status.get('isForcedByTime', False) or status.get('finalType') == "BY_TIME" or status.get('finalType') == "BY_TIME_PLUS_LAPS":
                     if sessionRunning:
                         result['timeRemain'] = (startTime + finalTime) - now - stoppedSeconds
-                    else:
+                    elif startTime > 0:
                         result['timeRemain'] = (startTime + finalTime) - stopTime - now - stoppedSeconds
+                    else:
+                        result['timeRemain'] = finalTime
                 else:
                     result['lapsRemain'] = max(0, status.get('finalLaps', 0) - status.get('elapsedLaps', 0))
 
