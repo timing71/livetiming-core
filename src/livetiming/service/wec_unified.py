@@ -482,9 +482,10 @@ class Service(lt_service):
                     ])
                 else:
                     best_lap = parseTime(car['best_lap'])
+                    last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
                     cars.append(common_cols + [
                         (last_lap if last_lap > 0 else '', last_flag),
-                        (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else 'pb' if last_lap == best_lap else ''),
+                        (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
                         car['pits']
                     ])
 
