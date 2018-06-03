@@ -280,7 +280,15 @@ class Service(lt_service):
                             sd['status'] = ls['status']
                             sd['safety_car'] = ls.get('safety_car', 0) == 1
                             sd['elapsed'] = ls.get('elapsed', 0)
-                            sd['remain'] = self.session['duration_seconds'] - ls.get('elapsed', 0)
+
+                            # Sometimes this calculation for remaining time goes wrong if sessions are consecutive
+                            # Don't override our previous remain value with a negative one
+                            maybeRemain = self.session['duration_seconds'] - ls.get('elapsed', 0)
+                            if maybeRemain >= 0:
+                                sd['remain'] = maybeRemain
+                            else:
+                                delta = (pts - self._last_timestamp).total_seconds()
+                                sd['remain'] = max(0, sd.get('remain', 0) - delta)
 
                             sd['alkamel_session_id'] = ls['alkamel_session_id']
 
