@@ -69,6 +69,13 @@ def parseTime(formattedTime):
             return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
+def maybeInt(raw):
+    try:
+        return int(raw)
+    except ValueError:
+        return raw
+
+
 def get_session(session_id=None):
     if session_id:
         try:
@@ -333,7 +340,7 @@ class Service(lt_service):
 
                         car['driver'] = car_data['driver']
                         car['tyre'] = car_data['tyre']
-                        car['lap'] = car_data['lap']
+                        car['lap'] = maybeInt(car_data['lap'])
                         car['gap'] = car_data['gap']
                         car['int'] = car_data['gapPrev']
                         car['pits'] = car_data['pitstop']
