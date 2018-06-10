@@ -150,7 +150,7 @@ CAR_TRACK_STATES = {
 
 CAR_STATES = {
     'RETIRED': 'RET',
-    'NOT_CLASSIFIED': 'DNF',
+    'NOT_CLASSIFIED': 'N/C',
     'NOT_STARTED': 'N/S',
     'DISQUALIFIED': 'DSQ',
     'EXCLUDED': 'DSQ'
@@ -159,6 +159,8 @@ CAR_STATES = {
 
 # e.lookup("status"), e.lookup("trackStatus"), e.lookup("isRunning"), e.lookup("isCheckered"), e.lookup("isSessionClosed"), false
 def map_car_state(status, trackStatus, isRunning, isCheckered):
+    if status == '' and trackStatus == '':
+        return 'PIT'
     if 'CLASSIFIED' == status.upper():
         if isCheckered:
             return 'FIN'
@@ -187,12 +189,14 @@ def map_flag(flag, isFinished):
 
 
 def _parse_loops(loops):
-    splits = loops.split(';')
-    t = {}
+    if loops:
+        splits = loops.split(';')
+        t = {}
 
-    for r in xrange(0, len(splits) - 1, 2):
-        t[int(splits[r])] = int(splits[r + 1])
-    return t
+        for r in xrange(0, len(splits) - 1, 2):
+            t[int(splits[r])] = int(splits[r + 1])
+        return t
+    return {}
 
 
 def e(t, n, r):
@@ -424,71 +428,83 @@ class Service(lt_service):
 
                 for position in sorted(map(int, standings.keys())):
                     data = standings[str(position)]
+
+                    race_num = data.get('number')
+
+                    current_sectors = parse_sectors(data.get('currentSectors', ''))
+                    previous_sectors = parse_sectors(data.get('lastSectors', ''), 'old')
+
+                    data_with_loops = {
+                        'currentLoops': _parse_loops(data.get('currentLoopSectors')),
+                        'previousLoops': _parse_loops(data.get('previousLoopSectors')),
+                    }
+                    data_with_loops.update(data)
+
+                    status = ''
+                    trackStatus = ''
+                    laps = None
+                    pits = None
+
                     if 'data' in data:
                         standing_data = data['data'].split(";")
-                        race_num = standing_data[1]
-                        entry = entries.get(race_num, {})
-                        clazz = entry.get('class', '')
 
-                        current_sectors = parse_sectors(data.get('currentSectors', ''))
-                        previous_sectors = parse_sectors(data.get('lastSectors', ''), 'old')
-
-                        data_with_loops = {
-                            'currentLoops': _parse_loops(data.get('currentLoopSectors')),
-                            'previousLoops': _parse_loops(data.get('previousLoopSectors')),
-                            'currentLapStartTime': maybe_int(standing_data[7], 0),
-                            'currentLapNumber': maybe_int(standing_data[9], 0),
-                            'laps': maybe_int(standing_data[4], 0)
-                        }
-                        data_with_loops.update(data)
+                        data_with_loops['currentLapStartTime'] = maybe_int(standing_data[7], 0)
+                        data_with_loops['currentLapNumber'] = maybe_int(standing_data[9], 0)
+                        data_with_loops['laps'] = maybe_int(standing_data[4], 0)
 
                         status = standing_data[2]
                         trackStatus = standing_data[8]
+                        laps = standing_data[4]
+                        pits = standing_data[5]
+                        race_num = standing_data[1]
 
-                        state = map_car_state(status, trackStatus, data.get('isRunning', False), data.get('isCheckered', False))
+                    entry = entries.get(race_num, {})
+                    clazz = entry.get('class', '')
 
-                        last_lap = data.get('lastLapTime', 0) / 1000.0
-                        best_lap = data.get('bestLapTime', 0) / 1000.0
+                    state = map_car_state(status, trackStatus, data.get('isRunning', False), data.get('isCheckered', False))
 
-                        last_lap_flag = 'pb' if data.get('isLastLapBestPersonal', False) else ''
+                    last_lap = data.get('lastLapTime', 0) / 1000.0
+                    best_lap = data.get('bestLapTime', 0) / 1000.0
 
-                        has_overall_best = overall_best_lap.get('participantNumber') == race_num
-                        has_class_best = clazz and class_best_laps.get(clazz, {}).get('participantNumber') == race_num
+                    last_lap_flag = 'pb' if data.get('isLastLapBestPersonal', False) else ''
 
-                        if has_overall_best or has_class_best:
-                            best_lap_flag = 'sb'
-                            if last_lap == best_lap and 3 in current_sectors:
-                                last_lap_flag = 'sb-new'
-                        else:
-                            best_lap_flag = ''
+                    has_overall_best = overall_best_lap.get('participantNumber') == race_num
+                    has_class_best = clazz and class_best_laps.get(clazz, {}).get('participantNumber') == race_num
 
-                        sector_cols = []
-                        for i in range(self._num_sectors):
-                            sector_cols.append(
-                                current_sectors.get(i + 1, previous_sectors.get(i + 1, ''))
-                            )
+                    if has_overall_best or has_class_best:
+                        best_lap_flag = 'sb'
+                        if last_lap == best_lap and 3 in current_sectors:
+                            last_lap_flag = 'sb-new'
+                    else:
+                        best_lap_flag = ''
 
-                        car = [
-                            race_num,
-                            state,
-                            u"{}, {}".format(entry.get('lastname', '').upper(), entry.get('firstname', '').title()),
-                            entry.get('team', ''),
-                            entry.get('vehicle', ''),
-                            standing_data[4],
-                            gap_func(lead_car, data_with_loops),
-                            gap_func(prev_car, data_with_loops)
-                        ] + sector_cols + [
-                            (last_lap if last_lap > 0 else '', last_lap_flag),
-                            (best_lap if best_lap > 0 else '', best_lap_flag),
-                            standing_data[5]
-                        ]
+                    sector_cols = []
+                    for i in range(self._num_sectors):
+                        sector_cols.append(
+                            current_sectors.get(i + 1, previous_sectors.get(i + 1, ''))
+                        )
 
-                        if self._has_classes:
-                            class_count[clazz] = class_count.get(clazz, 0) + 1
-                            car.insert(2, clazz)
-                            car.insert(3, class_count[clazz])
+                    car = [
+                        race_num,
+                        state,
+                        u"{}, {}".format(entry.get('lastname', data.get('lastname', '')).upper(), entry.get('firstname', data.get('firstname', '')).title()),
+                        entry.get('team', data.get('team', '')),
+                        entry.get('vehicle', data.get('vehicle', '')),
+                        laps,
+                        gap_func(lead_car, data_with_loops),
+                        gap_func(prev_car, data_with_loops)
+                    ] + sector_cols + [
+                        (last_lap if last_lap > 0 else '', last_lap_flag),
+                        (best_lap if best_lap > 0 else '', best_lap_flag),
+                        pits
+                    ]
 
-                        cars.append(car)
+                    if self._has_classes:
+                        class_count[clazz] = class_count.get(clazz, 0) + 1
+                        car.insert(2, clazz)
+                        car.insert(3, class_count[clazz])
+
+                    cars.append(car)
 
                     prev_car = data_with_loops
                     if not lead_car:
