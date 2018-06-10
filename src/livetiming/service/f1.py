@@ -9,6 +9,7 @@ from twisted.internet import reactor
 import math
 import simplejson
 import time
+import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
@@ -94,20 +95,17 @@ class Service(lt_service):
         if race != "" and session != "":
             self.hasSession = True
 
-            # servers = map(lambda s: s.get('ip'), servers.findall('Server'))
-            # if 'lb.softpauer.com' in servers:
-            #     serverIP = 'lb.softpauer.com'
-            # else:
-            #     serverIP = random.choice(servers)
-            serverIP = 'lb.softpauer.com'
+            servers = map(lambda s: s.get('ip'), servers.findall('Server'))
+            if 'lb.softpauer.com' in servers:
+                serverIP = 'lb.softpauer.com'
+            else:
+                serverIP = random.choice(servers)
+            # serverIP = 'lb.softpauer.com'
             self.log.info("Using server {}".format(serverIP))
 
             server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
 
             allURL = server_base_url + "all.js"
-
-            self.processData(urllib2.urlopen(allURL).readlines())
-            self.timestampLastUpdated = datetime.now()
 
             allFetcher = MultiLineFetcher(allURL, self.processData, 60)
             allFetcher.start()
@@ -205,7 +203,7 @@ class Service(lt_service):
         return None
 
     def getRaceState(self):
-        if not self.hasSession:
+        if not self.hasSession or self.serverTimestamp == 0:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
             return {
                 'cars': [],
