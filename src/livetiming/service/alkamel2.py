@@ -369,7 +369,7 @@ class Service(lt_service):
             self.analyser.reset()
         info = session_info.get('info', {})
         self._name = info.get('champName', 'Al Kamel Timing')
-        self._description = "{} - {}".format(
+        self._description = u"{} - {}".format(
             info.get('eventName', ''),
             new_session.get('name', '')
         )
