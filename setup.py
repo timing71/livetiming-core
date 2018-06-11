@@ -26,6 +26,7 @@ setup(
         "dictdiffer",
         "enum34",
         "icalendar",
+        "livetimingrelay",  # Only really required for the master relay
         "lzstring",
         "meteor-ejson",
         "pyopenssl",
