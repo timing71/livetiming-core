@@ -140,7 +140,7 @@
         },
         {
           "type": "class",
-          "classname": "livetiming.crossbar.relay.RelayMonitor",
+          "classname": "livetimingrelay.RelayMonitor",
           "realm": "timing",
           "role": "services"
         }
