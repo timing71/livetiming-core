@@ -104,6 +104,12 @@
         },
         {
           "type": "class",
+          "classname": "livetimingrelay.RelayMonitor",
+          "realm": "timing",
+          "role": "services"
+        },
+        {
+          "type": "class",
           "classname": "livetiming.directory.Directory",
           "realm": "timing",
           "role": "services"
