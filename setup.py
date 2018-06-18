@@ -25,6 +25,7 @@ setup(
         "crossbar==18.4.1",  # Latest version that supports Python 2.7
         "dictdiffer",
         "enum34",
+        "google-api-python-client",
         "icalendar",
         "livetimingrelay",  # Only really required for the master relay
         "lzstring",
