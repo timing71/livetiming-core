@@ -30,6 +30,7 @@ setup(
         "livetimingrelay",  # Only really required for the master relay
         "lzstring",
         "meteor-ejson",
+        "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pyopenssl",
         "python-dotenv",
         "python-twitter",
