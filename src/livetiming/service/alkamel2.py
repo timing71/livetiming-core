@@ -4,7 +4,7 @@ from datetime import datetime
 from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
-from livetiming.utils.meteor import MeteorClient, DDPProtoclFactory
+from livetiming.utils.meteor import MeteorClient, DDPProtocolFactory
 from twisted.internet.task import LoopingCall
 
 import argparse
@@ -35,7 +35,7 @@ class AlkamelV2Client(MeteorClient):
 
         self._feed_name = feed_name
         self._factory = ReconnectingWebSocketClientFactory('wss://livetiming.alkamelsystems.com/sockjs/261/t48ms2xd/websocket')
-        self._factory.protocol = DDPProtoclFactory(self)
+        self._factory.protocol = DDPProtocolFactory(self)
         connectWS(self._factory)
 
         def setSessionStatusTimestamp():

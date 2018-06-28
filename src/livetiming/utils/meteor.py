@@ -72,7 +72,7 @@ class EventEmitter(object):
             handler(*args, **kwargs)
 
 
-def DDPProtoclFactory(handler):
+def DDPProtocolFactory(handler):
     class DDPProtocol(WebSocketClientProtocol):
         """ A translation into Twisted of https://github.com/hharnisc/python-ddp/blob/master/DDPClient.py (or at least the relevant bits). """
         def __init__(self, *args, **kwargs):
