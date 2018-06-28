@@ -473,8 +473,11 @@ class Service(lt_service):
 
                     if has_overall_best or has_class_best:
                         best_lap_flag = 'sb'
-                        if last_lap == best_lap and 3 in current_sectors:
-                            last_lap_flag = 'sb-new'
+                        if last_lap == best_lap:
+                            if 3 in current_sectors:
+                                last_lap_flag = 'sb-new'
+                            else:
+                                last_lap_flag = 'sb'
                     else:
                         best_lap_flag = ''
 
