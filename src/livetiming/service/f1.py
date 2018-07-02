@@ -320,7 +320,7 @@ class Service(lt_service):
         currentLap = free["L"]
         totalLaps = free["TL"]
 
-        lapsRemain = max(totalLaps - currentLap, 0)
+        lapsRemain = max(totalLaps - currentLap + 1, 0)
 
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
