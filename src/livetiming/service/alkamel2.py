@@ -213,7 +213,7 @@ def e(t, n, r):
             return n['currentLapStartTime']
         else:
             finalLoopIndex = max(n['previousLoops'].keys())
-            return n['currentLapStartTime'] - n['previousLoops'][finalLoopIndex] + n['previousLoops'][t]
+            return n['currentLapStartTime'] - n['previousLoops'][finalLoopIndex] + n['previousLoops'].get(t, 0)
     elif t < 0:
         return n['currentLapStartTime']
     return n['currentLapStartTime'] + n['currentLoops'].get(t, 0)
