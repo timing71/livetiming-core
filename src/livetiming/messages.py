@@ -141,7 +141,7 @@ class FastLapMessage(PerCarMessage):
 
 class RaceControlMessage(TimingMessage):
 
-    CAR_NUMBER_REGEX = re.compile("car (?P<race_num>[0-9]+)", re.IGNORECASE)
+    CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
 
     def __init__(self, messageList):
         self.messageList = messageList
@@ -152,7 +152,7 @@ class RaceControlMessage(TimingMessage):
             nextMessage = self.messageList.pop()
             hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
             if hasCarNum:
-                msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl", hasCarNum.group('race_num')])
+                msgs.append([int(time.time()), "Race Control", nextMessage.upper(), "raceControl", hasCarNum.group('race_num')])
             else:
-                msgs.append([int(time.time()), "Race Control", nextMessage, "raceControl"])
+                msgs.append([int(time.time()), "Race Control", nextMessage.upper(), "raceControl"])
         return msgs
