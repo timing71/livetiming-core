@@ -28,7 +28,7 @@ setup(
         "google-api-python-client",
         "icalendar",
         "livetimingrelay",  # Only really required for the master relay
-        "lzstring",
+        "lzstring==1.0.3",
         "meteor-ejson",
         "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pyopenssl",
