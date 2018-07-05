@@ -87,7 +87,7 @@ class AlkamelV2Client(MeteorClient):
 
 class RaceControlMessage(TimingMessage):
 
-    CAR_NUMBER_REGEX = re.compile("car (?P<race_num>[0-9]+)", re.IGNORECASE)
+    CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
 
     def __init__(self, client):
         self._client = client
@@ -104,9 +104,9 @@ class RaceControlMessage(TimingMessage):
             for msg in new_messages:
                 hasCarNum = self.CAR_NUMBER_REGEX.search(msg['message'])
                 if hasCarNum:
-                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'], "raceControl", hasCarNum.group('race_num')])
+                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
                 else:
-                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'], "raceControl"])
+                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'].upper(), "raceControl"])
 
                 self._mostRecentTimestamp = max(self._mostRecentTimestamp, msg['date'])
             return sorted(msgs, key=lambda m: -m[0])
