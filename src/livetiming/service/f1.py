@@ -65,6 +65,15 @@ def parseFlagState(flagChar):
     return "green"
 
 
+SESSION_NAME_MAP = {
+    'Practice1': "Free Practice 1",
+    'Practice2': "Free Practice 2",
+    'Practice3': "Free Practice 3",
+    'Qualifying': "Qualifying",
+    'Race': "Race"
+}
+
+
 class Service(lt_service):
     attribution = ['FOWC', 'https://www.formula1.com/']
 
@@ -83,6 +92,9 @@ class Service(lt_service):
         self.serverTimestamp = 0
         self.timestampLastUpdated = datetime.now()
         self.dataLastUpdated = datetime.now()
+
+        self._description = 'Formula 1'
+
         self.configure()
 
     def configure(self):
@@ -130,29 +142,23 @@ class Service(lt_service):
                     self.serverTimestamp = max(self.serverTimestamp, content["T"] / 1000000)
                 if matches.group(1) == "f":
                     self.timestampLastUpdated = datetime.now()
+                    if "free" in content:
+                        free = content['free']
+                        new_description = u"{} - {}".format(
+                            free.get("R", "Formula 1").title(),
+                            SESSION_NAME_MAP[free.get("S", "")]
+                        )
+                        if self._description != new_description:
+                            self._description = new_description
+                            self.publishManifest()
+
         self.dataLastUpdated = datetime.now()
 
     def getName(self):
         return "Formula 1"
 
     def getDefaultDescription(self):
-        if "f" in self.dataMap:
-            if "free" in self.dataMap["f"]:
-                free = self.dataMap["f"]["free"]
-
-                sessionName = {
-                    'Practice1': "Free Practice 1",
-                    'Practice2': "Free Practice 2",
-                    'Practice3': "Free Practice 3",
-                    'Qualifying': "Qualifying",
-                    'Race': "Race"
-                }
-
-                return u"{} - {}".format(
-                    free.get("R", "Formula 1").title(),
-                    sessionName[free.get("S", "")]
-                )
-        return "Formula 1"
+        return self._description
 
     def getColumnSpec(self):
         return [
