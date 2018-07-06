@@ -230,7 +230,7 @@ class Service(lt_service):
                 if session:
                     return session['Id'].upper(), \
                         sessions_json['content']['full']['Competitions'][session['CompetitionId']]['Name'], \
-                        session['Name']
+                        u"{} - {}".format(meeting['Name'], session['Name'])
         self.log.warn("Could not find a live session!")
         return None, None, None
 
