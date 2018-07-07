@@ -1,4 +1,5 @@
 from autobahn.twisted.websocket import WebSocketClientProtocol
+from livetiming.service import Watchdog
 from twisted.logger import Logger
 
 import ejson
@@ -80,6 +81,7 @@ def DDPProtocolFactory(handler):
             self._callbacks = {}
             self._uid = 0
             self.log = Logger()
+            self._watchdog = Watchdog(30, self.ping)
 
         def _next_id(self):
             """Get the next id that will be sent to the server"""
@@ -104,8 +106,10 @@ def DDPProtocolFactory(handler):
                 "support": ["1", "pre2", "pre1"]
             })
             self._handler_call('connect', self)
+            self._watchdog.start()
 
         def onMessage(self, payload, isBinary):
+            self._watchdog.notify()
             self.log.debug("<<< {payload}", payload=payload)
             if payload[0] != 'a':
                 return
@@ -190,6 +194,9 @@ def DDPProtocolFactory(handler):
                 else:
                     pass
 
+        def onClose(self, wasClean, code, reason):
+            self._watchdog.stop()
+
         def send(self, obj):
             message = encode(obj)
             self.log.debug(">>> {message}", message=message)
@@ -225,6 +232,10 @@ def DDPProtocolFactory(handler):
             Arguments:
             sub_id - the id of the subsciption (returned by subcribe)"""
             self.send({'msg': 'unsub', 'id': sub_id})
+
+        def ping(self):
+            self.send({'msg': 'ping'})
+
     return DDPProtocol
 
 
