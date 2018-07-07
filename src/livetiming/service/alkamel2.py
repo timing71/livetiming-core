@@ -199,24 +199,34 @@ def _parse_loops(loops):
     return {}
 
 
-def e(t, n, r):
-    """ Line 43659-43661 of Al Kamel's JS """
-    if t < r:
+def e(e, t, a, s):
+    if t < s:
         if t < 0:
-            return n['currentLapStartTime']
-        elif t in n['currentLoops']:
-            return n['currentLapStartTime'] + n['currentLoops'][t]
+            return a['currentLapStartTime']
         else:
-            return n['currentLapStartTime']
-    elif t > r:
-        if r == -1 or len(n['previousLoops']) == 0:
-            return n['currentLapStartTime']
+            if a['currentLoops'].get(t, False):
+                return a['currentLapStartTime'] + a['currentLoops'][t]
+            else:
+                return a['currentLapStartTime']
+    elif t > s:
+        if len(a['previousLoops']) == 0 or s == -1:
+            return a['currentLapStartTime']
         else:
-            finalLoopIndex = max(n['previousLoops'].keys())
-            return n['currentLapStartTime'] - n['previousLoops'][finalLoopIndex] + n['previousLoops'].get(t, 0)
-    elif t < 0:
-        return n['currentLapStartTime']
-    return n['currentLapStartTime'] + n['currentLoops'].get(t, 0)
+            finalLoopIndex = max(a['previousLoops'].keys())
+            return a['currentLapStartTime'] - a['previousLoops'][finalLoopIndex] + a['previousLoops'].get(t, 0)
+    else:
+        if t < 0:
+            return a['currentLapStartTime']
+        else:
+            return a['currentLapStartTime'] + a['currentLoops'].get(t, 0)
+
+
+def pluralize(num, singular):
+    return "{} {}{}".format(
+        num,
+        singular,
+        "s" if num != 1 else ''
+    )
 
 
 def calculate_gap(first, second):
@@ -230,21 +240,41 @@ def calculate_gap(first, second):
         return ''
 
     if second.get('currentLapNumber', -1) != -1:
-        laps_different = first['currentLapNumber'] - second['currentLapNumber']
+        n = first['currentLapNumber'] - second['currentLapNumber']
     else:
-        laps_different = first['laps'] - second['laps']
+        n = first['laps'] - second['laps']
 
-    if laps_different == 1:
-        return "{} lap".format(laps_different)
-    elif laps_different > 1:
-        return "{} laps".format(laps_different)
-
-    a = len(second['currentLoops']) - 1
-    s = second['currentLapStartTime'] + (0 if a < 0 else second['currentLoops'].get(a, 0))
+    i = len(second['currentLoops']) - 1
+    r = second['currentLapStartTime'] + (0 if i < 0 else second['currentLoops'].get(i, 0))
     o = len(first['currentLoops']) - 1
-    l = e(a, first, o)
+    l = e(second, i, first, o)
 
-    return abs(s - l) / 1000.0
+    if n > 1:
+        if i > o:
+            return pluralize(n - 1, 'lap')
+        elif o < i:
+            return pluralize(n, 'lap')
+        else:
+            if l < r:
+                return pluralize(n, 'lap')
+            else:
+                return pluralize(n - 1, 'lap')
+    elif 1 == n:
+        if o > i:
+            return pluralize(n, 'lap')
+        else:
+            if o < i:
+                return abs(r - l) / 1000.0
+            else:
+                if l < r:
+                    return pluralize(n, 'lap')
+                else:
+                    l = first['currentLapStartTime'] - first['previousLoops'][max(first['previousLoops'].keys())]
+                    if i >= 0:
+                        l += first['previousLoops'].get(i, 0)
+                    return abs(r - l) / 1000.0
+    else:
+        return abs(r - l) / 1000.0
 
 
 def calculate_practice_gap(first, second):
