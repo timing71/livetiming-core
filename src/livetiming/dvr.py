@@ -93,7 +93,7 @@ class DirectoryTimingRecorder(TimingRecorder):
 
     def finalise(self):
         zip_name = "{}.zip".format(self.recordFile)
-        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zout:
+        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zout:
             for root, _, files in os.walk(self.recordFile):
                 for file in files:
                     zout.write(os.path.join(root, file), os.path.basename(file))
