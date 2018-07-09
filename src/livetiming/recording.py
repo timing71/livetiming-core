@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import PublishOptions
-from livetiming import load_env
+from livetiming import configure_sentry_twisted, load_env
 from livetiming.network import RPC, Realm, authenticatedService, Message,\
     MessageClass, Channel
 from twisted.internet import reactor
@@ -213,6 +213,7 @@ class RecordingsDirectory(ApplicationSession):
 
 def main():
     load_env()
+    configure_sentry_twisted()
     Logger().info("Starting recording directory service...")
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
     runner = ApplicationRunner(url=router, realm=Realm.TIMING)
