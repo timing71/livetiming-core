@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import RegisterOptions, PublishOptions
-from livetiming import load_env
+from livetiming import configure_sentry_twisted, load_env
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
 from os import environ
 from twisted.internet import reactor, task
@@ -65,6 +65,9 @@ class Directory(ApplicationSession):
         self.log.info("Disconnected")
         if reactor.running:
             reactor.stop()
+
+
+configure_sentry_twisted()
 
 
 def main():

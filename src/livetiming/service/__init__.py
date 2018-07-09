@@ -1,7 +1,7 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.twisted.websocket import WebSocketClientFactory
 from autobahn.wamp.types import PublishOptions, RegisterOptions
-from livetiming import load_env, sentry
+from livetiming import configure_sentry_twisted, load_env, sentry
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -27,6 +27,7 @@ import time
 import txaio
 
 
+configure_sentry_twisted()
 sentry = sentry()
 
 client.HTTPClientFactory.noisy = False

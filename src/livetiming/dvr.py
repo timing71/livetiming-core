@@ -1,6 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import SubscribeOptions
-from livetiming import load_env
+from livetiming import configure_sentry_twisted, load_env
 from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
 from livetiming.recording import TimingRecorder, INTRA_FRAMES
@@ -272,6 +272,9 @@ class StandaloneDVR(DVR):
         runner = ApplicationRunner(url=router, realm=Realm.TIMING)
         runner.run(session_class, auto_reconnect=True)
         self.log.info("DVR terminated.")
+
+
+configure_sentry_twisted()
 
 
 def main():
