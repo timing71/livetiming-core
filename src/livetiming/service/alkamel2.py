@@ -478,12 +478,12 @@ class Service(lt_service):
                     if 'data' in data:
                         standing_data = data['data'].split(";")
 
-                        data_with_loops['currentLapStartTime'] = maybe_int(standing_data[7], 0)
-                        data_with_loops['currentLapNumber'] = maybe_int(standing_data[9], 0)
+                        data_with_loops['currentLapStartTime'] = maybe_int(standing_data[7], 0) if len(standing_data) > 7 else 0
+                        data_with_loops['currentLapNumber'] = maybe_int(standing_data[9], 0) if len(standing_data) > 9 else 0
                         data_with_loops['laps'] = maybe_int(standing_data[4], 0)
 
                         status = standing_data[2]
-                        trackStatus = standing_data[8]
+                        trackStatus = standing_data[8] if len(standing_data) > 8 else None
                         laps = standing_data[4]
                         pits = standing_data[5]
                         race_num = standing_data[1]
