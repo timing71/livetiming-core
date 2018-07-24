@@ -37,10 +37,14 @@ class Directory(ApplicationSession):
             options=self.publish_options
         )
 
+    def getServicesList(self, includeHidden=False):
+        return [s for s in self.services.values() if includeHidden or not s.get('hidden')]
+
     @inlineCallbacks
     def onJoin(self, details):
         self.log.info("Session ready")
 
+        yield self.register(self.getServicesList, RPC.GET_DIRECTORY_LISTING)
         yield self.subscribe(self.onControlMessage, Channel.CONTROL)
         self.log.debug("Subscribed to control channel")
         yield self.publish(Channel.CONTROL, Message(MessageClass.INITIALISE_DIRECTORY).serialise())
