@@ -311,7 +311,15 @@ class Service(object):
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
-        self.publish(RPC.STATE_PUBLISH.format(self.uuid), self._requestCurrentState(), options=PublishOptions(retain=True))
+        self.publish(
+            RPC.STATE_PUBLISH.format(self.uuid),
+            Message(
+                MessageClass.SERVICE_DATA_COMPRESSED,
+                LZString().compressToUTF16(simplejson.dumps(self.state)),
+                retain=True
+            ).serialise(),
+            options=PublishOptions(retain=True)
+        )
 
     def _getMessageGenerators(self):
         return [
@@ -329,7 +337,7 @@ class Service(object):
         return messages
 
     def _requestCurrentState(self):
-        return Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(self.state)), retain=True).serialise()
+        return simplejson.loads(simplejson.dumps(self.state))
 
     def publishManifest(self):
         self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())

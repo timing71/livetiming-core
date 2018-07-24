@@ -93,6 +93,20 @@
               "role": "anonymous"
             }
           }
+        },
+        {
+          "type": "web",
+          "endpoint": {
+            "type": "tcp",
+            "port": 8080
+          },
+          "paths": {
+            "call": {
+              "type": "caller",
+              "realm": "timing",
+              "role": "anonymous"
+            }
+          }
         }
       ],
       "components": [
