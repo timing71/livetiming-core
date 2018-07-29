@@ -9,7 +9,7 @@ from datetime import datetime
 from livetiming.messages import RaceControlMessage
 
 STATE_LIVE = 1
-TYPE_AGGREGATE = 3
+TYPES_AGGREGATE = [3, 6]
 
 
 def json_get(url):
@@ -223,7 +223,7 @@ class Service(lt_service):
                     self.log.info("Found requested session {sessionID}", sessionID=sessionID.lower())
                     session = sessions[sessionID.lower()]
                 else:
-                    live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] != TYPE_AGGREGATE]
+                    live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
                     if live_sessions:
                         self.log.info("Using live session {sessionID}", sessionID=live_sessions[-1]['Id'].lower())
                         session = live_sessions[-1]
