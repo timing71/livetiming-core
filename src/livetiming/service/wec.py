@@ -1,50 +1,65 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, JSONFetcher
-from simplejson.scanner import JSONDecodeError
+from livetiming.service import Service as lt_service, Fetcher, JSONFetcher
+from twisted.internet import threads
 from twisted.logger import Logger
 
-import re
-import simplejson
-import time
 import argparse
+import wecapp
+from twisted.internet import reactor
+from twisted.internet.task import LoopingCall
+from datetime import datetime
+import time
+from threading import Lock
+from urllib2 import HTTPError
 
 
 def mapFlagState(params):
-    if 'safetycar' in params and params['safetycar'] == "true":
+    if 'safety_car' in params and params['safety_car'] == "true":
         return FlagStatus.SC.name.lower()
 
     flagMap = {
         'green': FlagStatus.GREEN,
         'yellow': FlagStatus.YELLOW,
         'full_yellow': FlagStatus.FCY,
+        'safety_car': FlagStatus.SC,
         'red': FlagStatus.RED,
         'chk': FlagStatus.CHEQUERED,
-        'off': FlagStatus.NONE
+        'off': FlagStatus.NONE,
     }
-    if 'racestate' in params and params['racestate'].lower() in flagMap:
-        return flagMap[params['racestate'].lower()].name.lower()
-    Logger().warn("Unknown flag state {flag}", flag=params.get('racestate', None))
+    if 'status' in params:
+        if params['status'].lower() in flagMap:
+            return flagMap[params['status'].lower()].name.lower()
+        Logger().warn("Unknown flag state {flag}", flag=params['status'])
     return 'none'
 
 
 def mapCarState(rawState):
     stateMap = {
-        'Run': 'RUN',
-        'In': 'PIT',
-        'Out': 'OUT',
-        'Ret': 'RET'
+        'run': 'RUN',
+        'in': 'PIT',
+        'out': 'OUT',
+        'ret': 'RET',
+        'stop': 'STOP',
+        'chk': 'FIN',
+        '': 'N/S'
     }
-    if rawState in stateMap:
-        return stateMap[rawState]
+    if rawState.lower() in stateMap:
+        return stateMap[rawState.lower()]
     Logger().warn("Unknown car state {}".format(rawState))
     return rawState
 
 
+def parse_extra_args(extra_args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
+    parser.add_argument("--session", help="Use given session ID instead of finding the current session")
+    return parser.parse_known_args(extra_args)
+
+
 def parseTime(formattedTime):
     if formattedTime == "" or formattedTime is None:
-        return ''
+        return 0
     try:
         return float(formattedTime)
     except ValueError:
@@ -52,64 +67,110 @@ def parseTime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%M:%S.%f")
             return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
         except ValueError:
-            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
-            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                return formattedTime
 
 
-SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{1-2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
-
-
-def parseSessionTime(formattedTime):
-    m = SESSION_TIME_REGEX.match(formattedTime)
-    if m:
-        return (3600 * int(m.group('hours'))) + (60 * int(m.group('minutes'))) + int(m.group('seconds'))
+def maybeInt(raw):
     try:
-        ttime = datetime.strptime(formattedTime, "%H:%M:%S")
-        return (3600 * ttime.hour) + (60 * ttime.minute) + ttime.second
+        return int(raw)
     except ValueError:
-        if formattedTime.startswith("24"):
-            return 86400
-        else:
-            return formattedTime
+        return raw
 
 
-def parse_extra_args(extra_args):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
-    return parser.parse_known_args(extra_args)
+def get_session(session_id=None):
+    if session_id:
+        try:
+            session_data = wecapp.get('http://pipeline-production.netcosports.com/wec/1/sessions/{}?resolve_ref=race_id'.format(session_id))
+            return session_data.get('session', None)
+        except HTTPError:
+            Logger().warn("No session data found for ID {session_id}", session_id=session_id)
+            return None
+    else:
+        init_dict = wecapp.get('http://pipeline-production.netcosports.com/wec/1/init?resolve_ref=session_id%2Crace_id')
+        if 'init' in init_dict:
+            init = init_dict['init']
+            if 'session' in init:
+                init['session']['race'] = init['race']
+                return init['session']
+    return None
+
+
+class WECAppFetcher(Fetcher):
+    def _defer(self):
+        return threads.deferToThread(wecapp.get, self.url)
+
+
+APP_TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standings/{}?resolve_ref=ranks.%24.participation_id%2Cranks.%24.participation.category_id%2Cranks.%24.participation.car_id%2Cranks.%24.participation.car.brand_id%2Cranks.%24.participation.team_id'
+
+WEB_TIMING_URL = "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__data.json?_t={}"
 
 
 class Service(lt_service):
-    log = Logger()
     attribution = ['WEC', 'http://www.fiawec.com/']
-    auto_poll = False  # We handle this ourselves in _handleData - otherwise data might lag by 2*10 seconds :(
+    initial_description = 'World Endurance Championship'
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
-        self.params = {}
-        self.entries = []
-        self.latest_seen_timestamp = None
 
-        self.messages = []
-        self.prevRaceControlMessages = []
+        self._session_data = {}
+        self._cars = {}
 
-        self.is_qualifying_mode = parse_extra_args(extra_args)[0].qualifying
+        self._last_timestamp = datetime.utcfromtimestamp(0)
+        self._last_retrieved = None
+        self._app_fetcher = None
+        self._web_fetcher = None
+        self._last_source = 'N'
+
+        self._data_lock = Lock()
+
+        self._parsed_extra_args = parse_extra_args(extra_args)[0]
+        self.is_qualifying_mode = self._parsed_extra_args.qualifying
 
         if self.is_qualifying_mode:
             self.log.info("Starting up in QUALIFYING mode")
 
-        self.description = "World Endurance Championship"
-        self.session_id = None
+        self.description = self.initial_description
 
         def data_url():
-            return "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__data.json?_t={}".format(int(1000 * time.time()))
+            return WEB_TIMING_URL.format(int(1000 * time.time()))
 
-        fetcher = JSONFetcher(data_url, self._handleData, 10)
-        fetcher.start()
+        self._web_fetcher = JSONFetcher(data_url, self._handleWebData, 10)
 
-        self.col_map = {}
-        for idx, stat in enumerate(self.getColumnSpec()):
-            self.col_map[stat] = idx
+        LoopingCall(self._get_current_session).start(60)
+
+    def _get_current_session(self):
+        self.log.debug("Updating WEC session...")
+        self.session = get_session(self._parsed_extra_args.session)
+
+        if self.session:
+            self.log.info("Using session {sessionid}", sessionid=self.session['id'])
+            new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
+            if new_description != self.description:
+                self.description = new_description
+                self.publishManifest()
+
+            if self._app_fetcher:
+                self._app_fetcher.stop()
+            self._app_fetcher = WECAppFetcher(
+                APP_TIMING_URL.format(self.session['id']),
+                self._handleAppData,
+                10
+            )
+            self._app_fetcher.start()
+
+            if not self._web_fetcher.running:
+                reactor.callLater(5, self._web_fetcher.start)  # Stagger the retrieval
+
+        else:
+            self.log.info("No WEC session found!")
+            if self._app_fetcher:
+                self._app_fetcher.stop()
+            if self._web_fetcher:
+                self._web_fetcher.stop()
 
     def getName(self):
         return "WEC"
@@ -136,18 +197,18 @@ class Service(lt_service):
             Stat.BS2,
             Stat.S3,
             Stat.BS3,
-            Stat.LAST_LAP  # old 16
+            Stat.LAST_LAP
         ]
         if self.is_qualifying_mode:
             return common_cols + [
-                Stat.DRIVER_1_BEST_LAP,  # 17
-                Stat.DRIVER_2_BEST_LAP,  # 18
-                Stat.AGGREGATE_BEST_LAP  # 19
+                Stat.DRIVER_1_BEST_LAP,
+                Stat.DRIVER_2_BEST_LAP,
+                Stat.AGGREGATE_BEST_LAP
             ]
         else:
             return common_cols + [
-                Stat.BEST_LAP,  # 17
-                Stat.PITS  # 18
+                Stat.BEST_LAP,
+                Stat.PITS
             ]
 
     def getTrackDataSpec(self):
@@ -155,160 +216,311 @@ class Service(lt_service):
             "Track Temp",
             "Air Temp",
             "Humidity",
+            "Pressure",
             "Wind Speed",
             "Wind Direction",
-            "Weather"
+            "Weather",
+            "Updated",
+            "Retrieved"
         ]
 
     def getPollInterval(self):
-        return 10
+        return 5
 
-    def _data_is_newer(self, params):
-        if self.latest_seen_timestamp is None:
-            return True
-        if "timestamp" not in params:
-            return True
-        return params["timestamp"] > self.latest_seen_timestamp
+    def _handleAppData(self, data):
+        with self._data_lock:
+            self._last_retrieved = datetime.utcnow()
+            if 'live_standing' in data:
+                ls = data['live_standing']
+                try:
+                    ts = ls.get('original_timestamp', 0)
+                    self.log.debug("App timestamp: {ts}", ts=ts)
+                    pts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    if not self._last_timestamp or pts >= self._last_timestamp:
+                        if 'ranks' in ls and len(ls['ranks']) > 0:
 
-    def _handleData(self, data):
-        if "params" in data:
-            params = data['params']
-            if self._data_is_newer(params):
-                self.params = params
-                if 'eventName' in self.params and self.params['eventName'] != self.description:
-                    self.description = self.params['eventName']
-                    self.publishManifest()
-                    self.analyser.reset()
-                if "sessionId" in params and params['sessionId'] != self.session_id:
-                    self.session_id = params['sessionId']
-                    self.analyser.reset()
+                            for car_data in ls['ranks']:
+                                race_num = car_data['car_number']
+                                car = self._cars.setdefault(race_num, {})
 
-                self.latest_seen_timestamp = self.params.get("timestamp", None)
+                                # These fields should always be set from either data source
+                                car['rank'] = car_data['rank']
+                                car['race_num'] = race_num
+                                car['state'] = mapCarState(car_data['status'])
+                                car['pos_in_class'] = car_data['rank_by_category']
+                                car['s1'] = car_data['sectors']['0']['current'] or 0
+                                car['bs1'] = car_data['sectors']['0']['best'] or 0
+                                car['s2'] = car_data['sectors']['1']['current'] or 0
+                                car['bs2'] = car_data['sectors']['1']['best'] or 0
+                                car['s3'] = car_data['sectors']['2']['current'] or 0
+                                car['bs3'] = car_data['sectors']['2']['best'] or 0
 
-            if "entries" in data:
-                self.entries = data['entries']
-            self._updateAndPublishRaceState()
+                                car['last_lap'] = parseTime(car_data['last_lap'])
+                                car['best_lap'] = parseTime(car_data['best_lap'])
+
+                                car['driver'] = car_data['current_pilot']
+                                car['tyre'] = car_data['current_tyres']
+                                car['lap'] = car_data['current_lap']
+                                car['gap'] = parseTime(car_data['gap'])
+                                car['int'] = parseTime(car_data['gap_prev'])
+                                car['pits'] = car_data['pitstop']
+
+                                # Quali fields
+                                car['d1l1'] = parseTime(car_data.get('average_d1_l1', ''))
+                                car['d2l1'] = parseTime(car_data.get('average_d2_l1', ''))
+                                car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
+                                car['av_lap'] = car_data.get('average_time', None)
+
+                                # These fields should not override data from the website if available
+                                if 'category' not in car:
+                                    car['category'] = car_data['participation']['category']['name_id'].replace(" ", "")
+
+                                if 'team' not in car:
+                                    car['team'] = car_data['participation']['team']['name_id']
+
+                                if 'car' not in car:
+                                    brand = car_data['participation']['car'].get('brand', {})
+                                    model = car_data['participation']['car'].get('model', '')
+                                    car['car'] = u'{} {}'.format(brand.get('name_id', ''), model).strip()
+
+                            sd = self._session_data
+
+                            sd['trackTemp'] = ls['track_temp']
+                            sd['airTemp'] = ls['air_temp']
+                            sd['humidity'] = ls['humidity']
+                            sd['windSpeed'] = ls['wind_speed']
+                            sd['windDirection'] = ls['wind_direction']
+                            sd['pressure'] = ls['pressure']
+                            sd['weather'] = ls['weather']
+
+                            sd['status'] = ls['status']
+                            sd['safety_car'] = ls.get('safety_car', 0) == 1
+                            sd['elapsed'] = ls.get('elapsed', 0)
+
+                            # Sometimes this calculation for remaining time goes wrong if sessions are consecutive
+                            # Don't override our previous remain value with a negative one
+                            maybeRemain = self.session['duration_seconds'] - ls.get('elapsed', 0)
+                            if maybeRemain >= 0:
+                                sd['remain'] = maybeRemain
+                            else:
+                                delta = (pts - self._last_timestamp).total_seconds()
+                                sd['remain'] = max(0, sd.get('remain', 0) - delta)
+
+                            sd['alkamel_session_id'] = ls['alkamel_session_id']
+
+                        self._last_timestamp = pts
+                        self._last_source = 'A'
+                    else:
+                        self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
+                except ValueError:
+                    self.log.failure("Couldn't parse time. Sad times.")
+
+    def _handleWebData(self, data):
+        with self._data_lock:
+            self._last_retrieved = datetime.utcnow()
+            if "params" in data:
+                params = data['params']
+                ts = int(params.get('timestamp', '0')) / 1000
+                pts = datetime.utcfromtimestamp(ts)
+                self.log.debug("Web timestamp: {pts}", pts=pts)
+
+                data_new_enough = (not self._last_timestamp or pts >= self._last_timestamp)
+                correct_session = self._session_data.get('alkamel_session_id') == params.get('sessionId')
+
+                if data_new_enough and correct_session:
+                    for car_data in data.get('entries', []):
+                        race_num = car_data['number']
+                        car = self._cars.setdefault(race_num, {})
+
+                        # These fields should always be set from either data source
+                        car['rank'] = car_data['ranking']
+                        car['race_num'] = race_num
+                        car['state'] = mapCarState(car_data['state'])
+                        car['pos_in_class'] = car_data['categoryPosition']
+                        car['s1'] = parseTime(car_data['currentSector1'])
+                        car['bs1'] = parseTime(car_data['bestSector1'])
+                        car['s2'] = parseTime(car_data['currentSector2'])
+                        car['bs2'] = parseTime(car_data['bestSector2'])
+                        car['s3'] = parseTime(car_data['currentSector3'])
+                        car['bs3'] = parseTime(car_data['bestSector3'])
+
+                        car['last_lap'] = parseTime(car_data['lastlap'])
+                        car['best_lap'] = parseTime(car_data['bestlap'])
+
+                        car['driver'] = car_data['driver']
+                        car['tyre'] = car_data['tyre']
+                        car['lap'] = maybeInt(car_data['lap'])
+                        car['gap'] = parseTime(car_data['gap'])
+                        car['int'] = parseTime(car_data['gapPrev'])
+                        car['pits'] = car_data['pitstop']
+
+                        # Quali fields
+                        car['d1l1'] = parseTime(car_data.get('d1l1', ''))
+                        car['d2l1'] = parseTime(car_data.get('d2l1', ''))
+                        car['aggregate_best'] = min(car['d1l1'], car['d2l1'])
+                        car['av_lap'] = car_data.get('av_time', None)
+
+                        # These fields should override data from the app
+                        car['category'] = car_data['category']
+                        car['team'] = car_data['team']
+                        car['car'] = car_data['car']
+
+                    sd = self._session_data
+
+                    sd['trackTemp'] = params['trackTemp']
+                    sd['airTemp'] = params['airTemp']
+                    sd['humidity'] = params['humidity']
+                    sd['windSpeed'] = params['windSpeed']
+                    sd['windDirection'] = float(params['windDirection'])
+                    sd['pressure'] = params['pressure']
+                    sd['weather'] = params['weather']
+
+                    sd['status'] = params['racestate']
+                    sd['safety_car'] = params.get('safetycar', 'false') == "true"
+                    sd['elapsed'] = params.get('elapsed', 0)
+                    sd['remain'] = params.get('remaining', 0)
+
+                    self._last_timestamp = pts
+                    self._last_source = 'B'
 
     def getRaceState(self):
+
         cars = []
         session = {}
 
         bestLapsByClass = {}
         bestSectorsByClass = {1: {}, 2: {}, 3: {}}
 
-        for car in self.entries:
-            category = car['category']
-            last_lap = parseTime(car['lastlap'])
+        with self._data_lock:
 
-            s1 = parseTime(car['currentSector1'])
-            bs1 = parseTime(car['bestSector1'])
-            s2 = parseTime(car['currentSector2'])
-            bs2 = parseTime(car['bestSector2'])
-            s3 = parseTime(car['currentSector3'])
-            bs3 = parseTime(car['bestSector3'])
+            # First pass: identify fastest sectors/lap per class
+            for car in self._cars.values():
+                race_num = car['race_num']
+                category = car['category']
+                s1 = car['s1']
+                bs1 = car['bs1']
+                s2 = car['s2']
+                bs2 = car['bs2']
+                s3 = car['s3']
+                bs3 = car['bs3']
 
-            state = mapCarState(car['state'])
+                if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
+                    bestSectorsByClass[1][category] = (race_num, bs1)
+                if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
+                    bestSectorsByClass[2][category] = (race_num, bs2)
+                if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
+                    bestSectorsByClass[3][category] = (race_num, bs3)
 
-            if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
-                bestSectorsByClass[1][category] = (car['number'], bs1)
-            if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
-                bestSectorsByClass[2][category] = (car['number'], bs2)
-            if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
-                bestSectorsByClass[3][category] = (car['number'], bs3)
-
-            common_cols = [
-                car['number'],
-                state,
-                category,
-                car['categoryPosition'],
-                car['team'],
-                car['driver'],
-                car['car'],
-                car['tyre'],
-                car['lap'],
-                car['gap'],
-                car['gapPrev'],
-                (s1, 'pb' if s1 == bs1 else ''),
-                (bs1, 'old' if s1 != bs1 else ''),
-                (s2, 'pb' if s2 == bs2 else ''),
-                (bs2, 'old' if s2 != bs2 else ''),
-                (s3, 'pb' if s3 == bs3 else ''),
-                (bs3, 'old' if s3 != bs3 else '')
-            ]
-
-            if self.is_qualifying_mode:
-                d1_lap = parseTime(car['d1l1'])
-                d2_lap = parseTime(car['d2l1'])
-                best_lap = min(d1_lap, d2_lap)
-                av_lap = parseTime(car['av_time'])
-
-                cars.append(common_cols + [
-                    (last_lap, 'pb' if last_lap == best_lap else ''),
-                    (d1_lap or '', 'pb' if best_lap == d1_lap else ''),
-                    (d2_lap or '', 'pb' if best_lap == d2_lap else ''),
-                    (av_lap or '', '')
-                ])
-            else:
-                best_lap = parseTime(car['bestlap'])
-                cars.append(common_cols + [
-                    (last_lap, 'pb' if last_lap == best_lap else ''),
-                    (best_lap, ''),
-                    car['pitstop']
-                ])
-
-            if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
-                    bestLapsByClass[category] = (car['number'], best_lap)
-
-        for car in cars:
-            # Second pass to highlight sb/sb-new
-            car_num = car[0]
-            category = car[2]
-            state = car[self.col_map[Stat.STATE]]
-            s3 = car[self.col_map[Stat.S3]][0]
-
-            # Best lap
-            if category in bestLapsByClass and bestLapsByClass[category][0] == car_num:
-                best_lap_time = bestLapsByClass[category][1]
                 if self.is_qualifying_mode:
-                    if car[self.col_map[Stat.DRIVER_1_BEST_LAP]][0] == best_lap_time:  # D1L1
-                        car[self.col_map[Stat.DRIVER_1_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_1_BEST_LAP]][0], 'sb')
-                    elif car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0] == best_lap_time:  # D2L1
-                        car[self.col_map[Stat.DRIVER_2_BEST_LAP]] = (car[self.col_map[Stat.DRIVER_2_BEST_LAP]][0], 'sb')
+                    best_lap = car['aggregate_best']
                 else:
-                    car[self.col_map[Stat.BEST_LAP]] = (car[self.col_map[Stat.BEST_LAP]][0], 'sb')
-                if car[self.col_map[Stat.LAST_LAP]][0] == best_lap_time and state == 'RUN' and s3 > 0:
-                    car[self.col_map[Stat.LAST_LAP]] = (car[self.col_map[Stat.LAST_LAP]][0], 'sb-new')
+                    best_lap = car['best_lap']
 
-            # Best sectors
-            if category in bestSectorsByClass[1] and bestSectorsByClass[1][category][0] == car_num:
-                car[self.col_map[Stat.BS1]] = (car[self.col_map[Stat.BS1]][0], 'sb')
-                if car[self.col_map[Stat.S1]][0] == car[self.col_map[Stat.BS1]][0]:
-                    car[self.col_map[Stat.S1]] = (car[self.col_map[Stat.S1]][0], 'sb')
-            if category in bestSectorsByClass[2] and bestSectorsByClass[2][category][0] == car_num:
-                car[self.col_map[Stat.BS2]] = (car[self.col_map[Stat.BS2]][0], 'sb')
-                if car[self.col_map[Stat.S2]][0] == car[self.col_map[Stat.BS2]][0]:
-                    car[self.col_map[Stat.S2]] = (car[self.col_map[Stat.S2]][0], 'sb')
-            if category in bestSectorsByClass[3] and bestSectorsByClass[3][category][0] == car_num:
-                car[self.col_map[Stat.BS3]] = (car[self.col_map[Stat.BS3]][0], 'sb')
-                if car[self.col_map[Stat.S3]][0] == car[self.col_map[Stat.BS3]][0]:
-                    car[self.col_map[Stat.S3]] = (car[self.col_map[Stat.S3]][0], 'sb')
+                if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
+                        bestLapsByClass[category] = (race_num, best_lap)
 
-        session['flagState'] = mapFlagState(self.params)
+            # Second pass: assemble cars in order
+            for car in sorted(self._cars.values(), key=lambda c: c['rank']):
+                race_num = car['race_num']
+                category = car['category']
+                s1 = car['s1']
+                bs1 = car['bs1']
+                s2 = car['s2']
+                bs2 = car['bs2']
+                s3 = car['s3']
+                bs3 = car['bs3']
+                last_lap = car['last_lap']
 
-        session['timeElapsed'] = self.params['elapsed'] if 'elapsed' in self.params else None
-        session['timeRemain'] = self.params['remaining'] if 'remaining' in self.params else None
+                def sector_time(sector):
+                    stime = car['s{}'.format(sector)]
+                    best = car['bs{}'.format(sector)]
 
-        if 'trackTemp' in self.params:
+                    if stime == best:
+                        if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == race_num:
+                            flag = 'sb'
+                        else:
+                            flag = 'pb'
+                    else:
+                        flag = ''
+
+                    return (stime if stime > 0 else '', flag)
+
+                def bs_flag(bsector):
+                    if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == race_num:
+                        return 'sb'
+                    return 'old'
+
+                common_cols = [
+                    race_num,
+                    car['state'],
+                    category,
+                    car['pos_in_class'],
+                    car['team'],
+                    car['driver'],
+                    car['car'],
+                    car['tyre'],
+                    car['lap'],
+                    car['gap'] if car['gap'] > 0 else '',
+                    car['int'] if car['int'] > 0 else '',
+                    sector_time(1),
+                    (bs1 if bs1 > 0 else '', bs_flag(1)),
+                    sector_time(2),
+                    (bs2 if bs2 > 0 else '', bs_flag(2)),
+                    sector_time(3),
+                    (bs3 if bs3 > 0 else '', bs_flag(3))
+                ]
+
+                we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
+                fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
+                last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
+
+                if self.is_qualifying_mode:
+                    d1_lap = car['d1l1']
+                    d2_lap = car['d2l1']
+                    best_lap = car['aggregate_best']
+                    av_lap = car['av_lap']
+
+                    d1_flag = 'sb' if we_have_fastest and d1_lap == fastest else 'pb' if d1_lap == best_lap else ''
+                    d2_flag = 'sb' if we_have_fastest and d2_lap == fastest else 'pb' if d2_lap == best_lap else ''
+
+                    cars.append(common_cols + [
+                        (last_lap if last_lap > 0 else '', last_flag),
+                        (d1_lap or '', d1_flag),
+                        (d2_lap or '', d2_flag),
+                        (av_lap or '', '')
+                    ])
+                else:
+                    best_lap = parseTime(car['best_lap'])
+                    last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
+                    cars.append(common_cols + [
+                        (last_lap if last_lap > 0 else '', last_flag),
+                        (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
+                        car['pits']
+                    ])
+
+            session['flagState'] = mapFlagState(self._session_data)
+
+            delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
+            self.log.debug("Delta: {delta}", delta=delta)
+
+            session['timeElapsed'] = self._session_data.get('elapsed', 0) + delta
+            session['timeRemain'] = self._session_data.get('remain', 0) - delta
+
+            last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
+
             session['trackData'] = [
-                u"{}°C".format(self.params['trackTemp']),
-                u"{}°C".format(self.params['airTemp']),
-                "{}%".format(self.params['humidity']),
-                "{}kph".format(self.params['windSpeed']),
-                u"{}°".format(self.params['windDirection']),
-                self.params['weather'].replace('_', ' ').title()
+                u"{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
+                u"{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
+                "{}%".format(self._session_data['humidity']) if 'humidity' in self._session_data else '',
+                "{}mbar".format(self._session_data['pressure']) if 'pressure' in self._session_data else '',
+                "{}kph".format(self._session_data['windSpeed']) if 'windSpeed' in self._session_data else '',
+                u"{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
+                self._session_data.get('weather', '').replace('_', ' ').title(),
+                self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
+                '{} {}'.format(self._last_source, last_retrieved_time)
             ]
 
-        return {
-            "cars": cars,
-            "session": session
-        }
+            return {
+                "cars": cars,
+                "session": session
+            }
