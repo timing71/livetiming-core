@@ -67,8 +67,11 @@ def parseTime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%M:%S.%f")
             return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
         except ValueError:
-            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
-            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                return formattedTime
 
 
 def maybeInt(raw):
@@ -258,8 +261,8 @@ class Service(lt_service):
                                 car['driver'] = car_data['current_pilot']
                                 car['tyre'] = car_data['current_tyres']
                                 car['lap'] = car_data['current_lap']
-                                car['gap'] = car_data['gap']
-                                car['int'] = car_data['gap_prev']
+                                car['gap'] = parseTime(car_data['gap'])
+                                car['int'] = parseTime(car_data['gap_prev'])
                                 car['pits'] = car_data['pitstop']
 
                                 # Quali fields
@@ -347,8 +350,8 @@ class Service(lt_service):
                         car['driver'] = car_data['driver']
                         car['tyre'] = car_data['tyre']
                         car['lap'] = maybeInt(car_data['lap'])
-                        car['gap'] = car_data['gap']
-                        car['int'] = car_data['gapPrev']
+                        car['gap'] = parseTime(car_data['gap'])
+                        car['int'] = parseTime(car_data['gapPrev'])
                         car['pits'] = car_data['pitstop']
 
                         # Quali fields
@@ -457,8 +460,8 @@ class Service(lt_service):
                     car['car'],
                     car['tyre'],
                     car['lap'],
-                    car['gap'],
-                    car['int'],
+                    car['gap'] if car['gap'] > 0 else '',
+                    car['int'] if car['int'] > 0 else '',
                     sector_time(1),
                     (bs1 if bs1 > 0 else '', bs_flag(1)),
                     sector_time(2),
