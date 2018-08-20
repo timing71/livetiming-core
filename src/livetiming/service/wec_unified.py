@@ -149,13 +149,17 @@ class Service(lt_service):
             if new_description != self.description:
                 self.description = new_description
                 self.publishManifest()
-            if not self._app_fetcher:
-                self._app_fetcher = WECAppFetcher(
-                    APP_TIMING_URL.format(self.session['id']),
-                    self._handleAppData,
-                    10
-                )
-                self._app_fetcher.start()
+
+            if self._app_fetcher:
+                self._app_fetcher.stop()
+            self._app_fetcher = WECAppFetcher(
+                APP_TIMING_URL.format(self.session['id']),
+                self._handleAppData,
+                10
+            )
+            self._app_fetcher.start()
+
+            if not self._web_fetcher.running:
                 reactor.callLater(5, self._web_fetcher.start)  # Stagger the retrieval
 
         else:
