@@ -40,6 +40,8 @@ def mapCarState(rawState):
         'in': 'PIT',
         'out': 'OUT',
         'ret': 'RET',
+        'stop': 'STOP',
+        'chk': 'FIN',
         '': 'N/S'
     }
     if rawState.lower() in stateMap:
