@@ -264,7 +264,7 @@ class Service(object):
         manifest = {
             "uuid": self.uuid,
             "name": self.getName(),
-            "serviceClass": self.__module__[19:],  # Everything after 'livetiming.service.'
+            "serviceClass": self._getServiceClass(),
             "description": self._getDescription(),
             "colSpec": colspec,
             "trackDataSpec": self.getTrackDataSpec(),
@@ -282,6 +282,9 @@ class Service(object):
             manifest['doNotRecord'] = True
 
         return manifest
+
+    def _getServiceClass(self):
+        return self.__module__[19:]  # Everything after 'livetiming.service.'
 
     def _getDescription(self):
         if self.args.description is not None:
