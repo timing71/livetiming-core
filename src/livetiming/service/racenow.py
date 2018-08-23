@@ -41,6 +41,8 @@ class RaceNowState:
         self.has_data = False
         self.session = {}
         self.cars = {}
+        self.flag = {}
+        self.weather = {}
 
     def handle(self, payload):
         if 'type' in payload:
@@ -60,6 +62,37 @@ class RaceNowState:
     def handle_0(self, payload):
         for line in payload.get('rows', []):
             self.cars[line['CARNO']] = line
+
+    def handle_F(self, payload):
+        self.flag.update(payload)
+
+    def handle_W(self, payload):
+        self.weather.update(payload)
+
+    def handle_L(self, payload):
+        self._update_car_with(payload)
+
+    def handle_D(self, payload):
+        self._update_car_with(payload)
+
+    def handle_I(self, payload):
+        self._update_car_with({
+            'CARNO': payload.get('CARNO'),
+            'PIT': payload.get('PIT'),
+            'STATUS': 'P'
+        })
+
+    def handle_O(self, payload):
+        self._update_car_with({
+            'CARNO': payload.get('CARNO'),
+            'STATUS': ''
+        })
+
+    def _update_car_with(payload):
+        if 'CARNO' in payload:
+            car_num = payload['CARNO']
+            if car_num in self.cars:
+                self.cars[car_num].update(payload)
 
 
 def parse_extra_args(extra_args):
@@ -140,6 +173,21 @@ def map_car(car):
     ]
 
 
+_SESSION_FLAGS = {
+    'R': FlagStatus.RED,
+    'G': FlagStatus.GREEN,
+    'Y': FlagStatus.SC,
+    'F': FlagStatus.CHEQUERED
+}
+
+
+def map_session_flag(raw):
+    return _SESSION_FLAGS.get(
+        raw,
+        FlagStatus.NONE
+    )
+
+
 class Service(lt_service):
     auto_poll = False
 
@@ -205,6 +253,9 @@ class Service(lt_service):
     def getDefaultDescription(self):
         return self._state.session.get('DESCR_E', '')
 
+    def getTrackDataSpec(self):
+        return ['Weather']
+
     def _mapCars(self):
 
         session_type = self._state.session.get('RACE_TYPE', 'B')
@@ -249,6 +300,7 @@ class Service(lt_service):
 
     def _mapSession(self):
         return {
-            "flagState": "none",
-            "timeElapsed": 0
+            "flagState": map_session_flag(self._state.flag.get('flag', '')).name.lower(),
+            "timeElapsed": 0,
+            "trackData": [ self._state.weather.get('condition', '') ]
         }
