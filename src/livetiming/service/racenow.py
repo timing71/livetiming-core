@@ -11,8 +11,7 @@ import simplejson
 import time
 import urllib2
 
-# We'll probably want to use this at some point
-# SERVER_SPEC_URL = 'http://52.36.59.170/data/server/server.json'
+SERVER_SPEC_URL = 'http://52.36.59.170/data/server/server.json'
 
 
 def create_ws_protocol(log, handler):
@@ -131,14 +130,23 @@ def map_time_flag(flag):
     return _TIME_FLAGS.get(flag, '')
 
 
-def maybe_time(time):
+def maybe_time(raw):
     try:
-        ftime = float(time)
+        ftime = float(raw)
         if ftime > 0:
             return ftime
         return ''
     except ValueError:
-        return time
+        return raw
+
+
+def maybe_float(raw):
+    if raw == '' or raw is None:
+        return 0
+    try:
+        return float(raw)
+    except ValueError as e:
+        return 0
 
 
 def maybe_int(raw):
@@ -150,7 +158,7 @@ def maybe_int(raw):
 
 def map_car(car):
     return [
-        car['REGNO'],
+        car['CARNO'],
         map_car_state(car.get('STATUS', '')),
         car.get('RACE_CLASS', ''),
         car.get('DRIVER_E', ''),
@@ -188,12 +196,30 @@ def map_session_flag(raw):
     )
 
 
+def get_websocket_url(track):
+    servers = simplejson.load(urllib2.urlopen(SERVER_SPEC_URL))
+
+    track_ip_key = '{}_server'.format(track)
+    track_port_key = '{}_port1'.format(track)
+
+    if track_ip_key in servers and track_port_key in servers:
+        return 'ws://{}:{}/get'.format(
+            servers[track_ip_key],
+            servers[track_port_key]
+        )
+
+    raise Exception('Cannot find {} in server config: {}'.format(track, servers.keys()))
+
+
 class Service(lt_service):
     auto_poll = False
+    attribution = ['RaceLive', 'http://racenow.racelive.jp/']
 
     def __init__(self, args, extra):
         lt_service.__init__(self, args, extra)
         self._extra = parse_extra_args(extra)
+
+        self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
 
         self._state = RaceNowState(
             self.log,
@@ -201,7 +227,7 @@ class Service(lt_service):
             self._updateAndPublishRaceState
         )
 
-        url = 'ws://52.24.223.254:9001/get'
+        url = get_websocket_url(self._extra.tk)
 
         factory = ReconnectingWebSocketClientFactory(url)
         factory.protocol = create_ws_protocol(self.log, self._state.handle)
@@ -211,13 +237,12 @@ class Service(lt_service):
         return self._extra.tk
 
     def onSessionChange(self):
+        self.log.info("Session change triggered")
         self.state['messages'] = []
         self.analyser.reset()
         self.publishManifest()
 
     def getRaceState(self):
-        if not self._state.has_data:
-            self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
         return {
             'cars': self._mapCars(),
             'session': self._mapSession()
@@ -265,13 +290,13 @@ class Service(lt_service):
 
         if len(cars) > 0:  # Now we need to calculate gap/int from the original dataset
             leader = self._state.cars[cars[0][0]]
-            leader_laps = int(leader.get('LAPS', 0))
+            leader_laps = maybe_int(leader.get('LAPS', 0))
 
             for idx, car in enumerate(cars[1:]):
                 this_car = self._state.cars[car[0]]
-                this_laps = int(this_car.get('LAPS', 0))
+                this_laps = maybe_int(this_car.get('LAPS', 0))
                 prev_car = self._state.cars[cars[idx][0]]
-                prev_laps = int(prev_car.get('LAPS', 0))
+                prev_laps = maybe_int(prev_car.get('LAPS', 0))
 
                 gap = ''
                 interval = ''
@@ -281,17 +306,17 @@ class Service(lt_service):
                         gap_laps = leader_laps - this_laps
                         gap = '{} lap{}'.format(gap_laps, 's' if gap_laps > 1 else '')
                     else:
-                        gap = float(this_car.get('TOTAL_TIME', 0)) - float(leader.get('TOTAL_TIME', 0))
+                        gap = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(leader.get('TOTAL_TIME', 0))
 
                     if this_laps < prev_laps:
                         int_laps = prev_laps - this_laps
                         interval = '{} lap{}'.format(int_laps, 's' if int_laps > 1 else '')
                     else:
-                        interval = float(this_car.get('TOTAL_TIME', 0)) - float(prev_car.get('TOTAL_TIME', 0))
+                        interval = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(prev_car.get('TOTAL_TIME', 0))
 
                 elif this_car.get('BEST_TIME', 0) != '9999999999':
-                    gap = float(this_car.get('BEST_TIME', 0)) - float(leader.get('BEST_TIME', 0))
-                    interval = float(this_car.get('BEST_TIME', 0)) - float(prev_car.get('BEST_TIME', 0))
+                    gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
+                    interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
 
                 car[7] = gap
                 car[8] = interval
@@ -302,5 +327,5 @@ class Service(lt_service):
         return {
             "flagState": map_session_flag(self._state.flag.get('flag', '')).name.lower(),
             "timeElapsed": 0,
-            "trackData": [ self._state.weather.get('condition', '') ]
+            "trackData": [self._state.weather.get('condition', '-')]
         }
