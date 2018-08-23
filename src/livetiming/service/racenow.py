@@ -55,8 +55,10 @@ class RaceNowState:
             self.log.warn('Unhandled message type {type}', type=payload['type'])
 
     def handle_S(self, payload):
+        old_session = self.session.get('DESCR_E')
         self.session.update(payload)
-        self.onSessionChange()
+        if self.session.get('DESCR_E') != old_session:
+            self.onSessionChange()
 
     def handle_0(self, payload):
         for line in payload.get('rows', []):
@@ -288,38 +290,69 @@ class Service(lt_service):
         sort_func = car_sort_key(session_type)
         cars = map(map_car, sorted(self._state.cars.values(), key=sort_func, reverse=True))
 
-        if len(cars) > 0:  # Now we need to calculate gap/int from the original dataset
+        if len(cars) > 0:  # Now we need to calculate gap/int from the original dataset, and highlight sb's
             leader = self._state.cars[cars[0][0]]
             leader_laps = maybe_int(leader.get('LAPS', 0))
 
-            for idx, car in enumerate(cars[1:]):
-                this_car = self._state.cars[car[0]]
-                this_laps = maybe_int(this_car.get('LAPS', 0))
-                prev_car = self._state.cars[cars[idx][0]]
-                prev_laps = maybe_int(prev_car.get('LAPS', 0))
+            sb_lap_car = self._state.session.get('LAP_BEST_NO')
+            sb_lap_time = maybe_float(self._state.session.get('LAP_BEST_TIME'))
 
-                gap = ''
-                interval = ''
+            sb_s1_car = self._state.session.get('S1_BEST_NO')
+            sb_s1_time = maybe_float(self._state.session.get('S1_BEST_TIME'))
 
-                if session_type == 'R':
-                    if this_laps < leader_laps:
-                        gap_laps = leader_laps - this_laps
-                        gap = '{} lap{}'.format(gap_laps, 's' if gap_laps > 1 else '')
-                    else:
-                        gap = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(leader.get('TOTAL_TIME', 0))
+            sb_s2_car = self._state.session.get('S2_BEST_NO')
+            sb_s2_time = maybe_float(self._state.session.get('S2_BEST_TIME'))
 
-                    if this_laps < prev_laps:
-                        int_laps = prev_laps - this_laps
-                        interval = '{} lap{}'.format(int_laps, 's' if int_laps > 1 else '')
-                    else:
-                        interval = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(prev_car.get('TOTAL_TIME', 0))
+            sb_s3_car = self._state.session.get('S3_BEST_NO')
+            sb_s3_time = maybe_float(self._state.session.get('S3_BEST_TIME'))
 
-                elif this_car.get('BEST_TIME', 0) != '9999999999':
-                    gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
-                    interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
+            sb_s4_car = self._state.session.get('S4_BEST_NO')
+            sb_s4_time = maybe_float(self._state.session.get('S4_BEST_TIME'))
 
-                car[7] = gap
-                car[8] = interval
+            for idx, car in enumerate(cars):
+                if idx > 0:
+                    this_car = self._state.cars[car[0]]
+                    this_laps = maybe_int(this_car.get('LAPS', 0))
+                    prev_car = self._state.cars[cars[idx - 1][0]]
+                    prev_laps = maybe_int(prev_car.get('LAPS', 0))
+
+                    gap = ''
+                    interval = ''
+
+                    if session_type == 'R':
+                        if this_laps < leader_laps:
+                            gap_laps = leader_laps - this_laps
+                            gap = '{} lap{}'.format(gap_laps, 's' if gap_laps > 1 else '')
+                        else:
+                            gap = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(leader.get('TOTAL_TIME', 0))
+
+                        if this_laps < prev_laps:
+                            int_laps = prev_laps - this_laps
+                            interval = '{} lap{}'.format(int_laps, 's' if int_laps > 1 else '')
+                        else:
+                            interval = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(prev_car.get('TOTAL_TIME', 0))
+
+                    elif this_car.get('BEST_TIME', 0) != '9999999999':
+                        gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
+                        interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
+
+                    car[7] = gap
+                    car[8] = interval
+
+                if car[0] == sb_lap_car and car[18][0] == sb_lap_time:
+                    car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[13] != '' else 'sb']
+
+                if car[0] == sb_s1_car and car[10][0] == sb_s1_time:
+                    car[10] = [car[10][0], 'sb']
+
+                if car[0] == sb_s2_car and car[12][0] == sb_s2_time:
+                    car[12] = [car[12][0], 'sb']
+
+                if car[0] == sb_s3_car and car[14][0] == sb_s3_time:
+                    car[14] = [car[14][0], 'sb']
+
+                if car[0] == sb_s4_car and car[16][0] == sb_s4_time:
+                    car[16] = [car[16][0], 'sb']
 
         return cars
 
