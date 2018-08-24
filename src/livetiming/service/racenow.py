@@ -409,7 +409,6 @@ class Service(lt_service):
     def _mapSession(self):
         session = {
             "flagState": map_session_flag(self._state.flag.get('flag', '')).name.lower(),
-            "timeElapsed": 0,
             "trackData": [self._state.weather.get('condition', '-')]
         }
 
