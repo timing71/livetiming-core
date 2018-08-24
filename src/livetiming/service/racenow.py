@@ -201,7 +201,6 @@ def map_car(car):
         car.get('DRIVER_E', ''),
         car.get('TEAM_E', ''),
         maybe_int(car.get('LAPS', 0)),
-        car.get('TIRE', ''),
         '',
         '',
         [maybe_time(car.get('SEC1_TIME', 0)), map_time_flag(car.get('SEC1_FLAG'))],
@@ -305,7 +304,6 @@ class Service(lt_service):
             Stat.DRIVER,
             Stat.TEAM,
             Stat.LAPS,
-            Stat.TYRE,
             Stat.GAP,
             Stat.INT,
             Stat.S1,
@@ -388,23 +386,23 @@ class Service(lt_service):
                         gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
                         interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
 
-                    car[7] = gap if gap >= 0 else ''
-                    car[8] = interval if interval >= 0 else ''
+                    car[6] = gap if gap >= 0 else ''
+                    car[7] = interval if interval >= 0 else ''
 
-                if car[0] == sb_lap_car and car[18][0] == sb_lap_time:
-                    car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[15][0] != '' else 'sb']
+                if car[0] == sb_lap_car and car[17][0] == sb_lap_time:
+                    car[17] = [car[17][0], 'sb-new' if car[16][0] == car[17][0] and car[14][0] != '' else 'sb']
 
-                if car[0] == sb_s1_car and car[10][0] == sb_s1_time:
-                    car[10] = [car[10][0], 'sb']
+                if car[0] == sb_s1_car and car[9][0] == sb_s1_time:
+                    car[9] = [car[9][0], 'sb']
 
-                if car[0] == sb_s2_car and car[12][0] == sb_s2_time:
-                    car[12] = [car[12][0], 'sb']
+                if car[0] == sb_s2_car and car[11][0] == sb_s2_time:
+                    car[11] = [car[11][0], 'sb']
 
-                if car[0] == sb_s3_car and car[14][0] == sb_s3_time:
-                    car[14] = [car[14][0], 'sb']
+                if car[0] == sb_s3_car and car[13][0] == sb_s3_time:
+                    car[13] = [car[13][0], 'sb']
 
-                if car[0] == sb_s4_car and car[16][0] == sb_s4_time:
-                    car[16] = [car[16][0], 'sb']
+                if car[0] == sb_s4_car and car[15][0] == sb_s4_time:
+                    car[15] = [car[15][0], 'sb']
 
         return cars
 
