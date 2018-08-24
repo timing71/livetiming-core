@@ -38,8 +38,10 @@ def parseState(rawState):
         return "PIT"
     elif rawState["PitOut"] == 1:
         return "OUT"
-    elif rawState["Retired"] == 1 or rawState["Stopped"] == 1:
+    elif rawState["Retired"] == 1:
         return "RET"
+    elif rawState["Stopped"] == 1:
+        return "STOP"
     return "RUN"
 
 
