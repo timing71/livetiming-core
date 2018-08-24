@@ -35,6 +35,7 @@ class RaceNowState:
         self.log = log
         self.onSessionChange = onSessionChange
         self.onData = onData
+        self.messages = []
         self._reset()
 
     def _reset(self):
@@ -43,6 +44,7 @@ class RaceNowState:
         self.cars = {}
         self.flag = {}
         self.weather = {}
+        del self.messages[:]
 
     def handle(self, payload):
         if 'type' in payload:
@@ -112,16 +114,21 @@ class RaceNowState:
         print "Reset request received"
 
     def handle_T(self, payload):
-        print "Text:", payload
+        self._handle_rc_message(payload['msg'])
 
     def handle_T2(self, payload):
-        print "Text 2:", payload
+        self._handle_rc_message(payload['msg'])
 
     def _update_car_with(self, payload):
         if 'CARNO' in payload:
             car_num = payload['CARNO']
             if car_num in self.cars:
                 self.cars[car_num].update(payload)
+
+    def _handle_rc_message(self, msg):
+        stripped = msg.strip()
+        if stripped != '':
+            self.messages.append(stripped)
 
 
 def parse_extra_args(extra_args):
@@ -322,6 +329,11 @@ class Service(lt_service):
 
     def getTrackDataSpec(self):
         return ['Weather']
+
+    def getExtraMessageGenerators(self):
+        return [
+            RaceControlMessage(self._state.messages)
+        ]
 
     def _mapCars(self):
 
