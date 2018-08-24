@@ -56,8 +56,11 @@ class RaceNowState:
 
     def handle_S(self, payload):
         old_session = self.session.get('DESCR_E')
+        is_new_session = payload.get('DESCR_E') != old_session
+        if is_new_session:
+            self._reset()
         self.session.update(payload)
-        if self.session.get('DESCR_E') != old_session:
+        if is_new_session:
             self.onSessionChange()
 
     def handle_0(self, payload):
@@ -70,7 +73,22 @@ class RaceNowState:
     def handle_W(self, payload):
         self.weather.update(payload)
 
+    def handle_1(self, payload):
+        self._update_car_with(payload)
+
+    def handle_2(self, payload):
+        self._update_car_with(payload)
+
+    def handle_3(self, payload):
+        self._update_car_with(payload)
+
     def handle_L(self, payload):
+        self._update_car_with(payload)
+
+    def handle_K(self, payload):
+        self._update_car_with(payload)
+
+    def handle_U(self, payload):
         self._update_car_with(payload)
 
     def handle_D(self, payload):
@@ -89,7 +107,16 @@ class RaceNowState:
             'STATUS': ''
         })
 
-    def _update_car_with(payload):
+    def handle_R(self, payload):
+        print "Reset request received"
+
+    def handle_T(self, payload):
+        print "Text:", payload
+
+    def handle_T2(self, payload):
+        print "Text 2:", payload
+
+    def _update_car_with(self, payload):
         if 'CARNO' in payload:
             car_num = payload['CARNO']
             if car_num in self.cars:
@@ -111,7 +138,7 @@ def car_sort_key(sessionType):
             else:
                 return float(car.get('BEST_TIME', 0)) * -1
         else:
-            return int(car.get('START_POS', 0))
+            return -99999 - int(car.get('START_POS', 0))
     return inner
 
 
@@ -336,11 +363,11 @@ class Service(lt_service):
                         gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
                         interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
 
-                    car[7] = gap
-                    car[8] = interval
+                    car[7] = gap if gap >= 0 else ''
+                    car[8] = interval if interval >= 0 else ''
 
                 if car[0] == sb_lap_car and car[18][0] == sb_lap_time:
-                    car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[13] != '' else 'sb']
+                    car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[15][0] != '' else 'sb']
 
                 if car[0] == sb_s1_car and car[10][0] == sb_s1_time:
                     car[10] = [car[10][0], 'sb']
@@ -357,8 +384,16 @@ class Service(lt_service):
         return cars
 
     def _mapSession(self):
-        return {
+        session = {
             "flagState": map_session_flag(self._state.flag.get('flag', '')).name.lower(),
             "timeElapsed": 0,
             "trackData": [self._state.weather.get('condition', '-')]
         }
+
+        to_go = self._state.flag.get('togo', '')
+
+        if re.match("[0-9]{2}:[0-9]{2}:[0-9]{2}", to_go):
+            times = map(int, to_go.split(':'))
+            session['timeRemain'] = (times[0] * 3600) + (times[1] * 60) + times[2]
+
+        return session
