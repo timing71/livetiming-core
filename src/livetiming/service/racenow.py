@@ -4,6 +4,7 @@ from livetiming.service import Service as lt_service, ReconnectingWebSocketClien
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
+from twisted.internet.task import LoopingCall
 
 import argparse
 import re
@@ -250,10 +251,20 @@ class Service(lt_service):
 
         self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
 
+        self._pending_update = False
+
+        def setPendingUpdate():
+            self._pending_update = True
+
+        def maybeSendUpdate():
+            if self._pending_update:
+                self._pending_update = False
+                self._updateAndPublishRaceState()
+
         self._state = RaceNowState(
             self.log,
             self.onSessionChange,
-            self._updateAndPublishRaceState
+            setPendingUpdate
         )
 
         url = get_websocket_url(self._extra.tk)
@@ -261,6 +272,8 @@ class Service(lt_service):
         factory = ReconnectingWebSocketClientFactory(url)
         factory.protocol = create_ws_protocol(self.log, self._state.handle)
         connectWS(factory)
+
+        LoopingCall(maybeSendUpdate).start(1)
 
     def _getServiceClass(self):
         return self._extra.tk
