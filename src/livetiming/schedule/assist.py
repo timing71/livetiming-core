@@ -66,7 +66,7 @@ def run(service, args):
             print u"New event: {}".format(e['summary'])
 
             event_body = {
-                'summary': "{} [{}{}]".format(
+                'summary': u"{} [{}{}]".format(
                     event['summary'],
                     event['service'],
                     ',--hidden' if event['service'] in ALWAYS_HIDDEN_SERVICES else ''
@@ -87,7 +87,7 @@ def _parse_event(event):
     tag = summary[1:summary.index(']')]
 
     return {
-        'summary': "{}: {}".format(tag, summary[summary.index(']') + 1:].strip()),
+        'summary': u"{}: {}".format(tag, summary[summary.index(']') + 1:].strip()),
         'service': TAG_TO_SERVICE_CLASS.get(tag),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime'])
