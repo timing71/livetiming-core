@@ -60,8 +60,6 @@ class F1Client(Thread):
                 hub.server.invoke('Subscribe', ['SPFeed', 'ExtrapolatedClock'])
                 connection.wait(None)
 
-_F1_SERVICE_YEAR = 2018
-
 
 def mapTimeFlag(color):
     timeMap = {
@@ -181,41 +179,21 @@ class Service(lt_service):
     attribution = ['FOWC', 'https://www.formula1.com/']
     auto_poll = False
 
-    DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
     log = Logger()
 
     def __init__(self, args, extra_args):
         args.hidden = True  # Always hide F1 due to C&D from FOM
         lt_service.__init__(self, args, extra_args)
-        self.carsState = []
-        self.sessionState = {}
         self.dataMap = {}
         self._clock = {}
         self.prevRaceControlMessage = None
         self.messages = []
-        self.hasSession = False
-        self.serverTimestamp = 0
-        self.timestampLastUpdated = datetime.now()
         self.dataLastUpdated = datetime.now()
 
         self._description = 'Formula 1'
 
         client = F1Client(self)
         client.start()
-
-    def on_initial_data(self, payload):
-        for key, val in payload[1].iteritems():
-            self.dataMap[key] = val
-            if key == 'free':
-                new_desc = '{} - {}'.format(
-                    val['data']['R'].title(),
-                    val['data']['S']
-                )
-
-                if new_desc != self._description:
-                    self._description = new_desc
-                    self.log.info("New session: {desc}", desc=new_desc)
-                    self.publishManifest()
 
     def on_spfeed(self, payload):
         self.on_feed(payload)
