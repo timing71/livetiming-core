@@ -47,13 +47,16 @@ class F1Client(Thread):
                     for msg in kwargs['M']:
                         delegate(msg['M'], msg['A'])
                 if 'R' in kwargs:
-                    delegate('feed', ['SPFeed', kwargs['R']['SPFeed']])
+                    for msg, payload in kwargs['R'].iteritems():
+                        delegate(msg, [msg, payload])
+                if 'M' not in kwargs and 'R' not in kwargs:
+                    if len(kwargs) > 0:
+                        self.log.warn("Unhandled packet: {pkt}", pkt=kwargs)
 
             connection.error += print_error
             connection.received += handle
 
             with connection:
-                print "Connection happened"
                 hub.server.invoke('Subscribe', ['SPFeed', 'ExtrapolatedClock'])
                 connection.wait(None)
 
@@ -107,15 +110,6 @@ def parseFlagState(flagChar):
     return "green"
 
 
-SESSION_NAME_MAP = {
-    'Practice1': "Free Practice 1",
-    'Practice2': "Free Practice 2",
-    'Practice3': "Free Practice 3",
-    'Qualifying': "Qualifying",
-    'Race': "Race"
-}
-
-
 def parse_time(formattedTime):
     if formattedTime == "" or formattedTime is None:
         return 0
@@ -133,8 +127,59 @@ def parse_time(formattedTime):
                 return formattedTime
 
 
+def obj_to_array(obj):
+    try:
+        result = []
+        for key, val in sorted(obj.iteritems(), key=lambda i: int(i[0])):
+            result[int(key)] = val
+        return result
+    except (ValueError, AttributeError):
+        return obj
+
+
+def array_add(arr, idx, item):
+    if idx < len(arr):
+        arr[idx] = item
+    else:
+        while len(arr) < item - 1:
+            arr.append(None)
+        arr.append(item)
+
+
+def _apply_patch_children(orig, patch):
+    for name, value in sorted(patch.iteritems(), key=lambda i: i[0]):
+        try:
+            name = int(name)
+        except ValueError:
+            name = name
+        if name == '_deleted':
+            for deletedItem in value:
+                del orig[deletedItem]
+        else:
+            if isinstance(orig, list):
+                if isinstance(value, dict):
+                    _apply_patch_children(orig[name], value)
+                else:
+                    # print orig
+                    # print "Setting array orig[{}] = {} ({})".format(name, value, type(value))
+                    array_add(orig, name, value)
+            elif name in orig:
+                if value is None:
+                    del orig[name]
+                elif isinstance(value, dict):
+                    _apply_patch_children(orig[name], value)
+                else:
+                    # print "Setting orig[{}] = {} ({})".format(name, value, type(value))
+                    orig[name] = value
+            else:
+                # print orig, len(orig)
+                # print "Creating orig[{}] = {}".format(name, value)
+                orig[name] = obj_to_array(value)
+
+
 class Service(lt_service):
     attribution = ['FOWC', 'https://www.formula1.com/']
+    auto_poll = False
 
     DATA_REGEX = re.compile(r"^(?:SP\._input_\(')([a-z]+)(?:',)(.*)\);$")
     log = Logger()
@@ -145,6 +190,7 @@ class Service(lt_service):
         self.carsState = []
         self.sessionState = {}
         self.dataMap = {}
+        self._clock = {}
         self.prevRaceControlMessage = None
         self.messages = []
         self.hasSession = False
@@ -157,13 +203,9 @@ class Service(lt_service):
         client = F1Client(self)
         client.start()
 
-    def on_feed(self, payload):
-        data = payload[1]
-        for key, val in data.iteritems():
-            if key in self.dataMap:
-                self.dataMap[key].update(val)
-            else:
-                self.dataMap[key] = val
+    def on_initial_data(self, payload):
+        for key, val in payload[1].iteritems():
+            self.dataMap[key] = val
             if key == 'free':
                 new_desc = '{} - {}'.format(
                     val['data']['R'].title(),
@@ -172,14 +214,38 @@ class Service(lt_service):
 
                 if new_desc != self._description:
                     self._description = new_desc
+                    self.log.info("New session: {desc}", desc=new_desc)
                     self.publishManifest()
-            try:
-                if "T" in val:
-                    self.serverTimestamp = max(self.serverTimestamp, val["T"] / 1000000)
-            except TypeError:
-                # not an iterable val
-                pass
+
+    def on_spfeed(self, payload):
+        self.on_feed(payload)
+
+    def on_feed(self, payload):
+        data = payload[1]
+        self._apply_patch(data)
+
+        if 'free' in data:
+
+            free = self._getData('free')
+
+            new_desc = '{} - {}'.format(
+                free['R'].title(),
+                free['S']
+            )
+
+            if new_desc != self._description:
+                self._description = new_desc
+                self.log.info("New session: {desc}", desc=new_desc)
+                self.publishManifest()
+
         self.dataLastUpdated = datetime.now()
+        self._updateAndPublishRaceState()
+
+    def _apply_patch(self, patch):
+        _apply_patch_children(self.dataMap, patch)
+
+    def on_extrapolatedclock(self, clock):
+        _apply_patch_children(self._clock, clock[1])
 
     def getName(self):
         return "Formula 1"
@@ -226,16 +292,18 @@ class Service(lt_service):
 
     def _getData(self, key, subkey=None):
         if key in self.dataMap:
-            for key, val in self.dataMap[key].iteritems():
-                if key != "T" and key != "TY":
-                    if subkey is not None:
-                        if subkey in val:
-                            return val[subkey]
-                        return None
-                    return val
+            if 'data' in self.dataMap[key]:
+                if subkey is not None:
+                        return self.dataMap[key]['data'].get(subkey)
+                return self.dataMap[key]['data']
+            else:
+                return self.dataMap[key]
+
         return None
 
     def getRaceState(self):
+        # print self.dataMap.keys()
+
         if 'free' not in self.dataMap:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
             return {
@@ -333,7 +401,7 @@ class Service(lt_service):
                 driver["Num"],
                 state,
                 driver["FullName"].title(),
-                math.floor(float(sq[0])) if sq[0] != "" else 0,
+                math.floor(float(sq[0])) if sq[0] else 0,
                 currentTyre,
                 currentTyreStats[1] if len(currentTyreStats) > 1 else '?',
                 currentTyreStats[2] if len(currentTyreStats) > 2 else '?',
@@ -358,7 +426,7 @@ class Service(lt_service):
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
             "timeElapsed": (currentTime - startTime) / 1000 if startTime else 0,
-            "timeRemain": free.get("QT", 0) - (datetime.now() - self.timestampLastUpdated).total_seconds(),
+            "timeRemain": self._getTimeRemaining(),
             "trackData": self._getTrackData()
         }
 
@@ -370,11 +438,31 @@ class Service(lt_service):
             "session": session,
         }
 
+        print "Comms:", comms
         if "M" in comms and comms["M"] != self.prevRaceControlMessage:
             self.messages.append(comms["M"])
             self.prevRaceControlMessage = comms["M"]
 
         return state
+
+    def _getTimeRemaining(self):
+        if 'Remaining' in self._clock:
+            remaining_parts = self._clock['Remaining'].split(':')
+            remaining = remaining_parts[2] + (60 * remaining_parts[1]) + (3600 * remaining_parts[0])
+
+            if self._clock.get('Extrapolating', False):
+                timestamp = datetime.strptime(
+                    self._clock['Utc'],
+                    "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+
+                offset = (datetime.utcnow() - timestamp).total_seconds()
+                return remaining - offset
+
+            else:
+                return remaining
+
+        return None
 
     def _getTrackData(self):
         W = self._getData("sq", "W")
