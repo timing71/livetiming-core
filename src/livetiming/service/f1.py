@@ -166,7 +166,7 @@ class Service(lt_service):
                 self.dataMap[key] = val
             if key == 'free':
                 new_desc = '{} - {}'.format(
-                    val['data']['R'],
+                    val['data']['R'].title(),
                     val['data']['S']
                 )
 
