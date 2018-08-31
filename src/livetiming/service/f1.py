@@ -5,6 +5,9 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import MultiLineFetcher, Service as lt_service
 from twisted.logger import Logger
 from twisted.internet import reactor
+from requests.sessions import Session
+from signalr import Connection
+from threading import Thread
 
 import math
 import simplejson
@@ -14,6 +17,45 @@ import re
 import urllib2
 import xml.etree.ElementTree as ET
 
+
+class F1Client(Thread):
+    def __init__(self, handler):
+        Thread.__init__(self)
+        self.handler = handler
+        self.log = handler.log
+        self.host = "livetiming.formula1.com"
+        self.daemon = True
+
+    def run(self):
+        with Session() as session:
+            connection = Connection("https://{}/signalr/".format(self.host), session)
+            hub = connection.register_hub('streaming')
+
+            def print_error(error):
+                print('error: ', error)
+
+            def delegate(method, data):
+                handler_method = "on_{}".format(method.lower())
+                if hasattr(self.handler, handler_method) and callable(getattr(self.handler, handler_method)):
+                    self.log.debug("Received {method}: {data}", method=method, data=data)
+                    getattr(self.handler, handler_method)(data)
+                else:
+                    self.log.info("Unhandled message {method}: {data}", method=handler_method, data=data)
+
+            def handle(**kwargs):
+                if 'M' in kwargs:
+                    for msg in kwargs['M']:
+                        delegate(msg['M'], msg['A'])
+                if 'R' in kwargs:
+                    delegate('feed', ['SPFeed', kwargs['R']['SPFeed']])
+
+            connection.error += print_error
+            connection.received += handle
+
+            with connection:
+                print "Connection happened"
+                hub.server.invoke('Subscribe', ['SPFeed', 'ExtrapolatedClock'])
+                connection.wait(None)
 
 _F1_SERVICE_YEAR = 2018
 
@@ -74,6 +116,23 @@ SESSION_NAME_MAP = {
 }
 
 
+def parse_time(formattedTime):
+    if formattedTime == "" or formattedTime is None:
+        return 0
+    try:
+        return float(formattedTime)
+    except ValueError:
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+            return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+        except ValueError:
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                return formattedTime
+
+
 class Service(lt_service):
     attribution = ['FOWC', 'https://www.formula1.com/']
 
@@ -95,63 +154,31 @@ class Service(lt_service):
 
         self._description = 'Formula 1'
 
-        self.configure()
+        client = F1Client(self)
+        client.start()
 
-    def configure(self):
-        serverListXML = urllib2.urlopen("http://www.formula1.com/sp/static/f1/{}/serverlist/svr/serverlist.xml".format(_F1_SERVICE_YEAR))
-        servers = ET.parse(serverListXML)
-        serversRoot = servers.getroot()
-
-        race = serversRoot.attrib.get("race", "")
-        session = serversRoot.attrib.get("session", "")
-        if race != "" and session != "":
-            self.hasSession = True
-
-            servers = map(lambda s: s.get('ip'), servers.findall('Server'))
-            if 'lb.softpauer.com' in servers:
-                serverIP = 'lb.softpauer.com'
+    def on_feed(self, payload):
+        data = payload[1]
+        for key, val in data.iteritems():
+            if key in self.dataMap:
+                self.dataMap[key].update(val)
             else:
-                serverIP = random.choice(servers)
-            # serverIP = 'lb.softpauer.com'
-            self.log.info("Using server {}".format(serverIP))
+                self.dataMap[key] = val
+            if key == 'free':
+                new_desc = '{} - {}'.format(
+                    val['data']['R'],
+                    val['data']['S']
+                )
 
-            server_base_url = "http://{}/f1/{}/live/{}/{}/".format(serverIP, _F1_SERVICE_YEAR, race, session)
-
-            allURL = server_base_url + "all.js"
-
-            allFetcher = MultiLineFetcher(allURL, self.processData, 60)
-            allFetcher.start()
-
-            def getCurURL():
-                timedelta = (datetime.now() - self.timestampLastUpdated).total_seconds()
-                return "{}cur.js?{}".format(server_base_url, self.serverTimestamp + timedelta if self.serverTimestamp > 0 else "")
-
-            curFetcher = MultiLineFetcher(getCurURL, self.processData, 1)
-            curFetcher.start()
-            return
-        self.log.info("No live session found, checking again in 30 seconds.")
-        reactor.callLater(30, self.configure)
-
-    def processData(self, data):
-        for dataline in data:
-            matches = self.DATA_REGEX.match(dataline)
-            if matches:
-                content = simplejson.loads(matches.group(2))
-                self.dataMap[matches.group(1)] = content
-                if "T" in content:
-                    self.serverTimestamp = max(self.serverTimestamp, content["T"] / 1000000)
-                if matches.group(1) == "f":
-                    self.timestampLastUpdated = datetime.now()
-                    if "free" in content:
-                        free = content['free']
-                        new_description = u"{} - {}".format(
-                            free.get("R", "Formula 1").title(),
-                            SESSION_NAME_MAP[free.get("S", "")]
-                        )
-                        if self._description != new_description:
-                            self._description = new_description
-                            self.publishManifest()
-
+                if new_desc != self._description:
+                    self._description = new_desc
+                    self.publishManifest()
+            try:
+                if "T" in val:
+                    self.serverTimestamp = max(self.serverTimestamp, val["T"] / 1000000)
+            except TypeError:
+                # not an iterable val
+                pass
         self.dataLastUpdated = datetime.now()
 
     def getName(self):
@@ -209,7 +236,7 @@ class Service(lt_service):
         return None
 
     def getRaceState(self):
-        if not self.hasSession or self.serverTimestamp == 0:
+        if 'free' not in self.dataMap:
             self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
             return {
                 'cars': [],
@@ -234,35 +261,35 @@ class Service(lt_service):
         if currentTime is None:
             currentTime = time.time() * 1000
 
-        b = self._getData("b")
+        b = self._getData("best")
         if b:
             bestTimes = b["DR"]
             flag = b["F"]
 
-        latestTimes = self._getData("o", "DR")
+        latestTimes = self._getData("opt", "DR")
 
         sq = self._getData("sq", "DR")
 
-        comms = self._getData("c")
+        comms = self._getData("commentary")
 
-        extra = self._getData("x", "DR")
+        extra = self._getData("xtra", "DR")
 
-        free = self.dataMap["f"]["free"]
+        free = self._getData('free')
 
         denormalised = []
 
         for idx, driver in enumerate(drivers):
             dnd = {}
             dnd["driver"] = driver
-            dnd["timeLine"] = bestTimes[idx]["B"].split(",")
+            dnd["timeLine"] = bestTimes[idx]["B"]
             if "STOP" in bestTimes[idx]:
                 dnd["stop"] = bestTimes[idx]["STOP"]
-            dnd["latestTimeLine"] = latestTimes[idx]["O"].split(",")
-            dnd["sq"] = sq[idx]["G"].split(",")
+            dnd["latestTimeLine"] = latestTimes[idx]["O"]
+            dnd["sq"] = sq[idx]["G"]
             dnd["extra"] = extra[idx]
             denormalised.append(dnd)
 
-        fastestLap = min(map(lambda d: float(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999, denormalised))
+        fastestLap = min(map(lambda d: parse_time(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999, denormalised))
 
         for dnd in sorted(denormalised, key=lambda d: int(d["latestTimeLine"][4])):
             driver = dnd["driver"]
@@ -271,9 +298,9 @@ class Service(lt_service):
             colorFlags = dnd["latestTimeLine"][2]
             sq = dnd["sq"]
 
-            if "X" in dnd["extra"] and dnd["extra"]["X"].split(",")[9] != "":
-                currentTyre = parseTyre(dnd["extra"]["X"].split(",")[9][0])
-                currentTyreStats = dnd["extra"]["TI"].split(",")[-4:-1]
+            if "X" in dnd["extra"] and dnd["extra"]["X"][9] != "":
+                currentTyre = parseTyre(dnd["extra"]["X"][9][0])
+                currentTyreStats = dnd["extra"]["TI"][-4:-1]
             else:
                 currentTyre = ""
                 currentTyreStats = ("", "", "")
@@ -287,7 +314,7 @@ class Service(lt_service):
                 state = "STOP"
 
             fastestLapFlag = ""
-            if timeLine[1] != "" and fastestLap == float(timeLine[1]):
+            if timeLine[1] != "" and fastestLap == parse_time(timeLine[1]):
                 fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] and state == "RUN" else "sb"
 
             gap = renderGapOrLaps(latestTimeLine[9])
@@ -300,7 +327,7 @@ class Service(lt_service):
                 interval = ourBestTime - fasterCarTime
                 gap = ourBestTime - fastestCarTime
 
-            last_lap = float(latestTimeLine[1])
+            last_lap = parse_time(latestTimeLine[1])
 
             cars.append([
                 driver["Num"],
@@ -319,7 +346,7 @@ class Service(lt_service):
                 [latestTimeLine[7], mapTimeFlag(colorFlags[3])],
                 [timeLine[10], 'old'],
                 [last_lap if last_lap > 0 else '', "sb-new" if fastestLapFlag == "sb-new" else mapTimeFlag(colorFlags[0])],
-                [float(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else ['', ''],
+                [parse_time(timeLine[1]), fastestLapFlag] if timeLine[1] != "" else ['', ''],
                 latestTimeLine[3][0]
             ])
 
@@ -331,7 +358,7 @@ class Service(lt_service):
         session = {
             "flagState": parseFlagState(free["FL"] if flag is None else flag),
             "timeElapsed": (currentTime - startTime) / 1000 if startTime else 0,
-            "timeRemain": free["QT"] - (datetime.now() - self.timestampLastUpdated).total_seconds(),
+            "timeRemain": free.get("QT", 0) - (datetime.now() - self.timestampLastUpdated).total_seconds(),
             "trackData": self._getTrackData()
         }
 
@@ -352,21 +379,18 @@ class Service(lt_service):
     def _getTrackData(self):
         W = self._getData("sq", "W")
         if W:
-            w = W.split(",")
+            w = W
             return [
                 u"{}°C".format(w[0]),
                 u"{}°C".format(w[1]),
                 "{}m/s".format(w[3]),
-                u"{}°".format(float(w[6]) - self._getTrackRotationOffset()),
+                u"{}°".format(float(w[6])),
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
                 "Wet" if w[2] == "1" else "Dry",
                 self.dataLastUpdated.strftime("%H:%M:%S")
             ]
         return []
-
-    def _getTrackRotationOffset(self):
-        return -45  # XXX this is Monaco's hardcoded value
 
     def getExtraMessageGenerators(self):
         return [
