@@ -425,7 +425,7 @@ class Service(lt_service):
 
     def _getTimeRemaining(self):
         if 'Remaining' in self._clock:
-            remaining_parts = self._clock['Remaining'].split(':')
+            remaining_parts = map(int, self._clock['Remaining'].split(':'))
             remaining = remaining_parts[2] + (60 * remaining_parts[1]) + (3600 * remaining_parts[0])
 
             if self._clock.get('Extrapolating', False):
