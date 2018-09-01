@@ -5,6 +5,7 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.logger import Logger
 from twisted.internet import reactor
+from twisted.web import client
 from twisted.web.client import Agent, readBody
 from requests.sessions import Session
 from signalr import Connection
@@ -14,6 +15,8 @@ from threading import Thread
 import math
 import simplejson
 import time
+
+client._HTTP11ClientFactory.noisy = False
 
 _web_agent = Agent(reactor)
 
