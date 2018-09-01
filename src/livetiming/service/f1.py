@@ -351,8 +351,6 @@ class Service(lt_service):
 
         sq = self._getData("sq", "DR")
 
-        comms = self._getData("commentary")
-
         extra = self._getData("xtra", "DR")
 
         free = self._getData('free')
@@ -381,7 +379,7 @@ class Service(lt_service):
 
             if "X" in dnd["extra"] and dnd["extra"]["X"][9] != "":
                 currentTyre = parseTyre(dnd["extra"]["X"][9][0])
-                currentTyreStats = dnd["extra"]["TI"][-4:-1]
+                currentTyreStats = dnd["extra"]["TI"][-2:]
             else:
                 currentTyre = ""
                 currentTyreStats = ("", "", "")
@@ -416,8 +414,8 @@ class Service(lt_service):
                 driver["FullName"].title(),
                 math.floor(float(sq[0])) if sq[0] else 0,
                 currentTyre,
+                currentTyreStats[0] if len(currentTyreStats) > 0 else '?',
                 currentTyreStats[1] if len(currentTyreStats) > 1 else '?',
-                currentTyreStats[2] if len(currentTyreStats) > 2 else '?',
                 gap,
                 interval,
                 [latestTimeLine[5], mapTimeFlag(colorFlags[1])],
