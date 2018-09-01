@@ -5,9 +5,11 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import MultiLineFetcher, Service as lt_service
 from twisted.logger import Logger
 from twisted.internet import reactor
+from twisted.web.client import Agent, readBody
 from requests.sessions import Session
 from signalr import Connection
 from threading import Thread
+
 
 import math
 import simplejson
@@ -16,6 +18,8 @@ import random
 import re
 import urllib2
 import xml.etree.ElementTree as ET
+
+_web_agent = Agent(reactor)
 
 
 class F1Client(Thread):
@@ -186,9 +190,10 @@ class Service(lt_service):
         lt_service.__init__(self, args, extra_args)
         self.dataMap = {}
         self._clock = {}
-        self.prevRaceControlMessage = None
+        self.prevRaceControlMessage = -1
         self.messages = []
         self.dataLastUpdated = datetime.now()
+        self._commsIndex = None
 
         self._description = 'Formula 1'
 
@@ -216,6 +221,14 @@ class Service(lt_service):
                 self.log.info("New session: {desc}", desc=new_desc)
                 self.publishManifest()
 
+        comms = self._getData('commentary')
+        pd = comms.get('PD', [])
+        if len(pd) > 0:
+            if 'h' in pd[0]:
+                idx = pd[0]['h']
+                if self._commsIndex != idx:
+                    self._fetch_comms(idx)
+
         self.dataLastUpdated = datetime.now()
         self._updateAndPublishRaceState()
 
@@ -224,6 +237,29 @@ class Service(lt_service):
 
     def on_extrapolatedclock(self, clock):
         _apply_patch_children(self._clock, clock[1])
+
+    def _fetch_comms(self, idx):
+        if 'path' in self.dataMap:
+            comms_url = 'https://livetiming.formula1.com/static/{}com.rc.js?{}'.format(self.dataMap['path'], idx)
+
+            def handle_comms(comms):
+                comm_json = simplejson.loads(comms[5:-2])
+                msgs = filter(lambda m: m['id'] > self.prevRaceControlMessage and (m['type'] == 'RCM' or '_FLAG' in m['type']), comm_json['feed']['e'])
+                for msg in msgs:
+                    self.messages.append(msg['text'])
+                    self.prevRaceControlMessage = max(self.prevRaceControlMessage, msg['id'])
+
+            def handle_comm_response(resp):
+                d = readBody(resp)
+                d.addCallback(handle_comms)
+
+            req = _web_agent.request(
+                'GET',
+                comms_url
+            )
+            req.addCallback(handle_comm_response)
+
+        self._commsIndex = idx
 
     def getName(self):
         return "Formula 1"
@@ -369,7 +405,7 @@ class Service(lt_service):
             if gap == "" and len(cars) > 0 and timeLine[1] != "":
                 fasterCarTime = cars[-1][16][0] or 0
                 fastestCarTime = cars[0][16][0] or 0
-                ourBestTime = float(timeLine[1])
+                ourBestTime = parse_time(timeLine[1])
                 interval = ourBestTime - fasterCarTime
                 gap = ourBestTime - fastestCarTime
 
@@ -416,11 +452,6 @@ class Service(lt_service):
             "session": session,
         }
 
-        print "Comms:", comms
-        if "M" in comms and comms["M"] != self.prevRaceControlMessage:
-            self.messages.append(comms["M"])
-            self.prevRaceControlMessage = comms["M"]
-
         return state
 
     def _getTimeRemaining(self):
@@ -430,8 +461,8 @@ class Service(lt_service):
 
             if self._clock.get('Extrapolating', False):
                 timestamp = datetime.strptime(
-                    self._clock['Utc'],
-                    "%Y-%m-%dT%H:%M:%S.%fZ"
+                    self._clock['Utc'][:-2],
+                    "%Y-%m-%dT%H:%M:%S.%f"
                 )
 
                 offset = (datetime.utcnow() - timestamp).total_seconds()
