@@ -148,6 +148,16 @@ def array_add(arr, idx, item):
 
 
 def _apply_patch_children(orig, patch):
+
+    if patch.get('_kf', False):
+        if isinstance(orig, list):
+            del orig[:]
+        elif isinstance(orig, dict):
+            for key in orig:
+                if key[0] != '_':
+                    del orig[key]
+        del patch['_kf']
+
     for name, value in sorted(patch.iteritems(), key=lambda i: i[0]):
         try:
             name = int(name)
