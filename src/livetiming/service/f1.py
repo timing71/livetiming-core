@@ -255,7 +255,7 @@ class Service(lt_service):
                 comm_json = simplejson.loads(comms[5:-2])
                 msgs = filter(lambda m: m['id'] > self.prevRaceControlMessage and (m['type'] == 'RCM' or '_FLAG' in m['type']), comm_json['feed']['e'])
                 for msg in msgs:
-                    self.messages.append(msg['text'])
+                    self.messages.append([msg['pub'], msg['text']])
                     self.prevRaceControlMessage = max(self.prevRaceControlMessage, msg['id'])
 
             def handle_comm_response(resp):
@@ -498,5 +498,18 @@ class Service(lt_service):
 
     def getExtraMessageGenerators(self):
         return [
-            RaceControlMessage(self.messages)
+            TimestampedRaceControlMessage(self.messages)
         ]
+
+
+class TimestampedRaceControlMessage(RaceControlMessage):
+    def process(self, oldState, newState):
+        msgs = []
+        while len(self.messageList) > 0:
+            ts, nextMessage = self.messageList.pop()
+            hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
+            if hasCarNum:
+                msgs.append([ts, "Race Control", nextMessage.upper(), "raceControl", hasCarNum.group('race_num')])
+            else:
+                msgs.append([ts, "Race Control", nextMessage.upper(), "raceControl"])
+        return msgs
