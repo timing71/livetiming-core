@@ -142,7 +142,7 @@ def array_add(arr, idx, item):
     if idx < len(arr):
         arr[idx] = item
     else:
-        while len(arr) < item - 1:
+        while len(arr) < idx - 1:
             arr.append(None)
         arr.append(item)
 
