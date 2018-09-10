@@ -21,7 +21,7 @@ TAG_TO_SERVICE_CLASS = {
     'IndyCar': 'indycar',
     'Michelin Le Mans Cup': 'lemanscup',
     'V8 Supercars': 'v8sc',
-    'VLN': 'wige',
+    'VLN': 'vln',
     'WEC': 'wec'
 }
 
