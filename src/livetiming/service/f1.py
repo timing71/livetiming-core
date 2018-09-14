@@ -5,6 +5,7 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.logger import Logger
 from twisted.internet import reactor
+from twisted.internet.task import LoopingCall
 from twisted.web import client
 from twisted.web.client import Agent, readBody
 from requests.sessions import Session
@@ -206,46 +207,58 @@ class Service(lt_service):
 
         self._description = 'Formula 1'
 
+        self._needs_publish = False
+
         client = F1Client(self)
         client.start()
+
+        def maybePublish():
+            if self._needs_publish:
+                self._updateAndPublishRaceState()
+                self._needs_publish = False
+        LoopingCall(maybePublish).start(1)
 
     def on_spfeed(self, payload):
         self.on_feed(payload)
 
     def on_feed(self, payload):
-        data = payload[1]
-        self._apply_patch(data)
+        if payload[0] == 'SPFeed':
+            data = payload[1]
+            self._apply_patch(data)
 
-        if 'free' in data:
+            if 'free' in data:
 
-            free = self._getData('free')
+                free = self._getData('free')
 
-            new_desc = '{} - {}'.format(
-                free['R'].title(),
-                free['S']
-            )
+                new_desc = '{} - {}'.format(
+                    free['R'].title(),
+                    free['S']
+                )
 
-            if new_desc != self._description:
-                self._description = new_desc
-                self.log.info("New session: {desc}", desc=new_desc)
-                self.publishManifest()
+                if new_desc != self._description:
+                    self._description = new_desc
+                    self.log.info("New session: {desc}", desc=new_desc)
+                    self.publishManifest()
 
-        comms = self._getData('commentary')
-        pd = comms.get('PD', [])
-        if len(pd) > 0:
-            if 'h' in pd[0]:
-                idx = pd[0]['h']
-                if self._commsIndex != idx:
-                    self._fetch_comms(idx)
+            comms = self._getData('commentary')
+            pd = comms.get('PD', [])
+            if len(pd) > 0:
+                if 'h' in pd[0]:
+                    idx = pd[0]['h']
+                    if self._commsIndex != idx:
+                        self._fetch_comms(idx)
+        elif payload[1] == 'ExtrapolatedClock':
+            self.on_extrapolatedclock(payload)
 
         self.dataLastUpdated = datetime.now()
-        self._updateAndPublishRaceState()
+        self._needs_publish = True
 
     def _apply_patch(self, patch):
         _apply_patch_children(self.dataMap, patch)
 
     def on_extrapolatedclock(self, clock):
         _apply_patch_children(self._clock, clock[1])
+        self._needs_publish = True
 
     def _fetch_comms(self, idx):
         if 'path' in self.dataMap:
