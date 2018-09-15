@@ -241,13 +241,14 @@ class Service(lt_service):
                     self.publishManifest()
 
             comms = self._getData('commentary')
-            pd = comms.get('PD', [])
-            if len(pd) > 0:
-                if 'h' in pd[0]:
-                    idx = pd[0]['h']
-                    if self._commsIndex != idx:
-                        self._fetch_comms(idx)
-        elif payload[1] == 'ExtrapolatedClock':
+            if comms:
+                pd = comms.get('PD', [])
+                if len(pd) > 0:
+                    if 'h' in pd[0]:
+                        idx = pd[0]['h']
+                        if self._commsIndex != idx:
+                            self._fetch_comms(idx)
+        elif payload[0] == 'ExtrapolatedClock':
             self.on_extrapolatedclock(payload)
 
         self.dataLastUpdated = datetime.now()
