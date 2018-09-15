@@ -481,9 +481,10 @@ class Service(lt_service):
             remaining = remaining_parts[2] + (60 * remaining_parts[1]) + (3600 * remaining_parts[0])
 
             if self._clock.get('Extrapolating', False):
+                utc = self._clock['Utc']
                 timestamp = datetime.strptime(
-                    self._clock['Utc'][:-2],
-                    "%Y-%m-%dT%H:%M:%S.%f"
+                    utc[:utc.index('.')],
+                    "%Y-%m-%dT%H:%M:%S"
                 )
 
                 offset = (datetime.utcnow() - timestamp).total_seconds()
