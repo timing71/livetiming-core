@@ -62,8 +62,11 @@ def parseTime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%M:%S.%f")
             return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
         except ValueError:
-            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
-            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                return formattedTime
 
 
 SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
@@ -226,15 +229,15 @@ class Service(lt_service):
 
             gap = 0
             prev_car_gap = cars[-1][8] if len(cars) > 0 else 0
-            try:
-                gap = 0 if car["4"] == '' else float(car["4"])
-            except ValueError:
-                gap = car["4"]
+            gap = 0 if car["4"] == '' else parseTime(car["4"])
 
             interval = 0
             if gap > 0:
-                if isinstance(prev_car_gap, float) and isinstance(gap, float):
-                    interval = gap - prev_car_gap
+                if isinstance(gap, float):
+                    if isinstance(prev_car_gap, float):
+                        interval = gap - prev_car_gap
+                    else:
+                        interval = gap
             if prev_car_gap == '':
                 interval = gap
 
