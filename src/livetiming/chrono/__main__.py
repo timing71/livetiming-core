@@ -2,7 +2,7 @@ import argparse
 
 from livetiming.chrono import alkamel
 from livetiming.racing import Stat
-from livetiming.recording import TimingRecorder
+from livetiming.dvr import DirectoryTimingRecorder
 import uuid
 
 _FORMATS = {
@@ -26,7 +26,7 @@ def _parse_args():
         subparser.set_defaults(get_start_time=format_module.get_start_time)
         subparser.set_defaults(colspec=format_module.COLSPEC)
 
-    parser.add_argument('--output', '-o', help='Output filename', default='output.zip')
+    parser.add_argument('--output', '-o', help='Output filename (\'.zip\' will be appended)', default='output')
 
     return parser.parse_args()
 
@@ -37,6 +37,8 @@ def main():
 
     events = sorted(args.create_events(args), key=lambda e: e.timestamp)
 
+    print "Generated {} events".format(len(events))
+
     message_generators = args.message_generators()
 
     car_state = initial_state
@@ -46,7 +48,7 @@ def main():
         'messages': []
     }
 
-    recorder = TimingRecorder(args.output)
+    recorder = DirectoryTimingRecorder(args.output)
     recorder.writeManifest({
         'description': 'Converted chrono dump',
         'name': 'converted',
@@ -82,6 +84,8 @@ def main():
         state = new_state
 
     recorder.writeState(state, events[-1].timestamp)
+    of = recorder.finalise()
+    print "Written {}".format(of)
 
 
 def _generate_messages(generators, timestamp, old_state, new_state):
