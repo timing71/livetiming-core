@@ -9,7 +9,7 @@ import csv
 import re
 
 
-_COLSPEC = [
+COLSPEC = [
     Stat.NUM,
     Stat.STATE,
     Stat.CLASS,
@@ -54,6 +54,7 @@ def _parse_clock_time(clock):
 def generate_parser_args(parser):
     parser.add_argument('--chronological-analysis', '-c', help='Chronological analysis CSV file', required=True)
     parser.add_argument('--start-date', '-s', help='Date at start of session', required=True)
+    parser.add_argument('--duration', '-d', help='Duration (in seconds) of session', required=True)
 
 
 def create_events(args):
@@ -76,27 +77,27 @@ def create_events(args):
             time_in_pit = parseTime(row['PIT_TIME'])
 
             if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
-                events.append((int(datestamp - lap_time + time_in_pit), PitOutEvent(_COLSPEC, race_num)))
+                events.append(PitOutEvent(int(datestamp - lap_time + time_in_pit), COLSPEC, race_num))
 
             s1_time = parseTime(row[' S1'])
             s2_time = parseTime(row[' S2'])
             s3_time = parseTime(row[' S3'])
 
             events.append(
-                (int(datestamp - s2_time - s3_time), SectorEvent(_COLSPEC, race_num, 1, s1_time, _parseFlags(row[' S1_IMPROVEMENT'])))
+                SectorEvent(int(datestamp - s2_time - s3_time), COLSPEC, race_num, 1, s1_time, _parseFlags(row[' S1_IMPROVEMENT']))
             )
             events.append(
-                (int(datestamp - s3_time), SectorEvent(_COLSPEC, race_num, 2, s2_time, _parseFlags(row[' S2_IMPROVEMENT'])))
+                SectorEvent(int(datestamp - s3_time), COLSPEC, race_num, 2, s2_time, _parseFlags(row[' S2_IMPROVEMENT']))
             )
             events.append(
-                (datestamp, SectorEvent(_COLSPEC, race_num, 3, s3_time, _parseFlags(row[' S3_IMPROVEMENT'])))
+                SectorEvent(datestamp, COLSPEC, race_num, 3, s3_time, _parseFlags(row[' S3_IMPROVEMENT']))
             )
 
             if row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
-                events.append((datestamp, PitInEvent(_COLSPEC, race_num)))
+                events.append(PitInEvent(datestamp, COLSPEC, race_num))
             else:
                 events.append(
-                    (datestamp, LaptimeEvent(_COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT'])))
+                    LaptimeEvent(datestamp, COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT']))
                 )
 
             if prev_race_num == race_num:
@@ -106,7 +107,7 @@ def create_events(args):
     return events
 
 
-def create_initial_state(args):
+def create_initial_state(args, extra):
     state = {}
     with open(args.chronological_analysis, 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
@@ -120,17 +121,18 @@ def create_initial_state(args):
                     row['DRIVER_NAME'].decode('utf-8'),
                     row['TEAM'].decode('utf-8'),
                     0,
+                    '',
+                    '',
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
+                    ['', ''],
                     None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None
+                    extra
                 ]
 
     return state
@@ -154,12 +156,26 @@ def get_start_time(args):
         return calendar.timegm((ts - delta).timetuple()) + 1
 
 
+def get_duration(args):
+    return args.duration
+
+
+def _car_sort_idx(c):
+    last_passing = c[-1]
+    return (
+        -c[5],
+        -last_passing[-1],
+        -last_passing[last_passing[-1]] if last_passing[last_passing[-1]] else None
+    )
+
+
 def sort_cars(args, cars):
-    return sorted(cars, key=lambda c: (c[15] if c[15] > 0 else 99999999, c[0]))
+    # return sorted(cars, key=lambda c: (c[15] if c[15] > 0 else 99999999, c[0]))
+    return sorted(cars, key=_car_sort_idx)
 
 
 def message_generators():
     return [
-        FastLapMessage(_COLSPEC),
-        CarPitMessage(_COLSPEC)
+        FastLapMessage(COLSPEC),
+        CarPitMessage(COLSPEC)
     ]

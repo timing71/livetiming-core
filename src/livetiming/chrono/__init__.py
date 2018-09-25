@@ -4,7 +4,8 @@ import copy
 
 
 class Event(object):
-    def __init__(self, colspec, race_num):
+    def __init__(self, timestamp, colspec, race_num):
+        self.timestamp = timestamp
         self._colspec = colspec
         self._race_num = race_num
 
@@ -30,8 +31,8 @@ class Event(object):
 
 
 class LaptimeEvent(Event):
-    def __init__(self, colspec, race_num, lap_time, flags):
-        super(LaptimeEvent, self).__init__(colspec, race_num)
+    def __init__(self, timestamp, colspec, race_num, lap_time, flags):
+        super(LaptimeEvent, self).__init__(timestamp, colspec, race_num)
         self._lap_time = lap_time
         self._flags = flags
 
@@ -46,6 +47,9 @@ class LaptimeEvent(Event):
             self._set_field(car, Stat.BEST_LAP, (self._lap_time, 'pb'))
             self._set_field(car, Stat.LAST_LAP, (self._lap_time, 'pb'))
 
+        car[-1][0] = self.timestamp
+        car[-1][4] = 0
+
         return self._updated_state(state, car)
 
 
@@ -57,8 +61,8 @@ _sector_by_num = {
 
 
 class SectorEvent(Event):
-    def __init__(self, colspec, race_num, sector_num, sector_time, flag):
-        super(SectorEvent, self).__init__(colspec, race_num)
+    def __init__(self, timestamp, colspec, race_num, sector_num, sector_time, flag):
+        super(SectorEvent, self).__init__(timestamp, colspec, race_num)
         self._sector_num = sector_num
         self._sector_time = sector_time
         self._flag = flag
@@ -72,6 +76,9 @@ class SectorEvent(Event):
         self._set_field(car, s_idx, (self._sector_time, self._flag))
         if not prev_best or self._sector_time < prev_best[0]:
             self._set_field(car, bs_idx, (self._sector_time, 'pb'))
+
+        car[-1][self._sector_num] = self.timestamp
+        car[-1][4] = self._sector_num
 
         return self._updated_state(state, car)
 
