@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from livetiming.chrono import LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
-from livetiming.messages import FastLapMessage, CarPitMessage
+from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.racing import Stat
 from livetiming.service.wec import parseTime
 
@@ -187,5 +187,6 @@ def sort_cars(args, cars):
 def message_generators():
     return [
         FastLapMessage(COLSPEC),
-        CarPitMessage(COLSPEC)
+        CarPitMessage(COLSPEC),
+        DriverChangeMessage(COLSPEC)
     ]
