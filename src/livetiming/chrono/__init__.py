@@ -77,6 +77,19 @@ class SectorEvent(Event):
         if not prev_best or self._sector_time < prev_best[0]:
             self._set_field(car, bs_idx, (self._sector_time, 'pb'))
 
+        for sn, stats in _sector_by_num.iteritems():
+            if sn != self._sector_num:
+                sec = self._get_field(car, stats[0])
+                if sec[1] == '':
+                    self._set_field(
+                        car,
+                        stats[0],
+                        [
+                            sec[0],
+                            'old'
+                        ]
+                    )
+
         car[-1][self._sector_num] = self.timestamp
         car[-1][4] = self._sector_num
 
