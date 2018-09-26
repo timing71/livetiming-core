@@ -79,7 +79,7 @@ def create_events(args):
             if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
                 events.append(PitOutEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num))
             if not prev_row or prev_row['DRIVER_NAME'] != row['DRIVER_NAME']:
-                events.append(DriverChangeEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num, row['DRIVER_NAME'].decode('utf-8')))
+                events.append(DriverChangeEvent(datestamp - lap_time + time_in_pit - 1, COLSPEC, race_num, row['DRIVER_NAME'].decode('utf-8')))
 
             s1_time = parseTime(row[' S1'])
             s2_time = parseTime(row[' S2'])
