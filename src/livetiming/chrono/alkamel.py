@@ -70,24 +70,24 @@ def create_events(args):
             race_num = row['\xef\xbb\xbfNUMBER']
             clock_time = _parse_clock_time(row[' HOUR'])
 
-            ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
-            datestamp = calendar.timegm(ts.timetuple())
+            ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second, microsecond=clock_time.microsecond)
+            datestamp = float(calendar.timegm(ts.timetuple())) + (clock_time.microsecond / 1000000.0)
 
             lap_time = parseTime(row[' LAP_TIME'])
             time_in_pit = parseTime(row['PIT_TIME'])
 
             if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
-                events.append(PitOutEvent(int(datestamp - lap_time + time_in_pit), COLSPEC, race_num))
+                events.append(PitOutEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num))
 
             s1_time = parseTime(row[' S1'])
             s2_time = parseTime(row[' S2'])
             s3_time = parseTime(row[' S3'])
 
             events.append(
-                SectorEvent(int(datestamp - s2_time - s3_time), COLSPEC, race_num, 1, s1_time, _parseFlags(row[' S1_IMPROVEMENT']))
+                SectorEvent(datestamp - s2_time - s3_time, COLSPEC, race_num, 1, s1_time, _parseFlags(row[' S1_IMPROVEMENT']))
             )
             events.append(
-                SectorEvent(int(datestamp - s3_time), COLSPEC, race_num, 2, s2_time, _parseFlags(row[' S2_IMPROVEMENT']))
+                SectorEvent(datestamp - s3_time, COLSPEC, race_num, 2, s2_time, _parseFlags(row[' S2_IMPROVEMENT']))
             )
             events.append(
                 SectorEvent(datestamp, COLSPEC, race_num, 3, s3_time, _parseFlags(row[' S3_IMPROVEMENT']))
@@ -151,7 +151,11 @@ def get_start_time(args):
 
         elapsed_raw = row[' ELAPSED']
         elapsed = re.match("((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+\.[0-9]+)", elapsed_raw)
-        delta = timedelta(hours=int(elapsed.group('hours') or 0), minutes=int(elapsed.group('minutes')), seconds=float(elapsed.group('seconds')))
+        delta = timedelta(
+            hours=int(elapsed.group('hours') or 0),
+            minutes=int(elapsed.group('minutes')),
+            milliseconds=float(elapsed.group('seconds')) * 1000
+        )
 
         return calendar.timegm((ts - delta).timetuple()) + 1
 
@@ -162,16 +166,22 @@ def get_duration(args):
 
 def _car_sort_idx(c):
     last_passing = c[-1]
-    return (
-        -c[5],
-        -last_passing[-1],
-        -last_passing[last_passing[-1]] if last_passing[last_passing[-1]] else None
-    )
+    try:
+        race_num_as_int = int(c[0])
+    except ValueError:
+        race_num_as_int = c[0]
+
+    return [
+        -c[5],  # laps completed
+        -last_passing[-1],  # current sector
+        last_passing[last_passing[-1]],  # time of arrival at current sector
+        race_num_as_int,
+    ]
 
 
 def sort_cars(args, cars):
     # return sorted(cars, key=lambda c: (c[15] if c[15] > 0 else 99999999, c[0]))
-    return sorted(cars, key=_car_sort_idx)
+    return sorted(cars, key=_car_sort_idx, reverse=False)
 
 
 def message_generators():
