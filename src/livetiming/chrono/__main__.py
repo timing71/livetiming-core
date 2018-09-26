@@ -1,6 +1,7 @@
 from livetiming.chrono import alkamel
 from livetiming.racing import Stat
 from livetiming.dvr import DirectoryTimingRecorder
+from livetiming.chrono import DriverChangeEvent
 
 import argparse
 import sys

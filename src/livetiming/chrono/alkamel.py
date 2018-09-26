@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from livetiming.chrono import LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
+from livetiming.chrono import DriverChangeEvent, LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
 from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.racing import Stat
 from livetiming.service.wec import parseTime
@@ -78,6 +78,8 @@ def create_events(args):
 
             if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
                 events.append(PitOutEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num))
+            if not prev_row or prev_row['DRIVER_NAME'] != row['DRIVER_NAME']:
+                events.append(DriverChangeEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num, row['DRIVER_NAME'].decode('utf-8')))
 
             s1_time = parseTime(row[' S1'])
             s2_time = parseTime(row[' S2'])
@@ -100,7 +102,7 @@ def create_events(args):
                     LaptimeEvent(datestamp, COLSPEC, race_num, lap_time, _parseFlags(row[' LAP_IMPROVEMENT']))
                 )
 
-            if prev_race_num == race_num:
+            if not prev_race_num or prev_race_num == race_num:
                 prev_row = row
             else:
                 prev_row = None
@@ -116,7 +118,7 @@ def create_initial_state(args, extra):
             if race_num not in state:
                 state[race_num] = [
                     race_num,
-                    'PIT',
+                    'N/S',
                     row['CLASS'].decode('utf-8'),
                     row['DRIVER_NAME'].decode('utf-8'),
                     row['TEAM'].decode('utf-8'),
