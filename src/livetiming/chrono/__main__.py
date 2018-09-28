@@ -47,7 +47,10 @@ def main():
     car_state = initial_state
     state = {
         'cars': args.sort_cars(args, car_state.values()),
-        'session': {'timeElapsed': 0},
+        'session': {
+            'timeElapsed': 0
+            'timeRemain': args.duration or None
+        },
         'messages': []
     }
 
