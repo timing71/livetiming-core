@@ -43,8 +43,9 @@ class LaptimeEvent(Event):
 
         self._set_field(car, Stat.LAST_LAP, (self._lap_time, self._flags))
         self._set_field(car, Stat.LAPS, prev_lap_count + 1)
-        if self._get_field(car, Stat.STATE) == 'OUT':
+        if self._get_field(car, Stat.STATE) in ['N/S', 'OUT']:
             self._set_field(car, Stat.STATE, 'RUN')
+
         if not prev_best or self._lap_time < prev_best[0]:
             self._set_field(car, Stat.BEST_LAP, (self._lap_time, 'pb'))
             self._set_field(car, Stat.LAST_LAP, (self._lap_time, 'pb'))
@@ -94,6 +95,9 @@ class SectorEvent(Event):
 
         car[-1][self._sector_num] = self.timestamp
         car[-1][4] = self._sector_num
+
+        if self._get_field(car, Stat.STATE) == 'N/S':
+            self._set_field(car, Stat.STATE, 'RUN')
 
         return self._updated_state(state, car)
 
