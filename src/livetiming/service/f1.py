@@ -267,7 +267,7 @@ class Service(lt_service):
 
             def handle_comms(comms):
                 comm_json = simplejson.loads(comms[5:-2])
-                msgs = filter(lambda m: m['id'] > self.prevRaceControlMessage and (m['type'] == 'RCM' or '_FLAG' in m['type']), comm_json['feed']['e'])
+                msgs = filter(lambda m: m['id'] > self.prevRaceControlMessage and (m['type'] != 'TEAM_RADIO'), comm_json['feed']['e'])
                 for msg in msgs:
                     self.messages.append([msg['pub'], msg['text']])
                     self.prevRaceControlMessage = max(self.prevRaceControlMessage, msg['id'])
