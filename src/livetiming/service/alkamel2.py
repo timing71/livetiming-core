@@ -127,7 +127,7 @@ def parse_sectors(sectorString, defaultFlag=''):
             isClassBest = parts[idx + 4] == 'true'
             isShowingWhileInPit = parts[idx + 5] == 'true'
 
-            if isSB:
+            if isSB or isClassBest:
                 flag = 'sb'
             elif isPB:
                 flag = 'pb'
