@@ -448,7 +448,8 @@ class Watchdog(object):
         self._call.start(self._timeout / 2, False)
 
     def stop(self):
-        self._call.stop()
+        if self._call.running:
+            self._call.stop()
 
     def notify(self):
         self._last_measure = time.time()
