@@ -12,6 +12,9 @@ import urllib2
 import xml.etree.ElementTree as ET
 
 
+# Natsoft demo stream: natsoft.com.au:8889
+# (Different, unsupported format at :8888)
+
 def create_ws_protocol(log, handler):
     class ClientProtocol(WebSocketClientProtocol):
 
