@@ -92,23 +92,32 @@ class RaceControlMessage(TimingMessage):
     def __init__(self, client):
         self._client = client
         self._mostRecentTimestamp = 0
+        self._seen_current_msgs = {}
 
     def process(self, _, __):
         rc = self._client.find_one('race_control', {'session': self._client._current_session_id})
         if rc:
-            messages = rc.get('raceControlMessages', {}).get('log', {})
+            rcm = rc.get('raceControlMessages', {})
+            messages = rcm.get('log', {})
             new_messages = [m for m in messages.values() if m.get('date', 0) > self._mostRecentTimestamp]
+
+            current = rcm.get('currentMessages', {})
+            for idx, msg in current.iteritems():
+                if self._seen_current_msgs.get(idx) != msg['message']:
+                    new_messages.append(msg)
+                    self._seen_current_msgs[idx] = msg['message']
 
             msgs = []
 
             for msg in new_messages:
                 hasCarNum = self.CAR_NUMBER_REGEX.search(msg['message'])
+                msgDate = msg.get('date', time.time() * 1000)
                 if hasCarNum:
-                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
+                    msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
                 else:
-                    msgs.append([msg['date'] / 1000, "Race Control", msg['message'].upper(), "raceControl"])
+                    msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl"])
 
-                self._mostRecentTimestamp = max(self._mostRecentTimestamp, msg['date'])
+                self._mostRecentTimestamp = max(self._mostRecentTimestamp, msgDate)
             return sorted(msgs, key=lambda m: -m[0])
         return []
 
