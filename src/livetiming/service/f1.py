@@ -496,9 +496,8 @@ class Service(lt_service):
         return None
 
     def _getTrackData(self):
-        W = self._getData("sq", "W")
-        if W:
-            w = W
+        w = self._getData("sq", "W")
+        if w:
             return [
                 u"{}°C".format(w[0]),
                 u"{}°C".format(w[1]),
@@ -506,7 +505,7 @@ class Service(lt_service):
                 u"{}°".format(float(w[6])),
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
-                "Wet" if w[2] == "1" else "Dry",
+                "Wet" if w[2] == 1 else "Dry",
                 self.dataLastUpdated.strftime("%H:%M:%S")
             ]
         return []
