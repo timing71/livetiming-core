@@ -487,6 +487,8 @@ class Service(lt_service):
         pass
 
     def on_removecompetitor(self, competitors):
-        for compID in competitors:
-            if compID in self.cars:
-                del self.cars[compID]
+        # I'm unconvinced by:
+        # for compID in competitors:
+        #     if compID in self.cars:
+        #         del self.cars[compID]
+        pass
