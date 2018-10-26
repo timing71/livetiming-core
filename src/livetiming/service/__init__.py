@@ -21,6 +21,7 @@ from uuid import uuid4
 
 import argparse
 import copy
+import io
 import os
 import simplejson
 import time
@@ -507,7 +508,7 @@ def main():
         "{}.log".format(args.service_class)
     )
 
-    with open(filepath, 'a', 0) as logFile:
+    with io.open(filepath, mode='a', encoding='utf-8') as logFile:
         level = "debug" if args.debug else "info"
         if not args.verbose:  # log to file, not stdout
             txaio.start_logging(out=logFile, level=level)
