@@ -443,11 +443,14 @@ class Service(lt_service):
     def on_sectortimes(self, data):
         for d in data:
             cid = d["CompetitorID"]
-            if cid not in self.sectorTimes or d["Id"] == 1:
+            if cid not in self.sectorTimes:
                 self.sectorTimes[cid] = [("", ""), ("", ""), ("", "")]
             sector = self.trackSectors.get(d["Id"], -1)
             if sector >= 0 and d["Time"] > 0:
                 self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "")
+                if sector == 0:
+                    self.sectorTimes[cid][1] = (self.sectorTimes[cid][1][0], self.sectorTimes[cid][1][1] or 'old')
+                    self.sectorTimes[cid][2] = (self.sectorTimes[cid][2][0], self.sectorTimes[cid][2][1] or 'old')
 
     def on_updatesector(self, data):
         for s in data:
