@@ -90,6 +90,8 @@ def mapState(state, inPit):
 
 
 def parseTime(formattedTime):
+    if formattedTime is None:
+        return None
     if formattedTime == "":
         return 0
     try:
@@ -141,6 +143,8 @@ RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*
 
 
 class Service(lt_service):
+    attribution = ['TSL Timing', 'https://www.tsl-timing.com/']
+
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
 
@@ -156,6 +160,7 @@ class Service(lt_service):
         self.sectorTimes = {}
         self.trackSectors = {}
         self.bestSectorTimes = {}
+        self.bestLap = None
         self.sprint_drivers = {}
         self.sprint_competitors = {}
         self.sprint_runs = {}
@@ -167,11 +172,13 @@ class Service(lt_service):
         self.lapsRemaining = None
         self.startTime = None
         self.clockRunning = False
+        self.sessionID = None
 
         self.weather = {
             'tracktemp': None,
             'trackstate': None,
             'airtemp': None,
+            'conditions': None,
             'airpressure': None,
             'windspeed': None,
             'winddir': None,
@@ -210,7 +217,8 @@ class Service(lt_service):
             Stat.S2,
             Stat.S3,
             Stat.LAST_LAP,
-            Stat.BEST_LAP
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getName(self):
@@ -227,6 +235,7 @@ class Service(lt_service):
             "Track temp",
             "Track state",
             "Air temp",
+            "Conditions",
             "Air pressure",
             "Wind speed",
             "Direction",
@@ -234,10 +243,14 @@ class Service(lt_service):
         ]
 
     def getExtraMessageGenerators(self):
-        return [
+        mgs = [
             RaceControlMessage(self.messages),
-            SprintStateMessage(self.getColumnSpec())
         ]
+
+        if self.sprint:
+            mgs.append(SprintStateMessage(self.getColumnSpec()))
+
+        return mgs
 
     def getCars(self):
         cars = []
@@ -251,20 +264,36 @@ class Service(lt_service):
             return stuple
 
         for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
+            bestTime = parseTime(car['CurrentSessionBest'])
+            bestTimeFlag = 'sb' if self.bestLap and self.bestLap[0] == car['ID'] else ''
+
+            lastTime = parseTime(car['LastLapTime'])
+
+            s1_time = sectorTimeFor(car, 0)
+            s3_time = sectorTimeFor(car, 2)
+
+            if lastTime == bestTime and bestTimeFlag == 'sb':
+                lastTimeFlag = 'sb-new' if s1_time[0] != '' and s3_time[0] != '' else 'sb'
+            else:
+                lastTimeFlag = 'pb' if car['PersonalBestTime'] else ''
+
+            display_class = car['SubClass'] or car['PrimaryClass'] or ''
+
             cars.append([
                 car['StartNumber'],
-                "{} {}".format(car['PrimaryClass'], car['SubClass']).strip(),
+                display_class,
                 "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
                 car['Name'] or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
                 car['Laps'],
                 car['Gap'],
                 car['Diff'],
-                sectorTimeFor(car, 0),
+                s1_time,
                 sectorTimeFor(car, 1),
-                sectorTimeFor(car, 2),
-                (parseTime(car['LastLapTime']), "pb" if car['PersonalBestTime'] else ""),
-                (parseTime(car['CurrentSessionBest']), "")
+                s3_time,
+                (lastTime if lastTime > 0 else '', lastTimeFlag),
+                (bestTime if bestTime > 0 else "", bestTimeFlag),
+                car.get('PitStops', '')
             ])
 
         return cars
@@ -320,13 +349,14 @@ class Service(lt_service):
                 "timeElapsed": (now - self.startTime).total_seconds() if self.startTime else 0,
                 "timeRemain": max(self.timeRemaining - (now - self.timeReference).total_seconds(), 0) if self.clockRunning else self.timeRemaining,
                 "trackData": [
-                    u"{}°C".format(self.weather['tracktemp']),
+                    u"{}°C".format(self.weather['tracktemp'] or '-'),
                     self.weather['trackstate'],
-                    u"{}°C".format(self.weather['airtemp']),
-                    "{}mb".format(self.weather['airpressure']),
-                    "{}mph".format(self.weather['windspeed']),
-                    u"{}°".format(self.weather['winddir']),
-                    "{}%".format(self.weather['humidity'])
+                    u"{}°C".format(self.weather['airtemp'] or '-'),
+                    self.weather['conditions'],
+                    "{}mb".format(self.weather['airpressure'] or '-'),
+                    "{}mph".format(self.weather['windspeed'] or '-'),
+                    u"{}°".format(self.weather['winddir'] or '-'),
+                    "{}%".format(self.weather['humidity'] or '-')
                 ]
             }
         }
@@ -336,15 +366,17 @@ class Service(lt_service):
             self.name = data["TrackDisplayName"]
         if "Series" in data and "Name" in data:
             if data["Series"] and data["Name"]:
-                self.description = "{} - {}".format(data["Series"], data["Name"])
+                self.description = "{} - {}".format(data["Series"], data["Name"].title())
             elif data["Series"]:
                 self.description = data["Series"]
             elif data["Name"]:
-                self.description = data["Name"]
+                self.description = data["Name"].title()
         if "State" in data:
             self.flag = mapSessionState(data['State'])
         if "TrackConditions" in data:
             self.weather['trackstate'] = data['TrackConditions']
+        if 'WeatherConditions' in data:
+            self.weather['conditions'] = data['WeatherConditions']
         if "LapsRemaining" in data:
             self.lapsRemaining = data["LapsRemaining"]
         if "TrackSectors" in data:
@@ -354,7 +386,14 @@ class Service(lt_service):
                     self.bestSectorTimes[self.trackSectors[sector['ID']]] = sector["BestTime"]
         if "ActualStart" in data and data["ActualStart"] and "UTCOffset" in data:
             self.startTime = datetime.utcfromtimestamp((data["ActualStart"] - data["UTCOffset"]) / 1e6)
-        self.publishManifest()
+        if 'FastLapCompetitorID' in data and 'FastLapTime' in data:
+            self.bestLap = (data['FastLapCompetitorID'], parseTime(data['FastLapTime']))
+
+        if self.sessionID != data.get('ID'):
+            if self.sessionID:
+                self.cars.clear()
+            self.sessionID = data['ID']
+            self.publishManifest()
 
     def on_sdbroadcast(self, data):
         self.on_session(data[0])
@@ -407,7 +446,7 @@ class Service(lt_service):
             if cid not in self.sectorTimes or d["Id"] == 1:
                 self.sectorTimes[cid] = [("", ""), ("", ""), ("", "")]
             sector = self.trackSectors.get(d["Id"], -1)
-            if sector >= 0:
+            if sector >= 0 and d["Time"] > 0:
                 self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "")
 
     def on_updatesector(self, data):
@@ -440,3 +479,11 @@ class Service(lt_service):
 
     def on_mapanimate(self, _):
         pass
+
+    def on_removeanimation(self, _):
+        pass
+
+    def on_removecompetitor(self, competitors):
+        for compID in competitors:
+            if compID in self.cars:
+                del self.cars[compID]
