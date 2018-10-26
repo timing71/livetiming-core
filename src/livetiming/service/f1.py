@@ -230,14 +230,14 @@ class Service(lt_service):
 
                 free = self._getData('free')
 
-                new_desc = '{} - {}'.format(
+                new_desc = u'{} - {}'.format(
                     free['R'].title(),
                     free['S']
                 )
 
                 if new_desc != self._description:
                     self._description = new_desc
-                    self.log.info("New session: {desc}", desc=new_desc)
+                    self.log.info(u"New session: {desc}", desc=new_desc)
                     self.publishManifest()
 
             comms = self._getData('commentary')
