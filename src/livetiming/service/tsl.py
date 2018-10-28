@@ -86,6 +86,8 @@ def mapState(state, inPit):
         return "FIN"
     if state == "Missing":
         return "?"
+    if state == 'NotStarted':
+        return 'N/S'
     return state
 
 
@@ -461,7 +463,10 @@ class Service(lt_service):
     def on_competitorpitout(self, data):
         for c in data:
             cid = c['CompetitorID']
-            self.cars[cid]['out_lap'] = True
+            if cid in self.cars:
+                self.cars[cid]['out_lap'] = True
+            else:
+                print "Pit out for unknown competitor: {}".format(c)
 
     def on_updatesprintdriver(self, data):
         for driver in data:
@@ -491,4 +496,11 @@ class Service(lt_service):
         # for compID in competitors:
         #     if compID in self.cars:
         #         del self.cars[compID]
+        pass
+
+    # We don't use the class data so we can ignore these.
+    def on_updateclass(self, _):
+        pass
+
+    def on_removeclass(self, _):
         pass
