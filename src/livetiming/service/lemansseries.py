@@ -115,6 +115,7 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.TEAM,
             Stat.DRIVER,
             Stat.CAR,
@@ -216,6 +217,8 @@ class Service(lt_service):
         except AttributeError:  # can happen if rawCarData is empty - server returns list rather than empty object in that case
             carKeys = []
 
+        class_count = {}
+
         for pos in sorted(carKeys, key=lambda i: int(i)):
             car = rawCarData[pos]
             engage = self.staticData["tabEngages"].get(car["2"], {"categorie": "", "team": -1, "voiture": -1, "num": car["2"]})
@@ -243,10 +246,13 @@ class Service(lt_service):
 
             state = mapCarState(car["9"])
 
+            class_count[classe] = class_count.get(classe, 0) + 1
+
             cars.append([
                 engage["num"],
                 state,
                 mapClasses(classe),
+                class_count[classe],
                 team["nom"],
                 u"{}, {}".format(driver["nom"].upper(), driver['prenom']),
                 u"{} {}".format(marque, voiture["nom"]).strip(),
