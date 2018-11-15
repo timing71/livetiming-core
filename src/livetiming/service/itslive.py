@@ -15,7 +15,6 @@ API_ROOT = 'https://api-live.its-live.net/v1'
 
 
 def json_get(url):
-    print "Getting {}".format(url)
     try:
         return simplejson.load(urllib2.urlopen(url))
     except simplejson.JSONDecodeError:
@@ -301,17 +300,30 @@ class Service(lt_service):
         if season:
             event = get_current_event(series, season['name'])
             if event:
-                session = get_current_session(series, season['name'], event['event_id'])
-                self.log.info("Found session: {session}", session=session)
-                self._session = session
-                self._ssid = {
-                    'cs_id': series,
-                    'season': season['name'],
-                    'event_id': event['event_id'],
-                    'session_id': session['session_id']
-                }
-                self._config = simplejson.loads(session['cfg'])
-                return session
+                LoopingCall(self._set_session, series, season, event['event_id']).start(60, False)
+                return self._set_session(series, season, event['event_id'])
+
+    def _set_session(self, series, season, event_id):
+        session = get_current_session(series, season['name'], event_id)
+        if not self._session:
+            self.log.info("Found session: {session}", session=session)
+
+        session_changed = self._session and session['full_id'] != self._session['full_id']
+
+        self._session = session
+        self._ssid = {
+            'cs_id': series,
+            'season': season['name'],
+            'event_id': event_id,
+            'session_id': session['session_id']
+        }
+        self._config = simplejson.loads(session['cfg'])
+
+        if session_changed:
+            self.log.info("Session has been changed: {session}", session=session)
+            self.publishManifest()
+
+        return session
 
     def _timing_sector_count(self):
         ts = [s for s in self._config['inters'] if s['type'] == 0 and s['distance'] > 0]
