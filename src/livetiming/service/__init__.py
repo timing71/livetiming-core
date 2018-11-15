@@ -10,6 +10,7 @@ from livetiming.racing import Stat
 from livetiming.recording import TimingRecorder
 from lzstring import LZString
 from simplejson.scanner import JSONDecodeError
+from treq.client import HTTPClient
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ReconnectingClientFactory
@@ -32,6 +33,7 @@ configure_sentry_twisted()
 sentry = sentry()
 
 client.HTTPClientFactory.noisy = False
+client._HTTP11ClientFactory.noisy = False
 
 
 def create_service_session(service):
@@ -96,6 +98,7 @@ class Service(object):
                 'service_name': self.__module__
             }
         })
+        self.http_client = HTTPClient(client.Agent(reactor))
 
     def set_publish(self, func):
         self._publish = func
