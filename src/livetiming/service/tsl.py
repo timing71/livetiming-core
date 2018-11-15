@@ -6,6 +6,7 @@ from livetiming.service import Service as lt_service
 from requests.sessions import Session
 from signalr import Connection
 from threading import Thread
+from kitchen.text.converters import to_bytes, to_unicode
 
 import argparse
 import re
@@ -127,7 +128,7 @@ def mapSessionState(state):
 
 def format_driver_name(driver):
     if 'FirstName' in driver and 'LastName' in driver:
-        return "{} {}".format(driver['FirstName'], driver['LastName'].upper())
+        return u"{} {}".format(driver['FirstName'], driver['LastName'].upper())
     return ''
 
 
@@ -285,7 +286,7 @@ class Service(lt_service):
                 car['StartNumber'],
                 display_class,
                 "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
-                car['Name'] or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
+                to_unicode(to_bytes(car['Name'])) or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
                 car['Laps'],
                 car['Gap'],

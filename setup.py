@@ -27,6 +27,7 @@ setup(
         "enum34",
         "google-api-python-client",
         "icalendar",
+        "kitchen",
         "livetimingrelay",  # Only really required for the master relay
         "lzstring==1.0.3",
         "meteor-ejson",
