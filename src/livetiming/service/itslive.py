@@ -3,17 +3,13 @@ from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
-from twisted.web import client
 
 import argparse
 import requests
 import simplejson
 import time
-import treq
 import urllib2
 
-
-client.HTTPClientFactory.noisy = False
 
 API_ROOT = 'https://api-live.its-live.net/v1'
 
@@ -70,8 +66,8 @@ def get_current_session(series, season, event):
 
 
 @inlineCallbacks
-def json_post(url, body):
-    response = yield treq.post(
+def json_post(client, url, body):
+    response = yield client.post(
         url,
         json=body,
         headers={
@@ -79,12 +75,12 @@ def json_post(url, body):
         }
     )
 
-    body = yield treq.json_content(response)
+    body = yield response.json()
     returnValue(body)
 
 
 @inlineCallbacks
-def get_session_standings(ssid, start_id):
+def get_session_standings(client, ssid, start_id):
     body = {
         'startPos': 0,
         'endPos': 1000000,
@@ -93,21 +89,24 @@ def get_session_standings(ssid, start_id):
     }
 
     result = yield json_post(
+        client,
         '{}/Session/GetRankingWithBestOfAll'.format(API_ROOT),
         body
     )
     returnValue(result)
 
 
-def get_session_data(ssid):
+def get_session_data(client, ssid):
     return json_post(
+        client,
         '{}/Session/GetLastRaceInfo'.format(API_ROOT),
         ssid
     )
 
 
-def get_last_message(ssid):
+def get_last_message(client, ssid):
     return json_post(
+        client,
         '{}/Session/GetLastMsg'.format(API_ROOT),
         ssid
     )
@@ -268,7 +267,7 @@ class Service(lt_service):
 
     @inlineCallbacks
     def _fetch_ranking_data(self):
-        data = yield get_session_standings(self._ssid, self._start_id)
+        data = yield get_session_standings(self.http_client, self._ssid, self._start_id)
 
         self._standingsData['boa'] = data['boa']
         self._standingsData['sboa'] = data['sboa']
@@ -281,12 +280,12 @@ class Service(lt_service):
 
     @inlineCallbacks
     def _fetch_session_data(self):
-        data = yield get_session_data(self._ssid)
+        data = yield get_session_data(self.http_client, self._ssid)
         self._session.update(data)
 
     @inlineCallbacks
     def _fetch_last_message(self):
-        data = yield get_last_message(self._ssid)
+        data = yield get_last_message(self.http_client, self._ssid)
 
         if data.get('data_id', 0) > self._lastMessage:
             self._messages.append(data['msg'][9:])
