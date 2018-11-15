@@ -1,3 +1,4 @@
+from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -101,6 +102,13 @@ def get_session_standings(ssid, start_id):
 def get_session_data(ssid):
     return json_post(
         '{}/Session/GetLastRaceInfo'.format(API_ROOT),
+        ssid
+    )
+
+
+def get_last_message(ssid):
+    return json_post(
+        '{}/Session/GetLastMsg'.format(API_ROOT),
         ssid
     )
 
@@ -249,11 +257,14 @@ class Service(lt_service):
             'boaTime': None,
             'cars': {}
         }
+        self._messages = []
+        self._lastMessage = 0
 
         self._find_session(self.extra_args.series)
 
         LoopingCall(self._fetch_ranking_data).start(1)
         LoopingCall(self._fetch_session_data).start(1)
+        LoopingCall(self._fetch_last_message).start(1)
 
     @inlineCallbacks
     def _fetch_ranking_data(self):
@@ -272,6 +283,14 @@ class Service(lt_service):
     def _fetch_session_data(self):
         data = yield get_session_data(self._ssid)
         self._session.update(data)
+
+    @inlineCallbacks
+    def _fetch_last_message(self):
+        data = yield get_last_message(self._ssid)
+
+        if data.get('data_id', 0) > self._lastMessage:
+            self._messages.append(data['msg'][9:])
+            self._lastMessage = data['epoch_ms']
 
     def _find_session(self, series):
         season = get_current_season(series)
@@ -334,3 +353,8 @@ class Service(lt_service):
             ),
             'session': map_session(self._session)
         }
+
+    def getExtraMessageGenerators(self):
+        return [
+            RaceControlMessage(self._messages)
+        ]
