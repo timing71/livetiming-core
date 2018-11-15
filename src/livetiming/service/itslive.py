@@ -189,8 +189,13 @@ def map_laptimes(car, boatime):
     ]
 
 
-def map_car(boa, boatime):
+def map_car(sector_count, boa, boatime):
     def inner(car):
+
+        sectors = []
+        for i in range(1, sector_count + 1):
+            sectors += map_sector(car, i, boa)
+
         return [
             car['number'],
             map_car_state(car),
@@ -200,11 +205,7 @@ def map_car(boa, boatime):
             car['total_lap'],
             car['gap_first'],
             car['gap_prev']
-        ] + \
-            map_sector(car, 1, boa) + \
-            map_sector(car, 2, boa) + \
-            map_sector(car, 3, boa) + \
-            map_sector(car, 4, boa) + \
+        ] + sectors + \
             map_laptimes(car, boatime) + [
             car['total_pit_stop']
         ]
@@ -249,6 +250,7 @@ class Service(lt_service):
         self.extra_args = parseExtraArgs(extra_args)
 
         self._session = {}
+        self._config = {}
         self._start_id = 0
         self._standingsData = {
             'boa': [None] * 8,
@@ -259,11 +261,14 @@ class Service(lt_service):
         self._messages = []
         self._lastMessage = 0
 
-        self._find_session(self.extra_args.series)
+        session = self._find_session(self.extra_args.series)
 
-        LoopingCall(self._fetch_ranking_data).start(1)
-        LoopingCall(self._fetch_session_data).start(1)
-        LoopingCall(self._fetch_last_message).start(1)
+        if session:
+            LoopingCall(self._fetch_ranking_data).start(1)
+            LoopingCall(self._fetch_session_data).start(1)
+            LoopingCall(self._fetch_last_message).start(1)
+        else:
+            raise RuntimeError('No session found!')
 
     @inlineCallbacks
     def _fetch_ranking_data(self):
@@ -305,6 +310,12 @@ class Service(lt_service):
                     'event_id': event['event_id'],
                     'session_id': session['session_id']
                 }
+                self._config = simplejson.loads(session['cfg'])
+                return session
+
+    def _timing_sector_count(self):
+        ts = [s for s in self._config['inters'] if s['type'] == 0 and s['distance'] > 0]
+        return min(5, len(ts))
 
     def getName(self):
         return self._session.get('folder_name', 'ITS Chrono')
@@ -316,6 +327,12 @@ class Service(lt_service):
         return 1
 
     def getColumnSpec(self):
+
+        sector_cols = []
+        for i in range(1, self._timing_sector_count() + 1):
+            sector_cols.append(getattr(Stat, 'S{}'.format(i)))
+            sector_cols.append(getattr(Stat, 'BS{}'.format(i)))
+
         return [
             Stat.NUM,
             Stat.STATE,
@@ -324,15 +341,8 @@ class Service(lt_service):
             Stat.CAR,
             Stat.LAPS,
             Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.BS1,
-            Stat.S2,
-            Stat.BS2,
-            Stat.S3,
-            Stat.BS3,
-            Stat.S4,
-            Stat.BS4,
+            Stat.INT
+        ] + sector_cols + [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -342,6 +352,7 @@ class Service(lt_service):
         return {
             'cars': map(
                 map_car(
+                    self._timing_sector_count(),
                     self._standingsData.get('boa'),
                     self._standingsData.get('boaTime')
                 ),
