@@ -98,6 +98,13 @@ def get_session_standings(ssid, start_id):
     returnValue(result)
 
 
+def get_session_data(ssid):
+    return json_post(
+        '{}/Session/GetLastRaceInfo'.format(API_ROOT),
+        ssid
+    )
+
+
 def parseExtraArgs(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--series", help="Series ID", required=True)
@@ -246,6 +253,7 @@ class Service(lt_service):
         self._find_session(self.extra_args.series)
 
         LoopingCall(self._fetch_ranking_data).start(1)
+        LoopingCall(self._fetch_session_data).start(1)
 
     @inlineCallbacks
     def _fetch_ranking_data(self):
@@ -259,6 +267,11 @@ class Service(lt_service):
             id = car['competitor_id']
             self._standingsData['cars'].setdefault(id, {}).update(car)
             self._start_id = max(self._start_id, car.get('data_id', 0))
+
+    @inlineCallbacks
+    def _fetch_session_data(self):
+        data = yield get_session_data(self._ssid)
+        self._session.update(data)
 
     def _find_session(self, series):
         season = get_current_season(series)
