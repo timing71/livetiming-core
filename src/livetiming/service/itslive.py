@@ -58,7 +58,7 @@ def get_current_session(series, season, event):
     current = [s for s in sessions if s['start_epoch'] <= now and ('end_epoch' not in s or s['end_epoch'] >= now)]
 
     if current:
-        return current[0]
+        return current[-1]
     else:
         print "No current session, using most recent one."
         return sessions[-1]
