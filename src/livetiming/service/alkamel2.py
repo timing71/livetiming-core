@@ -529,7 +529,7 @@ class Service(lt_service):
                     car = [
                         race_num,
                         state,
-                        u"{}, {}".format(entry.get('lastname', data.get('lastname', '')).upper(), entry.get('firstname', data.get('firstname', '')).title()),
+                        entry.get('name') if 'name' in entry else u"{}, {}".format(entry.get('lastname', data.get('lastname', '')).upper(), entry.get('firstname', data.get('firstname', '')).title()),
                         entry.get('team', data.get('team', '')),
                         entry.get('vehicle', data.get('vehicle', '')),
                         laps,
