@@ -167,6 +167,7 @@ def map_stint_with(car, timestamp):
             drivers.index(stint.driver) if stint.driver in drivers else -1,
             stint.best_lap_time,
             stint.yellow_laps,
-            stint.average_lap_time
+            stint.average_lap_time,
+            map(lambda ls: ls.for_json(), stint.laps)
         ]
     return map_stint
