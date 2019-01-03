@@ -43,6 +43,12 @@ setup(
         "subprocess32",
         "twisted==17.9.0"  # Latest version supported by Crossbar
     ],
+    setup_requires=[
+        'pytest-runner',
+    ],
+    tests_require=[
+        'pytest'
+    ],
     entry_points={
         'console_scripts': [
             'livetiming-directory = livetiming.directory:main',
