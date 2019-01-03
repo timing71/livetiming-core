@@ -35,13 +35,13 @@ class Lap(object):
 
     def for_json(self):
         return [
-            self.lap_num,
+            # self.lap_num,
             self.laptime,
-            self.position,
+            # self.position,
             # self.driver,
-            self.timestamp,
+            # self.timestamp,
             self.flag,
-            self.tyre
+            # self.tyre
         ]
 
     def __repr__(self, *args, **kwargs):
