@@ -218,7 +218,7 @@ def e(e, t, a, s):
             else:
                 return a['currentLapStartTime']
     elif t > s:
-        if len(a['previousLoops']) == 0 or s == -1:
+        if len(a['previousLoops']) == 0:
             return a['currentLapStartTime']
         else:
             finalLoopIndex = max(a['previousLoops'].keys())
@@ -312,6 +312,21 @@ SECTOR_STATS = [
     Stat.S4,
     Stat.S5,
 ]
+
+
+def augment_data_with_loops(data):
+    data_with_loops = {
+        'currentLoops': _parse_loops(data.get('currentLoopSectors')),
+        'previousLoops': _parse_loops(data.get('previousLoopSectors')),
+    }
+    if 'data' in data:
+        standing_data = data['data'].split(";")
+
+        data_with_loops['currentLapStartTime'] = maybe_int(standing_data[7], 0) if len(standing_data) > 7 else 0
+        data_with_loops['currentLapNumber'] = maybe_int(standing_data[9], 0) if len(standing_data) > 9 else 0
+        data_with_loops['laps'] = maybe_int(standing_data[4], 0)
+    data_with_loops.update(data)
+    return data_with_loops
 
 
 class Service(lt_service):
@@ -473,11 +488,7 @@ class Service(lt_service):
                     current_sectors = parse_sectors(data.get('currentSectors', ''))
                     previous_sectors = parse_sectors(data.get('lastSectors', ''), 'old')
 
-                    data_with_loops = {
-                        'currentLoops': _parse_loops(data.get('currentLoopSectors')),
-                        'previousLoops': _parse_loops(data.get('previousLoopSectors')),
-                    }
-                    data_with_loops.update(data)
+                    data_with_loops = augment_data_with_loops(data)
 
                     status = ''
                     trackStatus = ''
@@ -486,10 +497,6 @@ class Service(lt_service):
 
                     if 'data' in data:
                         standing_data = data['data'].split(";")
-
-                        data_with_loops['currentLapStartTime'] = maybe_int(standing_data[7], 0) if len(standing_data) > 7 else 0
-                        data_with_loops['currentLapNumber'] = maybe_int(standing_data[9], 0) if len(standing_data) > 9 else 0
-                        data_with_loops['laps'] = maybe_int(standing_data[4], 0)
 
                         status = standing_data[2]
                         trackStatus = standing_data[8] if len(standing_data) > 8 else None
