@@ -79,7 +79,7 @@ class Analyser(object):
     def _publish_pending(self):
         now = time.time()
         for key, data in copy.copy(self._pending_publishes).iteritems():
-            if self._last_published.get(key, 0) + (self.interval or 1) < now:
+            if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
                 self.log.debug("Publishing queued data for {key}", key=key)
                 did_publish = yield self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
