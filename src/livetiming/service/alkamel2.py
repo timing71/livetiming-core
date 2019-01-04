@@ -101,11 +101,11 @@ class RaceControlMessage(TimingMessage):
             messages = rcm.get('log', {})
             new_messages = [m for m in messages.values() if m.get('date', 0) > self._mostRecentTimestamp]
 
-            current = rcm.get('currentMessages', {})
-            for idx, msg in current.iteritems():
-                if self._seen_current_msgs.get(idx) != msg['message']:
-                    new_messages.append(msg)
-                    self._seen_current_msgs[idx] = msg['message']
+            # current = rcm.get('currentMessages', {})
+            # for idx, msg in current.iteritems():
+            #     if self._seen_current_msgs.get(idx) != msg['message']:
+            #         new_messages.append(msg)
+            #         self._seen_current_msgs[idx] = msg['message']
 
             msgs = []
 
