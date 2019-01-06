@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import SubscribeOptions
+from collections import defaultdict
 from livetiming import configure_sentry_twisted, load_env
 from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
@@ -33,6 +34,7 @@ class DVRSession(ApplicationSession):
             self.dvr.start()
         self.dvr.log.info("DVR session ready")
         yield self.subscribe(self.dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match=u'prefix', details_arg='details'))
+        yield self.subscribe(self.dvr.handle_analysis_message, u'livetiming.analysis', options=SubscribeOptions(match=u'prefix', details_arg='details'))
         yield self.subscribe(self.dvr.handle_control_message, Channel.CONTROL)
 
     def onDisconnect(self):
@@ -108,6 +110,7 @@ class DVR(object):
     def __init__(self):
         self.started = False
         self._in_progress_recordings = {}
+        self._in_progress_analyses = defaultdict(dict)
         self.IN_PROGRESS_DIR = os.getenv('LIVETIMING_RECORDINGS_TEMP_DIR', './recordings-temp')
         self.FINISHED_DIR = os.getenv('LIVETIMING_RECORDINGS_DIR', './recordings')
         self._recordings_without_frames = []
@@ -137,6 +140,14 @@ class DVR(object):
             elif msg.msgClass == MessageClass.SERVICE_DATA_COMPRESSED:
                 state = simplejson.loads(LZString().decompressFromUTF16(msg.payload))
                 self._store_data_frame(service_uuid, state, msg.date)
+
+    def handle_analysis_message(self, message, details=None):
+        if details and details.topic:
+            msg = Message.parse(message)
+            if msg.msgClass == MessageClass.ANALYSIS_DATA:
+                _, service_uuid, analysis_module = details.topic.split('/')
+                self.log.debug("Received analysis {module} for {uuid}", module=analysis_module, uuid=service_uuid)
+                self._in_progress_analyses[service_uuid][analysis_module] = msg.payload
 
     def handle_control_message(self, message):
         msg = Message.parse(message)
@@ -175,9 +186,11 @@ class DVR(object):
                 rec = self._get_recording(uuid, True)
 
         rec.writeManifest(manifest)
+        self._in_progress_analyses[uuid]['service'] = manifest
 
     def _store_data_frame(self, uuid, frame, date):
         self._get_recording(uuid).writeState(frame, date)
+        self._in_progress_analyses[uuid]['state'] = frame
 
     def _scan_for_finished_recordings(self):
         threshold = int(time.time()) - RECORDING_TIMEOUT
@@ -223,6 +236,7 @@ class DVR(object):
                 manifest = recording.manifest
                 manifest['uuid'] = '{}:{}'.format(uuid, disambiguator)
                 recording.writeManifest(manifest)
+                self._in_progress_analyses[uuid]['service'] = manifest
 
             def do_finalise(src):
                 if recording.duration < RECORDING_DURATION_THRESHOLD:
@@ -247,6 +261,14 @@ class DVR(object):
 
                     os.chmod(dest, 0664)
                     self.log.info("Saved recording to {dest}", dest=dest)
+
+                    analysis_filename = dest.replace('.zip', '.json')
+                    with open(analysis_filename, 'w') as analysis_file:
+                        simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
+                        os.chmod(analysis_filename, 0664)
+                        self.log.info("Created analysis file {filename}", filename=analysis_filename)
+
+                del self._in_progress_analyses[uuid]
 
             d = deferToThread(recording.finalise)  # This could take a long time!
             d.addCallback(do_finalise)
