@@ -218,6 +218,7 @@ class RecordingsDirectory(ApplicationSession):
 def update_recordings_index():
     load_env()
     sentry()
+    log = Logger()
 
     recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
 
@@ -237,7 +238,7 @@ def update_recordings_index():
     for extant in index.keys():
         filename = extant.replace(':', '_') + '.zip'
         if filename not in rec_files:
-            print 'Removing deleted recording file {} from index'.format(filename)
+            log.info('Removing deleted recording file {filename} from index', filename=filename)
             del index[extant]
 
     for rec_file in rec_files:
@@ -257,9 +258,9 @@ def update_recordings_index():
                 if manifest.get('hidden'):
                     index[uuid]['hidden'] = True
 
-                print "Added {} (UUID {}) to index".format(rec_file, manifest['uuid'])
+                log.info("Added {filename} (UUID {uuid}) to index", filename=rec_file, uuid=manifest['uuid'])
             except RecordingException:
-                self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
+                log.warn("Not a valid recording file: {filename}", filename=rec_file)
                 continue
 
         analysis_filename = os.path.join(recordings_dir, '{}.json'.format(rec_file[0:-4]))
@@ -268,12 +269,12 @@ def update_recordings_index():
             if os.path.isfile(analysis_filename):
                 index[uuid]['hasAnalysis'] = True
             elif os.environ.get('GENERATE_ANALYSIS'):
-                print "Generating post-session analysis file for {}...".format(rec_file)
+                log.info("Generating post-session analysis file for {rec_file}...", rec_file=rec_file)
                 try:
                     generate_analysis(rec_file, analysis_filename, True)
                     index[uuid]['hasAnalysis'] = True
                 except Exception as e:
-                    print e
+                    log.failure(failure=e)
                     index[uuid]['hasAnalysis'] = False
 
     with open(index_filename, 'w') as index_file:
