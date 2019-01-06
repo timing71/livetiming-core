@@ -189,9 +189,12 @@ class ReplayManager(object):
         self.scanTask.start(300)
 
     def scanDirectory(self):
-        (_, _, filenames) = os.walk(self.recordingDirectory).next()
+        os.chdir(self.recordingDirectory)
+        rec_files = glob.glob('*.zip')
+
         self.recordings = {}
-        for recFileName in filenames:
+
+        for recFileName in rec_files:
             try:
                 fullPath = os.path.join(self.recordingDirectory, recFileName)
                 recFile = RecordingFile(fullPath)
