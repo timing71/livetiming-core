@@ -250,11 +250,13 @@ def update_recordings_index():
                     'description': manifest['description'],
                     'duration': manifest['duration'],
                     'filename': rec_file,
-                    'hidden': manifest.get('hidden', False),
                     'name': manifest['name'],
                     'startTime': manifest['startTime'],
                     'uuid': manifest['uuid'],
                 }
+                if manifest.get('hidden'):
+                    index[uuid]['hidden'] = True
+
                 print "Added {} (UUID {}) to index".format(rec_file, manifest['uuid'])
             except RecordingException:
                 self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
