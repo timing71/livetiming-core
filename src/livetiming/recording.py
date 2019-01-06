@@ -237,7 +237,7 @@ def update_recordings_index():
     for extant in index.keys():
         filename = extant.replace(':', '_') + '.zip'
         if filename not in rec_files:
-            print 'Removing deleted recording file {}'.format(filename)
+            print 'Removing deleted recording file {} from index'.format(filename)
             del index[extant]
 
     for rec_file in rec_files:
@@ -265,7 +265,7 @@ def update_recordings_index():
         if 'hasAnalysis' not in index[uuid]:
             if os.path.isfile(analysis_filename):
                 index[uuid]['hasAnalysis'] = True
-            else:
+            elif os.environ.get('GENERATE_ANALYSIS'):
                 print "Generating post-session analysis file for {}...".format(rec_file)
                 try:
                     generate_analysis(rec_file, analysis_filename, True)
