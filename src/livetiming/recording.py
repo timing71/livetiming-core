@@ -20,6 +20,7 @@ import shutil
 import sys
 import tempfile
 import time
+import txaio
 import zipfile
 
 
@@ -219,6 +220,7 @@ def update_recordings_index():
     load_env()
     sentry()
     log = Logger()
+    txaio.start_logging()
 
     recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
 
