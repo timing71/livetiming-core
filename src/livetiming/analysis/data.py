@@ -1,6 +1,5 @@
 from collections import defaultdict, OrderedDict
 from livetiming.racing import Stat, FlagStatus
-from livetiming.recording import RecordingFile
 import cPickle
 import copy
 import re

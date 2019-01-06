@@ -1,22 +1,26 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import PublishOptions
-from livetiming import configure_sentry_twisted, load_env
+from livetiming import configure_sentry_twisted, load_env, sentry
+from livetiming.analysis import Analyser
 from livetiming.network import RPC, Realm, authenticatedService, Message,\
     MessageClass, Channel
+from livetiming.racing import Stat
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
+import datetime
 import dictdiffer
+import glob
 import os
 import re
 import simplejson
 import shutil
+import sys
+import tempfile
 import time
 import zipfile
-import tempfile
-import datetime
 
 
 INTRA_FRAMES = 10
@@ -209,6 +213,110 @@ class RecordingsDirectory(ApplicationSession):
         self.log.info("Disconnected")
         if reactor.running:
             reactor.stop()
+
+
+def update_recordings_index():
+    load_env()
+    sentry()
+
+    recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
+
+    index_filename = os.path.join(recordings_dir, 'index.json')
+    index = {}
+
+    try:
+        with open(index_filename, 'r') as index_file:
+            index = simplejson.load(index_file)
+    except IOError:
+        pass
+
+    os.chdir(recordings_dir)
+
+    rec_files = glob.glob('*.zip')
+
+    for extant in index.keys():
+        filename = extant.replace(':', '_') + '.zip'
+        if filename not in rec_files:
+            print 'Removing deleted recording file {}'.format(filename)
+            del index[extant]
+
+    for rec_file in rec_files:
+        uuid = rec_file.replace('_', ':', 1)[0:-4]
+        if uuid not in index:
+            try:
+                r = RecordingFile(rec_file)
+                manifest = r.augmentedManifest()
+                index[uuid] = {
+                    'description': manifest['description'],
+                    'duration': manifest['duration'],
+                    'filename': rec_file,
+                    'hidden': manifest.get('hidden', False),
+                    'name': manifest['name'],
+                    'startTime': manifest['startTime'],
+                    'uuid': manifest['uuid'],
+                }
+                print "Added {} (UUID {}) to index".format(rec_file, manifest['uuid'])
+            except RecordingException:
+                self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
+                continue
+
+        analysis_filename = os.path.join(recordings_dir, '{}.json'.format(rec_file[0:-4]))
+
+        if 'hasAnalysis' not in index[uuid]:
+            if os.path.isfile(analysis_filename):
+                index[uuid]['hasAnalysis'] = True
+            else:
+                print "Generating post-session analysis file for {}...".format(rec_file)
+                try:
+                    generate_analysis(rec_file, analysis_filename, True)
+                    index[uuid]['hasAnalysis'] = True
+                except Exception as e:
+                    print e
+                    index[uuid]['hasAnalysis'] = False
+
+    with open(index_filename, 'w') as index_file:
+        simplejson.dump(index, index_file, separators=(',', ':'))
+
+
+def generate_analysis(rec_file, out_file, report_progress=False):
+    rec = RecordingFile(rec_file)
+    manifest = rec.augmentedManifest()
+
+    a = Analyser(manifest['uuid'], None)
+    pcs = Stat.parse_colspec(manifest['colSpec'])
+
+    start_time = time.time()
+    frames = sorted(rec.keyframes + rec.iframes)
+    frame_count = len(frames)
+
+    data = {}
+    for idx, frame in enumerate(frames):
+        newState = rec.getStateAtTimestamp(frame)
+        a.receiveStateUpdate(newState, pcs, frame)
+        data['state'] = newState
+
+        if report_progress:
+            now = time.time()
+            current_fps = float(idx) / (now - start_time)
+            eta = datetime.datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
+            sys.stdout.write("\r{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S")))
+            sys.stdout.flush()
+
+    if report_progress:
+        print ""
+        stop_time = time.time()
+        print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
+
+    for key, module in a._modules.iteritems():
+        data[key] = module.get_data(a.data_centre)
+
+    data['service'] = manifest
+
+    with open(out_file, 'w') as outfile:
+        simplejson.dump(data, outfile, separators=(',', ':'))
+
+    if report_progress:
+        print "Generation complete."
 
 
 def main():

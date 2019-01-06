@@ -3,16 +3,15 @@ from collections import OrderedDict
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from livetiming.racing import FlagStatus, Stat
-from lzstring import LZString
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
+import copy
+import cPickle
 import importlib
 import simplejson
 import time
-import copy
-import cPickle
 import os
 
 
