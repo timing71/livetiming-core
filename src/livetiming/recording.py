@@ -180,51 +180,39 @@ def applyIntraFrame(initial, iframe):
 
 
 class ReplayManager(object):
-    def __init__(self, publish, recordingDirectory):
+    def __init__(self):
         self.log = Logger()
-        self.recordingDirectory = recordingDirectory
-        self.publish = publish
-        self.recordings = {}
-        self.scanTask = LoopingCall(self.scanDirectory)
-        self.scanTask.start(300)
+        self.recordings = []
+        self._scan_task = LoopingCall(self.update_index)
+        self._scan_task.start(600)
 
-    def scanDirectory(self):
-        os.chdir(self.recordingDirectory)
-        rec_files = glob.glob('*.zip')
-
-        self.recordings = {}
-
-        for recFileName in rec_files:
-            try:
-                fullPath = os.path.join(self.recordingDirectory, recFileName)
-                recFile = RecordingFile(fullPath)
-                manifest = recFile.augmentedManifest()
-                manifest['filename'] = recFileName
-                self.recordings[manifest['uuid']] = manifest
-            except RecordingException:
-                self.log.warn("Not a valid recording file: {filename}", filename=fullPath)
-        self.publish(Channel.RECORDING, Message(MessageClass.RECORDING_LISTING, self.recordings, retain=True).serialise(), options=PublishOptions(retain=True))
+    def update_index(self):
+        self.recordings = sorted(update_recordings_index().values(), key=lambda r: r['startTime'], reverse=True)
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
 
 @authenticatedService
 class RecordingsDirectory(ApplicationSession):
+    PAGE_SIZE = 50
+
+    @inlineCallbacks
     def onJoin(self, details):
-        self.replayManager = ReplayManager(self.publish, os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings'))
-        self.replayManager.log.info("Recordings directory service ready")
+        self.replayManager = ReplayManager()
+        yield self.register(self.get_page, RPC.GET_RECORDINGS_PAGE)
+        self.log.info("Recordings directory service ready")
 
     def onDisconnect(self):
         self.log.info("Disconnected")
         if reactor.running:
             reactor.stop()
 
+    def get_page(self, page_number):
+        start_idx = (page_number - 1) * self.PAGE_SIZE
+        return self.recordings[start_idx:start_idx + self.PAGE_SIZE]
+
 
 def update_recordings_index():
-    load_env()
-    sentry()
     log = Logger()
-    txaio.start_logging()
-
     recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
 
     index_filename = os.path.join(recordings_dir, 'index.json')
@@ -284,6 +272,8 @@ def update_recordings_index():
 
     with open(index_filename, 'w') as index_file:
         simplejson.dump(index, index_file, separators=(',', ':'))
+
+    return index
 
 
 def generate_analysis(rec_file, out_file, report_progress=False):
