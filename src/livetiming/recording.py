@@ -13,6 +13,7 @@ from twisted.logger import Logger
 import datetime
 import dictdiffer
 import glob
+import math
 import os
 import re
 import simplejson
@@ -197,8 +198,9 @@ class RecordingsDirectory(ApplicationSession):
 
     @inlineCallbacks
     def onJoin(self, details):
-        self.replayManager = ReplayManager()
+        self._manager = ReplayManager()
         yield self.register(self.get_page, RPC.GET_RECORDINGS_PAGE)
+        yield self.register(self.get_names, RPC.GET_RECORDINGS_NAMES)
         self.log.info("Recordings directory service ready")
 
     def onDisconnect(self):
@@ -206,9 +208,22 @@ class RecordingsDirectory(ApplicationSession):
         if reactor.running:
             reactor.stop()
 
-    def get_page(self, page_number):
+    def get_page(self, page_number=1, filter_name=None, show_hidden=False):
         start_idx = (page_number - 1) * self.PAGE_SIZE
-        return self.recordings[start_idx:start_idx + self.PAGE_SIZE]
+        possible_recordings = filter(
+            lambda r: r['name'] == filter_name or filter_name is None,
+            filter(
+                lambda r: show_hidden or not r.get('hidden'),
+                self._manager.recordings
+            )
+        )
+        return {
+            'recordings': possible_recordings[start_idx:start_idx + self.PAGE_SIZE],
+            'pages': math.ceil(len(possible_recordings) / float(self.PAGE_SIZE))
+        }
+
+    def get_names(self):
+        return list(set(map(lambda r: r['name'], self._manager.recordings)))
 
 
 def update_recordings_index():

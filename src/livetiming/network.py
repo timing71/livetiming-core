@@ -28,6 +28,7 @@ class RPC:
     STATE_PUBLISH = u"livetiming.service.{}"
     GET_DIRECTORY_LISTING = u'livetiming.directory.listServices'
     GET_RECORDINGS_PAGE = u'livetiming.recordings.page'
+    GET_RECORDINGS_NAMES = u'livetiming.recordings.names'
 
 
 class MessageClass(Enum):
