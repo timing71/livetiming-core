@@ -41,7 +41,7 @@ class DVRSession(ApplicationSession):
         self.dvr.log.info("Disconnected from live timing service")
 
 
-RECORDING_TIMEOUT = 5 * 60  # 5 minutes
+RECORDING_TIMEOUT = 1 * 60  # 5 minutes
 RECORDING_DURATION_THRESHOLD = 10 * 60  # recordings shorter than 10 minutes are thrown away
 
 
@@ -218,7 +218,15 @@ class DVR(object):
 
         for uuid in finished_recordings:
             try:
-                self._finish_recording(uuid)
+                maybe_deferred = self._finish_recording(uuid)
+                if maybe_deferred:
+
+                    def clear_analysis(*args):
+                        self.log.debug("Clearing analysis for {uuid}", uuid=uuid)
+                        del self._in_progress_analyses[uuid]
+
+                    maybe_deferred.addCallback(clear_analysis)
+
             except Exception:
                 self.log.failure("Exception while finishing recording for {uuid}", uuid=uuid)
 
@@ -268,10 +276,9 @@ class DVR(object):
                         os.chmod(analysis_filename, 0664)
                         self.log.info("Created analysis file {filename}", filename=analysis_filename)
 
-                del self._in_progress_analyses[uuid]
-
             d = deferToThread(recording.finalise)  # This could take a long time!
             d.addCallback(do_finalise)
+            return d
         else:
             self.log.error(
                 "Recording for UUID {uuid} has no manifest. Leaving you to solve this one manually!",
