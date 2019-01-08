@@ -355,7 +355,7 @@ def update_recordings_index():
 
         analysis_filename = os.path.join(recordings_dir, '{}.json'.format(rec_file[0:-4]))
 
-        if 'hasAnalysis' not in index[uuid]:
+        if not index[uuid].get('hasAnalysis'):
             if os.path.isfile(analysis_filename):
                 index[uuid]['hasAnalysis'] = True
             elif os.environ.get('GENERATE_ANALYSIS'):
