@@ -184,11 +184,13 @@ class ReplayManager(object):
     def __init__(self):
         self.log = Logger()
         self.recordings = []
+        self.recordings_by_uuid = {}
         self._scan_task = LoopingCall(self.update_index)
         self._scan_task.start(600)
 
     def update_index(self):
         self.recordings = sorted(update_recordings_index().values(), key=lambda r: r['startTime'], reverse=True)
+        self.recordings_by_uuid = {r['uuid']: r for r in self.recordings}
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
 
@@ -201,6 +203,7 @@ class RecordingsDirectory(ApplicationSession):
         self._manager = ReplayManager()
         yield self.register(self.get_page, RPC.GET_RECORDINGS_PAGE)
         yield self.register(self.get_names, RPC.GET_RECORDINGS_NAMES)
+        yield self.register(self.get_manifest, RPC.GET_RECORDINGS_MANIFEST)
         self.log.info("Recordings directory service ready")
 
     def onDisconnect(self):
@@ -235,6 +238,9 @@ class RecordingsDirectory(ApplicationSession):
                 )
             )
         )
+
+    def get_manifest(self, recording_uuid):
+        return self._manager.recordings_by_uuid.get(recording_uuid)
 
 
 def update_recordings_index():

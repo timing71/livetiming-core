@@ -29,6 +29,7 @@ class RPC:
     GET_DIRECTORY_LISTING = u'livetiming.directory.listServices'
     GET_RECORDINGS_PAGE = u'livetiming.recordings.page'
     GET_RECORDINGS_NAMES = u'livetiming.recordings.names'
+    GET_RECORDINGS_MANIFEST = u'livetiming.recordings.manifest'
 
 
 class MessageClass(Enum):
