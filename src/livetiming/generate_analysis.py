@@ -1,5 +1,7 @@
 from livetiming.recording import generate_analysis
 
+import sys
+
 
 def main():
     # Generate an analysis data dump from a recording file
