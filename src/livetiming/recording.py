@@ -171,6 +171,67 @@ class RecordingFile(object):
         return man
 
 
+class DirectoryBackedRecording(object):
+    def __init__(self, directory):
+        self.directory = directory
+        self.iframes = []
+        self.keyframes = []
+
+        try:
+            with open(os.path.join(self.directory, 'manifest.json'), 'r') as man_file:
+                self.manifest = simplejson.load(man_file)
+        except:
+            raise RecordingException("Directory contains no manifest.json, this is not a usable recording.")
+
+        if "version" not in self.manifest and not force_compat:
+            raise RecordingException("Unknown / pre-v1 recording file, unsupported. Try rectool convert")
+        if "version" in self.manifest and self.manifest['version'] != 1:
+            raise RecordingException("Unknown recording file version {}, cannot continue".format(self.manifest['version']))
+
+        minFrame = 999999999999999
+        maxFrame = 0
+        os.chdir(self.directory)
+        for frame in glob.glob('*.json'):
+            m = re.match("([0-9]{5,11})(i?)", frame)
+            if m:
+                val = int(m.group(1))
+                if m.group(2):  # it's an iframe
+                    self.iframes.append(val)
+                else:
+                    self.keyframes.append(val)
+                maxFrame = max(val, maxFrame)
+                minFrame = min(val, minFrame)
+        self.startTime = datetime.datetime.fromtimestamp(minFrame)
+        self.manifest['startTime'] = minFrame
+        self.duration = (datetime.datetime.fromtimestamp(maxFrame) - self.startTime).total_seconds()
+        self.frames = len(self.iframes) + len(self.keyframes)
+
+    def save_manifest(self):
+        with open(os.path.join(self.directory, 'manifest.json'), 'w') as man_file:
+            simplejson.dump(self.manifest)
+
+    def getStateAt(self, interval):
+        return self.getStateAtTimestamp(self.manifest['startTime'] + interval)
+
+    def getStateAtTimestamp(self, timecode):
+        mostRecentKeyframeIndex = max([frame for frame in self.keyframes if frame <= timecode] + [min(self.keyframes)])
+        intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
+
+        with open("{:011d}.json".format(mostRecentKeyframeIndex), 'r') as keyframe:
+            state = simplejson.load(keyframe)
+            for iframeIndex in intraFrames:
+                with open("{:011d}i.json".format(iframeIndex), 'r') as iframe:
+                    ifr = simplejson.load(iframe)
+                    state = applyIntraFrame(state, ifr)
+
+            return state
+
+    def augmentedManifest(self):
+        man = self.manifest
+        man['duration'] = self.duration
+        return man
+
+
 def applyIntraFrame(initial, iframe):
     return {
         'cars': dictdiffer.patch(iframe['cars'], initial['cars']),
@@ -309,44 +370,55 @@ def update_recordings_index():
 
 
 def generate_analysis(rec_file, out_file, report_progress=False):
-    rec = RecordingFile(rec_file)
-    manifest = rec.augmentedManifest()
+    try:
+        rec = extract_recording(rec_file)
+        manifest = rec.augmentedManifest()
 
-    a = Analyser(manifest['uuid'], None)
-    pcs = Stat.parse_colspec(manifest['colSpec'])
+        a = Analyser(manifest['uuid'], None)
+        pcs = Stat.parse_colspec(manifest['colSpec'])
 
-    start_time = time.time()
-    frames = sorted(rec.keyframes + rec.iframes)
-    frame_count = len(frames)
+        start_time = time.time()
+        frames = sorted(rec.keyframes + rec.iframes)
+        frame_count = len(frames)
 
-    data = {}
-    for idx, frame in enumerate(frames):
-        newState = rec.getStateAtTimestamp(frame)
-        a.receiveStateUpdate(newState, pcs, frame)
-        data['state'] = newState
+        data = {}
+        for idx, frame in enumerate(frames):
+            newState = rec.getStateAtTimestamp(frame)
+            a.receiveStateUpdate(newState, pcs, frame)
+            data['state'] = newState
+
+            if report_progress:
+                now = time.time()
+                current_fps = float(idx) / (now - start_time)
+                eta = datetime.datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
+                sys.stdout.write("\r{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S")))
+                sys.stdout.flush()
 
         if report_progress:
-            now = time.time()
-            current_fps = float(idx) / (now - start_time)
-            eta = datetime.datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
-            sys.stdout.write("\r{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S")))
-            sys.stdout.flush()
+            print ""
+            stop_time = time.time()
+            print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
 
-    if report_progress:
-        print ""
-        stop_time = time.time()
-        print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
+        for key, module in a._modules.iteritems():
+            data[key] = module.get_data(a.data_centre)
 
-    for key, module in a._modules.iteritems():
-        data[key] = module.get_data(a.data_centre)
+        data['service'] = manifest
 
-    data['service'] = manifest
+        with open(out_file, 'w') as outfile:
+            simplejson.dump(data, outfile, separators=(',', ':'))
 
-    with open(out_file, 'w') as outfile:
-        simplejson.dump(data, outfile, separators=(',', ':'))
+        if report_progress:
+            print "Generation complete."
+    finally:
+        if rec:
+            shutil.rmtree(rec.directory)
 
-    if report_progress:
-        print "Generation complete."
+
+def extract_recording(rec_file):
+    directory = tempfile.mkdtemp()
+    with zipfile.ZipFile(rec_file, 'r') as rec:
+        rec.extractall(directory)
+    return DirectoryBackedRecording(directory)
 
 
 def main():
