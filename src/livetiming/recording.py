@@ -219,11 +219,22 @@ class RecordingsDirectory(ApplicationSession):
         )
         return {
             'recordings': possible_recordings[start_idx:start_idx + self.PAGE_SIZE],
-            'pages': math.ceil(len(possible_recordings) / float(self.PAGE_SIZE))
+            'pages': math.ceil(len(possible_recordings) / float(self.PAGE_SIZE)),
+            'total': len(possible_recordings)
         }
 
-    def get_names(self):
-        return list(set(map(lambda r: r['name'], self._manager.recordings)))
+    def get_names(self, show_hidden=False):
+        return list(
+            set(
+                map(
+                    lambda r: r['name'],
+                    filter(
+                        lambda r: show_hidden or not r.get('hidden'),
+                        self._manager.recordings
+                    )
+                )
+            )
+        )
 
 
 def update_recordings_index():
