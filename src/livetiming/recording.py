@@ -335,7 +335,7 @@ def update_recordings_index():
         uuid = rec_file.replace('_', ':', 1)[0:-4]
         if uuid not in index:
             try:
-                r = RecordingFile(rec_file)
+                r = RecordingFile(os.path.join(recordings_dir, rec_file))
                 manifest = r.augmentedManifest()
                 index[uuid] = {
                     'description': manifest['description'],
@@ -361,7 +361,7 @@ def update_recordings_index():
             elif os.environ.get('GENERATE_ANALYSIS'):
                 log.info("Generating post-session analysis file for {rec_file}...", rec_file=rec_file)
                 try:
-                    generate_analysis(rec_file, analysis_filename, True)
+                    generate_analysis(os.path.join(recordings_dir, rec_file), analysis_filename, True)
                     index[uuid]['hasAnalysis'] = True
                 except Exception as e:
                     log.failure(failure=e)
