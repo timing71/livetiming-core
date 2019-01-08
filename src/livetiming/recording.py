@@ -220,9 +220,13 @@ class DirectoryBackedRecording(object):
         with open("{:011d}.json".format(mostRecentKeyframeIndex), 'r') as keyframe:
             state = simplejson.load(keyframe)
             for iframeIndex in intraFrames:
-                with open("{:011d}i.json".format(iframeIndex), 'r') as iframe:
-                    ifr = simplejson.load(iframe)
-                    state = applyIntraFrame(state, ifr)
+                try:
+                    with open("{:011d}i.json".format(iframeIndex), 'r') as iframe:
+                        ifr = simplejson.load(iframe)
+                        state = applyIntraFrame(state, ifr)
+                except Exception as e:
+                    print "WARN {} on iframe {}".format(e, iframeIndex)
+                    pass
 
             return state
 
