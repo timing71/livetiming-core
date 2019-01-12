@@ -304,11 +304,12 @@ class Service(object):
             self.state["cars"] = copy.deepcopy(newState["cars"])
             self.state["session"] = copy.deepcopy(newState["session"])
 
-            reactor.callInThread(  # This could take some time, let's be sure to not block the reactor
-                self.analyser.receiveStateUpdate,
-                newState,
-                self.getColumnSpec()
-            )
+            if self.analyser:
+                reactor.callInThread(  # This could take some time, let's be sure to not block the reactor
+                    self.analyser.receiveStateUpdate,
+                    newState,
+                    self.getColumnSpec()
+                )
 
             self._saveState()
         except Exception:
