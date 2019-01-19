@@ -364,7 +364,7 @@ def update_recordings_index():
                     generate_analysis(os.path.join(recordings_dir, rec_file), analysis_filename, True)
                     index[uuid]['hasAnalysis'] = True
                 except Exception as e:
-                    log.failure(failure=e)
+                    log.failure('Exception processing analysis for {rec_file}', rec_file=rec_file)
                     index[uuid]['hasAnalysis'] = False
 
     with open(index_filename, 'w') as index_file:
