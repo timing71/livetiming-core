@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import Component, run
+from autobahn.twisted.wamp import ApplicationSession
+from autobahn.twisted.websocket import WampWebSocketClientFactory
 from autobahn.wamp.types import PublishOptions
 from datetime import datetime
 from livetiming.analysis import Analyser
-from livetiming.recording import RecordingFile
+from livetiming.recording import extract_recording
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass,\
     authenticatedService
 from livetiming.racing import Stat
@@ -14,6 +16,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
 import os
+import shutil
 import simplejson
 import sys
 import time
@@ -30,19 +33,21 @@ class FakeAnalysis(ApplicationSession):
 
         recFile = sys.argv[1]
 
-        self.rec = RecordingFile(recFile)
+        self.rec = extract_recording(recFile)
 
         self.manifest = self.rec.manifest
         self.manifest['uuid'] = "TEST"
         self.manifest['name'] = "System Test"
         self.manifest['description'] = "system under test"
         self.manifest['hidden'] = True
+        self.manifest['doNotRecord'] = True
+
+        self.a = Analyser("TEST", self.publish, interval=20)
 
     @inlineCallbacks
     def onJoin(self, details):
         print "Joined"
-
-        self.a = Analyser("TEST", self.publish, interval=5)
+        print self._transport
 
         def true():
             return True
@@ -71,7 +76,7 @@ class FakeAnalysis(ApplicationSession):
                 current_fps = float(idx) / (now - start_time)
                 eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
                 print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
-                # time.sleep(1)
+                # time.sleep(0.1)
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
             self.a.save_data_centre()
@@ -83,16 +88,26 @@ class FakeAnalysis(ApplicationSession):
 
     def onDisconnect(self):
         self.log.info("Disconnected")
-        if reactor.running:
-            reactor.stop()
 
 
 def main():
     load_env()
     router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    # txaio.start_logging(level='debug')
-    runner.run(FakeAnalysis)
+
+    component = Component(
+        realm=Realm.TIMING,
+        session_factory=FakeAnalysis,
+        transports=[
+            {
+                'url': router,
+                'options': {
+                    'autoFragmentSize': 1024 * 128
+                }
+            }
+        ]
+    )
+
+    run(component, log_level='debug')
 
 
 if __name__ == '__main__':

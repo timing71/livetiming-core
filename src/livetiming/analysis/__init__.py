@@ -22,7 +22,7 @@ MIN_PUBLISH_INTERVAL = 10
 def _make_data_message(data):
     return Message(
         MessageClass.ANALYSIS_DATA,
-        simplejson.loads(simplejson.dumps(data)),
+        data,
         retain=True
     ).serialise()
 
@@ -47,7 +47,7 @@ class Analyser(object):
     log = Logger()
     publish_options = PublishOptions(retain=True)
 
-    def __init__(self, uuid, publishFunc, interval=ANALYSIS_PUBLISH_INTERVAL):
+    def __init__(self, uuid, publishFunc, interval=ANALYSIS_PUBLISH_INTERVAL, offline_mode=False):
         self._current_state = copy.copy(EMPTY_STATE)
         self.uuid = uuid
         self.publish = publishFunc
@@ -55,6 +55,7 @@ class Analyser(object):
         self._load_data_centre()
         self._pending_publishes = {}
         self._last_published = {}
+        self._offline_mode = offline_mode
 
         self._modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
 
@@ -64,30 +65,28 @@ class Analyser(object):
         self.data_centre.current_state = copy.deepcopy(newState)
         for key, module in self._modules.iteritems():
             if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
-                self._publish_data(key, module.get_data(self.data_centre))
+                self._publish_data(key, module.get_data(self.data_centre, self._offline_mode))
 
         self._current_state = self.data_centre.current_state
         self.data_centre.latest_timestamp = timestamp
 
     def _publish_data(self, key, data):
-        self.log.debug("Queueing publish of data '{key}': {data}", key=key, data=data)
+        self.log.debug("Queueing publish of data '{key}'", key=key, data=data)
         self._pending_publishes[key] = data
         self._publish_pending()
 
-    @inlineCallbacks
     def _publish_pending(self):
         now = time.time()
         for key, data in copy.copy(self._pending_publishes).iteritems():
             if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
                 self.log.debug("Publishing queued data for {key}", key=key)
-                did_publish = yield self.publish(
+                self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
                     _make_data_message(data),
                     options=self.publish_options
                 )
-                if did_publish:
-                    self._pending_publishes.pop(key)
-                    self._last_published[key] = now
+                self._pending_publishes.pop(key)
+                self._last_published[key] = now
 
     def _data_centre_file(self):
         return os.path.join(
@@ -151,7 +150,7 @@ def per_car(func):
     return inner
 
 
-def map_stint_with(car, timestamp):
+def map_stint_with(car, timestamp, offline_mode):
     drivers = car.drivers
 
     def map_stint(stint):
@@ -167,6 +166,6 @@ def map_stint_with(car, timestamp):
             stint.best_lap_time,
             stint.yellow_laps,
             stint.average_lap_time,
-            map(lambda ls: ls.for_json(), stint.laps)
+            map(lambda ls: ls.for_json(), stint.laps) if offline_mode else None
         ]
     return map_stint
