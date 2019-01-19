@@ -13,5 +13,5 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
     return False
 
 
-def get_data(dc):
+def get_data(dc, offline_mode):
     return {car.race_num: car.for_json() for car in dc._cars.values()}
