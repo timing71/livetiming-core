@@ -377,7 +377,7 @@ def generate_analysis(rec_file, out_file, report_progress=False):
         rec = extract_recording(rec_file)
         manifest = rec.augmentedManifest()
 
-        a = Analyser(manifest['uuid'], None, offline_mode=True)
+        a = Analyser(manifest['uuid'], None)
         pcs = Stat.parse_colspec(manifest['colSpec'])
 
         start_time = time.time()

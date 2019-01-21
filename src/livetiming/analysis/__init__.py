@@ -46,7 +46,7 @@ class Analyser(object):
     log = Logger()
     publish_options = PublishOptions(retain=True)
 
-    def __init__(self, uuid, publishFunc, interval=ANALYSIS_PUBLISH_INTERVAL, offline_mode=False):
+    def __init__(self, uuid, publishFunc, interval=ANALYSIS_PUBLISH_INTERVAL):
         self._current_state = copy.copy(EMPTY_STATE)
         self.uuid = uuid
         self.publish = publishFunc
@@ -54,7 +54,6 @@ class Analyser(object):
         self._load_data_centre()
         self._pending_publishes = {}
         self._last_published = {}
-        self._offline_mode = offline_mode
 
         self._modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
 
@@ -149,7 +148,7 @@ def per_car(key, data_func):
                     old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
                     changed = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or changed
             if changed:
-                data = data_func(dc, False)
+                data = data_func(dc)
                 print "Changed data for per_car {}: {}".format(key, data)
                 return [(key, data)]
             else:
@@ -158,7 +157,7 @@ def per_car(key, data_func):
     return per_car_inner
 
 
-def map_stint_with(car, timestamp, offline_mode):
+def map_stint_with(car, timestamp):
     drivers = car.drivers
 
     def map_stint(stint):
@@ -174,6 +173,6 @@ def map_stint_with(car, timestamp, offline_mode):
             stint.best_lap_time,
             stint.yellow_laps,
             stint.average_lap_time,
-            map(lambda ls: ls.for_json(), stint.laps) if offline_mode else None
+            map(lambda ls: ls.for_json(), stint.laps)
         ]
     return map_stint

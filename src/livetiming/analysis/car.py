@@ -7,7 +7,7 @@ import importlib
 SUBMODULES = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in ['lap', 'stint']}
 
 
-def get_data(dc, offline_mode):
+def get_data(dc):
     return {car.race_num: car.for_json() for car in dc._cars.values()}
 
 
