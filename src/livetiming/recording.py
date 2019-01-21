@@ -216,7 +216,6 @@ class DirectoryBackedRecording(object):
     def getStateAtTimestamp(self, timecode):
         mostRecentKeyframeIndex = max([frame for frame in self.keyframes if frame <= timecode] + [min(self.keyframes)])
         intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
-
         with open("{:011d}.json".format(mostRecentKeyframeIndex), 'r') as keyframe:
             state = simplejson.load(keyframe)
             for iframeIndex in intraFrames:
@@ -364,7 +363,7 @@ def update_recordings_index():
                     generate_analysis(os.path.join(recordings_dir, rec_file), analysis_filename, True)
                     index[uuid]['hasAnalysis'] = True
                 except Exception as e:
-                    log.failure(failure=e)
+                    log.failure('Exception processing analysis for {rec_file}', rec_file=rec_file)
                     index[uuid]['hasAnalysis'] = False
 
     with open(index_filename, 'w') as index_file:
@@ -378,7 +377,7 @@ def generate_analysis(rec_file, out_file, report_progress=False):
         rec = extract_recording(rec_file)
         manifest = rec.augmentedManifest()
 
-        a = Analyser(manifest['uuid'], None)
+        a = Analyser(manifest['uuid'], None, offline_mode=True)
         pcs = Stat.parse_colspec(manifest['colSpec'])
 
         start_time = time.time()

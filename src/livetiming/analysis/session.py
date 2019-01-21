@@ -18,7 +18,7 @@ def receive_state_update(dc, old_state, new_state, colspec, timestamp):
     return changed
 
 
-def get_data(dc):
+def get_data(dc, offline_mode):
     results = {
         'currentTimestamp': dc.latest_timestamp,
         'flagStats': dc.session.flag_periods,
