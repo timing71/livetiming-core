@@ -15,7 +15,10 @@ def receive_state_update(dc, old_state, new_state, colspec, timestamp):
     if dc.leader_lap != _prev_leader_lap:
         _prev_leader_lap = dc.leader_lap
         changed = True
-    return changed
+    if changed:
+        return [('session', get_data(dc, False))]
+    else:
+        return []
 
 
 def get_data(dc, offline_mode):

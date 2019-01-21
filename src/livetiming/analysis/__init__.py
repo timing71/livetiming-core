@@ -28,10 +28,9 @@ def _make_data_message(data):
 
 
 PROCESSING_MODULES = [  # Order is important!
-    'car',
+    'static',
     'driver',
-    'lap',
-    'stint',
+    'car',
     'session'
 ]
 
@@ -63,9 +62,11 @@ class Analyser(object):
         if not timestamp:
             timestamp = time.time()
         self.data_centre.current_state = copy.deepcopy(newState)
-        for key, module in self._modules.iteritems():
-            if module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp):
-                self._publish_data(key, module.get_data(self.data_centre, self._offline_mode))
+        for key in PROCESSING_MODULES:
+            module = self._modules[key]
+            updates = module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp)
+            for key, data in updates:
+                self._publish_data(key, data)
 
         self._current_state = self.data_centre.current_state
         self.data_centre.latest_timestamp = timestamp
@@ -79,7 +80,7 @@ class Analyser(object):
         now = time.time()
         for key, data in copy.copy(self._pending_publishes).iteritems():
             if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
-                self.log.debug("Publishing queued data for {key}", key=key)
+                self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
                 self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
                     _make_data_message(data),
@@ -136,18 +137,25 @@ class FieldExtractor(object):
         return default
 
 
-def per_car(func):
-    def inner(dc, old_state, new_state, colspec, timestamp):
-        flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
-        f = FieldExtractor(colspec)
-        result = False
-        for idx, new_car in enumerate(new_state['cars']):
-            race_num = f.get(new_car, Stat.NUM)
-            if race_num:
-                old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-                result = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or result
-        return result
-    return inner
+def per_car(key, data_func):
+    def per_car_inner(func):
+        def inner(dc, old_state, new_state, colspec, timestamp):
+            flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
+            f = FieldExtractor(colspec)
+            changed = False
+            for idx, new_car in enumerate(new_state['cars']):
+                race_num = f.get(new_car, Stat.NUM)
+                if race_num:
+                    old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
+                    changed = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or changed
+            if changed:
+                data = data_func(dc, False)
+                print "Changed data for per_car {}: {}".format(key, data)
+                return [(key, data)]
+            else:
+                return []
+        return inner
+    return per_car_inner
 
 
 def map_stint_with(car, timestamp, offline_mode):

@@ -1,10 +1,9 @@
 from livetiming.racing import Stat
-from livetiming.analysis import map_stint_with, per_car
+from livetiming.analysis import map_stint_with
 
 PIT_STATES = ["PIT", "FUEL", "N/S"]
 
 
-@per_car
 def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
     old_car_state = f.get(old_car, Stat.STATE)
     new_car_state = f.get(new_car, Stat.STATE)
@@ -28,7 +27,15 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
         car.fuel_stop(timestamp)
         has_changed = True
 
-    return has_changed
+    if has_changed:
+        return (
+            'stint/{}'.format(race_num),
+            {
+                race_num: map(map_stint_with(car, dc.latest_timestamp, True), [s for s in car.stints if not s.in_progress])
+            }
+        )
+    else:
+        return []
 
 
 def get_data(dc, offline_mode):

@@ -25,6 +25,9 @@ from twisted.internet.threads import deferToThread
 from twisted.internet.task import LoopingCall
 
 
+TEST_UUID = 'TEST'
+
+
 @authenticatedService
 class FakeAnalysis(ApplicationSession):
 
@@ -36,22 +39,21 @@ class FakeAnalysis(ApplicationSession):
         self.rec = extract_recording(recFile)
 
         self.manifest = self.rec.manifest
-        self.manifest['uuid'] = "TEST"
+        self.manifest['uuid'] = TEST_UUID
         self.manifest['name'] = "System Test"
         self.manifest['description'] = "system under test"
         self.manifest['hidden'] = True
         self.manifest['doNotRecord'] = True
 
-        self.a = Analyser("TEST", self.publish, interval=20)
+        self.a = Analyser(TEST_UUID, self.publish, interval=20)
 
     @inlineCallbacks
     def onJoin(self, details):
         print "Joined"
-        print self._transport
 
         def true():
             return True
-        yield self.register(true, RPC.LIVENESS_CHECK.format("TEST"))
+        yield self.register(true, RPC.LIVENESS_CHECK.format(TEST_UUID))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
         print "All registered"
@@ -67,7 +69,7 @@ class FakeAnalysis(ApplicationSession):
                 self.a.receiveStateUpdate(newState, pcs, frame)
                 if (idx % 100 == 0):
                     self.publish(
-                        RPC.STATE_PUBLISH.format("TEST"),
+                        RPC.STATE_PUBLISH.format(TEST_UUID),
                         Message(MessageClass.SERVICE_DATA_COMPRESSED, LZString().compressToUTF16(simplejson.dumps(newState)), retain=True).serialise(),
                         options=PublishOptions(retain=True)
                     )
@@ -76,7 +78,7 @@ class FakeAnalysis(ApplicationSession):
                 current_fps = float(idx) / (now - start_time)
                 eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
                 print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
-                # time.sleep(0.1)
+                time.sleep(0.1)
             stop_time = time.time()
             print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
             self.a.save_data_centre()
@@ -107,7 +109,7 @@ def main():
         ]
     )
 
-    run(component, log_level='debug')
+    run(component, log_level='info')
 
 
 if __name__ == '__main__':
