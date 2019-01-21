@@ -148,9 +148,7 @@ def per_car(key, data_func):
                     old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
                     changed = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or changed
             if changed:
-                data = data_func(dc)
-                print "Changed data for per_car {}: {}".format(key, data)
-                return [(key, data)]
+                return [(key, data_func(dc))]
             else:
                 return []
         return inner
