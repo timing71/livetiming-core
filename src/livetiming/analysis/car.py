@@ -8,7 +8,10 @@ SUBMODULES = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for
 
 
 def get_data(dc):
-    return {car.race_num: car.for_json() for car in dc._cars.values()}
+    data = {}
+    for key, module in SUBMODULES.iteritems():
+        data[key] = module.get_data(dc)
+    return data
 
 
 def receive_state_update(dc, old_state, new_state, colspec, timestamp):
