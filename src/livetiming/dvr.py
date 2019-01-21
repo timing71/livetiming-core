@@ -145,9 +145,16 @@ class DVR(object):
         if details and details.topic:
             msg = Message.parse(message)
             if msg.msgClass == MessageClass.ANALYSIS_DATA:
-                _, service_uuid, analysis_module = details.topic.split('/')
-                self.log.debug("Received analysis {module} for {uuid}", module=analysis_module, uuid=service_uuid)
-                self._in_progress_analyses[service_uuid][analysis_module] = msg.payload
+                topic_parts = details.topic.split('/')
+
+                if len(topic_parts) >= 3:
+                    service_uuid = topic_parts[1]
+                    analysis_module = topic_parts[2]
+
+                    self.log.debug("Received analysis {module} for {uuid}", module=analysis_module, uuid=service_uuid)
+                    self._in_progress_analyses[service_uuid].setdefault(analysis_module, {}).update(msg.payload)
+                else:
+                    self.log.warn("Received analysis packet with malformed topic {topic}", topic=details.topic)
 
     def handle_control_message(self, message):
         msg = Message.parse(message)
@@ -270,11 +277,11 @@ class DVR(object):
                     os.chmod(dest, 0664)
                     self.log.info("Saved recording to {dest}", dest=dest)
 
-                    analysis_filename = dest.replace('.zip', '.json')
-                    with open(analysis_filename, 'w') as analysis_file:
-                        simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
-                        os.chmod(analysis_filename, 0664)
-                        self.log.info("Created analysis file {filename}", filename=analysis_filename)
+                analysis_filename = dest.replace('.zip', '.json')
+                with open(analysis_filename, 'w') as analysis_file:
+                    simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
+                    os.chmod(analysis_filename, 0664)
+                    self.log.info("Created analysis file {filename}", filename=analysis_filename)
 
             d = deferToThread(recording.finalise)  # This could take a long time!
             d.addCallback(do_finalise)
