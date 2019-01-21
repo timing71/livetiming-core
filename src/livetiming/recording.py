@@ -405,6 +405,10 @@ def generate_analysis(rec_file, out_file, report_progress=False):
         for key, module in a._modules.iteritems():
             data[key] = module.get_data(a.data_centre)
 
+        car_stats = data.pop('car')
+        for k, v in car_stats.iteritems():
+            data[k] = v
+
         data['service'] = manifest
 
         with open(out_file, 'w') as outfile:
