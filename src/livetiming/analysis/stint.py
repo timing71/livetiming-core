@@ -31,12 +31,12 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
         return (
             'stint/{}'.format(race_num),
             {
-                race_num: map(map_stint_with(car, dc.latest_timestamp, True), [s for s in car.stints if not s.in_progress])
+                race_num: map(map_stint_with(car, dc.latest_timestamp), [s for s in car.stints if not s.in_progress])
             }
         )
     else:
         return []
 
 
-def get_data(dc, offline_mode):
-    return {car.race_num: map(map_stint_with(car, dc.latest_timestamp, offline_mode), [s for s in car.stints if not s.in_progress]) for car in dc._cars.values()}
+def get_data(dc):
+    return {car.race_num: map(map_stint_with(car, dc.latest_timestamp), [s for s in car.stints if not s.in_progress]) for car in dc._cars.values()}

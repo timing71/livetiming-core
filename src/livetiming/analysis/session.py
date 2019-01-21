@@ -16,12 +16,12 @@ def receive_state_update(dc, old_state, new_state, colspec, timestamp):
         _prev_leader_lap = dc.leader_lap
         changed = True
     if changed:
-        return [('session', get_data(dc, False))]
+        return [('session', get_data(dc))]
     else:
         return []
 
 
-def get_data(dc, offline_mode):
+def get_data(dc):
     results = {
         'currentTimestamp': dc.latest_timestamp,
         'flagStats': dc.session.flag_periods,
