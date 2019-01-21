@@ -46,8 +46,8 @@ def _apply_car_lap(dc, race_num, car, new_car, new_lap, position, f, timestamp, 
         dc.session.flag_change(flag, new_leader_lap, timestamp)
 
 
-def get_data(dc):
-    return {car.race_num: [map_stint_with(car, dc.latest_timestamp)(car.current_stint), car.last_pass] for car in dc._cars.values()}
+def get_data(dc, offline_mode):
+    return {car.race_num: [map_stint_with(car, dc.latest_timestamp, offline_mode)(car.current_stint), car.last_pass] for car in dc._cars.values()}
 
 TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
 
