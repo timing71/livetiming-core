@@ -2,7 +2,11 @@ from livetiming.racing import Stat
 from livetiming.analysis import per_car
 
 
-@per_car
+def get_data(dc, offline_mode):
+    return {car.race_num: car.drivers for car in dc._cars.values()}
+
+
+@per_car('driver', get_data)
 def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
     old_driver = f.get(old_car, Stat.DRIVER)
     new_driver = f.get(new_car, Stat.DRIVER)
