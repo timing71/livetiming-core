@@ -159,9 +159,10 @@ class RecordingFile(object):
 
         with zipfile.ZipFile(self.filename, 'r', zipfile.ZIP_DEFLATED) as z:
             state = simplejson.load(z.open("{:011d}.json".format(mostRecentKeyframeIndex)))
-            for iframeIndex in intraFrames:
+            for iframeIndex in sorted(intraFrames):
                 iframe = simplejson.load(z.open("{:011d}i.json".format(iframeIndex)))
                 state = applyIntraFrame(state, iframe)
+                print "Applied {}".format(iframeIndex)
 
             return state
 
@@ -218,7 +219,7 @@ class DirectoryBackedRecording(object):
         intraFrames = [frame for frame in self.iframes if frame <= timecode and frame > mostRecentKeyframeIndex]
         with open("{:011d}.json".format(mostRecentKeyframeIndex), 'r') as keyframe:
             state = simplejson.load(keyframe)
-            for iframeIndex in intraFrames:
+            for iframeIndex in sorted(intraFrames):
                 try:
                     with open("{:011d}i.json".format(iframeIndex), 'r') as iframe:
                         ifr = simplejson.load(iframe)
