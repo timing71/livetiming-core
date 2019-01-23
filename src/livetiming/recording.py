@@ -333,7 +333,7 @@ def update_recordings_index():
 
     for rec_file in rec_files:
         uuid = rec_file.replace('_', ':', 1)[0:-4]
-        if uuid not in index:
+        if uuid not in index or os.environ.get('REINDEX'):
             try:
                 r = RecordingFile(os.path.join(recordings_dir, rec_file))
                 manifest = r.augmentedManifest()
