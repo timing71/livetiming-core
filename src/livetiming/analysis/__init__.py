@@ -120,6 +120,18 @@ class Analyser(object):
         self._last_published = {}
         self._current_state = copy.copy(EMPTY_STATE)
 
+    def get_current_state(self):
+        data = {}
+
+        for key, module in self._modules.iteritems():
+            data[key] = module.get_data(self.data_centre)
+
+        car_stats = data.pop('car')
+        for k, v in car_stats.iteritems():
+            data[k] = v
+
+        return data
+
 
 class FieldExtractor(object):
     def __init__(self, colSpec):
