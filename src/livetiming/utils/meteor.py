@@ -100,6 +100,7 @@ def DDPProtocolFactory(handler):
                     self.log.warn("Handler can't handle method {name}", name=name)
 
         def onConnect(self, response):
+            self.factory.resetDelay()
             self.send({
                 "msg": "connect",
                 "version": "1",
@@ -195,6 +196,7 @@ def DDPProtocolFactory(handler):
                     pass
 
         def onClose(self, wasClean, code, reason):
+            self.log.info("Connection closed: wasClean? {wasClean} reason {reason}", reason=reason, wasClean=wasClean)
             self._watchdog.stop()
 
         def send(self, obj):
