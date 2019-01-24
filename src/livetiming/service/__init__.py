@@ -51,6 +51,7 @@ def create_service_session(service):
 
             yield self.register(self._isAlive, RPC.LIVENESS_CHECK.format(service.uuid), register_opts)
             yield self.register(service._requestCurrentState, RPC.REQUEST_STATE.format(service.uuid), register_opts)
+            yield self.register(service._requestCurrentAnalysisState, RPC.REQUEST_ANALYSIS_DATA.format(service.uuid), register_opts)
             yield self.subscribe(service.onControlMessage, Channel.CONTROL)
             self.log.info("Subscribed to control channel")
             yield service.publishManifest()
@@ -346,6 +347,11 @@ class Service(object):
 
     def _requestCurrentState(self):
         return simplejson.loads(simplejson.dumps(self.state))
+
+    def _requestCurrentAnalysisState(self):
+        if self.analyser:
+            return self.analyser.get_current_state()
+        return None
 
     def publishManifest(self):
         self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
