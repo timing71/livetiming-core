@@ -254,7 +254,7 @@ class DVR(object):
                 self._in_progress_analyses[uuid]['service'] = manifest
 
             def do_finalise(src):
-                if recording.duration < RECORDING_DURATION_THRESHOLD:
+                if 0 < recording.duration < RECORDING_DURATION_THRESHOLD:
                     self.log.warn(
                         "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
                         uuid=uuid,
