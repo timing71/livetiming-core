@@ -198,6 +198,8 @@ def DDPProtocolFactory(handler):
         def onClose(self, wasClean, code, reason):
             self.log.info("Connection closed: wasClean? {wasClean} reason {reason}", reason=reason, wasClean=wasClean)
             self._watchdog.stop()
+            if not wasClean:
+                self.dropConnection(abort=True)
 
         def send(self, obj):
             message = encode(obj)
