@@ -162,7 +162,6 @@ class RecordingFile(object):
             for iframeIndex in sorted(intraFrames):
                 iframe = simplejson.load(z.open("{:011d}i.json".format(iframeIndex)))
                 state = applyIntraFrame(state, iframe)
-                print "Applied {}".format(iframeIndex)
 
             return state
 
