@@ -19,11 +19,11 @@ ANALYSIS_PUBLISH_INTERVAL = 60
 MIN_PUBLISH_INTERVAL = 10
 
 
-def _make_data_message(data):
+def _make_data_message(data, retain=True):
     return Message(
         MessageClass.ANALYSIS_DATA,
         data,
-        retain=True
+        retain
     ).serialise()
 
 
@@ -88,10 +88,11 @@ class Analyser(object):
         for key, data in copy.copy(self._pending_publishes).iteritems():
             if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
                 self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
+                retain = key not in ['lap', 'stint']
                 self.publish(
                     u"livetiming.analysis/{}/{}".format(self.uuid, key),
-                    _make_data_message(data),
-                    options=self.publish_options
+                    _make_data_message(data, retain),
+                    options=self.publish_options if retain else None
                 )
                 self._pending_publishes.pop(key)
                 self._last_published[key] = now
