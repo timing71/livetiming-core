@@ -58,7 +58,7 @@ def convert(args, extras):
                 startTime = time.mktime(info.date_time + (0, 0, 0)) - firstKeyframe
                 print "Start time not available, inferring from first keyframe as {}".format(startTime)
 
-        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             for frame in orig.keyframes:
                 print "{} => {}".format(frame, int(startTime + frame))
                 z.write(os.path.join(tempdir, "{:05d}.json".format(frame)), "{:011d}.json".format(int(startTime + frame)))
@@ -90,7 +90,7 @@ def clip(args, extras):
         with zipfile.ZipFile(args.recfile, 'r', zipfile.ZIP_DEFLATED) as z:
             z.extractall(tempdir)
 
-        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             if clipStart not in orig.keyframes:
                 z.writestr("{:011d}.json".format(clipStart), simplejson.dumps(orig.getStateAtTimestamp(clipStart)))
             for frame in orig.keyframes:
