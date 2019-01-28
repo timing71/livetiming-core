@@ -36,7 +36,7 @@ def updateZip(zipname, filename, data, new_filename=None, new_zipname=None):
 
     # create a temp copy of the archive without filename
     with zipfile.ZipFile(zipname, 'r') as zin:
-        with zipfile.ZipFile(tmpname, 'w') as zout:
+        with zipfile.ZipFile(tmpname, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zout:
             zout.comment = zin.comment  # preserve the comment
             seen_filenames = []
             for item in zin.infolist():
@@ -50,7 +50,7 @@ def updateZip(zipname, filename, data, new_filename=None, new_zipname=None):
     os.rename(tmpname, new_zipname if new_zipname else zipname)
 
     # now add filename with its new data
-    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
         zf.writestr(new_filename if new_filename else filename, data)
 
 
@@ -68,7 +68,7 @@ class TimingRecorder(object):
         serviceRegistration["startTime"] = time.time()
         serviceRegistration["version"] = 1
         self.manifest = serviceRegistration
-        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             if "manifest.json" not in z.namelist():
                 z.writestr("manifest.json", simplejson.dumps(serviceRegistration))
                 return True
@@ -77,7 +77,7 @@ class TimingRecorder(object):
     def writeState(self, state, timestamp=None):
         if not timestamp:
             timestamp = int(time.time())
-        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             if self.frames % INTRA_FRAMES == 0:  # Write a keyframe
                 z.writestr("{:011d}.json".format(timestamp), simplejson.dumps(state))
             else:  # Write an intra-frame
