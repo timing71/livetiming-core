@@ -3,7 +3,7 @@ from collections import OrderedDict
 from livetiming.analysis.data import DataCentre
 from livetiming.network import Message, MessageClass
 from livetiming.racing import FlagStatus, Stat
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import DeferredLock, inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
@@ -42,6 +42,12 @@ EMPTY_STATE = {
 }
 
 
+def with_dc_lock(func):
+    def inner(elf, *args, **kwargs):
+        elf._dc_lock.run(func, elf, *args, **kwargs)
+    return inner
+
+
 class Analyser(object):
     log = Logger()
     publish_options = PublishOptions(retain=True)
@@ -54,9 +60,11 @@ class Analyser(object):
         self._load_data_centre()
         self._pending_publishes = {}
         self._last_published = {}
+        self._dc_lock = DeferredLock()
 
         self._modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
 
+    @with_dc_lock
     def receiveStateUpdate(self, newState, colSpec, timestamp=None):
         if not timestamp:
             timestamp = time.time()
@@ -94,6 +102,7 @@ class Analyser(object):
             "{}.data.p".format(self.uuid)
         )
 
+    @with_dc_lock
     def save_data_centre(self):
         start = time.time()
         with open(self._data_centre_file(), "wb") as data_dump_file:
@@ -114,6 +123,7 @@ class Analyser(object):
         except IOError:
             self.data_centre = DataCentre()
 
+    @with_dc_lock
     def reset(self):
         self.data_centre.reset()
         self._pending_publishes = {}
