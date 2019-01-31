@@ -322,7 +322,11 @@ class NatsoftState(object):
 
     def handle_c(self, c):
         self._session['elapsed'] = (int(c.get('E')), time.time())
-        self._session['counter'] = (int(c.get('C')), c.get('Y'))
+        try:
+            C = int(c.get('C', 0))
+        except ValueError:
+            C = 0
+        self._session['counter'] = (C, c.get('Y'))
 
     def handle_status(self, s):
         raw_flag = s.get('Status', None)
