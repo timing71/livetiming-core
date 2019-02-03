@@ -152,12 +152,25 @@ class NatsoftState(object):
                 ET.dump(xml)
 
     def handle_new(self, xml):
-        self.log.info("Starting new event session")
-        self._reset()
+        # Actually new, or just a periodic reset?
+        actual_reset = False
+        e_tag = xml.find('E')
+        event_tag = xml.find('Event')
+
+        if e_tag is not None:
+            evt_description = e_tag.get('D')
+            actual_reset = evt_description != self._description
+        elif event_tag is not None:
+            evt_description = event_tag.get('Description1')
+            actual_reset = evt_description != self._description
+
+        if actual_reset:
+            self.log.info("Starting new event session")
+            self._reset()
         self.has_data = True
 
         self.handle_children(xml)
-        if self.onSessionChange:
+        if self.onSessionChange and actual_reset:
             self.onSessionChange()
 
     def handle_children(self, xml):
