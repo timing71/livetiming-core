@@ -45,6 +45,7 @@ class AlkamelV2Client(MeteorClient):
         self.on_collection_change('session_status', setSessionStatusTimestamp)
 
     def onConnect(self):
+        self.log.info('Connected to upstream timing provider')
         self.subscribe('livetimingFeed', [self._feed_name], self.recv_feeds)
         self.subscribe('sessionClasses', [None])
 
