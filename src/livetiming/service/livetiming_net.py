@@ -81,7 +81,7 @@ def parseLaptime(raw):
         ttime = datetime.strptime(raw, "%M:%S.%f")
         timeval = (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
     except ValueError:
-        timeval = 0
+        timeval = ''
 
     return (timeval, flag)
 
@@ -101,7 +101,11 @@ def parseSessionTime(formattedTime):
         ttime = datetime.strptime(formattedTime, "%H:%M:%S")
         return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second
     except ValueError:
-        return 0
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S")
+            return (60 * ttime.minute) + ttime.second
+        except ValueError:
+            return 0
 
 
 def stripFlags(raw):
@@ -110,10 +114,18 @@ def stripFlags(raw):
 
 
 def parseDelta(raw):
+    if raw == '---' or raw == '--.----':
+        return ''
     try:
         return float(raw)
     except ValueError:
         return raw
+
+
+def dashToBlank(raw):
+    if raw == '---':
+        return ''
+    return raw
 
 
 def mapSessionFlag(raw):
@@ -129,15 +141,20 @@ def mapSessionFlag(raw):
     return "none"
 
 
+# ["P","No","Name","Laps","LapTime","FL","FTime","Diff","Gap","Pits","LPit","Led","ST","Status","Speed","FSpeed","Elapsed","CLS","PFLapTime","MPL","CRank","CFLap","CFLapTime","CFastSpeed","CDiff","CGap","PIC","P2P","Make","Nat","Team","Sponsor","Residence","Chassis","Engine","Tire","Points"]
+
 FULL_COL_SPEC = [
     # Stat, label used at livetiming.net, mapping function
     (Stat.NUM, "No", ident),
     (Stat.STATE, "Status", mapState),
     (Stat.CLASS, "CLS", ident),
+    (Stat.POS_IN_CLASS, "PIC", ident),
     (Stat.DRIVER, "Name", ident),
-    (Stat.CAR, "Make/Model", ident),
+    (Stat.CAR, "Make", ident),
     (Stat.TEAM, "Team", ident),
-    (Stat.LAPS, "Laps", ident),
+    (Stat.LAPS, "Laps", dashToBlank),
+    (Stat.TYRE, "Tire", ident),
+    (Stat.PUSH_TO_PASS, "P2P", ident),
     (Stat.GAP, "Diff", parseDelta),
     (Stat.INT, "Gap", parseDelta),
     (Stat.S1, "S1", parseSectorTime),
@@ -150,6 +167,8 @@ FULL_COL_SPEC = [
 
 
 class Service(lt_service):
+    auto_poll = False
+
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
 
@@ -170,7 +189,7 @@ class Service(lt_service):
                 self.filename
             ),
             self.handlePacket,
-            10)
+            5)
         f.start()
 
     def getSeries(self):
@@ -204,6 +223,7 @@ class Service(lt_service):
         if newDesc != self.description:
             self.description = newDesc
             self.publishManifest()
+        self._updateAndPublishRaceState()
 
     def getRaceState(self):
         cars = []
@@ -222,6 +242,7 @@ class Service(lt_service):
             session['flagState'] = mapSessionFlag(header[5])
             session['timeElapsed'] = parseSessionTime(header[4])
             session['timeRemain'] = parseSessionTime(header[8])
-            session['lapsRemain'] = header[9]
+            if len(header[1]) > 0 and header[1][0] == 'R':  # In race only
+                session['lapsRemain'] = header[9]
 
         return {"cars": cars, "session": session}
