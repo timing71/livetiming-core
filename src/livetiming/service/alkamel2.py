@@ -9,8 +9,18 @@ from twisted.internet.task import LoopingCall
 
 import argparse
 import math
+import random
 import re
+import string
 import time
+
+
+def random_string(length):
+    return ''.join(random.choice(string.ascii_lowercase + string.digits + '_') for _ in range(length))
+
+
+def random_number_string(length):
+    return ''.join(random.choice(string.digits) for _ in range(length))
 
 
 class AlkamelV2Client(MeteorClient):
@@ -34,7 +44,14 @@ class AlkamelV2Client(MeteorClient):
         self.session_type = 'NONE'
 
         self._feed_name = feed_name
-        self._factory = ReconnectingWebSocketClientFactory('wss://livetiming.alkamelsystems.com/sockjs/261/t48ms2xd/websocket')
+
+        ws_url = 'wss://livetiming.alkamelsystems.com/sockjs/{}/{}/websocket'.format(
+            random_number_string(3),
+            random_string(8)
+        )
+        self.log.info('Using URL {url}', url=ws_url)
+
+        self._factory = ReconnectingWebSocketClientFactory(ws_url)
         self._factory.protocol = DDPProtocolFactory(self)
         connectWS(self._factory)
 
