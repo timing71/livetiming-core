@@ -145,6 +145,15 @@ def parseExtraArgs(extra_args):
 RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*)")
 
 
+SECTOR_STATS = [
+    Stat.S1,
+    Stat.S2,
+    Stat.S3,
+    Stat.S4,
+    Stat.S5,
+]
+
+
 class Service(lt_service):
     attribution = ['TSL Timing', 'https://www.tsl-timing.com/']
 
@@ -215,10 +224,8 @@ class Service(lt_service):
             Stat.CAR,
             Stat.LAPS,
             Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.S2,
-            Stat.S3,
+            Stat.INT
+        ] + SECTOR_STATS[0:len(self.trackSectors)] + [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -255,16 +262,16 @@ class Service(lt_service):
 
         return mgs
 
+    def sectorTimeFor(self, car, sector):
+        if car['ID'] not in self.sectorTimes:
+            return ("", "")
+        stuple = self.sectorTimes[car["ID"]][sector]
+        if stuple[0] == self.bestSectorTimes.get(sector, -1) / 1e6:
+            return (stuple[0], 'sb')
+        return stuple
+
     def getCars(self):
         cars = []
-
-        def sectorTimeFor(car, sector):
-            if car['ID'] not in self.sectorTimes:
-                return ("", "")
-            stuple = self.sectorTimes[car["ID"]][sector]
-            if stuple[0] == self.bestSectorTimes.get(sector, -1) / 1e6:
-                return (stuple[0], 'sb')
-            return stuple
 
         for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
             bestTime = parseTime(car['CurrentSessionBest'])
@@ -272,11 +279,13 @@ class Service(lt_service):
 
             lastTime = parseTime(car['LastLapTime'])
 
-            s1_time = sectorTimeFor(car, 0)
-            s3_time = sectorTimeFor(car, 2)
+            sector_times = [self.sectorTimeFor(car, i) for i in range(len(self.trackSectors))]
+
+            s1_time = sector_times[0]
+            final_sector_time = sector_times[-1]
 
             if lastTime == bestTime and bestTimeFlag == 'sb':
-                lastTimeFlag = 'sb-new' if s1_time[0] != '' and s3_time[0] != '' else 'sb'
+                lastTimeFlag = 'sb-new' if s1_time[0] != '' and final_sector_time[0] != '' else 'sb'
             else:
                 lastTimeFlag = 'pb' if car['PersonalBestTime'] else ''
 
@@ -291,9 +300,7 @@ class Service(lt_service):
                 car['Laps'],
                 car['Gap'],
                 car['Diff'],
-                s1_time,
-                sectorTimeFor(car, 1),
-                s3_time,
+            ] + sector_times + [
                 (lastTime if lastTime > 0 else '', lastTimeFlag),
                 (bestTime if bestTime > 0 else "", bestTimeFlag),
                 car.get('PitStops', '')
@@ -447,7 +454,7 @@ class Service(lt_service):
         for d in data:
             cid = d["CompetitorID"]
             if cid not in self.sectorTimes:
-                self.sectorTimes[cid] = [("", ""), ("", ""), ("", "")]
+                self.sectorTimes[cid] = [("", ""), ("", ""), ("", ""), ("", ""), ("", "")]
             sector = self.trackSectors.get(d["Id"], -1)
             if sector >= 0 and d["Time"] > 0:
                 self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "")
