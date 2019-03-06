@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 
 from livetiming.schedule import create_event, get_events
 from livetiming.schedule.datetime_z import parse_datetime
@@ -19,6 +20,7 @@ TAG_TO_SERVICE_CLASS = {
     'CTSC': 'imsa',
     'European Le Mans': 'elms',
     'Formula 1': 'f1',
+    'F1': 'f1',
     'Formula 2': 'f2',
     'F2': 'f2',
     'Formula E': 'formulae',
@@ -74,7 +76,7 @@ def run(service, args):
             elif already_scheduled(event):
                 print u"Already scheduled: {}".format(e['summary'])
             else:
-                print u"New event: {}".format(e['summary'])
+                print u"New event: {}".format(event['summary'])
 
                 event_body = {
                     'summary': u"{} [{}{}]".format(
@@ -94,12 +96,15 @@ def run(service, args):
                     create_event(service, event_body)
 
 
+MULTI_SPACE_REGEX = re.compile('\s+')
+
+
 def _parse_event(event):
     summary = event['summary']
     tag = summary[1:summary.index(']')]
 
     return {
-        'summary': u"{}: {}".format(tag, summary[summary.index(']') + 1:].strip()),
+        'summary': MULTI_SPACE_REGEX.sub(' ', u"{}: {}".format(tag, summary[summary.index(']') + 1:])),
         'service': TAG_TO_SERVICE_CLASS.get(tag),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime'])
