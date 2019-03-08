@@ -76,7 +76,7 @@ def run(service, args):
             elif already_scheduled(event):
                 print u"Already scheduled: {}".format(e['summary'])
             else:
-                print u"New event: {}".format(event['summary'])
+                print u"New event: {} ({} - {})".format(event['summary'], event['start'], event['end'])
 
                 event_body = {
                     'summary': u"{} [{}{}]".format(
