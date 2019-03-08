@@ -254,7 +254,7 @@ class DVR(object):
                 self._in_progress_analyses[uuid]['service'] = manifest
 
             def do_finalise(src):
-                if 0 < recording.duration < RECORDING_DURATION_THRESHOLD:
+                if 0 <= recording.duration < RECORDING_DURATION_THRESHOLD:
                     self.log.warn(
                         "Recording for UUID {uuid} of duration {duration}s is less than threshold ({threshold}s), deleting recording file.",
                         uuid=uuid,
@@ -277,11 +277,11 @@ class DVR(object):
                     os.chmod(dest, 0664)
                     self.log.info("Saved recording to {dest}", dest=dest)
 
-                analysis_filename = dest.replace('.zip', '.json')
-                with open(analysis_filename, 'w') as analysis_file:
-                    simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
-                    os.chmod(analysis_filename, 0664)
-                    self.log.info("Created analysis file {filename}", filename=analysis_filename)
+                    analysis_filename = dest.replace('.zip', '.json')
+                    with open(analysis_filename, 'w') as analysis_file:
+                        simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
+                        os.chmod(analysis_filename, 0664)
+                        self.log.info("Created analysis file {filename}", filename=analysis_filename)
 
             d = deferToThread(recording.finalise)  # This could take a long time!
             d.addCallback(do_finalise)
