@@ -372,13 +372,13 @@ class Service(lt_service):
         }
 
     def on_session(self, data):
-        if "TrackDisplayName" in data:
-            self.name = data["TrackDisplayName"]
-        if "Series" in data and "Name" in data:
-            if data["Series"] and data["Name"]:
-                self.description = "{} - {}".format(data["Series"], data["Name"].title())
-            elif data["Series"]:
-                self.description = data["Series"]
+        if "Series" in data:
+            self.name = data["Series"]
+        if "TrackDisplayName" in data or "Name" in data:
+            if data["TrackDisplayName"] and data["Name"]:
+                self.description = "{} - {}".format(data["TrackDisplayName"], data["Name"].title())
+            elif data["TrackDisplayName"]:
+                self.description = data["TrackDisplayName"]
             elif data["Name"]:
                 self.description = data["Name"].title()
         if "State" in data:
