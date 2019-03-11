@@ -230,7 +230,8 @@ class DVR(object):
 
                     def clear_analysis(*args):
                         self.log.debug("Clearing analysis for {uuid}", uuid=uuid)
-                        del self._in_progress_analyses[uuid]
+                        if uuid in self._in_progress_analyses:
+                            del self._in_progress_analyses[uuid]
 
                     maybe_deferred.addCallback(clear_analysis)
 
