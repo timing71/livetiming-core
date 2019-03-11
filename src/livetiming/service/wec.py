@@ -54,6 +54,7 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
     parser.add_argument("--session", help="Use given session ID instead of finding the current session")
+    parser.add_argument("--laps", help="Specify number of laps for a distance-certain race")
     return parser.parse_known_args(extra_args)
 
 
@@ -505,6 +506,11 @@ class Service(lt_service):
 
             session['timeElapsed'] = self._session_data.get('elapsed', 0) + delta
             session['timeRemain'] = self._session_data.get('remain', 0) - delta
+
+            if self._parsed_extra_args.laps and len(cars) > 0:
+                total_laps = self._parsed_extra_args.laps
+                completed_laps = cars[0][8] or 0
+                session['lapsRemain'] = total_laps - completed_laps
 
             last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
 
