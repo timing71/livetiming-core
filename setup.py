@@ -1,5 +1,6 @@
 import re
 import json
+import os
 from setuptools import setup, find_packages
 
 
@@ -10,9 +11,11 @@ try:
 except:
     verstr = 'unknown'
 
+version_tag = os.environ.get('LIVETIMING_BUILD_TAG', '.dev0')
+
 setup(
     name='livetiming',
-    version=verstr,
+    version="{}{}".format(verstr, version_tag),
     description='Live timing aggregator for motorsport timing feeds',
     author='James Muscat',
     author_email='jamesremuscat@gmail.com',
