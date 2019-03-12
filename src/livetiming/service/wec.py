@@ -54,7 +54,7 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
     parser.add_argument("--session", help="Use given session ID instead of finding the current session")
-    parser.add_argument("--laps", help="Specify number of laps for a distance-certain race")
+    parser.add_argument("--laps", help="Specify number of laps for a distance-certain race", type=int)
     return parser.parse_known_args(extra_args)
 
 
@@ -326,7 +326,9 @@ class Service(lt_service):
                 self.log.debug("Web timestamp: {pts}", pts=pts)
 
                 data_new_enough = (not self._last_timestamp or pts >= self._last_timestamp)
-                correct_session = self._session_data.get('alkamel_session_id') == params.get('sessionId')
+
+                session_via_app = self._session_data.get('alkamel_session_id')
+                correct_session = session_via_app == params.get('sessionId') or not session_via_app
 
                 if data_new_enough and correct_session:
                     for car_data in data.get('entries', []):
@@ -510,7 +512,13 @@ class Service(lt_service):
             if self._parsed_extra_args.laps and len(cars) > 0:
                 total_laps = self._parsed_extra_args.laps
                 completed_laps = cars[0][8] or 0
-                session['lapsRemain'] = total_laps - completed_laps
+                laps_remaining = total_laps - completed_laps
+
+                last_lap_time = cars[0][-3][0] or 0
+                time_until_laps_complete = laps_remaining / last_lap_time if last_lap_time > 0 else None
+
+                if not time_until_laps_complete or time_until_laps_complete <= session['timeRemain']:
+                    session['lapsRemain'] = laps_remaining
 
             last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
 
