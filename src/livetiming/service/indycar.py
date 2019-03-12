@@ -292,7 +292,12 @@ class Service(lt_service):
         return {"cars": cars, "session": state}
 
     def getRawFeedData(self):
-        feed_url = "http://racecontrol.indycar.com/xml/timingscoring.json"
-        feed = urllib2.urlopen(feed_url)
-        lines = feed.readlines()
-        return simplejson.loads(lines[1])
+        try:
+            feed_url = "http://racecontrol.indycar.com/xml/timingscoring.json"
+            feed = urllib2.urlopen(feed_url)
+            lines = feed.readlines()
+            return simplejson.loads(lines[1])
+        except simplejson.JSONDecodeError:
+            self.log.warning('Error decoding JSON! Feed was: {lines}', lines="".join(lines))
+            self.log.warning('Hackily returning current service state instead')
+            return self.state
