@@ -27,7 +27,7 @@ def update_present_values(source, destination):
             destination[key] = val
 
 
-def create_protocol(service):
+def create_protocol(service, initial_state_file=None):
     class HHProtocol(Protocol):
         def log(self, *args, **kwargs):
             if service:
@@ -51,6 +51,13 @@ def create_protocol(service):
                 if hasattr(func, 'handles_message'):
                     for msg_type in func.handles_message:
                         self._handlers[msg_type] = func
+
+        def dump_data(self):
+            return {
+                'cars': self.cars,
+                'track': self.track,
+                'session': self.session
+            }
 
         def dataReceived(self, data):
             self._buffer += data
@@ -143,7 +150,19 @@ def create_protocol(service):
         def ignore(self, _):
             pass
 
-    return HHProtocol()
+    protocol = HHProtocol()
+
+    if initial_state_file:
+        try:
+            with open(initial_state_file, 'r') as statefile:
+                state = simplejson.load(statefile)
+                protocol.cars = state['cars']
+                protocol.session = state['session']
+                protocol.track = state['track']
+        except IOError:
+            pass
+
+    return protocol
 
 
 # 2019-03-13T20:00:09+0000 Unhandled message type HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage
@@ -193,15 +212,26 @@ class Service(lt_service):
 
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
-        self.protocol = create_protocol(self)
+        self.protocol = create_protocol(self, self._state_dump_file())
         self._extra_args = parse_extra_args(extra_args)
 
         self._due_publish_state = False
         self._last_update = time.time()
 
+    def _state_dump_file(self):
+        return 'hhtiming_state_dump_{}.json'.format(self.uuid)
+
     def notify_update(self):
         self._last_update = time.time()
         self._due_publish_state = True
+
+        with open(self._state_dump_file(), 'w') as outfile:
+            simplejson.dump(
+                self.protocol.dump_data(),
+                outfile,
+                sort_keys=True,
+                indent='  '
+            )
 
     def start(self):
         def maybePublish():
