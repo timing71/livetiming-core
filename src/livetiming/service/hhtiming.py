@@ -341,6 +341,12 @@ class Service(lt_service):
             self._rcMessageGenerator
         ]
 
+    def _car_sort_function(self):
+        if self.protocol.session.get('SessionType') < 3:
+            return lambda (num, car): car.get('BestLaptime', int(car.get('CompetitorNumber', 0)))
+        else:
+            return lambda (num, car): 'FIX ME SOMEHOW'
+
     def _map_cars(self):
         cars = []
 
@@ -359,7 +365,7 @@ class Service(lt_service):
                 if best_sector and (not existing_best_sector or existing_best_sector[0] > best_sector):
                     best_by_class[clazz][s + 1] = (best_sector, num)
 
-        for num, car in self.protocol.cars.iteritems():
+        for num, car in sorted(self.protocol.cars.iteritems(), key=self._car_sort_function()):
             # print car
             driver = car.get('driver', {})
             clazz = car.get('CategoryID')
