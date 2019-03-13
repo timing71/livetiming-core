@@ -1,6 +1,7 @@
 from collections import defaultdict
-from livetiming.service import Service as lt_service
+from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat, FlagStatus
+from livetiming.service import Service as lt_service
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
@@ -43,6 +44,7 @@ def create_protocol(service, initial_state_file=None):
             self.cars = defaultdict(dict)
             self.track = {}
             self.session = {}
+            self.messages = []
             self._buffer = ''
 
             self._handlers = {}
@@ -56,7 +58,8 @@ def create_protocol(service, initial_state_file=None):
             return {
                 'cars': self.cars,
                 'track': self.track,
-                'session': self.session
+                'session': self.session,
+                'messages': self.messages
             }
 
         def dataReceived(self, data):
@@ -143,6 +146,10 @@ def create_protocol(service, initial_state_file=None):
             car['InPit'] = False
             car['OutLap'] = True
 
+        @handler('HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage')
+        def race_control_message(self, data):
+            self.messages.append((data['MessageReceivedTime'], data['MessageString']))
+
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
             'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage'
@@ -159,6 +166,7 @@ def create_protocol(service, initial_state_file=None):
                 protocol.cars = state['cars']
                 protocol.session = state['session']
                 protocol.track = state['track']
+                protocol.messages = state['messages']
         except IOError:
             pass
 
@@ -167,6 +175,30 @@ def create_protocol(service, initial_state_file=None):
 
 # 2019-03-13T20:00:09+0000 Unhandled message type HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage
 # 2019-03-13T20:00:09+0000 {'MessageReceivedTime': 3608.065999984741, 'MessageString': 'CAR 50 REPORTED TO THE STEWARD FOR NOT RESPECTING THE RED FLAG PROCEDURE'}
+
+
+class RaceControlMessage(TimingMessage):
+
+    def __init__(self, protocol):
+        self.protocol = protocol
+        self._mostRecentTimestamp = 0
+
+    def process(self, _, __):
+
+        new_messages = [m for m in self.protocol.messages if m[0] > self._mostRecentTimestamp]
+
+        msgs = []
+
+        for msg in sorted(new_messages, key=lambda m: m[0]):
+            hasCarNum = self.CAR_NUMBER_REGEX.search(msg[1])
+            msgDate = time.time() * 1000
+            if hasCarNum:
+                msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
+            else:
+                msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl"])
+
+            self._mostRecentTimestamp = max(self._mostRecentTimestamp, map(lambda m: m[0], new_messages))
+        return sorted(msgs, key=lambda m: -m[0])
 
 
 def _map_car_state(car):
@@ -214,6 +246,8 @@ class Service(lt_service):
         super(Service, self).__init__(args, extra_args)
         self.protocol = create_protocol(self, self._state_dump_file())
         self._extra_args = parse_extra_args(extra_args)
+
+        self._rcMessageGenerator = RaceControlMessage(self.protocol)
 
         self._due_publish_state = False
         self._last_update = time.time()
@@ -278,6 +312,11 @@ class Service(lt_service):
             'cars': self._map_cars(),
             'session': self._map_session()
         }
+
+    def getExtraMessageGenerators(self):
+        return [
+            self._rcMessageGenerator
+        ]
 
     def _map_cars(self):
         cars = []
