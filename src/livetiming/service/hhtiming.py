@@ -126,16 +126,35 @@ def create_protocol(service):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = False
 
+        @handler('HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage')
+        def ignore(self, _):
+            pass
+
     return HHProtocol()
 
 
-def _map_car_state(state):
-    return 'PIT'
+CAR_STATE_MAP = {
+    0: 'PIT'
+}
 
 
 FLAG_STATE_MAP = {
     0: FlagStatus.NONE
 }
+
+
+def _extract_sector(sectorIndex, car):
+    current_sectors = car.get('current_sectors', {})
+    previous_sectors = car.get('previous_sectors', {})
+
+    sector = str(sectorIndex)
+
+    if sector in current_sectors:
+        return (current_sectors[sector]['SectorTime'], '')
+    elif sector in previous_sectors:
+        return (previous_sectors[sector]['SectorTime'], 'old')
+    else:
+        return ('', '')
 
 
 def parse_extra_args(extra_args):
@@ -185,7 +204,13 @@ class Service(lt_service):
             Stat.DRIVER,
             Stat.TEAM,
             Stat.CAR,
-            Stat.LAPS
+            Stat.LAPS,
+            Stat.S1,
+            Stat.S2,
+            Stat.S3,
+            Stat.LAST_LAP,
+            Stat.BEST_LAP,
+            Stat.PITS
         ]
 
     def getName(self):
@@ -203,21 +228,37 @@ class Service(lt_service):
     def _map_cars(self):
         cars = []
         for num, car in self.protocol.cars.iteritems():
-            print car.keys()
+            print car
             driver = car.get('driver', {})
-            cars.append([
+
+            car_data = [
                 num,
-                _map_car_state(car.get('State')),
+                CAR_STATE_MAP.get(car.get('Status'), car.get('Status')),
                 car.get('CategoryID'),
                 u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('TeamName'),
                 car.get('CarMake'),
                 car.get('NumberOfLaps')
-            ])
+            ]
+
+            for s in range(3):
+                car_data.append(
+                    _extract_sector(
+                        s + 1,
+                        car
+                    )
+                )
+
+            car_data += [
+                (car.get('LapTime', ''), ''),
+                (car.get('BestLaptime', ''), '')
+            ]
+
+            cars.append(car_data)
         return cars
 
     def _map_session(self):
-        print self.protocol.session.keys()
+        # print self.protocol.session.keys()
         return {
             'flagState': FLAG_STATE_MAP.get(self.protocol.session.get('TrackStatus', 0), FlagStatus.NONE).name.lower()
         }
