@@ -118,7 +118,6 @@ def create_protocol(service, initial_state_file=None):
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
         def adv_track_info(self, data):
             update_present_values(data, self.track)
-            print data
 
         @handler('HTiming.Core.Definitions.Communication.Messages.LaptimeResultsUpdateMessage')
         def laptime_results_update(self, data):
@@ -152,7 +151,8 @@ def create_protocol(service, initial_state_file=None):
 
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
-            'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage'
+            'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage',
+            'HTiming.Core.Definitions.Communication.Messages.ClassInformationMessage'  # <- this one is pointless so long as ID == description
         )
         def ignore(self, _):
             pass
@@ -354,7 +354,6 @@ class Service(lt_service):
         hhs = self.protocol.session
         # print hhs
         delta = time.time() - hhs['LastUpdate']
-        print 'Delta is {}'.format(delta)
         return {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
             'timeElapsed': hhs.get('SessionTime', 0) + delta
