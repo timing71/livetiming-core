@@ -9,6 +9,7 @@ from twisted.internet.task import LoopingCall
 import argparse
 import inspect
 import simplejson
+import time
 
 END_OF_MESSAGE = '<EOM>'
 
@@ -74,6 +75,7 @@ def create_protocol(service):
         @handler('HTiming.Core.Definitions.Communication.Messages.HeartbeatMessage')
         def heartbeat(self, data):
             update_present_values(data, self.session)
+            self.session['LastUpdate'] = time.time()
 
         @handler('HTiming.Core.Definitions.Communication.Messages.CompetitorMessage')
         def competitor(self, data):
@@ -91,14 +93,17 @@ def create_protocol(service):
             car = self.cars[data.pop('CompetitorNumber')]
             current_sectors = car.setdefault('current_sectors', {})
             current_sectors[data.pop('TimelineNumber')] = data
+            car['InPit'] = False
 
         @handler('HTiming.Core.Definitions.Communication.Messages.EventMessage')
         def event(self, data):
             update_present_values(data, self.session)
+            self.session['LastUpdate'] = time.time()
 
         @handler('HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage')
         def session_info(self, data):
             update_present_values(data, self.session)
+            self.session['LastUpdate'] = time.time()
 
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
         def adv_track_info(self, data):
@@ -116,16 +121,20 @@ def create_protocol(service):
             update_present_values(data, car)
             car['previous_sectors'] = car.get('current_sectors', {})
             car['current_sectors'] = {}
+            car['OutLap'] = False
+            car['InPit'] = False
 
         @handler('HTiming.Core.Definitions.Communication.Messages.PitInMessage')
         def pit_in(self, data):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = True
+            car['OutLap'] = False
 
         @handler('HTiming.Core.Definitions.Communication.Messages.PitOutMessage')
         def pit_out(self, data):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = False
+            car['OutLap'] = True
 
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
@@ -137,13 +146,22 @@ def create_protocol(service):
     return HHProtocol()
 
 
-CAR_STATE_MAP = {
-    0: 'PIT'
-}
+# 2019-03-13T20:00:09+0000 Unhandled message type HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage
+# 2019-03-13T20:00:09+0000 {'MessageReceivedTime': 3608.065999984741, 'MessageString': 'CAR 50 REPORTED TO THE STEWARD FOR NOT RESPECTING THE RED FLAG PROCEDURE'}
+
+
+def _map_car_state(car):
+    if car.get('OutLap', False):
+        return 'OUT'
+    elif car.get('InPit', True):
+        return 'PIT'
+    else:
+        return 'RUN'
 
 
 FLAG_STATE_MAP = {
-    0: FlagStatus.NONE
+    0: FlagStatus.NONE,
+    5: FlagStatus.GREEN
 }
 
 
@@ -179,8 +197,10 @@ class Service(lt_service):
         self._extra_args = parse_extra_args(extra_args)
 
         self._due_publish_state = False
+        self._last_update = time.time()
 
     def notify_update(self):
+        self._last_update = time.time()
         self._due_publish_state = True
 
     def start(self):
@@ -232,12 +252,12 @@ class Service(lt_service):
     def _map_cars(self):
         cars = []
         for num, car in self.protocol.cars.iteritems():
-            print car
+            # print car
             driver = car.get('driver', {})
 
             car_data = [
                 num,
-                'PIT' if car.get('InPit', True) else 'RUN',
+                _map_car_state(car),
                 car.get('CategoryID'),
                 u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('TeamName'),
@@ -262,9 +282,13 @@ class Service(lt_service):
         return cars
 
     def _map_session(self):
-        # print self.protocol.session.keys()
+        hhs = self.protocol.session
+        # print hhs
+        delta = time.time() - hhs['LastUpdate']
+        print 'Delta is {}'.format(delta)
         return {
-            'flagState': FLAG_STATE_MAP.get(self.protocol.session.get('TrackStatus', 0), FlagStatus.NONE).name.lower()
+            'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
+            'timeElapsed': hhs.get('SessionTime', 0) + delta
         }
 
 
