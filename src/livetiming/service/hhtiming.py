@@ -102,8 +102,15 @@ def create_protocol(service, initial_state_file=None):
         def adv_sector_crossing(self, data):
             car = self.cars[data.pop('CompetitorNumber')]
             current_sectors = car.setdefault('current_sectors', {})
-            current_sectors[data.pop('TimelineNumber')] = data
+            sector_index = data.pop('TimelineNumber')
+            current_sectors[sector_index] = data
             car['InPit'] = False
+
+            pb_sectors = car.setdefault('PersonalBestSectors', {})
+            if sector_index in pb_sectors:
+                pb_sectors[sector_index] = min(data['SectorTime'], pb_sectors[sector_index])
+            else:
+                pb_sectors[sector_index] = data['SectorTime']
 
         @handler('HTiming.Core.Definitions.Communication.Messages.EventMessage')
         def event(self, data):
@@ -219,11 +226,19 @@ FLAG_STATE_MAP = {
 def _extract_sector(sectorIndex, car):
     current_sectors = car.get('current_sectors', {})
     previous_sectors = car.get('previous_sectors', {})
+    pb_sectors = car.get('PersonalBestSectors', {})
 
     sector = str(sectorIndex)
 
     if sector in current_sectors:
-        return (current_sectors[sector]['SectorTime'], '')
+        sector_time = current_sectors[sector]['SectorTime']
+
+        if sector in pb_sectors and pb_sectors[sector] == sector_time:
+            flag = 'pb'
+        else:
+            flag = ''
+
+        return (sector_time, flag)
     elif sector in previous_sectors:
         return (previous_sectors[sector]['SectorTime'], 'old')
     else:
@@ -289,13 +304,18 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
-            Stat.DRIVER,
             Stat.TEAM,
+            Stat.DRIVER,
             Stat.CAR,
             Stat.LAPS,
+            Stat.GAP,
+            Stat.INT,
             Stat.S1,
+            Stat.BS1,
             Stat.S2,
+            Stat.BS2,
             Stat.S3,
+            Stat.BS3,
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -328,10 +348,12 @@ class Service(lt_service):
                 num,
                 _map_car_state(car),
                 car.get('CategoryID'),
-                u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('TeamName'),
+                u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('CarMake'),
-                car.get('NumberOfLaps')
+                car.get('NumberOfLaps'),
+                '',
+                ''
             ]
 
             for s in range(3):
@@ -342,9 +364,16 @@ class Service(lt_service):
                     )
                 )
 
+                car_data.append(
+                    (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), '')
+                )
+
+            last_lap = car.get('LapTime', '')
+            best_lap = car.get('BestLaptime', '')
+
             car_data += [
-                (car.get('LapTime', ''), ''),
-                (car.get('BestLaptime', ''), '')
+                (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
+                (best_lap, '')
             ]
 
             cars.append(car_data)
