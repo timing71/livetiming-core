@@ -223,17 +223,20 @@ FLAG_STATE_MAP = {
 }
 
 
-def _extract_sector(sectorIndex, car):
+def _extract_sector(sectorIndex, car, num, best_in_class):
     current_sectors = car.get('current_sectors', {})
     previous_sectors = car.get('previous_sectors', {})
     pb_sectors = car.get('PersonalBestSectors', {})
+    best = best_in_class.get(sectorIndex)
 
     sector = str(sectorIndex)
 
     if sector in current_sectors:
         sector_time = current_sectors[sector]['SectorTime']
 
-        if sector in pb_sectors and pb_sectors[sector] == sector_time:
+        if best and best[1] == num and best[0] == sector_time:
+            flag = 'sb'
+        elif sector in pb_sectors and pb_sectors[sector] == sector_time:
             flag = 'pb'
         else:
             flag = ''
@@ -340,14 +343,31 @@ class Service(lt_service):
 
     def _map_cars(self):
         cars = []
+
+        best_by_class = defaultdict(dict)
+
+        for num, car in self.protocol.cars.iteritems():
+            clazz = car.get('CategoryID')
+            best_lap = car.get('BestLaptime', None)
+            existing_best = best_by_class[clazz].get(0, None)
+            if best_lap and (not existing_best or existing_best[0] > best_lap):
+                best_by_class[clazz][0] = (best_lap, num)
+            for s in range(3):
+                sector = str(s + 1)
+                best_sector = car.get('PersonalBestSectors', {}).get(sector, None)
+                existing_best_sector = best_by_class[clazz].get(s + 1, None)
+                if best_sector and (not existing_best_sector or existing_best_sector[0] > best_sector):
+                    best_by_class[clazz][s + 1] = (best_sector, num)
+
         for num, car in self.protocol.cars.iteritems():
             # print car
             driver = car.get('driver', {})
+            clazz = car.get('CategoryID')
 
             car_data = [
                 num,
                 _map_car_state(car),
-                car.get('CategoryID'),
+                clazz,
                 car.get('TeamName'),
                 u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('CarMake'),
@@ -360,7 +380,9 @@ class Service(lt_service):
                 car_data.append(
                     _extract_sector(
                         s + 1,
-                        car
+                        car,
+                        num,
+                        best_by_class[clazz]
                     )
                 )
 
@@ -370,10 +392,16 @@ class Service(lt_service):
 
             last_lap = car.get('LapTime', '')
             best_lap = car.get('BestLaptime', '')
+            best_lap_in_class = best_by_class[clazz].get(0)
+
+            if best_lap_in_class and num == best_lap_in_class[1]:
+                best_lap_flag = 'sb-new' if last_lap == best_lap else 'sb'
+            else:
+                best_lap_flag = ''
 
             car_data += [
                 (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
-                (best_lap, '')
+                (best_lap, best_lap_flag)
             ]
 
             cars.append(car_data)
