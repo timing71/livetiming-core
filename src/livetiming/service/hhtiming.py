@@ -13,9 +13,9 @@ import simplejson
 END_OF_MESSAGE = '<EOM>'
 
 
-def handler(msg_type):
+def handler(*msg_types):
     def inner(func):
-        func.handles_message = msg_type
+        func.handles_message = msg_types
         return func
     return inner
 
@@ -48,7 +48,8 @@ def create_protocol(service):
 
             for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
                 if hasattr(func, 'handles_message'):
-                    self._handlers[func.handles_message] = func
+                    for msg_type in func.handles_message:
+                        self._handlers[msg_type] = func
 
         def dataReceived(self, data):
             self._buffer += data
@@ -126,7 +127,10 @@ def create_protocol(service):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = False
 
-        @handler('HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage')
+        @handler(
+            'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
+            'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage'
+        )
         def ignore(self, _):
             pass
 
@@ -233,7 +237,7 @@ class Service(lt_service):
 
             car_data = [
                 num,
-                CAR_STATE_MAP.get(car.get('Status'), car.get('Status')),
+                'PIT' if car.get('InPit', True) else 'RUN',
                 car.get('CategoryID'),
                 u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('TeamName'),
