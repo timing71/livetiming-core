@@ -226,8 +226,8 @@ def _parse_loops(loops):
     return {}
 
 
-def e(e, t, a, s):
-    if t < s:
+def e(e, t, a, n):
+    if t < n:
         if t < 0:
             return a['currentLapStartTime']
         else:
@@ -235,7 +235,7 @@ def e(e, t, a, s):
                 return a['currentLapStartTime'] + a['currentLoops'][t]
             else:
                 return a['currentLapStartTime']
-    elif t > s:
+    elif t > n:
         if len(a['previousLoops']) == 0:
             return a['currentLapStartTime']
         else:
@@ -271,9 +271,9 @@ def calculate_gap(first, second):
     else:
         n = first['laps'] - second['laps']
 
-    i = len(second['currentLoops']) - 1
+    i = max(second['currentLoops'].keys())
     r = second['currentLapStartTime'] + (0 if i < 0 else second['currentLoops'].get(i, 0))
-    o = len(first['currentLoops']) - 1
+    o = max(first['currentLoops'].keys()) if len(first['currentLoops']) > 0 else 0
     l = e(second, i, first, o)
 
     if n > 1:
