@@ -121,6 +121,7 @@ def create_protocol(service, initial_state_file=None):
         def session_info(self, data):
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
+            print "Session type: {}".format(data.get('SessionType', 'unset'))
 
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
         def adv_track_info(self, data):
@@ -145,6 +146,7 @@ def create_protocol(service, initial_state_file=None):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = True
             car['OutLap'] = False
+            car['Pits'] = car.get('Pits', 0) + 1
 
         @handler('HTiming.Core.Definitions.Communication.Messages.PitOutMessage')
         def pit_out(self, data):
@@ -260,13 +262,20 @@ def parse_extra_args(extra_args):
 
 
 def calculate_practice_gap(first, second):
-    if first and second and first.get('BestLapTime', 0) > 0 and second.get('BestLapTime', 0) > 0:
-        return second['BestLapTime'] - first['BestLapTime']
+    if first and second and first.get('BestLaptime', 0) > 0 and second.get('BestLaptime', 0) > 0:
+        return second['BestLaptime'] - first['BestLaptime']
     return ''
 
 
 def calculate_race_gap(first, second):
     return ''
+
+
+def maybe_int(mi):
+    try:
+        return int(mi)
+    except ValueError:
+        return mi
 
 
 class Service(lt_service):
@@ -354,13 +363,13 @@ class Service(lt_service):
         ]
 
     def _car_sort_function(self):
-        if self.protocol.session.get('SessionType') < 3:
-            return lambda (num, car): car.get('BestLaptime', int(car.get('CompetitorNumber', 0)))
+        if self.protocol.session.get('SessionType') < 4:
+            return lambda (num, car): (car.get('BestLaptime', 999999), maybe_int(num))
         else:
             return lambda (num, car): 'FIX ME SOMEHOW'
 
     def _gap_function(self):
-        if self.protocol.session.get('SessionType') < 3:
+        if self.protocol.session.get('SessionType') < 4:
             return calculate_practice_gap
         else:
             return calculate_race_gap
@@ -385,13 +394,15 @@ class Service(lt_service):
 
         gap_func = self._gap_function()
 
-        for num, car in sorted(self.protocol.cars.iteritems(), key=self._car_sort_function()):
+        sorted_cars = sorted(self.protocol.cars.iteritems(), key=self._car_sort_function())
+
+        for num, car in sorted_cars:
             # print car
             driver = car.get('driver', {})
             clazz = car.get('CategoryID')
 
-            leader = cars[0] if len(cars) > 0 else None
-            prev_car = cars[-1] if len(cars) > 0 else None
+            leader = sorted_cars[0][1] if len(sorted_cars) > 1 else None
+            prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
 
             car_data = [
                 num,
@@ -424,13 +435,14 @@ class Service(lt_service):
             best_lap_in_class = best_by_class[clazz].get(0)
 
             if best_lap_in_class and num == best_lap_in_class[1]:
-                best_lap_flag = 'sb-new' if last_lap == best_lap else 'sb'
+                best_lap_flag = 'sb-new' if last_lap == best_lap and car_data[-2][0] != '' and car_data[-2][1] != 'old' else 'sb'
             else:
                 best_lap_flag = ''
 
             car_data += [
                 (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
-                (best_lap, best_lap_flag)
+                (best_lap, best_lap_flag),
+                car.get('Pits', '')
             ]
 
             cars.append(car_data)
