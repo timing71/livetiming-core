@@ -219,6 +219,8 @@ def _map_car_state(car):
 
 FLAG_STATE_MAP = {
     0: FlagStatus.NONE,
+    2: FlagStatus.RED,
+    3: FlagStatus.CHEQUERED,
     5: FlagStatus.GREEN
 }
 
@@ -255,6 +257,16 @@ def parse_extra_args(extra_args):
 
     a, _ = parser.parse_known_args(extra_args)
     return a
+
+
+def calculate_practice_gap(first, second):
+    if first and second and first.get('BestLapTime', 0) > 0 and second.get('BestLapTime', 0) > 0:
+        return second['BestLapTime'] - first['BestLapTime']
+    return ''
+
+
+def calculate_race_gap(first, second):
+    return ''
 
 
 class Service(lt_service):
@@ -347,6 +359,12 @@ class Service(lt_service):
         else:
             return lambda (num, car): 'FIX ME SOMEHOW'
 
+    def _gap_function(self):
+        if self.protocol.session.get('SessionType') < 3:
+            return calculate_practice_gap
+        else:
+            return calculate_race_gap
+
     def _map_cars(self):
         cars = []
 
@@ -365,10 +383,15 @@ class Service(lt_service):
                 if best_sector and (not existing_best_sector or existing_best_sector[0] > best_sector):
                     best_by_class[clazz][s + 1] = (best_sector, num)
 
+        gap_func = self._gap_function()
+
         for num, car in sorted(self.protocol.cars.iteritems(), key=self._car_sort_function()):
             # print car
             driver = car.get('driver', {})
             clazz = car.get('CategoryID')
+
+            leader = cars[0] if len(cars) > 0 else None
+            prev_car = cars[-1] if len(cars) > 0 else None
 
             car_data = [
                 num,
@@ -378,8 +401,8 @@ class Service(lt_service):
                 u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                 car.get('CarMake'),
                 car.get('NumberOfLaps'),
-                '',
-                ''
+                gap_func(leader, car),
+                gap_func(prev_car, car)
             ]
 
             for s in range(3):
@@ -417,10 +440,15 @@ class Service(lt_service):
         hhs = self.protocol.session
         # print hhs
         delta = time.time() - hhs['LastUpdate']
-        return {
+        session = {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
             'timeElapsed': hhs.get('SessionTime', 0) + delta
         }
+
+        if hhs.get('TimeToGo'):
+            session['timeRemain'] = hhs['TimeToGo']
+
+        return session
 
 
 if __name__ == '__main__':
