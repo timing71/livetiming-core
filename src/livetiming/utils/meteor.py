@@ -376,6 +376,7 @@ class MeteorClient(EventEmitter):
 
     def connect(self, ddp):
         self.ddp_client = ddp
+        self.subscriptions = {}
         self.onConnect()
 
     def added(self, collection, id, fields):
