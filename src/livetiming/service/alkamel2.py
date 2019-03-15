@@ -271,7 +271,7 @@ def calculate_gap(first, second):
     else:
         n = first['laps'] - second['laps']
 
-    i = max(second['currentLoops'].keys())
+    i = max(second['currentLoops'].keys()) if len(second['currentLoops']) > 0 else 0
     r = second['currentLapStartTime'] + (0 if i < 0 else second['currentLoops'].get(i, 0))
     o = max(first['currentLoops'].keys()) if len(first['currentLoops']) > 0 else 0
     l = e(second, i, first, o)
