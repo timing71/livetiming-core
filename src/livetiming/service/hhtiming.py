@@ -30,6 +30,20 @@ def update_present_values(source, destination):
 
 def create_protocol(service, initial_state_file=None):
     class HHProtocol(Protocol):
+
+        def __init__(self):
+            self.cars = defaultdict(dict)
+            self.track = {}
+            self.session = {}
+            self.messages = []
+
+            self._handlers = {}
+
+            for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
+                if hasattr(func, 'handles_message'):
+                    for msg_type in func.handles_message:
+                        self._handlers[msg_type] = func
+
         def log(self, *args, **kwargs):
             if service:
                 service.log.info(*args, **kwargs)
@@ -41,18 +55,7 @@ def create_protocol(service, initial_state_file=None):
             return connectProtocol(endpoint, self)
 
         def connectionMade(self):
-            self.cars = defaultdict(dict)
-            self.track = {}
-            self.session = {}
-            self.messages = []
             self._buffer = ''
-
-            self._handlers = {}
-
-            for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
-                if hasattr(func, 'handles_message'):
-                    for msg_type in func.handles_message:
-                        self._handlers[msg_type] = func
 
         def dump_data(self):
             return {
@@ -177,6 +180,7 @@ def create_protocol(service, initial_state_file=None):
                 protocol.track = state['track']
                 protocol.messages = state['messages']
         except IOError:
+            protocol.log('Failed to load existing state file')
             pass
 
     return protocol
@@ -195,16 +199,17 @@ class RaceControlMessage(TimingMessage):
     def process(self, _, __):
 
         new_messages = [m for m in self.protocol.messages if m[0] > self._mostRecentTimestamp]
+        print "I have new messages:", new_messages
 
         msgs = []
 
         for msg in sorted(new_messages, key=lambda m: m[0]):
-            hasCarNum = self.CAR_NUMBER_REGEX.search(msg[1])
+            hasCarNum = CAR_NUMBER_REGEX.search(msg[1])
             msgDate = time.time() * 1000
             if hasCarNum:
-                msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
+                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl", hasCarNum.group('race_num')])
             else:
-                msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl"])
+                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
 
             self._mostRecentTimestamp = max(self._mostRecentTimestamp, map(lambda m: m[0], new_messages))
         return sorted(msgs, key=lambda m: -m[0])
@@ -401,7 +406,7 @@ class Service(lt_service):
             driver = car.get('driver', {})
             clazz = car.get('CategoryID')
 
-            leader = sorted_cars[0][1] if len(sorted_cars) > 1 else None
+            leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 1 else None
             prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
 
             car_data = [
@@ -416,18 +421,20 @@ class Service(lt_service):
                 gap_func(prev_car, car)
             ]
 
+            bbc = best_by_class[clazz]
+
             for s in range(3):
                 car_data.append(
                     _extract_sector(
                         s + 1,
                         car,
                         num,
-                        best_by_class[clazz]
+                        bbc
                     )
                 )
 
                 car_data.append(
-                    (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), '')
+                    (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), 'sb' if s + 1 in bbc and bbc[s + 1][1] == num else 'old')
                 )
 
             last_lap = car.get('LapTime', '')
@@ -450,7 +457,7 @@ class Service(lt_service):
 
     def _map_session(self):
         hhs = self.protocol.session
-        # print hhs
+        print hhs
         delta = time.time() - hhs['LastUpdate']
         session = {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
