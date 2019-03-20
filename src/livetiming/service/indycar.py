@@ -94,7 +94,7 @@ def parseEventName(heartbeat):
 def map_tyre(raw_tyre):
     mapp = {
         'P': ["P", "tyre-medium"],
-        'A': ["O", "tyre-ssoft"],
+        'A': ["O", "tyre-soft"],
         'W': ["W", "tyre-wet"],
         'WX': ["W", "tyre-wet"]
     }
