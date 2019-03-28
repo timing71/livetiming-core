@@ -274,6 +274,7 @@ class Service(lt_service):
         cars = []
 
         for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
+            car_state = "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits'])
             bestTime = parseTime(car['CurrentSessionBest'])
             bestTimeFlag = 'sb' if self.bestLap and self.bestLap[0] == car['ID'] else ''
 
@@ -285,7 +286,7 @@ class Service(lt_service):
             final_sector_time = sector_times[-1]
 
             if lastTime == bestTime and bestTimeFlag == 'sb':
-                lastTimeFlag = 'sb-new' if s1_time[0] != '' and final_sector_time[0] != '' else 'sb'
+                lastTimeFlag = 'sb-new' if s1_time[0] != '' and final_sector_time[0] != '' and car_state != 'PIT' else 'sb'
             else:
                 lastTimeFlag = 'pb' if car['PersonalBestTime'] else ''
 
@@ -294,7 +295,7 @@ class Service(lt_service):
             cars.append([
                 car['StartNumber'],
                 display_class,
-                "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits']),
+                car_state,
                 to_unicode(to_bytes(car['Name'])) or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
                 car['Laps'],
