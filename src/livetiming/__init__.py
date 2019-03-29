@@ -3,7 +3,7 @@ from twisted.python import log
 
 import os
 import pkg_resources
-import raven
+import sentry_sdk
 
 
 def load_env():
@@ -14,18 +14,17 @@ def load_env():
         pass
 
 
-_sentry = None
+_sentry_configured = False
 
 
 def sentry():
-    global _sentry
-    if not _sentry:
-        _sentry = raven.Client(
+    global _sentry_configured
+    if not _sentry_configured:
+        sentry_sdk.init(
             environment=os.getenv("LIVETIMING_ENVIRONMENT", "development"),
-            include_paths=['livetiming'],
-            release=raven.fetch_package_version('livetiming'),
+            release=pkg_resources.get_distribution('livetiming').version,
         )
-    return _sentry
+        _sentry_configured = True
 
 
 def _log_to_sentry(event):
@@ -33,7 +32,9 @@ def _log_to_sentry(event):
         return
 
     f = event['failure']
-    sentry().captureException((f.type, f.value, f.getTracebackObject()))
+    with sentry_sdk.push_scope() as scope:
+        scope.set_extra('debug', False)
+        sentry_sdk.capture_exception((f.type, f.value, f.getTracebackObject()))
 
 
 _sentry_twisted_configured = False

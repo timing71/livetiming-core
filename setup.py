@@ -38,7 +38,7 @@ setup(
         "pyopenssl",
         "python-dotenv",
         "python-twitter",
-        "raven",
+        "sentry-sdk",
         "service_identity",
         "signalr-client",
         "simplejson",
