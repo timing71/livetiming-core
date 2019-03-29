@@ -24,13 +24,14 @@ import argparse
 import codecs
 import copy
 import os
+import sentry_sdk
 import simplejson
 import time
 import txaio
 
 
 configure_sentry_twisted()
-sentry = sentry()
+sentry()
 
 client.HTTPClientFactory.noisy = False
 client._HTTP11ClientFactory.noisy = False
@@ -74,8 +75,6 @@ class Service(object):
     auto_poll = True
 
     def __init__(self, args, extra_args={}):
-        sentry.context.activate()
-        self.sentry = sentry
         self.args = args
         self.uuid = os.path.splitext(os.path.basename(self.args.initial_state))[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
@@ -93,12 +92,11 @@ class Service(object):
                 interval=self.getPollInterval()
             )
         self._publish = None
-        self.sentry.context.merge({
-            'tags': {
-                'uuid': self.uuid,
-                'service_name': self.__module__
-            }
-        })
+
+        with sentry_sdk.configure_scope() as scope:
+            scope.set_context('uuid', self.uuid)
+            scope.set_context('service_name', self.__module__)
+
         self.http_client = HTTPClient(client.Agent(reactor))
 
     def set_publish(self, func):
@@ -235,9 +233,9 @@ class Service(object):
             with open(self.args.initial_state, 'r') as stateFile:
                 try:
                     return simplejson.load(stateFile)
-                except Exception:
+                except Exception as e:
                     self.log.failure("Exception trying to load saved state: {log_failure}")
-                    sentry.captureException()
+                    sentry_sdk.capture_exception(e)
         return {
             "messages": [],
             "session": {
@@ -258,9 +256,9 @@ class Service(object):
         with open(filepath, 'w') as stateFile:
             try:
                 simplejson.dump(self.state, stateFile)
-            except Exception:
+            except Exception as e:
                 self.log.failure("Exception while saving state: {log_failure}")
-                sentry.captureException()
+                sentry_sdk.capture_exception(e)
         if self.recorder:
             self.recorder.writeState(self.state)
 
@@ -313,9 +311,9 @@ class Service(object):
                 )
 
             self._saveState()
-        except Exception:
+        except Exception as e:
             self.log.failure("Exception while updating race state: {log_failure}")
-            sentry.captureException()
+            sentry_sdk.capture_exception(e)
 
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))

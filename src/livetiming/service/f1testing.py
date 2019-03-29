@@ -2,6 +2,7 @@ from datetime import date
 from livetiming.racing import Stat
 from livetiming.service import Service as lt_service, Fetcher
 
+import sentry_sdk
 import simplejson
 from simplejson.scanner import JSONDecodeError
 
@@ -30,7 +31,7 @@ class Service(lt_service):
                     self.publishManifest()
             except JSONDecodeError as e:
                 self.log.failure("Failed parsing JSON. Exception was {log_failure}. Data was {data}.", data=e.doc)
-                self.sentry.captureException()
+                sentry_sdk.capture_exception(e)
 
         fetcher = Fetcher("http://www.softpauer.com/f1/2018/testsessions/TestResults.js", setData, 30)
         fetcher.start()
