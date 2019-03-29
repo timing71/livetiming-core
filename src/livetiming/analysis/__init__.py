@@ -154,7 +154,7 @@ class FieldExtractor(object):
         if car:
             try:
                 return car[self.mapping[field]]
-            except KeyError:
+            except KeyError, IndexError:
                 return default
         return default
 
