@@ -13,6 +13,7 @@ import re
 import os
 import pytz
 import urllib2
+import sentry_sdk
 import time
 import twitter
 
@@ -23,7 +24,7 @@ EVENT_START_BUFFER = datetime.timedelta(minutes=5)  # Start this many minutes ea
 EVENT_END_BUFFER = datetime.timedelta(minutes=10)  # Overrun by this much
 
 
-sentry = sentry()
+sentry()
 
 
 class Event(object):
@@ -190,9 +191,9 @@ class Scheduler(object):
                             self.log.info(u"Found event: {evt}", evt=e)
 
                 self.log.info("Sync complete")
-            except Exception:
+            except Exception as e:
                 self.log.failure("Exception while syncing calendar: {log_failure}")
-                sentry.captureException()
+                sentry_sdk.capture_exception(e)
         self.publish_schedule()
 
     def execute(self):
@@ -217,15 +218,15 @@ class Scheduler(object):
                     hasChanged = True
                 except Exception:
                     self.log.failure("Exception while starting job: {log_failure}")
-                    sentry.captureException()
+                    sentry_sdk.capture_exception(e)
 
             for job in toEnd:
                 try:
                     self._stop_service(job.uid, job.service)
                     hasChanged = True
-                except Exception:
+                except Exception as e:
                     self.log.failure("Exception while stopping job: {log_failure}")
-                    sentry.captureException()
+                    sentry_sdk.capture_exception(e)
 
         if hasChanged:
             self.publish_schedule()
