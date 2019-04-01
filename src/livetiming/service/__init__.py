@@ -94,8 +94,8 @@ class Service(object):
         self._publish = None
 
         with sentry_sdk.configure_scope() as scope:
-            scope.set_context('uuid', self.uuid)
-            scope.set_context('service_name', self.__module__)
+            scope.set_tag('uuid', self.uuid)
+            scope.set_tag('service_name', self.__module__)
 
         self.http_client = HTTPClient(client.Agent(reactor))
 
