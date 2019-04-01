@@ -105,6 +105,8 @@ class Service(lt_service):
         self.trackFeed = None
         self.weatherFeed = {}
 
+        self._timestamps = {}
+
         self.description = self.getName()
 
     def getClientProtocol(self):
@@ -147,7 +149,6 @@ class Service(lt_service):
         ]
 
     def onTimingPayload(self, payload):
-        print payload
         if "M" in payload:
             for message in payload["M"]:
                 self.handleTimingMessage(message)
@@ -190,62 +191,66 @@ class Service(lt_service):
 
     def handleTimingMessage(self, message):
         messageType = message["M"]
-        if messageType == "datafeed":
-            data = message["A"][2]
-            if 'lines' in data:
-                for line in data["lines"]:
-                    car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
-                    if "sectors" in line:
-                        for sector in line["sectors"]:
-                            car[int(sector["Id"]) + 5] = parseTime(sector)
-                    if "laps" in line:
-                        car[3] = line["laps"]["Value"]
-                    if "last" in line:
-                        car[9] = parseTime(line["last"])
-                        if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '':  # last == best == sb and just set S3
-                            car[9][1] = 'sb-new'
-                    if "status" in line:
-                        car[1] = parseState(line["status"])
-                    if "position" in line:
-                        car[-1] = int(line["position"]["Value"])
-                    if "gap" in line:
-                        car[4] = line["gap"]["Value"]
-                    if "interval" in line:
-                        car[5] = line["interval"]["Value"]
-                    if "gapP" in line:
-                        car[4] = line["gapP"]["Value"]
-                    if "intervalP" in line:
-                        car[5] = line["intervalP"]["Value"]
-                    if "pits" in line:
-                        car[11] = line["pits"]["Value"]
-            try:
-                if "Session" in message["A"][1]:
-                    self._setDescription(message["A"][1]["Session"])
-            except TypeError:
-                pass
 
-        if messageType == "statsfeed":
-            data = message["A"][1]
-            if 'lines' in data:
-                for line in data["lines"]:
-                    car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
-                    if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
-                        car[10] = parseTime(line["PersonalBestLapTime"])
-                    if "Position" in line:
-                        car[-1] = int(line["Position"])
+        if messageType not in self._timestamps or message["A"][0] < self._timestamps[messageType]:
+            if messageType == "datafeed":
+                data = message["A"][2]
+                if 'lines' in data:
+                    for line in data["lines"]:
+                        car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                        if "sectors" in line:
+                            for sector in line["sectors"]:
+                                car[int(sector["Id"]) + 5] = parseTime(sector)
+                        if "laps" in line:
+                            car[3] = line["laps"]["Value"]
+                        if "last" in line:
+                            car[9] = parseTime(line["last"])
+                            if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '':  # last == best == sb and just set S3
+                                car[9][1] = 'sb-new'
+                        if "status" in line:
+                            car[1] = parseState(line["status"])
+                        if "position" in line:
+                            car[-1] = int(line["position"]["Value"])
+                        if "gap" in line:
+                            car[4] = line["gap"]["Value"]
+                        if "interval" in line:
+                            car[5] = line["interval"]["Value"]
+                        if "gapP" in line:
+                            car[4] = line["gapP"]["Value"]
+                        if "intervalP" in line:
+                            car[5] = line["intervalP"]["Value"]
+                        if "pits" in line:
+                            car[11] = line["pits"]["Value"]
+                try:
+                    if "Session" in message["A"][1]:
+                        self._setDescription(message["A"][1]["Session"])
+                except TypeError:
+                    pass
 
-        if messageType == "timefeed":
-            self.timeLeft = parseSessionTime(message["A"][2])
-            self.lastTimeUpdate = datetime.utcnow()
+            if messageType == "statsfeed":
+                data = message["A"][1]
+                if 'lines' in data:
+                    for line in data["lines"]:
+                        car = [car for car in self.carState if car[0] == line["driver"]["RacingNumber"]][0]
+                        if "PersonalBestLapTime" in line and line["PersonalBestLapTime"] is not None:
+                            car[10] = parseTime(line["PersonalBestLapTime"])
+                        if "Position" in line:
+                            car[-1] = int(line["Position"])
 
-        if messageType == "sessionfeed":
-            self.sessionFeed = message["A"][1]["Value"]
+            if messageType == "timefeed":
+                self.timeLeft = parseSessionTime(message["A"][2])
+                self.lastTimeUpdate = datetime.utcnow()
 
-        if messageType == "trackfeed":
-            self.trackFeed = message["A"][1]["Value"]
+            if messageType == "sessionfeed":
+                self.sessionFeed = message["A"][1]["Value"]
 
-        if messageType == "weatherfeed":
-            self.weatherFeed[message["A"][1]] = message["A"][2]
+            if messageType == "trackfeed":
+                self.trackFeed = message["A"][1]["Value"]
+
+            if messageType == "weatherfeed":
+                self.weatherFeed[message["A"][1]] = message["A"][2]
+
+            self._timestamps[messageType] = message['A'][0]
 
         self._updateRaceState()
 
