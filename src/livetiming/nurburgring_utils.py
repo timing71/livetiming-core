@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
+from twisted.logger import Logger
 from twisted.web import client
 from twisted.web.http_headers import Headers
 
@@ -250,10 +251,12 @@ def _parse_objects(data):
 
 
 class Nurburgring(object):
+    log = Logger()
+
     def __init__(self, verbose=False):
         self._zones = {}
         self._verbose = verbose
-        client.getPage(MARSHAL_POST_ADDRESS_URL).addCallback(self._parse_addresses)
+        client.getPage(MARSHAL_POST_ADDRESS_URL).addCallbacks(self._parse_addresses, self._handle_errback)
 
     def _parse_addresses(self, data):
         addresses = _parse_objects(data)
@@ -261,7 +264,7 @@ class Nurburgring(object):
         for obj in addresses.values():
             if "geoobjectid" in obj:
                 self._names[obj['geoobjectid']] = base64.b64decode(obj.get('name')).lower()
-        client.getPage(MARSHAL_POST_ID_URL).addCallback(self._parse_marshal_posts)
+        client.getPage(MARSHAL_POST_ID_URL).addCallbacks(self._parse_marshal_posts, self._handle_errback)
 
     def _parse_marshal_posts(self, data):
         objs = _parse_objects(data)
@@ -273,7 +276,7 @@ class Nurburgring(object):
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
-        client.getPage(ACTIVE_ZONES_URL).addCallback(self._parse_zones)
+        client.getPage(ACTIVE_ZONES_URL).addCallbacks(self._parse_zones, self._handle_errback)
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
@@ -286,6 +289,9 @@ class Nurburgring(object):
                 self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
         if self._verbose:
             print self._zones
+
+    def _handle_errback(self, err):
+        self.log.error("Encountered an error: {err}", err=err)
 
     def active_zones(self):
         return copy.copy(self._zones)
