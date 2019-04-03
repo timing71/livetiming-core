@@ -1,5 +1,6 @@
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 from autobahn.wamp.types import PublishOptions
+from collections import defaultdict
 from livetiming import servicemanager, load_env, sentry
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
@@ -146,6 +147,7 @@ class Scheduler(object):
     def __init__(self):
         self.events = {}
         self.runningEvents = []
+        self.running_events_per_service = defaultdict(list)
         self.calendarAddress = os.environ['LIVETIMING_CALENDAR_URL']
         self.lock = Lock()
         self._publish = None
@@ -188,9 +190,9 @@ class Scheduler(object):
                         e = Event.from_ical(evt, self.log)
                         if e:
                             self.events[e.uid] = e
-                            self.log.info(u"Found event: {evt}", evt=e)
+                            self.log.debug(u"Found event: {evt}", evt=e)
 
-                self.log.info("Sync complete")
+                self.log.info("Sync complete, {num} event(s) found", num=len(self.events))
             except Exception as e:
                 self.log.failure("Exception while syncing calendar: {log_failure}")
                 sentry_sdk.capture_exception(e)
@@ -211,6 +213,14 @@ class Scheduler(object):
 
             hasChanged = False
 
+            for job in toEnd:
+                try:
+                    self._stop_service(job.uid, job.service)
+                    hasChanged = True
+                except Exception as e:
+                    self.log.failure("Exception while stopping job: {log_failure}")
+                    sentry_sdk.capture_exception(e)
+
             for job in toStart:
                 try:
                     self._start_service(job.uid, job.service, job.serviceArgs)
@@ -218,14 +228,6 @@ class Scheduler(object):
                     hasChanged = True
                 except Exception:
                     self.log.failure("Exception while starting job: {log_failure}")
-                    sentry_sdk.capture_exception(e)
-
-            for job in toEnd:
-                try:
-                    self._stop_service(job.uid, job.service)
-                    hasChanged = True
-                except Exception as e:
-                    self.log.failure("Exception while stopping job: {log_failure}")
                     sentry_sdk.capture_exception(e)
 
         if hasChanged:
@@ -250,15 +252,42 @@ class Scheduler(object):
             self.log.debug("Call to publish with no publish function set!")
 
     def _start_service(self, uid, service, args):
-        self.log.info("Starting service {} with args {}".format(service, args))
-        servicemanager.start_service(service, args)
+        self.log.debug('_start_service called for uid {uid}', uid=uid)
+        existing = self.running_events_per_service[service]
+
+        found_existing = False
+
+        for _, existing_args in existing:
+            if args == existing_args:
+                found_existing = True
+                break
+
+        if found_existing:
+            self.log.info("Maintaining already-running service {service} for UID {uid}", service=service, uid=uid)
+        elif len(existing) > 0:
+            self.log.error("Needing to start service {service}, which is already running with different arguments. Holding out until existing service is terminated.", service=service)
+            return False
+        else:
+            self.log.info("Starting service {service} with args {args} (event UID: {uid}", service=service, args=args, uid=uid)
+            servicemanager.start_service(service, args)
+
         self.runningEvents.append(uid)
+        self.running_events_per_service[service].append([uid, args])
 
     def _stop_service(self, uid, service):
-        self.log.info("Stopping service {}".format(service))
-        servicemanager.stop_service(service)
+        existing = self.running_events_per_service[service]
+
+        others = [e for e in existing if e[0] != uid]
+
+        if len(others) == 0:
+            self.log.info("Stopping service {}".format(service))
+            servicemanager.stop_service(service)
+        else:
+            self.log.info("Maintaining already-running service {service} as other events are running", service=service)
+
         self.runningEvents.remove(uid)
         self.events.pop(uid)
+        self.running_events_per_service[service] = others
 
 
 def main():
