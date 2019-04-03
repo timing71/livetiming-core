@@ -8,3 +8,6 @@ class Service(wige):
         extra_args.append('-e')
         extra_args.append('20')
         super(Service, self).__init__(args, extra_args)
+
+    def getName(self):
+        return 'VLN'
