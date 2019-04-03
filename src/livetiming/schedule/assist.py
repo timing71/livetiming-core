@@ -19,6 +19,7 @@ TAG_TO_SERVICE_CLASS = {
     'Blancpain GT': 'blancpain',
     'CTSC': 'imsa',
     'European Le Mans': 'elms',
+    'ELMS': 'elms',
     'Formula 1': 'f1',
     'F1': 'f1',
     'Formula 2': 'f2',
