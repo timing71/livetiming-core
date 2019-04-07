@@ -296,7 +296,7 @@ def calculate_gap(first, second):
                 if l < r:
                     return pluralize(n, 'lap')
                 else:
-                    l = first['currentLapStartTime'] - first['previousLoops'][max(first['previousLoops'].keys())]
+                    l = first['currentLapStartTime'] - (first['previousLoops'][max(first['previousLoops'].keys())] if len(first['previousLoops']) > 0 else 0)
                     if i >= 0:
                         l += first['previousLoops'].get(i, 0)
                     return abs(r - l) / 1000.0
