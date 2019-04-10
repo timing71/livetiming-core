@@ -202,12 +202,20 @@ class Service(lt_service):
         if meetings_json:
             meetings = meetings_json['content']['full']['Meetings']
             if meetingID and meetingID.lower() in meetings:
-                self.log.info("Found requested meeting {meetingID}", meetingID=meetingID.lower())
+                self.log.info(
+                    "Found requested meeting {meetingID}: {name}",
+                    meetingID=meetingID.lower(),
+                    name=meetings[meetingID.lower()]['Name']
+                )
                 return meetings[meetingID.lower()]
             else:
                 live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
                 if live_meetings:
-                    self.log.info("Using currently live meeting {meetingID}", meetingID=live_meetings[0]['Id'].lower())
+                    self.log.info(
+                        "Using currently live meeting {meetingID}: {name}",
+                        meetingID=live_meetings[0]['Id'].lower(),
+                        name=live_meetings[0]['Name']
+                    )
                     return live_meetings[0]
         self.log.warn("Could not find a live meeting!")
         return None
@@ -220,13 +228,23 @@ class Service(lt_service):
                 sessions = sessions_json['content']['full']['Units']
                 session = None
                 if sessionID and sessionID.lower() in sessions:
-                    self.log.info("Found requested session {sessionID}", sessionID=sessionID.lower())
                     session = sessions[sessionID.lower()]
+                    self.log.info(
+                        "Found requested session {sessionID}: {name}",
+                        sessionID=sessionID.lower(),
+                        name=session['Name']
+                    )
+
                 else:
                     live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
                     if live_sessions:
-                        self.log.info("Using live session {sessionID}", sessionID=live_sessions[-1]['Id'].lower())
                         session = live_sessions[-1]
+                        self.log.info(
+                            "Using live session {sessionID}: {name}",
+                            sessionID=session['Id'].lower(),
+                            name=session['Name']
+                        )
+
                 if session:
                     return session['Id'].upper(), \
                         sessions_json['content']['full']['Competitions'][session['CompetitionId']]['Name'], \
