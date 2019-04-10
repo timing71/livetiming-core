@@ -2,7 +2,7 @@
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import TimingMessage
-from livetiming.nurburgring_utils import Nurburgring
+from livetiming.utils.nurburgring import Nurburgring
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
