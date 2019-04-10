@@ -10,10 +10,10 @@ import copy
 import re
 import simplejson
 
-
-MARSHAL_POST_ADDRESS_URL = 'http://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp=IPHADAC24H&type=address'
-MARSHAL_POST_ID_URL = 'http://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp=IPHADAC24H'
-ACTIVE_ZONES_URL = 'http://live.racing.apioverip.de/?action=list&module=geoobject&type=activewithlimit&user=251259'
+OVER_IP_APP = 'IPHNGR24'
+MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'.format(OVER_IP_APP)
+MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'.format(OVER_IP_APP)
+ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'.format(OVER_IP_APP)
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
 
@@ -280,6 +280,9 @@ class Nurburgring(object):
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
+        print "Zone parsing is currently broken! Reimplement this method when sample data is available."
+        print data
+        return
         zone_types = map(str, parsed_data.get('zones', []))
         self._zones = {}
         for zt in zone_types:
