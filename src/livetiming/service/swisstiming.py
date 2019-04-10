@@ -143,10 +143,10 @@ class Service(lt_service):
         if not hasattr(self, 'URL_BASE'):
             raise Exception("{} does not define a URL_BASE property! Fix your code!".format(self.__module__))
 
-        self.SRO_ROOT_URL = self.URL_BASE + "SEASON_JSON.json"
-        self.SRO_SCHEDULE_URL = self.URL_BASE + "SCHEDULE_{meeting}_JSON.json"
-        self.SRO_SESSION_TIMING_URL = self.URL_BASE + "TIMING_{session}_JSON.json"
-        self.SRO_SESSION_DATA_URL = self.URL_BASE + "COMP_DETAIL_{session}_JSON.json"
+        self.ROOT_URL = self.URL_BASE + "SEASON_JSON.json"
+        self.SCHEDULE_URL = self.URL_BASE + "SCHEDULE_{meeting}_JSON.json"
+        self.SESSION_TIMING_URL = self.URL_BASE + "TIMING_{session}_JSON.json"
+        self.SESSION_DETAIL_URL = self.URL_BASE + "COMP_DETAIL_{session}_JSON.json"
 
         self._tz_offset = 0
         self._timing_data = None
@@ -182,10 +182,10 @@ class Service(lt_service):
                     self._session_data = None
                     self._timing_data = None
 
-                self.session_fetcher = JSONFetcher(uncache(self.SRO_SESSION_DATA_URL.format(session=self.sro_session)), self._receive_session, 20)
+                self.session_fetcher = JSONFetcher(uncache(self.SESSION_DETAIL_URL.format(session=self.sro_session)), self._receive_session, 20)
                 self.session_fetcher.start()
 
-                self.timing_fetcher = JSONFetcher(uncache(self.SRO_SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
+                self.timing_fetcher = JSONFetcher(uncache(self.SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
                 self.timing_fetcher.start()
 
             if not ea.session:
@@ -198,7 +198,7 @@ class Service(lt_service):
             reactor.callLater(30, self._init_session)
 
     def _find_meeting(self, meetingID=None):
-        meetings_json = json_get(self.SRO_ROOT_URL)
+        meetings_json = json_get(self.ROOT_URL)
         if meetings_json:
             meetings = meetings_json['content']['full']['Meetings']
             if meetingID and meetingID.lower() in meetings:
@@ -223,7 +223,7 @@ class Service(lt_service):
     def _find_session(self, meetingID=None, sessionID=None):
         meeting = self._find_meeting(meetingID)
         if meeting:
-            sessions_json = json_get(self.SRO_SCHEDULE_URL.format(meeting=meeting['Id'].upper()))
+            sessions_json = json_get(self.SCHEDULE_URL.format(meeting=meeting['Id'].upper()))
             if sessions_json:
                 sessions = sessions_json['content']['full']['Units']
                 session = None
