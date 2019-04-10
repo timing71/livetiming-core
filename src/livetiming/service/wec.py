@@ -151,7 +151,11 @@ class Service(lt_service):
             self.log.info("Using session {sessionid}", sessionid=self.session['id'])
             new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
             if new_description != self.description:
+                self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
+                self._session_data = {}
+                self._cars = {}
+                self.analyser.reset()
                 self.publishManifest()
 
             if self._app_fetcher:
