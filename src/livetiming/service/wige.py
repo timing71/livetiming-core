@@ -158,14 +158,21 @@ class SlowZoneMessage(TimingMessage):
         for zone, state in self._curr.iteritems():
             severity, mp, location = state
             if zone not in self._prev:
-                if severity == '60':
+                if severity == 0:
+                    msgs.append([
+                        int(time.time()),
+                        "Track",
+                        "Yellow flag at MP{} ({})".format(mp, location),
+                        "yellow"
+                    ])
+                if severity == 60:
                     msgs.append([
                         int(time.time()),
                         "Track",
                         "New Code 60 zone at MP{} ({})".format(mp, location),
                         "code60"
                     ])
-                elif severity == '120':
+                elif severity == 120:
                     msgs.append([
                         int(time.time()),
                         "Track",
@@ -174,14 +181,14 @@ class SlowZoneMessage(TimingMessage):
                     ])
             else:
                 prev_severity = self._prev[zone][0]
-                if prev_severity == '60' and severity == '120':
+                if prev_severity == 60 and severity == 120:
                     msgs.append([
                         int(time.time()),
                         "Track",
                         "Code 60 zone downgraded to slow at MP{} ({})".format(mp, location),
                         "yellow"
                     ])
-                elif prev_severity == '120' and severity == '60':
+                elif prev_severity == 120 and severity == 60:
                     msgs.append([
                         int(time.time()),
                         "Track",
@@ -273,7 +280,9 @@ class Service(lt_service):
     def getTrackDataSpec(self):
         return [
             'Slow zones',
-            'Code 60 zones'
+            'At',
+            'Code 60 zones',
+            'At'
         ]
 
     def getExtraMessageGenerators(self):
@@ -287,23 +296,34 @@ class Service(lt_service):
         self._current_zones.clear()
         self._current_zones.update(self._nbr.active_zones())
 
+        yellows = 0
         slow_zones = 0
         code60_zones = 0
-        for z in self._current_zones.values():
-            speed = z[0]
-            if z[0] == '60':
-                code60_zones += 1
-            elif z[0] == '120':
-                slow_zones += 1
 
-        if 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
-            flag = FlagStatus.NONE
-        elif len(self._current_zones) == 209 and self._current_zones.values()[0][0] == '80':
+        sz_locations = set()
+        c60_locations = set()
+
+        for z in sorted(self._current_zones.values(), key=lambda z: z[1]):
+            speed = z[0]
+            if speed == 0:
+                yellows += 1
+            if speed == 60:
+                code60_zones += 1
+                c60_locations.add(z[2])
+            elif speed == 120:
+                slow_zones += 1
+                sz_locations.add(z[2])
+
+        if len(self._current_zones) == 209 and self._current_zones.values()[0][0] == 80:
             flag = FlagStatus.RED
         elif code60_zones > 0:
             flag = FlagStatus.CODE_60_ZONE
         elif slow_zones > 0:
             flag = FlagStatus.SLOW_ZONE
+        elif yellows > 0:
+            flag = FlagStatus.YELLOW
+        # elif 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
+        #    flag = FlagStatus.NONE
         else:
             flag = FlagStatus.GREEN
 
@@ -314,7 +334,9 @@ class Service(lt_service):
                 "timeElapsed": 0,
                 'trackData': [
                     slow_zones,
-                    code60_zones
+                    ', '.join(sz_locations),
+                    code60_zones,
+                    ', '.join(c60_locations)
                 ]
             }
         }
