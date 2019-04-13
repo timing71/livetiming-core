@@ -14,16 +14,22 @@ OVER_IP_APP = 'IPHNGR24'
 MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'.format(OVER_IP_APP)
 MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'.format(OVER_IP_APP)
 ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'.format(OVER_IP_APP)
+# TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'.format(OVER_IP_APP)
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
 
 MARSHAL_POST_LOCATIONS = {
     '1': 'Start/Finish',
     '2': 'Start/Finish',
+    '2a': 'Start/Finish',
     '3': 'Start/Finish',
-    '4': 'Yokohama-S',
-    '4a': 'Yokohama-S',
-    '5': 'Yokohama-S',
+    '4': 'Haug-Haken',
+    '4a': 'Haug-Haken',
+    '5': 'Haug-Haken',
+    '6': 'Mercedes arena',
+    '7': 'Mercedes arena',
+    '8': 'Mercedes arena',
+    '9': 'Mercedes arena',
     '10': 'Yokohama-S',
     '11': 'Yokohama-S',
     '12': 'Yokohama - Valvoline',
@@ -91,12 +97,12 @@ MARSHAL_POST_LOCATIONS = {
     '77': 'Quiddelbacher Höhe',
     '78': 'Quiddelbacher Höhe',
     '79': 'Quiddelbacher Höhe',
-    '80': 'Quiddelbacher Höhe',
-    '81': 'Quiddelbacher Höhe',
-    '82': 'Flugplatz',
-    '83': 'Flugplatz',
-    '84': 'Flugplatz',
-    '85': 'Flugplatz',
+    '80': 'Flugplatz',
+    '81': 'Flugplatz',
+    '82': 'Schwedenkreuz',
+    '83': 'Schwedenkreuz',
+    '84': 'Schwedenkreuz',
+    '85': 'Schwedenkreuz',
     '86': 'Schwedenkreuz',
     '87': 'Schwedenkreuz',
     '88': 'Aremberg',
@@ -112,13 +118,13 @@ MARSHAL_POST_LOCATIONS = {
     '97': 'Fuchsröhre',
     '98': 'Fuchsröhre',
     '98a': 'Fuchsröhre',
-    '99': 'Fuchsröhre',
+    '99': 'Adenauer Forst',
     '100': 'Adenauer Forst',
     '100a': 'Adenauer Forst',
-    '101': 'Adenauer Forst',
-    '102': 'Adenauer Forst',
-    '103': 'Adenauer Forst',
-    '103a': 'Adenauer Forst',
+    '101': 'Metzgesfeld',
+    '102': 'Metzgesfeld',
+    '103': 'Metzgesfeld',
+    '103a': 'Metzgesfeld',
     '104': 'Kallenhard',
     '105': 'Kallenhard',
     '106': 'Kallenhard',
@@ -126,22 +132,22 @@ MARSHAL_POST_LOCATIONS = {
     '108': 'Kallenhard',
     '108a': 'Kallenhard',
     '109': 'Kallenhard',
-    '110': 'Kallenhard',
-    '111': 'Kallenhard',
-    '112': 'Kallenhard',
-    '112a': 'Kallenhard',
-    '113': 'Kallenhard',
-    '114': 'Wehrseifen',
-    '115': 'Wehrseifen',
-    '116': 'Wehrseifen',
-    '117': 'Wehrseifen',
-    '118': 'Breidscheid',
-    '119': 'Breidscheid',
-    '120': 'Breidscheid',
-    '121': 'Breidscheid',
-    '122': 'Exmühle',
-    '123': 'Exmühle',
-    '124': 'Exmühle',
+    '110': 'Wehrseifen',
+    '111': 'Wehrseifen',
+    '112': 'Exmühle',
+    '112a': 'Exmühle',
+    '113': 'Exmühle',
+    '114': 'Exmühle',
+    '115': 'Exmühle',
+    '116': 'Exmühle',
+    '117': 'Exmühle',
+    '118': 'Exmühle',
+    '119': 'Exmühle',
+    '120': 'Exmühle',
+    '121': 'Exmühle',
+    '122': 'Exmühle - Bergwerk',
+    '123': 'Exmühle - Bergwerk',
+    '124': 'Exmühle - Bergwerk',
     '125': 'Bergwerk',
     '125a': 'Bergwerk',
     '126': 'Bergwerk',
@@ -157,16 +163,16 @@ MARSHAL_POST_LOCATIONS = {
     '135': 'Klostertal',
     '136': 'Klostertal',
     '137': 'Klostertal',
-    '138': 'Klostertal',
-    '139': 'Klostertalkurve',
-    '140': 'Klostertalkurve',
-    '141': 'Klostertalkurve',
-    '142': 'Klostertalkurve',
+    '138': 'Caracciola – Karussel',
+    '139': 'Caracciola – Karussel',
+    '140': 'Caracciola – Karussel',
+    '141': 'Caracciola – Karussel',
+    '142': 'Caracciola – Karussel',
     '143': 'Caracciola – Karussel',
     '144': 'Caracciola – Karussel',
     '145': 'Caracciola – Karussel',
-    '146': 'Caracciola – Karussel',
-    '147': 'Caracciola – Karussel',
+    '146': 'Karussel exit',
+    '147': 'Karussel exit',
     '148': 'Hohe Acht',
     '149': 'Hohe Acht',
     '149a': 'Hohe Acht',
@@ -273,6 +279,9 @@ class Nurburgring(object):
         for obj in objs.values():
             self._marshal_posts[obj['ruleid']] = self._names.get(obj['refid'], obj['refid'])
 
+            if self._verbose:
+                print self._marshal_posts
+
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
@@ -280,16 +289,14 @@ class Nurburgring(object):
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
-        print "Zone parsing is currently broken! Reimplement this method when sample data is available."
-        print data
-        return
-        zone_types = map(str, parsed_data.get('zones', []))
         self._zones = {}
-        for zt in zone_types:
-            zones = parsed_data.get(zt, [])
-            for zone in zones:
-                post_num = self._marshal_posts.get(str(zone), '')
-                self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
+
+        zones = parsed_data.get('data', [])
+
+        for zt, zone in zones:
+            post_num = self._marshal_posts.get(str(zone), '')
+            self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
+
         if self._verbose:
             print self._zones
 
