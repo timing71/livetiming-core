@@ -4,7 +4,7 @@ from datetime import datetime
 from livetiming.messages import TimingMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
-from livetiming.utils.meteor import MeteorClient, DDPProtocolFactory
+from livetiming.utils.meteor import MeteorClient, MeteorClientException, DDPProtocolFactory
 from twisted.internet.task import LoopingCall
 
 import argparse
@@ -90,9 +90,12 @@ class AlkamelV2Client(MeteorClient):
             self.set_session(live_sessions[0])
 
     def set_session(self, session_info):
-        if self._current_session_id:
+        if self._current_session_id and self._current_session_id != session_info['session']:
             for topic in self.SESSION_SUBSCRIPTIONS:
-                self.unsubscribe(topic)
+                try:
+                    self.unsubscribe(topic)
+                except MeteorClientException:
+                    pass  # we might not have had that subscription after all...
 
         self._current_session_id = session_info['session']
         self.session_type = session_info.get('info', {}).get('type', 'UNKNOWN')
