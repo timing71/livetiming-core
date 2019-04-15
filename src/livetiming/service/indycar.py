@@ -297,7 +297,7 @@ class Service(lt_service):
             feed = urllib2.urlopen(feed_url)
             lines = feed.readlines()
             return simplejson.loads(lines[1])
-        except simplejson.JSONDecodeError:
-            self.log.warning('Error decoding JSON! Feed was: {lines}', lines="".join(lines))
+        except (simplejson.JSONDecodeError, IndexError):
+            self.log.warning('Error obtaining raw feed! Feed was: {lines}', lines="".join(lines))
             self.log.warning('Hackily returning current service state instead')
             return self.state
