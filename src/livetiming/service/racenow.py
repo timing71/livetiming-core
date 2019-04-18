@@ -25,7 +25,7 @@ def create_ws_protocol(log, handler):
         def onMessage(self, payload, isBinary):
             log.debug('Received message: \'{msg}\'', msg=payload)
             if len(payload) > 0:
-                handler(simplejson.loads(payload))
+                handler(simplejson.loads(payload.decode()))
 
     return ClientProtocol
 
@@ -406,8 +406,8 @@ class Service(lt_service):
                         gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
                         interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
 
-                    car[7] = gap if gap >= 0 else ''
-                    car[8] = interval if interval >= 0 else ''
+                    car[7] = gap if isinstance(gap, str) or gap >= 0 else ''
+                    car[8] = interval if isinstance(interval, str) or interval >= 0 else ''
 
                 if car[0] == sb_lap_car and car[18][0] == sb_lap_time:
                     car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[15][0] != '' else 'sb']

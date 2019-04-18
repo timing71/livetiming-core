@@ -11,9 +11,9 @@ import re
 import simplejson
 
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
-MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'
-MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'
-ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'
+MARSHAL_POST_ADDRESS_URL = bytes('https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'.format(OVER_IP_APP), 'utf-8')
+MARSHAL_POST_ID_URL = bytes('https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'.format(OVER_IP_APP), 'utf-8')
+ACTIVE_ZONES_URL = bytes('https://dev.apioverip.de/racing/rules/active?overipapp={}'.format(OVER_IP_APP), 'utf-8')
 # TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'.format(OVER_IP_APP)
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
@@ -243,7 +243,7 @@ MARSHAL_POST_LOCATIONS = {
 
 def _parse_objects(data):
     result = {}
-    tokens = data[11:].split(';')
+    tokens = data.decode()[11:].split(';')
 
     for token in tokens:
         split = TOKEN_SPLIT_REGEX.match(token)

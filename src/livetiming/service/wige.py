@@ -26,7 +26,10 @@ def create_ws_protocol(log, handler, eventID):
             log.info('Connected to upstream timing source')
             self.factory.resetDelay()
             self._watchdog.start()
-            self.sendMessage('{"eventId": "' + eventID + '","eventPid":[0,3,4]}')
+            message = simplejson.dumps({
+                "eventId": eventID
+            })
+            self.sendMessage(message.encode('utf-8'))
 
         def onMessage(self, payload, isBinary):
             log.debug('Received message: {msg}', msg=payload)
@@ -257,7 +260,7 @@ class Service(DuePublisher, lt_service):
         )
 
     def getPollInterval(self):
-        return None
+        return 10
 
     def getColumnSpec(self):
 
