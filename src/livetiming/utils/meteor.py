@@ -9,7 +9,7 @@ class oid(str):
     pass
 
 
-def decode(ejson_message):
+def _decode(ejson_message):
     return ejson.loads(
         ejson_message,
         custom_type_hooks=[
@@ -18,7 +18,7 @@ def decode(ejson_message):
     )
 
 
-def encode(obj):
+def _encode(obj):
     body = ejson.dumps(
         obj,
         custom_type_hooks=[
@@ -112,13 +112,14 @@ def DDPProtocolFactory(handler):
         def onMessage(self, payload, isBinary):
             self._watchdog.notify()
             self.log.debug("<<< {payload}", payload=payload)
+            payload = payload.decode('utf-8')
             if payload[0] != 'a':
                 return
 
-            messages = decode(str(payload[1:]))
+            messages = _decode(payload[1:])
 
             for message in messages:
-                data = decode(message)
+                data = _decode(message)
                 if not data.get('msg'):
                     return
 
@@ -202,9 +203,9 @@ def DDPProtocolFactory(handler):
                 self.dropConnection(abort=True)
 
         def send(self, obj):
-            message = encode(obj)
-            self.log.debug(">>> {message}", message=message)
-            self.sendMessage(message)
+            message = _encode(obj)
+            self.log.debug(">>> {msg}", msg=message)
+            self.sendMessage(message.encode('utf-8'))
 
         def call(self, method, params, callback=None):
             """Call a method on the server

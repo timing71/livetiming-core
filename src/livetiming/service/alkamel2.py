@@ -144,7 +144,7 @@ def parse_sectors(sectorString, defaultFlag=''):
     sectors = {}
     parts = sectorString.split(';')
     len_parts = len(parts)
-    for i in range(len_parts / 6):
+    for i in range(len_parts // 6):
         idx = 6 * i
         if len_parts > idx and parts[idx] != '':
             sector = int(parts[idx])
