@@ -133,7 +133,8 @@ class RaceNowState:
 
 def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--tk', help='Track (Suzuka, Motegi or one of their variants)', required=True, metavar='TRACK')
+    parser.add_argument('-t', '--tk', help='Track (Suzuka, Motegi or one of their variants)', metavar='TRACK')
+    parser.add_argument('-w', '--ws', help='WebSocket URL to connect to (instead of track name)')
     parser.add_argument('--name', help='Name for the service', required=True)
     return parser.parse_args(extra_args)
 
@@ -232,19 +233,24 @@ def map_session_flag(raw):
     )
 
 
-def get_websocket_url(track):
-    servers = simplejson.load(urllib2.urlopen(SERVER_SPEC_URL))
+def get_websocket_url(extra_args):
+    if extra_args.tk:
+        servers = simplejson.load(urllib2.urlopen(SERVER_SPEC_URL))
 
-    track_ip_key = '{}_server'.format(track)
-    track_port_key = '{}_port1'.format(track)
+        track_ip_key = '{}_server'.format(track)
+        track_port_key = '{}_port1'.format(track)
 
-    if track_ip_key in servers and track_port_key in servers:
-        return 'ws://{}:{}/get'.format(
-            servers[track_ip_key],
-            servers[track_port_key]
-        )
+        if track_ip_key in servers and track_port_key in servers:
+            return 'ws://{}:{}/get'.format(
+                servers[track_ip_key],
+                servers[track_port_key]
+            )
 
-    raise Exception('Cannot find {} in server config: {}'.format(track, servers.keys()))
+        raise Exception('Cannot find {} in server config: {}'.format(track, list(servers.keys())))
+    elif extra_args.ws:
+        return extra_args.ws
+    else:
+        raise Exception('Either track name or websocket URL must be specified')
 
 
 class Service(lt_service):
@@ -273,7 +279,7 @@ class Service(lt_service):
             setPendingUpdate
         )
 
-        url = get_websocket_url(self._extra.tk)
+        url = get_websocket_url(self._extra)
 
         factory = ReconnectingWebSocketClientFactory(url)
         factory.protocol = create_ws_protocol(self.log, self._state.handle)
