@@ -135,7 +135,7 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--tk', help='Track (Suzuka, Motegi or one of their variants)', metavar='TRACK')
     parser.add_argument('-w', '--ws', help='WebSocket URL to connect to (instead of track name)')
-    parser.add_argument('--name', help='Name for the service', required=True)
+    parser.add_argument('--name', help='Name for the service')
     return parser.parse_args(extra_args)
 
 
@@ -338,7 +338,9 @@ class Service(lt_service):
         ]
 
     def getName(self):
-        return self._extra.name
+        if self._extra.name:
+            return self._extra.name
+        raise Exception('No service name specified (-n)')
 
     def getDefaultDescription(self):
         return self._state.session.get('DESCR_E', '')
