@@ -249,13 +249,59 @@ class ReplayManager(object):
         self.log = Logger()
         self.recordings = []
         self.recordings_by_uuid = {}
+
+        self._recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
+        self._index_filename = os.path.join(self._recordings_dir, 'index.json')
+
         self._scan_task = LoopingCall(self.update_index)
         self._scan_task.start(600)
 
     def update_index(self):
-        self.recordings = sorted(update_recordings_index().values(), key=lambda r: r['startTime'], reverse=True)
+        self.recordings = sorted(update_recordings_index(self._index_filename).values(), key=lambda r: r['startTime'], reverse=True)
         self.recordings_by_uuid = {r['uuid']: r for r in self.recordings}
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
+
+    def update_manifest(self, manifest):
+
+        # We have four places to update the manifest in:
+        # - the index file
+        # - our cached copy of the index file
+        # - the recording zip file
+        # - the analysis zip file (if present)
+
+        uuid = manifest['uuid']
+
+        index = {}
+        try:
+            with open(self._index_filename, 'r') as index_file:
+                index = simplejson.load(index_file)
+        except IOError:
+            return False
+
+        index[uuid].update(manifest)
+
+        with open(self._index_filename, 'w') as index_file:
+            simplejson.dump(index, index_file, separators=(',', ':'))
+
+        self.update_index()
+
+        recfile = RecordingFile(os.path.join(self._recordings_dir, manifest['filename']))
+        recfile.manifest.update(manifest)
+        recfile.save_manifest()
+
+        if manifest.get('hasAnalysis', False):
+            analysis_file = os.path.join(self._recordings_dir, '{}.json'.format(manifest['filename'][0:-4]))
+            analysis = {}
+            try:
+                with open(analysis_file) as af:
+                    analysis = simplejson.load(af)
+            except IOError:
+                return False
+
+            analysis['service'].update(manifest)
+
+            with open(analysis_file, 'w') as af:
+                simplejson.dump(analysis, af)
 
 
 @authenticatedService
@@ -268,6 +314,7 @@ class RecordingsDirectory(ApplicationSession):
         yield self.register(self.get_page, RPC.GET_RECORDINGS_PAGE)
         yield self.register(self.get_names, RPC.GET_RECORDINGS_NAMES)
         yield self.register(self.get_manifest, RPC.GET_RECORDINGS_MANIFEST)
+        yield self.register(self.update_manifest, RPC.UPDATE_RECORDING_MANIFEST)
         self.log.info("Recordings directory service ready")
 
     def onDisconnect(self):
@@ -306,12 +353,17 @@ class RecordingsDirectory(ApplicationSession):
     def get_manifest(self, recording_uuid):
         return self._manager.recordings_by_uuid.get(recording_uuid)
 
+    def update_manifest(self, manifest, authcode=None):
+        if authcode != os.environ.get('LIVETIMING_ADMIN_AUTHCODE') or not authcode:
+            raise Exception('Incorrect authcode supplied')
 
-def update_recordings_index():
+        self._manager.update_manifest(manifest)
+
+
+def update_recordings_index(index_filename):
     log = Logger()
     recordings_dir = os.environ.get('LIVETIMING_RECORDINGS_DIR', './recordings')
 
-    index_filename = os.path.join(recordings_dir, 'index.json')
     index = {}
 
     try:
