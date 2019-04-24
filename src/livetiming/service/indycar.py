@@ -8,7 +8,9 @@ import urllib2
 import simplejson
 
 
-def mapFlagStates(rawState):
+def mapFlagStates(rawState, session_type):
+    if session_type == 'P' and rawState == 'YELLOW':
+        return FlagStatus.YELLOW.name.lower()
     flagMap = {
         "GREEN": FlagStatus.GREEN,
         "YELLOW": FlagStatus.CAUTION,
@@ -207,7 +209,7 @@ class Service(lt_service):
             self.publishManifest()
 
         state = {
-            "flagState": mapFlagStates(heartbeat["currentFlag"]),
+            "flagState": mapFlagStates(heartbeat["currentFlag"], heartbeat['SessionType']),
             "timeElapsed": parseSessionTime(heartbeat["elapsedTime"]),
             "timeRemain": parseSessionTime(heartbeat["overallTimeToGo"]) if "overallTimeToGo" in heartbeat else 0,
         }
