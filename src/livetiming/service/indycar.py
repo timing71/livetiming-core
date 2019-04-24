@@ -148,6 +148,7 @@ class Service(lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.DRIVER,
+            Stat.TEAM,
             Stat.LAPS,
             Stat.TYRE,
             Stat.PUSH_TO_PASS,
@@ -285,6 +286,7 @@ class Service(lt_service):
                 car["no"],
                 self._debouncer.value_for(car['no'], state_value),
                 "{0} {1}".format(car.get("firstName", ""), car.get("lastName", "")),
+                car.get('team', ''),
                 car["laps"],
                 map_tyre(car.get('Tire', '')),
                 [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
@@ -298,9 +300,9 @@ class Service(lt_service):
                 car["pitStops"]
             ])
 
-        bestLapIdx = 16
-        lastLapIdx = 14
-        lastSectorIdx = 12
+        bestLapIdx = 17
+        lastLapIdx = 15
+        lastSectorIdx = 13
 
         for car in cars:
             num = car[0]
@@ -309,17 +311,17 @@ class Service(lt_service):
                 if car[bestLapIdx][0] == car[lastLapIdx][0]:
                     car[lastLapIdx] = [car[lastLapIdx][0], 'sb-new' if car[lastSectorIdx][0] != '' else 'sb']
             if num == fastSectors[0][1]:
-                car[9] = [car[9][0], 'sb']
-                if car[8][0] == car[9][0]:
-                    car[8] = [car[8][0], 'sb']
+                car[10] = [car[10][0], 'sb']
+                if car[9][0] == car[10][0]:
+                    car[9] = [car[9][0], 'sb']
             if num == fastSectors[1][1]:
-                car[11] = [car[11][0], 'sb']
-                if car[10][0] == car[11][0]:
-                    car[10] = [car[10][0], 'sb']
+                car[12] = [car[12][0], 'sb']
+                if car[11][0] == car[12][0]:
+                    car[11] = [car[11][0], 'sb']
             if not self._oval_mode and num == fastSectors[1][1]:
-                car[13] = [car[13][0], 'sb']
-                if car[12][0] == car[13][0]:
-                    car[12] = [car[12][0], 'sb']
+                car[14] = [car[14][0], 'sb']
+                if car[13][0] == car[14][0]:
+                    car[13] = [car[13][0], 'sb']
 
         return {"cars": cars, "session": state}
 
