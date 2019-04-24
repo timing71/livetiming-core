@@ -165,7 +165,9 @@ class Service(lt_service):
                 Stat.T1_SPEED,
                 Stat.BEST_T1_SPEED,
                 Stat.T3_SPEED,
-                Stat.BEST_T3_SPEED
+                Stat.BEST_T3_SPEED,
+                Stat.NO_TOW_SPEED,
+                Stat.NO_TOW_RANK
             ]
         else:
             return [
@@ -237,11 +239,15 @@ class Service(lt_service):
                 if bt3 > 0 and bt3 > fastSectors[1][0]:
                     fastSectors[1] = (bt3, car['no'])
 
+                no_tow_rank = car.get('NTRank', '0')
+
                 sector_cols = [
                     (t1 if t1 > 0 else '', 'pb' if t1 == bt1 else ''),
                     (bt1 if bt1 > 0 else '', 'old'),
                     (t3 if t3 > 0 else '', 'pb' if t3 == bt3 else ''),
-                    (bt3 if bt3 > 0 else '', 'old')
+                    (bt3 if bt3 > 0 else '', 'old'),
+                    (car.get('NTBestSpeed', ''), 'sb' if no_tow_rank == '1' else ''),
+                    (no_tow_rank if no_tow_rank != '0' else '', 'sb' if no_tow_rank == '1' else '')
                 ]
             else:
 
@@ -290,9 +296,9 @@ class Service(lt_service):
                 car["pitStops"]
             ])
 
-        bestLapIdx = 14 if self._oval_mode else 16
-        lastLapIdx = 12 if self._oval_mode else 14
-        lastSectorIdx = 10 if self._oval_mode else 12
+        bestLapIdx = 16
+        lastLapIdx = 14
+        lastSectorIdx = 12
 
         for car in cars:
             num = car[0]
