@@ -309,7 +309,7 @@ class Service(lt_service):
             if num == fastLap[1]:
                 car[bestLapIdx] = [car[bestLapIdx][0], 'sb']
                 if car[bestLapIdx][0] == car[lastLapIdx][0]:
-                    car[lastLapIdx] = [car[lastLapIdx][0], 'sb-new' if car[lastSectorIdx][0] != '' else 'sb']
+                    car[lastLapIdx] = [car[lastLapIdx][0], 'sb-new' if car[lastSectorIdx][0] != '' and car[1] != 'PIT' else 'sb']
             if num == fastSectors[0][1]:
                 car[10] = [car[10][0], 'sb']
                 if car[9][0] == car[10][0]:
