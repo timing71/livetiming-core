@@ -60,6 +60,8 @@ class Stat(Enum):
     BEST_T1_SPEED = ("BT1S", "numeric", "Best turn 1 speed")
     T3_SPEED = ("T3 Spd", "numeric", "Turn 3 speed")
     BEST_T3_SPEED = ("BT3S", "numeric", "Best turn 3 speed")
+    NO_TOW_SPEED = ('NTS', 'numeric', 'No-tow speed - best speed without tow')
+    NO_TOW_RANK = ('NTR', 'numeric', 'No-tow rank')
 
     def __init__(self, title, ttype, description=None):
         self.title = title
