@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
@@ -103,6 +104,26 @@ def map_tyre(raw_tyre):
     return raw_tyre
 
 
+class PitOutDebouncer(object):
+    def __init__(self, limit=3):
+        self._values = defaultdict(list)
+        self.limit = limit
+
+    def value_for(self, key, feed_value):
+        values_list = self._values[key]
+        values_list.append(feed_value)
+
+        values_list = values_list[-self.limit:]
+
+        if len(values_list) < self.limit:
+            return feed_value
+        elif values_list[0] == 'PIT' and values_list[1] == 'RUN':
+            # Avoid the bounce of PIT => RUN => PIT => RUN => RUN... on successive updates
+            return 'RUN'
+        else:
+            return feed_value
+
+
 class Service(lt_service):
     attribution = ['IndyCar', 'http://racecontrol.indycar.com/']
     log = Logger()
@@ -112,6 +133,7 @@ class Service(lt_service):
         self.name = "IndyCar"
         self.description = "IndyCar"
         self._oval_mode = False
+        self._debouncer = PitOutDebouncer()
 
     def getName(self):
         return self.name
@@ -249,9 +271,11 @@ class Service(lt_service):
             diff = car.get('diff', '-')
             gap = car.get('gap', 0)
 
+            state_value = "PIT" if (car["status"].lower() == "in pit" or car["onTrack"] == "False") else "RUN"
+
             cars.append([
                 car["no"],
-                "PIT" if (car["status"].lower() == "in pit" or car["onTrack"] == "False") else "RUN",
+                self._debouncer.value_for(car['no'], state_value),
                 "{0} {1}".format(car.get("firstName", ""), car.get("lastName", "")),
                 car["laps"],
                 map_tyre(car.get('Tire', '')),
