@@ -418,7 +418,7 @@ class Service(lt_service):
 
             fastestLapFlag = ""
             if timeLine[1] != "" and fastestLap == parse_time(timeLine[1]):
-                fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] and state == "RUN" else "sb"
+                fastestLapFlag = "sb-new" if timeLine[1] == latestTimeLine[1] and state == "RUN" and latestTimeLine[7] != '' else "sb"
 
             gap = renderGapOrLaps(latestTimeLine[9])
             interval = renderGapOrLaps(latestTimeLine[14])
