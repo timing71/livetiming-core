@@ -91,7 +91,7 @@ class CarPitMessage(PerCarMessage):
         clazz = self.getValue(newCar, Stat.CLASS, "Pits")
 
         if oldStatus != newStatus and carNum is not None:
-            if newStatus == "OUT" or (newStatus == "RUN" and oldStatus == "PIT"):
+            if (oldStatus != 'RUN' and newStatus == "OUT") or (newStatus == "RUN" and oldStatus == "PIT"):
                 return [clazz, u"#{} ({}) has left the pits".format(carNum, driver), "out"]
             elif newStatus == "PIT":
                 return [clazz, u"#{} ({}) has entered the pits".format(carNum, driver), "pit"]
