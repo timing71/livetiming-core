@@ -192,7 +192,7 @@ class Service(lt_service):
     def handleTimingMessage(self, message):
         messageType = message["M"]
 
-        if messageType not in self._timestamps or message["A"][0] < self._timestamps[messageType]:
+        if messageType not in self._timestamps or message["A"][0] >= self._timestamps[messageType]:
             if messageType == "datafeed":
                 data = message["A"][2]
                 if 'lines' in data:
