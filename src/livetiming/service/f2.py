@@ -3,6 +3,7 @@ from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
+from twisted.internet.task import LoopingCall
 
 import simplejson
 import urllib2
@@ -88,6 +89,7 @@ def parseFlag(rawFlag):
 
 class Service(lt_service):
     attribution = ['FOWC', 'http://www.fiaformula2.com/']
+    auto_poll = False
 
     def __init__(self, args, extra_args):
         lt_service.__init__(self, args, extra_args)
@@ -109,6 +111,17 @@ class Service(lt_service):
         self._timestamps = {}
 
         self.description = self.getName()
+
+        self._due_publish_state = False
+
+    def start(self):
+        def maybePublish():
+            if self._due_publish_state:
+                self._updateAndPublishRaceState()
+                self._due_publish_state = False
+        LoopingCall(maybePublish).start(1)
+
+        super(Service, self).start()
 
     def getClientProtocol(self):
         return createProtocol("F2", self)
@@ -189,6 +202,7 @@ class Service(lt_service):
                 self.weatherFeed.update(payload["R"]["weatherfeed"][1])
         elif payload:  # is not empty
             print "What is {}?".format(payload)
+        self._due_publish_state = True
 
     def handleTimingMessage(self, message):
         messageType = message["M"]
@@ -253,8 +267,6 @@ class Service(lt_service):
                 self.weatherFeed[message["A"][1]] = message["A"][2]
 
             self._timestamps[messageType] = message['A'][0]
-
-        self._updateRaceState()
 
     def _setDescription(self, description):
         if description != self.description:
