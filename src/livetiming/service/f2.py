@@ -218,12 +218,12 @@ class Service(lt_service):
                                 car[int(sector["Id"]) + 5] = parseTime(sector)
                         if "laps" in line:
                             car[3] = line["laps"]["Value"]
-                        if "last" in line:
-                            car[9] = parseTime(line["last"])
-                            if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '':  # last == best == sb and just set S3
-                                car[9][1] = 'sb-new'
                         if "status" in line:
                             car[1] = parseState(line["status"])
+                        if "last" in line:
+                            car[9] = parseTime(line["last"])
+                            if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '' and car[1] == 'RUN':  # last == best == sb and just set S3
+                                car[9][1] = 'sb-new'
                         if "position" in line:
                             car[-1] = int(line["position"]["Value"])
                         if "gap" in line:
