@@ -100,6 +100,7 @@ class Service(lt_service):
         self.carState = []
         self.sessionState = {"flagState": "none"}
         self.timeLeft = 0
+        self.clock_running = False
         self.lastTimeUpdate = datetime.utcnow()
         self.sessionFeed = None
         self.trackFeed = None
@@ -238,6 +239,7 @@ class Service(lt_service):
                             car[-1] = int(line["Position"])
 
             if messageType == "timefeed":
+                self.clock_running = message['A'][1]
                 self.timeLeft = parseSessionTime(message["A"][2])
                 self.lastTimeUpdate = datetime.utcnow()
 
@@ -260,7 +262,11 @@ class Service(lt_service):
             self.publishManifest()
 
     def getRaceState(self):
-        self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
+        if self.clock_running:
+            self.sessionState["timeRemain"] = self.timeLeft - (datetime.utcnow() - self.lastTimeUpdate).total_seconds()
+        else:
+            self.sessionState['timeRemain'] = self.timeLeft
+
         if self.sessionFeed == "Finished" or self.sessionFeed == "Finalised":
             self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
         elif self.sessionFeed == 'Aborted':
