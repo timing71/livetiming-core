@@ -26,6 +26,7 @@ TAG_TO_SERVICE_CLASS = {
     'F2': 'f2',
     'Formula E': 'formulae',
     'GP3 Series': 'gp3',
+    'F3': 'gp3',
     'IMSA': 'imsa',
     'IndyCar': 'indycar',
     'Michelin Le Mans Cup': 'lemanscup',
