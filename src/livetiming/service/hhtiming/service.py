@@ -2,193 +2,14 @@ from collections import defaultdict
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
+from livetiming.service.hhtiming import create_protocol
 from twisted.internet import reactor
-from twisted.internet.protocol import Protocol
-from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
+from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 
 import argparse
-import inspect
 import simplejson
 import time
-
-END_OF_MESSAGE = '<EOM>'
-
-
-def handler(*msg_types):
-    def inner(func):
-        func.handles_message = msg_types
-        return func
-    return inner
-
-
-def update_present_values(source, destination):
-    for key, val in source.iteritems():
-        if val != -1:
-            destination[key] = val
-
-
-def create_protocol(service, initial_state_file=None):
-    class HHProtocol(Protocol):
-
-        def __init__(self):
-            self.cars = defaultdict(dict)
-            self.track = {}
-            self.session = {}
-            self.messages = []
-
-            self._handlers = {}
-
-            for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
-                if hasattr(func, 'handles_message'):
-                    for msg_type in func.handles_message:
-                        self._handlers[msg_type] = func
-
-        def log(self, *args, **kwargs):
-            if service:
-                service.log.info(*args, **kwargs)
-            else:
-                print args, kwargs
-
-        def connect(self, endpoint):
-            self.log("Connecting to HH Timing at {endpoint}...", endpoint=endpoint)
-            return connectProtocol(endpoint, self)
-
-        def connectionMade(self):
-            self._buffer = ''
-
-        def dump_data(self):
-            return {
-                'cars': self.cars,
-                'track': self.track,
-                'session': self.session,
-                'messages': self.messages
-            }
-
-        def dataReceived(self, data):
-            self._buffer += data
-            while END_OF_MESSAGE in self._buffer:
-                msg, _, rest = self._buffer.partition(END_OF_MESSAGE)
-                self.handleMessage(msg)
-                self._buffer = rest
-
-        def handleMessage(self, msg):
-            parsed_msg = simplejson.loads(msg)
-            msg_type = parsed_msg.pop('$type').split(',')[0]
-
-            if msg_type in self._handlers:
-                self._handlers[msg_type](parsed_msg)
-            else:
-                print 'Unhandled message type {}'.format(msg_type)
-                print parsed_msg
-                print '----'
-            if service:
-                service.notify_update(msg_type)
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.HeartbeatMessage')
-        def heartbeat(self, data):
-            update_present_values(data, self.session)
-            self.session['LastUpdate'] = time.time()
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.CompetitorMessage')
-        def competitor(self, data):
-            car = self.cars[data['CompetitorID']]
-            update_present_values(data, car)
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.DriverMessage')
-        def driver(self, data):
-            if data.pop('IsInCar'):
-                car = self.cars[data.pop('CarID')]
-                car['driver'] = data
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.AdvSectorTimeLineCrossing')
-        def adv_sector_crossing(self, data):
-            car = self.cars[data.pop('CompetitorNumber')]
-            current_sectors = car.setdefault('current_sectors', {})
-            sector_index = data.pop('TimelineNumber')
-            current_sectors[sector_index] = data
-            car['InPit'] = False
-
-            pb_sectors = car.setdefault('PersonalBestSectors', {})
-            if sector_index in pb_sectors:
-                pb_sectors[sector_index] = min(data['SectorTime'], pb_sectors[sector_index])
-            else:
-                pb_sectors[sector_index] = data['SectorTime']
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.EventMessage')
-        def event(self, data):
-            update_present_values(data, self.session)
-            self.session['LastUpdate'] = time.time()
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage')
-        def session_info(self, data):
-            update_present_values(data, self.session)
-            self.session['LastUpdate'] = time.time()
-            print "Session type: {}".format(data.get('SessionType', 'unset'))
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
-        def adv_track_info(self, data):
-            update_present_values(data, self.track)
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.LaptimeResultsUpdateMessage')
-        def laptime_results_update(self, data):
-            car = self.cars[data.pop('CarID')]
-            update_present_values(data, car)
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.BasicTimeCrossingMessage')
-        def basic_time_crossing(self, data):
-            car = self.cars[data.pop('CarID')]
-            update_present_values(data, car)
-            car['previous_sectors'] = car.get('current_sectors', {})
-            car['current_sectors'] = {}
-            car['OutLap'] = False
-            car['InPit'] = False
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.PitInMessage')
-        def pit_in(self, data):
-            car = self.cars[data.pop('CarID')]
-            car['InPit'] = True
-            car['OutLap'] = False
-            car['Pits'] = car.get('Pits', 0) + 1
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.PitOutMessage')
-        def pit_out(self, data):
-            car = self.cars[data.pop('CarID')]
-            car['InPit'] = False
-            car['OutLap'] = True
-
-        @handler('HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage')
-        def race_control_message(self, data):
-            self.messages.append((data['MessageReceivedTime'], data['MessageString']))
-
-        @handler(
-            'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
-            'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage',
-            'HTiming.Core.Definitions.Communication.Messages.ClassInformationMessage'  # <- this one is pointless so long as ID == description
-        )
-        def ignore(self, _):
-            pass
-
-    protocol = HHProtocol()
-
-    if initial_state_file:
-        try:
-            with open(initial_state_file, 'r') as statefile:
-                state = simplejson.load(statefile)
-                protocol.cars = state['cars']
-                protocol.session = state['session']
-                protocol.track = state['track']
-                protocol.messages = state['messages']
-        except IOError as e:
-            protocol.log('Failed to load existing state file')
-            print 'bad', e
-            pass
-
-    return protocol
-
-
-# 2019-03-13T20:00:09+0000 Unhandled message type HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage
-# 2019-03-13T20:00:09+0000 {'MessageReceivedTime': 3608.065999984741, 'MessageString': 'CAR 50 REPORTED TO THE STEWARD FOR NOT RESPECTING THE RED FLAG PROCEDURE'}
 
 
 class RaceControlMessage(TimingMessage):
@@ -251,9 +72,16 @@ def _extract_sector(sectorIndex, car, num, best_in_class):
         else:
             flag = ''
 
+        if sector_time < 0:
+            sector_time = '*'
         return (sector_time, flag)
     elif sector in previous_sectors:
-        return (previous_sectors[sector]['SectorTime'], 'old')
+        prev_sector_time = previous_sectors[sector]['SectorTime']
+
+        if prev_sector_time < 0:
+            prev_sector_time = '*'
+
+        return (prev_sector_time, 'old')
     else:
         return ('', '')
 
@@ -287,6 +115,8 @@ def calculate_race_gap(first, second):
     if laps_gap > 1:
         return "{} laps".format(laps_gap)
     elif laps_gap == 1:
+        if len(first_sectors) > len(second_sectors):
+            return pluralize(laps_gap, 'lap')
         if len(second_sectors) == 0 and len(second_prev) > 0 and len(first_prev) > 0:
             max_prev = max(second_prev.keys())
             return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
@@ -301,6 +131,14 @@ def calculate_race_gap(first, second):
             return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
 
     return ''
+
+
+def pluralize(num, singular):
+    return "{} {}{}".format(
+        num,
+        singular,
+        "s" if num != 1 else ''
+    )
 
 
 def sort_car_in_race(args):
@@ -451,7 +289,7 @@ class Service(lt_service):
                 sector = s['StartTimeLine']
                 best_sector = car.get('PersonalBestSectors', {}).get(sector, None)
                 existing_best_sector = best_by_class[clazz].get(sector, None)
-                if best_sector and (not existing_best_sector or existing_best_sector[0] > best_sector):
+                if best_sector and best_sector > 0 and (not existing_best_sector or existing_best_sector[0] > best_sector):
                     best_by_class[clazz][sector] = (best_sector, num)
 
         gap_func = self._gap_function()
@@ -491,8 +329,12 @@ class Service(lt_service):
                         )
                     )
 
+                    best_sec_time = car.get('PersonalBestSectors', {}).get(sector, '')
+                    if best_sec_time < 0:
+                        best_sec_time = '*'
+
                     car_data.append(
-                        (car.get('PersonalBestSectors', {}).get(sector, ''), 'sb' if sector in bbc and bbc[sector][1] == num else 'old')
+                        (best_sec_time, 'sb' if sector in bbc and bbc[sector][1] == num else 'old')
                     )
 
                 last_lap = car.get('LapTime', '')
@@ -526,9 +368,3 @@ class Service(lt_service):
             session['timeRemain'] = hhs['TimeToGo']
 
         return session
-
-
-if __name__ == '__main__':
-    hh = create_protocol(None)
-    hh.connect(TCP4ClientEndpoint(reactor, 'live-api.hhtiming.com', 24688))
-    reactor.run()

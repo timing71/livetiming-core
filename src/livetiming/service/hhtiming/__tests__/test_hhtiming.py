@@ -4,9 +4,11 @@ from livetiming.service.hhtiming import create_protocol, Service
 
 import os
 import pytest
+import simplejson
 
 
 STATE_DUMP_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'hhtiming.json')
+
 
 class ServiceForTest(Service):
     def _state_dump_file(self):
@@ -63,6 +65,9 @@ def test_calculate_gap(service, colspec, state):
     assert last_car[gap_idx] == '9 laps'
     assert last_car[int_idx] == '3 laps'
 
+    car_off_lead_lap = state['cars'][-3]
+    assert car_off_lead_lap[gap_idx] == '1 lap'
+
 
 def test_compute_colspec(service, colspec):
     pre_sector_stats = [
@@ -91,3 +96,16 @@ def test_compute_colspec(service, colspec):
 
     expected_num_sectors = len(service.protocol.track['OrderedListOfOnTrackSectors']['$values'])
     assert len(colspec) == non_sector_stats + (expected_num_sectors * 2)
+
+
+@pytest.mark.skip(reason="Utility function that's occasionally useful")
+def test_dump_state(service, state):
+
+    outobj = {
+        "manifest": service._createServiceRegistration()
+    }
+
+    outobj.update(state)
+
+    with open('hhstate.json', 'w') as outfile:
+        simplejson.dump(outobj, outfile)
