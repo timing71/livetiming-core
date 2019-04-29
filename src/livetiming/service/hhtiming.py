@@ -179,8 +179,9 @@ def create_protocol(service, initial_state_file=None):
                 protocol.session = state['session']
                 protocol.track = state['track']
                 protocol.messages = state['messages']
-        except IOError:
+        except IOError as e:
             protocol.log('Failed to load existing state file')
+            print 'bad', e
             pass
 
     return protocol
@@ -273,6 +274,8 @@ def calculate_practice_gap(first, second):
 
 
 def calculate_race_gap(first, second):
+    if not first or not second:
+        return ''
     laps_gap = first.get('NumberOfLaps', 0) - second.get('NumberOfLaps', 0)
 
     first_sectors = first.get('current_sectors', {})
@@ -294,16 +297,18 @@ def calculate_race_gap(first, second):
             return '1 lap'
     else:
         max_curr = max(second_sectors.keys())
-        return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
+        if max_curr in first_sectors:
+            return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
 
     return ''
 
 
-def sort_car_in_race(num, car):
+def sort_car_in_race(args):
+    num, car = args
     current_sectors = car.get('current_sectors', {})
-    latest_sector_idx = max(current_sectors.keys())
-    latest_sector = current_sectors[latest_sector_idx]
-    latest_sector_crossing_time = latest_sector.get('TimelineCrossingTimeOfDay', 0)
+    latest_sector_idx = max(current_sectors.keys()) if len(current_sectors) > 0 else None
+    latest_sector = current_sectors[latest_sector_idx] if latest_sector_idx else None
+    latest_sector_crossing_time = latest_sector.get('TimelineCrossingTimeOfDay', 0) if latest_sector else None
 
     return [
         -car.get('NumberOfLaps', 0),  # Highest first
@@ -405,13 +410,13 @@ class Service(lt_service):
         ]
 
     def _car_sort_function(self):
-        if self.protocol.session.get('SessionType') < 4:
+        if self.protocol.session.get('SessionType') < 3:
             return lambda (num, car): (car.get('BestLaptime', 999999), maybe_int(num))
         else:
             return sort_car_in_race
 
     def _gap_function(self):
-        if self.protocol.session.get('SessionType') < 4:
+        if self.protocol.session.get('SessionType') < 3:
             return calculate_practice_gap
         else:
             return calculate_race_gap
@@ -443,7 +448,7 @@ class Service(lt_service):
             driver = car.get('driver', {})
             clazz = car.get('CategoryID')
 
-            leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 1 else None
+            leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 0 else None
             prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
 
             car_data = [
