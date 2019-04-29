@@ -74,10 +74,12 @@ def create_protocol(service, initial_state_file=None):
             if msg_type in self._handlers:
                 self._handlers[msg_type](parsed_msg)
             else:
-                print 'Unhandled message type {}'.format(msg_type)
-                print parsed_msg
-                print '----'
-            if service:
+                self.log(
+                    'Unhandled message type {msg_type}: {data}',
+                    msg_type,
+                    parsed_msg
+                )
+            if service and hasattr(service, 'notify_update'):
                 service.notify_update(msg_type)
 
         @handler('HTiming.Core.Definitions.Communication.Messages.HeartbeatMessage')
@@ -119,7 +121,6 @@ def create_protocol(service, initial_state_file=None):
         def session_info(self, data):
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
-            print "Session type: {}".format(data.get('SessionType', 'unset'))
 
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
         def adv_track_info(self, data):

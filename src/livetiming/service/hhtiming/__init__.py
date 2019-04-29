@@ -1,2 +1,2 @@
 from .protocol import create_protocol
-from .service import Service
+from .service import RaceControlMessage, Service
