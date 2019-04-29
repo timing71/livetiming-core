@@ -273,7 +273,44 @@ def calculate_practice_gap(first, second):
 
 
 def calculate_race_gap(first, second):
+    laps_gap = first.get('NumberOfLaps', 0) - second.get('NumberOfLaps', 0)
+
+    first_sectors = first.get('current_sectors', {})
+    first_prev = first.get('previous_sectors', {})
+
+    second_sectors = second.get('current_sectors', {})
+    second_prev = second.get('previous_sectors', {})
+
+    if laps_gap > 1:
+        return "{} laps".format(laps_gap)
+    elif laps_gap == 1:
+        if len(second_sectors) == 0 and len(second_prev) > 0 and len(first_prev) > 0:
+            max_prev = max(second_prev.keys())
+            return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
+        elif len(second_sectors) > 0:
+            max_curr = max(second_sectors.keys())
+            return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_curr].get('TimelineCrossingTimeOfDay', 0)
+        else:
+            return '1 lap'
+    else:
+        max_curr = max(second_sectors.keys())
+        return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
+
     return ''
+
+
+def sort_car_in_race(num, car):
+    current_sectors = car.get('current_sectors', {})
+    latest_sector_idx = max(current_sectors.keys())
+    latest_sector = current_sectors[latest_sector_idx]
+    latest_sector_crossing_time = latest_sector.get('TimelineCrossingTimeOfDay', 0)
+
+    return [
+        -car.get('NumberOfLaps', 0),  # Highest first
+        -len(current_sectors),  # Highest first
+        latest_sector_crossing_time,  # Earliest (lowest) first
+        maybe_int(num)  # Doesn't really matter
+    ]
 
 
 def maybe_int(mi):
@@ -371,7 +408,7 @@ class Service(lt_service):
         if self.protocol.session.get('SessionType') < 4:
             return lambda (num, car): (car.get('BestLaptime', 999999), maybe_int(num))
         else:
-            return lambda (num, car): 'FIX ME SOMEHOW'
+            return sort_car_in_race
 
     def _gap_function(self):
         if self.protocol.session.get('SessionType') < 4:
