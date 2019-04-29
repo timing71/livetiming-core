@@ -26,6 +26,10 @@ def state(service):
     return service.getRaceState()
 
 
+def test_exclude_course_cars(state):
+    assert len(state['cars']) == 25
+
+
 def test_calculate_order(colspec, state):
 
     race_num_idx = colspec.index(Stat.NUM)
@@ -35,6 +39,8 @@ def test_calculate_order(colspec, state):
 
     assert first_car[race_num_idx] == '47'
     assert second_car[race_num_idx] == '23'
+
+    assert state['cars'][-1][race_num_idx] == '9'
 
 
 def test_calculate_gap(service, colspec, state):
@@ -50,3 +56,7 @@ def test_calculate_gap(service, colspec, state):
 
     assert second_car[gap_idx] == second_car[int_idx]
     assert second_car[gap_idx] == pytest.approx(4.123, 0.001)
+
+    last_car = state['cars'][-1]
+    assert last_car[gap_idx] == '9 laps'
+    assert last_car[int_idx] == '3 laps'
