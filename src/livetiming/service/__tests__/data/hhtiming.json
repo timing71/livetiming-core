@@ -1,0 +1,4002 @@
+{
+  "cars": {
+    "10": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 5,
+      "BestLaptime": 124.43299999999999,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "10",
+      "CompetitorNumber": "10",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 126.988,
+      "LastElapsedTime": 1440.085,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "10",
+      "SessionTime": 1440.085,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.502
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46802.763
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46828.569
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46844.647
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Robillard",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46790.546
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46669.563
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.732
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46701.48
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46717.892
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46746.651
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46755.788
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.445
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.991
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46786.268
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46787.766
+        }
+      }
+    },
+    "11": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 126.142,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "11",
+      "CompetitorNumber": "11",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 129.185,
+      "LastElapsedTime": 513.733,
+      "NumberOfLaps": 4,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "11",
+      "SessionTime": 513.733,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45870.277
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45876.339
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45901.761
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Smith",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45864.194
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45741.1
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45747.226
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45773.798
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45789.569
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45817.562
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45828.077
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45847.266
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45847.894
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45859.822
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45861.357
+        }
+      }
+    },
+    "12": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 124.922,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "12",
+      "CompetitorNumber": "12",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 128.486,
+      "LastElapsedTime": 1447.681,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "12",
+      "SessionTime": 1447.681,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46804.263
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46810.747
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46837.065
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46853.665
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Woods",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46798.142
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.631
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46682.05
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46708.38
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46724.576
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46752.747
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46762.482
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.715
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46782.267
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46793.826
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46795.339
+        }
+      }
+    },
+    "19": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 124.899,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "19",
+      "CompetitorNumber": "19",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 124.899,
+      "LastElapsedTime": 1434.263,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "19",
+      "SessionTime": 1434.263,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46790.719
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.358
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46822.182
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46837.669
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46864.982
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Baker",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46784.724
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46665.792
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46671.498
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46697.692
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46713.231
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46740.735
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46750.042
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46768.849
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46769.408
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.372
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.889
+        }
+      }
+    },
+    "2": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 5,
+      "BestLaptime": 127.312,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "2",
+      "CompetitorNumber": "2",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 127.867,
+      "LastElapsedTime": 1449.112,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "2",
+      "SessionTime": 1449.112,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46805.57
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46811.59
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46838.058
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46854.643
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "George",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46799.573
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46677.696
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46683.742
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46709.98
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46726.112
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46754.489
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46763.944
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46783.709
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46784.272
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46795.179
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.723
+        }
+      }
+    },
+    "23": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 119.681,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "23",
+      "CompetitorNumber": "23",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 119.681,
+      "LastElapsedTime": 1424.486,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "23",
+      "SessionTime": 1424.486,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.684
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46786.121
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46810.529
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46825.754
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46852.129
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46860.881
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Simone",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.947
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46666.563
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46691.177
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46706.437
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46732.662
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46741.429
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46759.725
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46760.265
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46770.755
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46772.21
+        }
+      }
+    },
+    "25": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 9,
+      "BestLaptime": 127.406,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "25",
+      "CompetitorNumber": "25",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 127.838,
+      "LastElapsedTime": 1446.466,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "25",
+      "SessionTime": 1446.466,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46803.045
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46809.303
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46836.023
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46852.052
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Chouest",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.927
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.128
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46681.255
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46707.792
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46723.893
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46752.171
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46761.853
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.851
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.406
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46792.563
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46794.089
+        }
+      }
+    },
+    "26": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 126.227,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "26",
+      "CompetitorNumber": "26",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 127.829,
+      "LastElapsedTime": 1439.634,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "26",
+      "SessionTime": 1439.634,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.102
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46802.206
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46827.941
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46844.366
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "McGuire",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46790.095
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46668.312
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46674.749
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46700.684
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46717.309
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46744.907
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46754.211
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46773.737
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.314
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.721
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46787.249
+        }
+      }
+    },
+    "33": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 124.885,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "33",
+      "CompetitorNumber": "33",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 124.885,
+      "LastElapsedTime": 1434.683,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "33",
+      "SessionTime": 1434.683,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.086
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.791
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46822.618
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46838.098
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46865.49
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Willsey",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.144
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46666.204
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46671.944
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46697.822
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46713.611
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46741.094
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46750.432
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46769.441
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46769.999
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.814
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46782.324
+        }
+      }
+    },
+    "4": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 121.489,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "4",
+      "CompetitorNumber": "4",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 121.489,
+      "LastElapsedTime": 1427.486,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "4",
+      "SessionTime": 1427.486,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46783.883
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46789.327
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46814.159
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46829.764
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46856.781
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46866.031
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Lamelas",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46777.947
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46662.372
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46667.813
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46692.848
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46708.288
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46734.967
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46744.083
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46762.53
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46763.089
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46773.636
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46775.132
+        }
+      }
+    },
+    "40": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 5,
+      "BestLaptime": 122.762,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "40",
+      "CompetitorNumber": "40",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 122.978,
+      "LastElapsedTime": 1429.542,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "40",
+      "SessionTime": 1429.542,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.942
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.617
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46817.315
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46832.78
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46859.767
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46868.829
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Grant",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.003
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46662.907
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46668.732
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46694.002
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46709.499
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46736.405
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46745.524
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46764.324
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46764.879
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46775.712
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46777.2
+        }
+      }
+    },
+    "43": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 119.99199999999999,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "43",
+      "CompetitorNumber": "43",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 119.99199999999999,
+      "LastElapsedTime": 1421.665,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "43",
+      "SessionTime": 1421.665,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46783.349
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46808.159
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46850.198
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46859.089
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "McAleer",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46772.126
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46663.335
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46687.947
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46729.683
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46738.554
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46756.807
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46757.347
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46767.904
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46769.372
+        }
+      }
+    },
+    "47": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 119.432,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "47",
+      "CompetitorNumber": "47",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 119.432,
+      "LastElapsedTime": 1419.878,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "47",
+      "SessionTime": 1419.878,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46776.105
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.538
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46806.003
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46821.304
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46847.888
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46856.758
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Pflucker",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46770.339
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46656.667
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46662.167
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46686.632
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46701.861
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46728.14
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46736.96
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46755.065
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46755.602
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46766.129
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46767.594
+        }
+      }
+    },
+    "51": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 123.897,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "51",
+      "CompetitorNumber": "51",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 123.897,
+      "LastElapsedTime": 1431.891,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "51",
+      "SessionTime": 1431.891,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46788.323
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46794.221
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46819.384
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46834.966
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46862.215
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Hodes",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46782.352
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46664.408
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46670.279
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46695.712
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46711.251
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46738.501
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46747.742
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46766.51
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46767.066
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46778.002
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46779.519
+        }
+      }
+    },
+    "52": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 123.833,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "52",
+      "CompetitorNumber": "52",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 123.833,
+      "LastElapsedTime": 1432.163,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "52",
+      "SessionTime": 1432.163,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46788.642
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46794.454
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46819.878
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46835.649
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46862.767
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Guasch",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46782.624
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46664.772
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46670.437
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46696.128
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46712.332
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46739.451
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46748.487
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46767.107
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46767.662
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46778.276
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46779.796
+        }
+      }
+    },
+    "54": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 2,
+      "BestLaptime": 125.171,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "54",
+      "CompetitorNumber": "54",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 126.17,
+      "LastElapsedTime": 1443.628,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "54",
+      "SessionTime": 1443.628,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46800.049
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46806.023
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46831.828
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46847.48
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Murry",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46794.089
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46673.863
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46679.993
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46706.026
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46721.853
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46749.63
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46759.001
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46777.983
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46778.538
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46789.791
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.289
+        }
+      }
+    },
+    "55": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 6,
+      "BestLaptime": 121.827,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "55",
+      "CompetitorNumber": "55",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 122.962,
+      "LastElapsedTime": 1429.943,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "55",
+      "SessionTime": 1429.943,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46786.223
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.996
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46817.513
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46833.271
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46860.168
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46869.32
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Reger",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.404
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46663.261
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46668.923
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46694.439
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46710.0
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46736.877
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46745.973
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46764.445
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46764.989
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46776.119
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46777.617
+        }
+      }
+    },
+    "60": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 4,
+      "BestLaptime": 127.439,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "60",
+      "CompetitorNumber": "60",
+      "InPit": false,
+      "IsCrossingInPits": true,
+      "LapTime": 177.724,
+      "LastElapsedTime": 1369.765,
+      "NumberOfLaps": 9,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "Pits": 1,
+      "ReportName": "60",
+      "SessionTime": 1369.765,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {},
+      "driver": {
+        "FirstName": "",
+        "LastName": "Hamilton",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46720.226
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46551.021
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46558.183
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46591.917
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46614.577
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46649.702
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46661.894
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46685.657
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46686.497
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46702.79
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46706.419
+        }
+      }
+    },
+    "64": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 2,
+      "BestLaptime": 126.889,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "64",
+      "CompetitorNumber": "64",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 128.608,
+      "LastElapsedTime": 1447.495,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "Pits": 1,
+      "ReportName": "64",
+      "SessionTime": 1447.495,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46804.03
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46810.455
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46836.909
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46853.487
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Rao",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46797.956
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.406
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46681.7
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46708.188
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46724.485
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46752.474
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46762.207
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.461
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46782.018
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46793.582
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46795.115
+        }
+      }
+    },
+    "7": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 123.93299999999999,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "7",
+      "CompetitorNumber": "7",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 126.349,
+      "LastElapsedTime": 1439.049,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "7",
+      "SessionTime": 1439.049,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46795.501
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46801.364
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46826.512
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46841.937
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46868.992
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Mount",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46789.51
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46669.141
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.372
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46701.144
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46717.544
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46745.434
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46754.662
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46773.586
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.143
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.206
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46786.705
+        }
+      }
+    },
+    "70": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 127.04,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "70",
+      "CompetitorNumber": "70",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 128.899,
+      "LastElapsedTime": 1447.245,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "70",
+      "SessionTime": 1447.245,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46803.803
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46809.964
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46836.491
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46853.53
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Janco",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46797.706
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46674.861
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46680.958
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46707.401
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46723.375
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46751.951
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46761.614
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.929
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.514
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46793.282
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46794.834
+        }
+      }
+    },
+    "74": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 10,
+      "BestLaptime": 123.56700000000001,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "74",
+      "CompetitorNumber": "74",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 123.56700000000001,
+      "LastElapsedTime": 1435.467,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "74",
+      "SessionTime": 1435.467,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.805
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46797.702
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46823.05
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46838.692
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46865.699
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Schwab",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.928
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46668.325
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46674.385
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46699.802
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46715.226
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46742.485
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46751.723
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46770.166
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46770.708
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46781.671
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46783.154
+        }
+      }
+    },
+    "75": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 124.982,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "75",
+      "CompetitorNumber": "75",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 127.375,
+      "LastElapsedTime": 1439.735,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "75",
+      "SessionTime": 1439.735,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.227
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46802.526
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46828.262
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46844.51
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "Cassels",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46790.196
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46668.783
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46675.036
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46700.972
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46717.46
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46746.042
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46755.404
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.107
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46774.658
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46785.841
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46787.365
+        }
+      }
+    },
+    "86": {
+      "AllowFirstLapAsBest": false,
+      "BestLapIn": 3,
+      "BestLaptime": 128.068,
+      "CarColour": "",
+      "CarMake": "Ligier JS P3",
+      "CategoryID": "LMP3",
+      "CompetitorID": "86",
+      "CompetitorNumber": "86",
+      "InPit": false,
+      "IsCrossingInPits": false,
+      "LapTime": 129.075,
+      "LastElapsedTime": 1445.887,
+      "NumberOfLaps": 10,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "ReportName": "86",
+      "SessionTime": 1445.887,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46802.649
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46809.08
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46836.106
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46853.301
+        }
+      },
+      "driver": {
+        "FirstName": "",
+        "LastName": "LaHaye",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46796.348
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46673.448
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46679.756
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46706.066
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46722.455
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46751.282
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46760.849
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46779.781
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46780.344
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46791.866
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46793.443
+        }
+      }
+    },
+    "9": {
+      "AllowFirstLapAsBest": false,
+      "CarColour": "",
+      "CarMake": "Norma M30",
+      "CategoryID": "LMP3",
+      "CompetitorID": "9",
+      "CompetitorNumber": "9",
+      "InPit": false,
+      "IsCrossingInPits": true,
+      "LapTime": 196.487,
+      "LastElapsedTime": 196.487,
+      "NumberOfLaps": 1,
+      "OutLap": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "3": -1.0,
+        "4": -1.0,
+        "5": -1.0,
+        "6": -1.0,
+        "7": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "Pits": 1,
+      "ReportName": "9",
+      "SessionTime": 196.487,
+      "Status": 10,
+      "TeamName": "",
+      "TransponderNumber": -999,
+      "current_sectors": {},
+      "driver": {
+        "FirstName": "",
+        "LastName": "Kraut",
+        "ReportName": "%^&*&^%"
+      },
+      "previous_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45546.948
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45360.776
+        },
+        "3": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45368.516
+        },
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45397.718
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45415.338
+        },
+        "6": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45446.591
+        },
+        "7": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45455.976
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45475.007
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45475.547
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45530.736
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 45535.028
+        }
+      }
+    },
+    "E1": {
+      "InPit": false,
+      "PersonalBestSectors": {
+        "1": -1.0,
+        "2": -1.0,
+        "8": -1.0,
+        "9": -1.0,
+        "A": -1.0,
+        "B": -1.0
+      },
+      "current_sectors": {
+        "1": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": true,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46245.571
+        },
+        "2": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46263.435
+        },
+        "8": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46128.208
+        },
+        "9": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46136.749
+        },
+        "A": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46236.854
+        },
+        "B": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 46239.571
+        }
+      }
+    },
+    "E2": {
+      "InPit": false,
+      "PersonalBestSectors": {
+        "4": -1.0,
+        "5": -1.0
+      },
+      "current_sectors": {
+        "4": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 44862.56
+        },
+        "5": {
+          "AllowFirstLapAsBest": false,
+          "IsStartFinish": false,
+          "SectorTime": -1.0,
+          "SessionTime": 1.7976931348623157e+308,
+          "TimelineCrossingTimeOfDay": 44885.379
+        }
+      }
+    }
+  },
+  "messages": [],
+  "session": {
+    "EventName": "IPC - Race",
+    "LastUpdate": 1552582870.211167,
+    "MessageTime": "2019-03-14T17:00:55.7241368+00:00",
+    "ProtocolID": "ff551402-78b8-4bc6-9e6a-7c713c8b5e4d",
+    "SessionDescription": "IPC - Race",
+    "SessionID": "976",
+    "SessionTime": 1519.0,
+    "SessionType": 3,
+    "TimeOfDay": 46869.0,
+    "TimeToGo": 4781.0,
+    "TrackStatus": 0
+  },
+  "track": {
+    "ListOfNonTrackSectors": {
+      "$type": "System.Collections.Generic.List`1[[HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions]], mscorlib",
+      "$values": []
+    },
+    "NumberOfCorners": 15,
+    "OrderedListOfInPitSectors": {
+      "$type": "System.Collections.Generic.List`1[[HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions]], mscorlib",
+      "$values": [
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": true,
+          "BlockBestOnOutLap": true,
+          "EndTimeLine": "1",
+          "SectorIndex": 0,
+          "SectorLength": 161.84879999999998,
+          "SectorName": "PIT1",
+          "StartTimeLine": "B"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": true,
+          "BlockBestOnOutLap": true,
+          "EndTimeLine": "2",
+          "SectorIndex": 0,
+          "SectorLength": 381.889,
+          "SectorName": "PIT2",
+          "StartTimeLine": "1"
+        }
+      ]
+    },
+    "OrderedListOfOnTrackSectors": {
+      "$type": "System.Collections.Generic.List`1[[HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions]], mscorlib",
+      "$values": [
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "2",
+          "SectorIndex": 0,
+          "SectorLength": 381.889,
+          "SectorName": "S01",
+          "StartTimeLine": "1"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": true,
+          "EndTimeLine": "3",
+          "SectorIndex": 0,
+          "SectorLength": 310.7436,
+          "SectorName": "S02",
+          "StartTimeLine": "2"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "4",
+          "SectorIndex": 0,
+          "SectorLength": 1131.57,
+          "SectorName": "S03",
+          "StartTimeLine": "3"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "5",
+          "SectorIndex": 0,
+          "SectorLength": 646.3792,
+          "SectorName": "S04",
+          "StartTimeLine": "4"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "6",
+          "SectorIndex": 0,
+          "SectorLength": 1217.3204,
+          "SectorName": "S05",
+          "StartTimeLine": "5"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "7",
+          "SectorIndex": 0,
+          "SectorLength": 458.5462,
+          "SectorName": "S06",
+          "StartTimeLine": "6"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "8",
+          "SectorIndex": 0,
+          "SectorLength": 1016.0508,
+          "SectorName": "S07",
+          "StartTimeLine": "7"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "9",
+          "SectorIndex": 0,
+          "SectorLength": 37.8968,
+          "SectorName": "S08",
+          "StartTimeLine": "8"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "A",
+          "SectorIndex": 0,
+          "SectorLength": 515.8994,
+          "SectorName": "S09",
+          "StartTimeLine": "9"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": true,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "B",
+          "SectorIndex": 0,
+          "SectorLength": 77.216,
+          "SectorName": "S10",
+          "StartTimeLine": "A"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "1",
+          "SectorIndex": 0,
+          "SectorLength": 161.84879999999998,
+          "SectorName": "S11",
+          "StartTimeLine": "B"
+        }
+      ]
+    },
+    "OrderedListOfSpeedTraps": {
+      "$type": "System.Collections.Generic.List`1[[HHTiming.Core.Definitions.DataContainers.SpeedTrapInfo, HHTiming.Core.Definitions]], mscorlib",
+      "$values": []
+    },
+    "OrderedListOfTopSpeedSectors": {
+      "$type": "System.Collections.Generic.List`1[[HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions]], mscorlib",
+      "$values": [
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "9",
+          "SectorIndex": 0,
+          "SectorLength": 37.8968,
+          "SectorName": "SP6",
+          "StartTimeLine": "8"
+        },
+        {
+          "$type": "HHTiming.Core.Definitions.DataContainers.SectorInfo, HHTiming.Core.Definitions",
+          "BlockBestOnInLap": false,
+          "BlockBestOnOutLap": false,
+          "EndTimeLine": "B",
+          "SectorIndex": 0,
+          "SectorLength": 77.216,
+          "SectorName": "SPI",
+          "StartTimeLine": "A"
+        }
+      ]
+    },
+    "PitStartFinishTimeStrip": "1",
+    "TrackLength": 5954.572800000001,
+    "TrackName": "Sebring International Raceway"
+  }
+}
