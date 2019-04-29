@@ -83,7 +83,7 @@ def create_protocol(service, initial_state_file=None):
                 print parsed_msg
                 print '----'
             if service:
-                service.notify_update()
+                service.notify_update(msg_type)
 
         @handler('HTiming.Core.Definitions.Communication.Messages.HeartbeatMessage')
         def heartbeat(self, data):
@@ -341,7 +341,7 @@ class Service(lt_service):
     def _state_dump_file(self):
         return 'hhtiming_state_dump_{}.json'.format(self.uuid)
 
-    def notify_update(self):
+    def notify_update(self, msg_type):
         self._last_update = time.time()
         self._due_publish_state = True
 
@@ -352,6 +352,14 @@ class Service(lt_service):
                 sort_keys=True,
                 indent='  '
             )
+
+        if msg_type in [
+            'HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage',
+            'HTiming.Core.Definitions.Communication.Messages.EventMessage',
+            'HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage'
+        ]:
+            # Any of those messages could change data encoded in our manifest
+            self.publishManifest()
 
     def start(self):
         def maybePublish():
@@ -444,57 +452,57 @@ class Service(lt_service):
         sorted_cars = sorted(self.protocol.cars.iteritems(), key=self._car_sort_function())
 
         for num, car in sorted_cars:
-            # print car
-            driver = car.get('driver', {})
-            clazz = car.get('CategoryID')
+            if car.get('CompetitorID', False):  # Exclude course cars etc.
+                driver = car.get('driver', {})
+                clazz = car.get('CategoryID')
 
-            leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 0 else None
-            prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
+                leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 0 else None
+                prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
 
-            car_data = [
-                num,
-                _map_car_state(car),
-                clazz,
-                car.get('TeamName'),
-                u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
-                car.get('CarMake'),
-                car.get('NumberOfLaps'),
-                gap_func(leader, car),
-                gap_func(prev_car, car)
-            ]
+                car_data = [
+                    num,
+                    _map_car_state(car),
+                    clazz,
+                    car.get('TeamName'),
+                    u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
+                    car.get('CarMake'),
+                    car.get('NumberOfLaps'),
+                    gap_func(leader, car),
+                    gap_func(prev_car, car)
+                ]
 
-            bbc = best_by_class[clazz]
+                bbc = best_by_class[clazz]
 
-            for s in range(3):
-                car_data.append(
-                    _extract_sector(
-                        s + 1,
-                        car,
-                        num,
-                        bbc
+                for s in range(3):
+                    car_data.append(
+                        _extract_sector(
+                            s + 1,
+                            car,
+                            num,
+                            bbc
+                        )
                     )
-                )
 
-                car_data.append(
-                    (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), 'sb' if s + 1 in bbc and bbc[s + 1][1] == num else 'old')
-                )
+                    car_data.append(
+                        (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), 'sb' if s + 1 in bbc and bbc[s + 1][1] == num else 'old')
+                    )
 
-            last_lap = car.get('LapTime', '')
-            best_lap = car.get('BestLaptime', '')
-            best_lap_in_class = best_by_class[clazz].get(0)
+                last_lap = car.get('LapTime', '')
+                best_lap = car.get('BestLaptime', '')
+                best_lap_in_class = best_by_class[clazz].get(0)
 
-            if best_lap_in_class and num == best_lap_in_class[1]:
-                best_lap_flag = 'sb-new' if last_lap == best_lap and car_data[-2][0] != '' and car_data[-2][1] != 'old' else 'sb'
-            else:
-                best_lap_flag = ''
+                if best_lap_in_class and num == best_lap_in_class[1]:
+                    best_lap_flag = 'sb-new' if last_lap == best_lap and car_data[-2][0] != '' and car_data[-2][1] != 'old' else 'sb'
+                else:
+                    best_lap_flag = ''
 
-            car_data += [
-                (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
-                (best_lap, best_lap_flag),
-                car.get('Pits', '')
-            ]
+                car_data += [
+                    (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
+                    (best_lap, best_lap_flag),
+                    car.get('Pits', '')
+                ]
 
-            cars.append(car_data)
+                cars.append(car_data)
         return cars
 
     def _map_session(self):
