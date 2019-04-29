@@ -80,3 +80,19 @@ class Stat(Enum):
     @staticmethod
     def parse_colspec(colSpec):
         return [Stat.from_title(s[0]) for s in colSpec]
+
+    @staticmethod
+    def sector(key):
+        return (
+            "S{}".format(key),
+            'time',
+            "Sector {} time".format(key)
+        )
+
+    @staticmethod
+    def best_sector(key):
+        return (
+            "BS{}".format(key),
+            'time',
+            "Best sector {} time".format(key)
+        )

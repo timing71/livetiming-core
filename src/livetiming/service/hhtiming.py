@@ -379,7 +379,7 @@ class Service(lt_service):
         super(Service, self).start()
 
     def getColumnSpec(self):
-        return [
+        pre_sectors = [
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
@@ -388,17 +388,24 @@ class Service(lt_service):
             Stat.CAR,
             Stat.LAPS,
             Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.BS1,
-            Stat.S2,
-            Stat.BS2,
-            Stat.S3,
-            Stat.BS3,
+            Stat.INT
+        ]
+
+        sectors = []
+        for sector in self._sectors_list():
+            sectors.append(Stat.sector(sector['SectorName'][1:]))
+            sectors.append(Stat.best_sector(sector['SectorName'][1:]))
+
+        post_sectors = [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
         ]
+
+        return pre_sectors + sectors + post_sectors
+
+    def _sectors_list(self):
+        return self.protocol.track.get('OrderedListOfOnTrackSectors', {}).get('$values', [])
 
     def getName(self):
         return self.protocol.session.get('EventName', 'Live Timing')
@@ -440,12 +447,12 @@ class Service(lt_service):
             existing_best = best_by_class[clazz].get(0, None)
             if best_lap and (not existing_best or existing_best[0] > best_lap):
                 best_by_class[clazz][0] = (best_lap, num)
-            for s in range(3):
-                sector = str(s + 1)
+            for s in self._sectors_list():
+                sector = s['StartTimeLine']
                 best_sector = car.get('PersonalBestSectors', {}).get(sector, None)
-                existing_best_sector = best_by_class[clazz].get(s + 1, None)
+                existing_best_sector = best_by_class[clazz].get(sector, None)
                 if best_sector and (not existing_best_sector or existing_best_sector[0] > best_sector):
-                    best_by_class[clazz][s + 1] = (best_sector, num)
+                    best_by_class[clazz][sector] = (best_sector, num)
 
         gap_func = self._gap_function()
 
@@ -473,10 +480,11 @@ class Service(lt_service):
 
                 bbc = best_by_class[clazz]
 
-                for s in range(3):
+                for s in self._sectors_list():
+                    sector = s['StartTimeLine']
                     car_data.append(
                         _extract_sector(
-                            s + 1,
+                            sector,
                             car,
                             num,
                             bbc
@@ -484,7 +492,7 @@ class Service(lt_service):
                     )
 
                     car_data.append(
-                        (car.get('PersonalBestSectors', {}).get(str(s + 1), ''), 'sb' if s + 1 in bbc and bbc[s + 1][1] == num else 'old')
+                        (car.get('PersonalBestSectors', {}).get(sector, ''), 'sb' if sector in bbc and bbc[sector][1] == num else 'old')
                     )
 
                 last_lap = car.get('LapTime', '')
