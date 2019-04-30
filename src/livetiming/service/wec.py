@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, Fetcher, JSONFetcher
-from twisted.internet import threads
+from livetiming.service.hhtiming import create_protocol, RaceControlMessage
+from threading import Lock
+from twisted.internet import reactor, threads
+from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
+from urllib2 import HTTPError
 
 import argparse
 import wecapp
-from twisted.internet import reactor
-from twisted.internet.task import LoopingCall
-from datetime import datetime
 import time
-from threading import Lock
-from urllib2 import HTTPError
 
 
 def mapFlagState(params):
@@ -55,6 +56,7 @@ def parse_extra_args(extra_args):
     parser.add_argument("--qualifying", help="Use column set for aggregate qualifying", action="store_true")
     parser.add_argument("--session", help="Use given session ID instead of finding the current session")
     parser.add_argument("--laps", help="Specify number of laps for a distance-certain race", type=int)
+    parser.add_argument('--hh', help='Address and port of HH Timing API server to connect to')
     return parser.parse_known_args(extra_args)
 
 
@@ -134,6 +136,15 @@ class Service(lt_service):
         if self.is_qualifying_mode:
             self.log.info("Starting up in QUALIFYING mode")
 
+        if self._parsed_extra_args.hh:
+            print self._parsed_extra_args
+            if len(self._parsed_extra_args.hh.split(':')) != 2:
+                raise Exception('HH Timing API server must be specified as host:port')
+            self._hhtiming = create_protocol(self)
+            self._race_control = RaceControlMessage(self._hhtiming)
+        else:
+            self._hhtiming = None
+
         self.description = self.initial_description
 
         def data_url():
@@ -142,6 +153,19 @@ class Service(lt_service):
         self._web_fetcher = JSONFetcher(data_url, self._handleWebData, 10)
 
         LoopingCall(self._get_current_session).start(60)
+
+    def start(self):
+        if self._hhtiming:
+            host, port = self._parsed_extra_args.hh.split(':')
+            self._hhtiming.connect(
+                TCP4ClientEndpoint(
+                    reactor,
+                    host,
+                    int(port)
+                )
+            )
+
+        super(Service, self).start()
 
     def _get_current_session(self):
         self.log.debug("Updating WEC session...")
@@ -231,6 +255,11 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return 5
+
+    def getExtraMessageGenerators(self):
+        if self._hhtiming:
+            return [self._race_control]
+        return []
 
     def _handleAppData(self, data):
         with self._data_lock:

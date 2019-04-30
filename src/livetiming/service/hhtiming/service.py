@@ -21,7 +21,6 @@ class RaceControlMessage(TimingMessage):
     def process(self, _, __):
 
         new_messages = [m for m in self.protocol.messages if m[0] > self._mostRecentTimestamp]
-        print "I have new messages:", new_messages
 
         msgs = []
 
