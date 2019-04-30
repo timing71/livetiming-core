@@ -10,6 +10,7 @@
 dist
 build
 eggs
+.eggs
 parts
 bin
 var
@@ -17,6 +18,7 @@ sdist
 develop-eggs
 .installed.cfg
 __pycache__
+.pytest_cache
 
 # Installer logs
 pip-log.txt
@@ -36,6 +38,7 @@ nosetests.xml
 
 # Project-specific
 venv/
+venv3/
 crossbar/.crossbar/node.key
 /*.json
 /*.data.p
@@ -46,6 +49,7 @@ crossbar/.crossbar/node.key
 /analysis/
 /state/
 /pids/
+/dvr/
 .idea
 web/app/config/config.json
 livetiming.env
