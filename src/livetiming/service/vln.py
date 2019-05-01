@@ -7,6 +7,7 @@ class Service(wige):
         extra_args.append('wss://livetiming.azurewebsites.net/event-20/ws')
         extra_args.append('-e')
         extra_args.append('20')
+        extra_args.append('--nurburgring')
         super(Service, self).__init__(args, extra_args)
 
     def getName(self):

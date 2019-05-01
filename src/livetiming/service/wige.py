@@ -34,6 +34,7 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--ws', help='WebSocket URL to connect to', required=True)
     parser.add_argument('-e', '--event-id', help='Event ID', required=True)
+    parser.add_argument('--nurburgring', help='Use Nurburgring-specific features', action='store_true')
 
     return parser.parse_args(extra_args)
 
@@ -61,7 +62,7 @@ def parseGap(raw):
         return raw
     if raw[0] == 'R':
         laps = int(raw[1:])
-        return '{} laps' if laps > 1 else '1 lap'
+        return '{} laps'.format(laps) if laps > 1 else '1 lap'
     if raw[0] == '-':
         return raw[4:].title()
     try:
@@ -218,9 +219,11 @@ class Service(lt_service):
         self._extra = parse_extra_args(extra)
 
         self._data = {}
-        self._nbr = Nurburgring()
-        self._current_zones = {}
-        self._last_zones = {}
+
+        if self._extra.nurburgring:
+            self._nbr = Nurburgring()
+            self._current_zones = {}
+            self._last_zones = {}
 
         self.log.info("Using WebSocket URL {url}", url=self._extra.ws)
         self._connectWS(self._extra.ws, self._extra.event_id)
@@ -278,65 +281,75 @@ class Service(lt_service):
         ]
 
     def getTrackDataSpec(self):
-        return [
-            'Slow zones',
-            'At',
-            'Code 60 zones',
-            'At'
-        ]
+        if self._extra.nurburgring:
+            return [
+                'Slow zones',
+                'At',
+                'Code 60 zones',
+                'At'
+            ]
+        return []
 
     def getExtraMessageGenerators(self):
-        return [
-            SlowZoneMessage(self._last_zones, self._current_zones)
-        ]
+        if self._extra.nurburgring:
+            return [
+                SlowZoneMessage(self._last_zones, self._current_zones)
+            ]
+        return []
 
     def getRaceState(self):
-        self._last_zones.clear()
-        self._last_zones.update(self._current_zones)
-        self._current_zones.clear()
-        self._current_zones.update(self._nbr.active_zones())
+        if self._extra.nurburgring:
+            self._last_zones.clear()
+            self._last_zones.update(self._current_zones)
+            self._current_zones.clear()
+            self._current_zones.update(self._nbr.active_zones())
 
-        yellows = 0
-        slow_zones = 0
-        code60_zones = 0
+            yellows = 0
+            slow_zones = 0
+            code60_zones = 0
 
-        sz_locations = set()
-        c60_locations = set()
+            sz_locations = set()
+            c60_locations = set()
 
-        for z in sorted(self._current_zones.values(), key=lambda z: z[1]):
-            speed = z[0]
-            if speed == 0:
-                yellows += 1
-            if speed == 60:
-                code60_zones += 1
-                c60_locations.add(z[2])
-            elif speed == 120:
-                slow_zones += 1
-                sz_locations.add(z[2])
+            for z in sorted(self._current_zones.values(), key=lambda z: z[1]):
+                speed = z[0]
+                if speed == 0:
+                    yellows += 1
+                if speed == 60:
+                    code60_zones += 1
+                    c60_locations.add(z[2])
+                elif speed == 120:
+                    slow_zones += 1
+                    sz_locations.add(z[2])
 
-        if len(self._current_zones) == 209 and self._current_zones.values()[0][0] == 80:
-            flag = FlagStatus.RED
-        elif code60_zones > 0:
-            flag = FlagStatus.CODE_60_ZONE
-        elif slow_zones > 0:
-            flag = FlagStatus.SLOW_ZONE
-        elif yellows > 0:
-            flag = FlagStatus.YELLOW
-        # elif 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
-        #    flag = FlagStatus.NONE
+            if len(self._current_zones) == 209 and self._current_zones.values()[0][0] == 80:
+                flag = FlagStatus.RED
+            elif code60_zones > 0:
+                flag = FlagStatus.CODE_60_ZONE
+            elif slow_zones > 0:
+                flag = FlagStatus.SLOW_ZONE
+            elif yellows > 0:
+                flag = FlagStatus.YELLOW
+            # elif 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
+            #    flag = FlagStatus.NONE
+            else:
+                flag = FlagStatus.GREEN
+
+            track_data = [
+                slow_zones,
+                ', '.join(sz_locations),
+                code60_zones,
+                ', '.join(c60_locations)
+            ]
         else:
-            flag = FlagStatus.GREEN
+            flag = FlagStatus.NONE
+            track_data = []
 
         return {
             'cars': postprocess_cars(map(mapCar, self._data.get('RESULT', {}))),
             'session': {
                 "flagState": flag.name.lower(),
                 "timeElapsed": 0,
-                'trackData': [
-                    slow_zones,
-                    ', '.join(sz_locations),
-                    code60_zones,
-                    ', '.join(c60_locations)
-                ]
+                'trackData': track_data
             }
         }
