@@ -356,7 +356,6 @@ class Service(lt_service):
 
     def _map_session(self):
         hhs = self.protocol.session
-        print hhs
         delta = time.time() - hhs['LastUpdate']
         session = {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
