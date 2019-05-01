@@ -2,6 +2,8 @@ from livetiming.service.wige import Service as wige
 
 
 class Service(wige):
+    attribution = ['wige Solutions / GPSauge']
+
     def __init__(self, args, extra_args):
         extra_args.append('--ws')
         extra_args.append('wss://livetiming.azurewebsites.net/event-20/ws')

@@ -171,7 +171,7 @@ SECTOR_STATS = [
 
 
 class Service(lt_service):
-    attribution = ['wige / GPSauge']
+    attribution = ['wige Solutions']
     auto_poll = False
 
     def __init__(self, args, extra):
