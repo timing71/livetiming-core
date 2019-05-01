@@ -99,55 +99,6 @@ def mapState(raw, ontrack):
     return "? {}".format(raw)
 
 
-def mapCar(car):
-    return [
-        car['STNR'],
-        mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
-        # car['LASTINTERMEDIATENUMBER'],
-        car['CLASSNAME'],
-        car['CLASSRANK'],
-        car['NAME'],
-        car['TEAM'],
-        car['CAR'],
-        parseGap(car['GAP']),
-        parseGap(car['INT']),
-        (parseTime(car.get('S1TIME', '')), ''),
-        (parseTime(car.get('S2TIME', '')), ''),
-        (parseTime(car.get('S3TIME', '')), ''),
-        (parseTime(car.get('S4TIME', '')), ''),
-        (parseTime(car.get('S5TIME', '')), ''),
-        (parseTime(car['LASTLAPTIME']), ''),
-        (parseTime(car['FASTESTLAP']), ''),
-        car['PITSTOPCOUNT']
-    ]
-
-
-def postprocess_cars(cars):
-    fastest = (None, None)
-    for car in cars:
-        race_num = car[0]
-        last = car[14]
-        best = car[15]
-
-        if last[0] == best[0]:
-            car[14] = (last[0], 'pb')
-        if not fastest[0] or best[0] < fastest[0]:
-            fastest = (best[0], race_num)
-
-    for car in cars:
-        race_num = car[0]
-        last = car[14]
-        best = car[15]
-        s5 = car[13]
-
-        if race_num == fastest[1]:
-            car[15] = (best[0], 'sb')
-            if last[0] == best[0] and s5[0] != '':
-                car[14] = (last[0], 'sb-new')
-
-    return cars
-
-
 class SlowZoneMessage(TimingMessage):
     def __init__(self, prevZones, currentZones):
         self._prev = prevZones
@@ -210,6 +161,15 @@ class SlowZoneMessage(TimingMessage):
         return msgs
 
 
+SECTOR_STATS = [
+    Stat.S1,
+    Stat.S2,
+    Stat.S3,
+    Stat.S4,
+    Stat.S5
+]
+
+
 class Service(lt_service):
     attribution = ['wige / GPSauge']
     auto_poll = False
@@ -247,18 +207,22 @@ class Service(lt_service):
         self._updateAndPublishRaceState()
 
     def getName(self):
-        return "wige Solutions"
+        return self._data.get('CUP', 'wige Solutions')
 
     def getDefaultDescription(self):
-        return u"{} - {}".format(
-            self._data.get('CUP', 'VLN'),
-            self._data.get('HEAT', '')
+        return u'{} - {}'.format(
+            self._data.get('HEAT', ''),
+            self._data.get('TRACKNAME', '')
         )
 
     def getPollInterval(self):
         return None
 
     def getColumnSpec(self):
+
+        num_sectors = int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1
+        sector_cols = SECTOR_STATS[:num_sectors]
+
         return [
             Stat.NUM,
             Stat.STATE,
@@ -269,12 +233,8 @@ class Service(lt_service):
             Stat.TEAM,
             Stat.CAR,
             Stat.GAP,
-            Stat.INT,
-            Stat.S1,
-            Stat.S2,
-            Stat.S3,
-            Stat.S4,
-            Stat.S5,
+            Stat.INT
+        ] + sector_cols + [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -346,10 +306,67 @@ class Service(lt_service):
             track_data = []
 
         return {
-            'cars': postprocess_cars(map(mapCar, self._data.get('RESULT', {}))),
+            'cars': self.postprocess_cars(map(self.map_car, self._data.get('RESULT', {}))),
             'session': {
                 "flagState": flag.name.lower(),
                 "timeElapsed": 0,
                 'trackData': track_data
             }
         }
+
+    def map_car(self, car):
+
+        sector_cols = map(
+            lambda s: (parseTime(car.get('S{}TIME'.format(s + 1), '')), ''),
+            range(int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1)
+        )
+
+        return [
+            car['STNR'],
+            mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
+            # car['LASTINTERMEDIATENUMBER'],
+            car['CLASSNAME'],
+            car['CLASSRANK'],
+            car['NAME'],
+            car['TEAM'],
+            car['CAR'],
+            parseGap(car['GAP']),
+            parseGap(car['INT'])
+        ] + sector_cols + [
+            (parseTime(car['LASTLAPTIME']), ''),
+            (parseTime(car['FASTESTLAP']), ''),
+            car['PITSTOPCOUNT']
+        ]
+
+    def postprocess_cars(self, cars):
+
+        colspec = self.getColumnSpec()
+        num_sectors = int(self._data.get('NROFINTERMEDIATETIMES', 4))
+
+        last_lap_idx = colspec.index(Stat.LAST_LAP)
+        best_lap_idx = colspec.index(Stat.BEST_LAP)
+        last_sector_idx = colspec.index(SECTOR_STATS[num_sectors])
+
+        fastest = (None, None)
+        for car in cars:
+            race_num = car[0]
+            last = car[last_lap_idx]
+            best = car[best_lap_idx]
+
+            if last[0] == best[0]:
+                car[last_lap_idx] = (last[0], 'pb')
+            if not fastest[0] or best[0] < fastest[0]:
+                fastest = (best[0], race_num)
+
+        for car in cars:
+            race_num = car[0]
+            last = car[last_lap_idx]
+            best = car[best_lap_idx]
+            s5 = car[last_sector_idx]
+
+            if race_num == fastest[1]:
+                car[best_lap_idx] = (best[0], 'sb')
+                if last[0] == best[0] and s5[0] != '':
+                    car[last_lap_idx] = (last[0], 'sb-new')
+
+        return cars
