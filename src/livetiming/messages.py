@@ -139,9 +139,10 @@ class FastLapMessage(PerCarMessage):
                     return [clazz, u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
 
 
-class RaceControlMessage(TimingMessage):
+CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
 
-    CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
+
+class RaceControlMessage(TimingMessage):
 
     def __init__(self, messageList):
         self.messageList = messageList
