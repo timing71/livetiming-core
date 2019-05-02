@@ -32,7 +32,7 @@ class RaceControlMessage(TimingMessage):
             else:
                 msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
 
-            self._mostRecentTimestamp = max(self._mostRecentTimestamp, map(lambda m: m[0], new_messages))
+            self._mostRecentTimestamp = max(self._mostRecentTimestamp, max(map(lambda m: m[0], new_messages)))
         return sorted(msgs, key=lambda m: -m[0])
 
 
@@ -318,7 +318,7 @@ class Service(lt_service):
                 bbc = best_by_class[clazz]
 
                 for s in self._sectors_list():
-                    sector = s['StartTimeLine']
+                    sector = s['EndTimeLine']
                     car_data.append(
                         _extract_sector(
                             sector,
@@ -345,8 +345,20 @@ class Service(lt_service):
                 else:
                     best_lap_flag = ''
 
+                if last_lap == best_lap and best_lap != '':
+                    if best_lap_flag == 'sb':
+                        last_sector = car_data[-2][0]
+                        if last_sector == '':
+                            last_lap_flag = 'sb'
+                        else:
+                            last_lap_flag = 'sb-new'
+                    else:
+                        last_lap_flag = 'pb'
+                else:
+                    last_lap_flag = ''
+
                 car_data += [
-                    (last_lap, 'pb' if last_lap == best_lap and best_lap != '' else ''),
+                    (last_lap, last_lap_flag),
                     (best_lap, best_lap_flag),
                     car.get('Pits', '')
                 ]

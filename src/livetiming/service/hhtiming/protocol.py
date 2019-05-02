@@ -76,8 +76,8 @@ def create_protocol(service, initial_state_file=None):
             else:
                 self.log(
                     'Unhandled message type {msg_type}: {data}',
-                    msg_type,
-                    parsed_msg
+                    msg_type=msg_type,
+                    data=parsed_msg
                 )
             if service and hasattr(service, 'notify_update'):
                 service.notify_update(msg_type)
@@ -100,11 +100,13 @@ def create_protocol(service, initial_state_file=None):
 
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvSectorTimeLineCrossing')
         def adv_sector_crossing(self, data):
-            car = self.cars[data.pop('CompetitorNumber')]
+            car_num = data.pop('CompetitorNumber')
+            car = self.cars[car_num]
             current_sectors = car.setdefault('current_sectors', {})
             sector_index = data.pop('TimelineNumber')
             current_sectors[sector_index] = data
-            car['InPit'] = False
+            if not data.get('IsStartFinish', False):
+                car['InPit'] = False
 
             pb_sectors = car.setdefault('PersonalBestSectors', {})
             if sector_index in pb_sectors:
@@ -138,7 +140,6 @@ def create_protocol(service, initial_state_file=None):
             car['previous_sectors'] = car.get('current_sectors', {})
             car['current_sectors'] = {}
             car['OutLap'] = False
-            car['InPit'] = False
 
         @handler('HTiming.Core.Definitions.Communication.Messages.PitInMessage')
         def pit_in(self, data):
@@ -157,9 +158,12 @@ def create_protocol(service, initial_state_file=None):
         def race_control_message(self, data):
             self.messages.append((data['MessageReceivedTime'], data['MessageString']))
 
+# HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage: {'LastSpeed': 266.24078624078624, 'TimeOfCrossing': 4367.069999933243, 'CarID': '98', 'AllowFirstLapAsBest': True, 'SpeedTrapName': 'Speed1', 'BestSpeed': -1.0, 'BestLapIn': -1}
+
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
             'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage',
+            'HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage',
             'HTiming.Core.Definitions.Communication.Messages.ClassInformationMessage'  # <- this one is pointless so long as ID == description
         )
         def ignore(self, _):
