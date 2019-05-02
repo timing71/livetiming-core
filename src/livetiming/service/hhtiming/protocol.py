@@ -158,12 +158,16 @@ def create_protocol(service, initial_state_file=None):
         def race_control_message(self, data):
             self.messages.append((data['MessageReceivedTime'], data['MessageString']))
 
-# HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage: {'LastSpeed': 266.24078624078624, 'TimeOfCrossing': 4367.069999933243, 'CarID': '98', 'AllowFirstLapAsBest': True, 'SpeedTrapName': 'Speed1', 'BestSpeed': -1.0, 'BestLapIn': -1}
+        @handler('HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage')
+        def speed_trap_message(self, data):
+            car = self.cars[data.pop('CarID')]
+            traps = car.setdefault('speed_traps', {})
+            trap_name = data.pop('SpeedTrapName')
+            traps[trap_name] = data
 
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
             'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage',
-            'HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage',
             'HTiming.Core.Definitions.Communication.Messages.ClassInformationMessage'  # <- this one is pointless so long as ID == description
         )
         def ignore(self, _):
