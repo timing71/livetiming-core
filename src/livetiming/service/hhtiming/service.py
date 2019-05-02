@@ -16,7 +16,7 @@ class RaceControlMessage(TimingMessage):
 
     def __init__(self, protocol):
         self.protocol = protocol
-        self._mostRecentTimestamp = 0
+        self._mostRecentTimestamp = None
 
     def process(self, _, __):
 
