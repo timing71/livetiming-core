@@ -117,7 +117,7 @@ def calculate_race_gap(first, second):
         if len(first_sectors) > len(second_sectors):
             return pluralize(laps_gap, 'lap')
         if len(second_sectors) == 0 and len(second_prev) > 0 and len(first_prev) > 0:
-            max_prev = max(second_prev.keys())
+            max_prev = max(second_prev.keys()) if len(second_prev) > 0 else None
             return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
         elif len(second_sectors) > 0:
             max_curr = max(second_sectors.keys())
@@ -125,8 +125,8 @@ def calculate_race_gap(first, second):
         else:
             return '1 lap'
     else:
-        max_curr = max(second_sectors.keys())
-        if max_curr in first_sectors:
+        max_curr = max(second_sectors.keys()) if len(second_sectors) > 0 else None
+        if max_curr and max_curr in first_sectors:
             return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
 
     return ''
