@@ -508,7 +508,8 @@ class Service(lt_service):
 
                 we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
                 fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
-                last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
+                final_sector = common_cols[-2]
+                last_flag = 'sb-new' if we_have_fastest and last_lap == fastest and final_sector[0] != '' else 'pb' if last_lap == best_lap else ''
 
                 if self.is_qualifying_mode:
                     d1_lap = car['d1l1']
@@ -527,7 +528,7 @@ class Service(lt_service):
                     ])
                 else:
                     best_lap = parseTime(car['best_lap'])
-                    last_flag = 'sb-new' if we_have_fastest and last_lap == fastest else 'pb' if last_lap == best_lap else ''
+                    last_flag = 'sb-new' if we_have_fastest and last_lap == fastest and final_sector[0] != '' else 'pb' if last_lap == best_lap else ''
                     cars.append(common_cols + [
                         (last_lap if last_lap > 0 else '', last_flag),
                         (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
