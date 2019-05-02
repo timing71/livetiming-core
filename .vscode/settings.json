@@ -1,7 +1,7 @@
 {
   "python.pythonPath": "${workspaceFolder}/venv/bin/python",
-  "python.unitTest.pyTestArgs": [],
-  "python.unitTest.unittestEnabled": false,
-  "python.unitTest.nosetestsEnabled": false,
-  "python.unitTest.pyTestEnabled": true
+  "python.testing.pyTestArgs": [],
+  "python.testing.unittestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pyTestEnabled": true
 }
