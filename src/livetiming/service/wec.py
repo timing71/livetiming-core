@@ -179,7 +179,7 @@ class Service(lt_service):
                 self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
                 self._session_data = {
-                    'alkamel_session_id' = self.session['alkamel_session_id']
+                    'alkamel_session_id': self.session['alkamel_session_id']
                 }
                 self._cars = {}
                 self.analyser.reset()
