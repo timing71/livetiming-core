@@ -151,7 +151,7 @@ class RaceControlMessage(TimingMessage):
         msgs = []
         while len(self.messageList) > 0:
             nextMessage = self.messageList.pop()
-            hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
+            hasCarNum = CAR_NUMBER_REGEX.search(nextMessage)
             if hasCarNum:
                 msgs.append([int(time.time()), "Race Control", nextMessage.upper(), "raceControl", hasCarNum.group('race_num')])
             else:
