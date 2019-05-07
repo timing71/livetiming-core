@@ -285,7 +285,8 @@ class Scheduler(object):
         else:
             self.log.info("Maintaining already-running service {service} as other events are running", service=service)
 
-        self.runningEvents.remove(uid)
+        if uid in self.runningEvents:
+            self.runningEvents.remove(uid)
         self.events.pop(uid)
         self.running_events_per_service[service] = others
 
