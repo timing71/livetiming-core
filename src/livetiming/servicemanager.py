@@ -120,6 +120,21 @@ def start_service(service_class, args):
     return _start_service(*_parse_args(["start", service_class] + args))
 
 
+def ensure_service(service_class, args):
+    '''
+      This method behaves like `start_service` but throws no exceptions if a service
+      is already running. Thus, it can be used to ensure that the given service is
+      running, and start one with the given args if not.
+
+      It makes no attempt to verify that the running service was started with the same
+      arguments as passed to this function.
+    '''
+    try:
+        return _start_service(*_parse_args(["start", service_class] + args))
+    except ServiceManagementException:
+        return False
+
+
 def stop_service(service_class):
     return _stop_service(_parse_args(["stop", service_class])[0])
 
