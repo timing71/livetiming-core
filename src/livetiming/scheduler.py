@@ -264,6 +264,7 @@ class Scheduler(object):
 
         if found_existing:
             self.log.info("Maintaining already-running service {service} for UID {uid}", service=service, uid=uid)
+            servicemanager.ensure_service(service, args)
         elif len(existing) > 0:
             self.log.error("Needing to start service {service}, which is already running with different arguments. Holding out until existing service is terminated.", service=service)
             return False
