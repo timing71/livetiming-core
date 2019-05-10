@@ -120,6 +120,15 @@ def create_protocol(service, initial_state_file=None):
             else:
                 pb_sectors[sector_index] = data['SectorTime']
 
+        @handler('HTiming.Core.Definitions.Communication.Messages.SectorTimeResultsUpdateMessage')
+        def sector_time_update(self, data):
+            car = self.cars[data.pop('CarID')]
+            pb_sectors = car.setdefault('PersonalBestSectors', {})
+
+            sector_idx = self._sector_from_name(data['SectorName'])
+            if sector_idx:
+                pb_sectors[sector_idx] = data['BestSectorTime']
+
         @handler('HTiming.Core.Definitions.Communication.Messages.EventMessage')
         def event(self, data):
             update_present_values(data, self.session)
@@ -164,12 +173,16 @@ def create_protocol(service, initial_state_file=None):
         def race_control_message(self, data):
             self.messages.append((data['MessageReceivedTime'], data['MessageString']))
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage')
+        @handler(
+            'HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage',
+            'HTiming.Core.Definitions.Communication.Messages.TopSpeedResultsUpdateMessage'
+        )
         def speed_trap_message(self, data):
             car = self.cars[data.pop('CarID')]
             traps = car.setdefault('speed_traps', {})
             trap_name = data.pop('SpeedTrapName')
-            traps[trap_name] = data
+            trap_data = traps.setdefault(trap_name, {})
+            update_present_values(data, trap_data)
 
         @handler('HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage')
         def weather_message(self, data):
@@ -182,6 +195,13 @@ def create_protocol(service, initial_state_file=None):
         )
         def ignore(self, _):
             pass
+
+        def _sector_from_name(self, sector_name):
+            sectors = self.track.get('OrderedListOfOnTrackSectors', {}).get('$values', [])
+            for s in sectors:
+                if s['SectorName'] == sector_name:
+                    return s['EndTimeLine']
+            return None
 
     protocol = HHProtocol()
 
