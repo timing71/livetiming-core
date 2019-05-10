@@ -88,7 +88,7 @@ def parseFlag(rawFlag):
 
 
 class Service(lt_service):
-    attribution = ['FOWC', 'http://www.fiaformula2.com/']
+    attribution = ['Formula Motorsport Ltd', 'http://www.fiaformula2.com/']
     auto_poll = False
 
     def __init__(self, args, extra_args):
