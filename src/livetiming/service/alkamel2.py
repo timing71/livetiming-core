@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
-from livetiming.messages import TimingMessage
+from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.utils.meteor import MeteorClient, MeteorClientException, DDPProtocolFactory
@@ -107,9 +107,6 @@ class AlkamelV2Client(MeteorClient):
 
 
 class RaceControlMessage(TimingMessage):
-
-    CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
-
     def __init__(self, client):
         self._client = client
         self._mostRecentTimestamp = 0
@@ -131,7 +128,7 @@ class RaceControlMessage(TimingMessage):
             msgs = []
 
             for msg in new_messages:
-                hasCarNum = self.CAR_NUMBER_REGEX.search(msg['message'])
+                hasCarNum = CAR_NUMBER_REGEX.search(msg['message'])
                 msgDate = msg.get('date', time.time() * 1000)
                 if hasCarNum:
                     msgs.append([msgDate / 1000, "Race Control", msg['message'].upper(), "raceControl", hasCarNum.group('race_num')])
