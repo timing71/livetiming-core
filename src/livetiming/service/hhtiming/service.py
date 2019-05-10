@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections import defaultdict
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat, FlagStatus
@@ -175,6 +176,8 @@ class Service(lt_service):
         self._due_publish_state = False
         self._last_update = time.time()
 
+        self._has_weather = False
+
     def _state_dump_file(self):
         return 'hhtiming_state_dump_{}.json'.format(self.uuid)
 
@@ -190,7 +193,10 @@ class Service(lt_service):
                 indent='  '
             )
 
-        if msg_type in [
+        if msg_type == 'HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage' and not self._has_weather:
+            self._has_weather = True
+            self.publishManifest()
+        elif msg_type in [
             'HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage',
             'HTiming.Core.Definitions.Communication.Messages.EventMessage',
             'HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage'
@@ -255,6 +261,16 @@ class Service(lt_service):
             'cars': self._map_cars(),
             'session': self._map_session()
         }
+
+    def getTrackDataSpec(self):
+        if self._has_weather:
+            return [
+                "Air Temp",
+                "Humidity",
+                "Wind Speed",
+                "Wind Direction"
+            ]
+        return []
 
     def getExtraMessageGenerators(self):
         return [
@@ -368,10 +384,17 @@ class Service(lt_service):
 
     def _map_session(self):
         hhs = self.protocol.session
+        weather = self.protocol.weather
         delta = time.time() - hhs['LastUpdate']
         session = {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
-            'timeElapsed': hhs.get('SessionTime', 0) + delta
+            'timeElapsed': hhs.get('SessionTime', 0) + delta,
+            'trackData': [
+                u"{}°C".format(round(weather['AirTemperature'], 1)) if 'AirTemperature' in weather else '-',
+                u"{}%".format(int(weather['Humidity'])) if 'Humidity' in weather else '-',
+                u"{} m/s".format(round(weather['WindSpeed'], 1)) if 'WindSpeed' in weather else '-',
+                u"{}°".format(round(weather['WindDirection'], 1)) if 'WindDirection' in weather else '-'
+            ]
         }
 
         if hhs.get('TimeToGo'):

@@ -30,6 +30,7 @@ def create_protocol(service, initial_state_file=None):
             self.cars = defaultdict(dict)
             self.track = {}
             self.session = {}
+            self.weather = {}
             self.messages = []
 
             self._handlers = {}
@@ -98,6 +99,11 @@ def create_protocol(service, initial_state_file=None):
                 car = self.cars[data.pop('CarID')]
                 car['driver'] = data
 
+        @handler('HTiming.Core.Definitions.Communication.Messages.DriverUpdateMessage')
+        def driver_update(self, data):
+            car = self.cars[data.pop('CarID')]
+            car['driver'] = data
+
         @handler('HTiming.Core.Definitions.Communication.Messages.AdvSectorTimeLineCrossing')
         def adv_sector_crossing(self, data):
             car_num = data.pop('CompetitorNumber')
@@ -164,6 +170,10 @@ def create_protocol(service, initial_state_file=None):
             traps = car.setdefault('speed_traps', {})
             trap_name = data.pop('SpeedTrapName')
             traps[trap_name] = data
+
+        @handler('HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage')
+        def weather_message(self, data):
+            update_present_values(data, self.weather)
 
         @handler(
             'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
