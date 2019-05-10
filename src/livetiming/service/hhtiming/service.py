@@ -78,10 +78,19 @@ def _extract_sector(sectorIndex, car, num, best_in_class):
     elif sector in previous_sectors:
         prev_sector_time = previous_sectors[sector]['SectorTime']
 
+        if best and best[1] == num and best[0] == prev_sector_time:
+            flag = 'sb'
+        elif sector in pb_sectors and pb_sectors[sector] == prev_sector_time:
+            flag = 'pb'
+        elif len(current_sectors) > 0:
+            flag = 'old'
+        else:
+            flag = ''
+
         if prev_sector_time < 0:
             prev_sector_time = '*'
 
-        return (prev_sector_time, 'old')
+        return (prev_sector_time, flag)
     else:
         return ('', '')
 
