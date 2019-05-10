@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from livetiming.messages import RaceControlMessage
+from livetiming.messages import CAR_NUMBER_REGEX, RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
 from twisted.logger import Logger
@@ -521,7 +521,7 @@ class TimestampedRaceControlMessage(RaceControlMessage):
         msgs = []
         while len(self.messageList) > 0:
             ts, nextMessage = self.messageList.pop()
-            hasCarNum = self.CAR_NUMBER_REGEX.search(nextMessage)
+            hasCarNum = CAR_NUMBER_REGEX.search(nextMessage)
             if hasCarNum:
                 msgs.append([ts, "Race Control", nextMessage.upper(), "raceControl", hasCarNum.group('race_num')])
             else:
