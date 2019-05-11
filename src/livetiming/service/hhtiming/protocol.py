@@ -136,6 +136,8 @@ def create_protocol(service, initial_state_file=None):
 
         @handler('HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage')
         def session_info(self, data):
+            if self.session.get('SessionID') != data.get('SessionID'):
+                self.cars.clear()
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
 
