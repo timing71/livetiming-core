@@ -17,11 +17,11 @@ class RaceControlMessage(TimingMessage):
 
     def __init__(self, protocol):
         self.protocol = protocol
-        self._mostRecentTimestamp = None
+        self._messageIndex = 0
 
     def process(self, _, __):
 
-        new_messages = [m for m in self.protocol.messages if m[0] > self._mostRecentTimestamp]
+        new_messages = self.protocol.messages[self._messageIndex:]
 
         msgs = []
 
@@ -33,7 +33,7 @@ class RaceControlMessage(TimingMessage):
             else:
                 msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
 
-            self._mostRecentTimestamp = max(self._mostRecentTimestamp, max(map(lambda m: m[0], new_messages)))
+            self._messageIndex = self.protocol.messages.length
         return sorted(msgs, key=lambda m: -m[0])
 
 
