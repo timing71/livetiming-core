@@ -231,7 +231,7 @@ class Service(lt_service):
             bestLap = parseTime(car["8"])
 
             gap = 0
-            prev_car_gap = cars[-1][8] if len(cars) > 0 else 0
+            prev_car_gap = cars[-1][9] if len(cars) > 0 else 0
             gap = 0 if car["4"] == '' else parseTime(car["4"])
 
             interval = 0
