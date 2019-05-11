@@ -99,6 +99,7 @@ def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="HH host", default='live-api.hhtiming.com')
     parser.add_argument("--port", help="HH port", type=int, default=24688)
+    parser.add_argument('--time', '-t', help='Total time in session', type=int, default=None)
 
     a, _ = parser.parse_known_args(extra_args)
     return a
@@ -366,17 +367,17 @@ class Service(lt_service):
                 best_lap_in_class = best_by_class[clazz].get(0)
 
                 if best_lap_in_class and num == best_lap_in_class[1]:
-                    best_lap_flag = 'sb-new' if last_lap == best_lap and car_data[-2][0] != '' and car_data[-2][1] != 'old' else 'sb'
+                    best_lap_flag = 'sb'
                 else:
                     best_lap_flag = ''
 
                 if last_lap == best_lap and best_lap != '':
                     if best_lap_flag == 'sb':
-                        last_sector = car_data[-2][0]
-                        if last_sector == '':
-                            last_lap_flag = 'sb'
-                        else:
+                        last_sector = car_data[-2]
+                        if last_sector[0] != '' and last_sector[1] != 'old':
                             last_lap_flag = 'sb-new'
+                        else:
+                            last_lap_flag = 'sb'
                     else:
                         last_lap_flag = 'pb'
                 else:
@@ -408,5 +409,7 @@ class Service(lt_service):
 
         if hhs.get('TimeToGo'):
             session['timeRemain'] = hhs['TimeToGo']
+        elif self._extra_args.time:
+            session['timeRemain'] = max(0, self._extra_args.time - hhs.get('SessionTime', 0) - delta)
 
         return session
