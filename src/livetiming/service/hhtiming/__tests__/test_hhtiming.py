@@ -1,6 +1,7 @@
 from livetiming.racing import Stat
 from livetiming.service import parse_args
 from livetiming.service.hhtiming import create_protocol, Service
+from livetiming.service.hhtiming.service import calculate_race_gap
 
 import os
 import pytest
@@ -96,6 +97,114 @@ def test_compute_colspec(service, colspec):
 
     expected_num_sectors = len(service.protocol.track['OrderedListOfOnTrackSectors']['$values'])
     assert len(colspec) == non_sector_stats + (expected_num_sectors * 2)
+
+
+def test_race_gap():
+    car_24 = {
+        "LastElapsedTime": 1801.542,
+        "NumberOfLaps": 18,
+        "SessionTime": 1801.542,
+        "current_sectors": {},
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 31.785,
+                "SessionTime": 1734.07,
+                "TimelineCrossingTimeOfDay": 1734.07
+            },
+            "2": {
+                "SectorTime": 33.713,
+                "SessionTime": 1767.783,
+                "TimelineCrossingTimeOfDay": 1767.783
+            },
+            "3": {
+                "SectorTime": 33.759,
+                "SessionTime": 1801.542,
+                "TimelineCrossingTimeOfDay": 1801.542
+            }
+        }
+    }
+
+    car_23 = {
+        "LastElapsedTime": 1806.771,
+        "NumberOfLaps": 18,
+        "SessionTime": 1806.771,
+        "current_sectors": {},
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 31.814,
+                "SessionTime": 1739.213,
+                "TimelineCrossingTimeOfDay": 1739.213
+            },
+            "2": {
+                "SectorTime": 34.108,
+                "SessionTime": 1773.321,
+                "TimelineCrossingTimeOfDay": 1773.321
+            },
+            "3": {
+                "SectorTime": 33.45,
+                "SessionTime": 1806.771,
+                "TimelineCrossingTimeOfDay": 1806.771
+            }
+        }
+    }
+
+    gap = calculate_race_gap(car_24, car_23)
+    assert gap == pytest.approx(5.229, 0.001)
+
+    car_22 = {
+        "LastElapsedTime": 3784.674,
+        "NumberOfLaps": 35,
+        "SessionTime": 3784.674,
+        "current_sectors": {
+            "1": {
+                "SectorTime": 32.007,
+                "SessionTime": 3816.681,
+                "TimelineCrossingTimeOfDay": 3816.681
+            }
+        },
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 106.196,
+                "SessionTime": 3716.619,
+                "TimelineCrossingTimeOfDay": 3716.619
+            },
+            "2": {
+                "SectorTime": 34.451,
+                "SessionTime": 3751.07,
+                "TimelineCrossingTimeOfDay": 3751.07
+            },
+            "3": {
+                "SectorTime": 33.604,
+                "SessionTime": 3784.674,
+                "TimelineCrossingTimeOfDay": 3784.674
+            }
+        }
+    }
+    car_25 = {
+        "LastElapsedTime": 3804.58,
+        "NumberOfLaps": 35,
+        "current_sectors": {},
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 32.957,
+                "SessionTime": 3733.793,
+                "TimelineCrossingTimeOfDay": 3733.793
+            },
+            "2": {
+                "SectorTime": 35.561,
+                "SessionTime": 3769.354,
+                "TimelineCrossingTimeOfDay": 3769.354
+            },
+            "3": {
+                "SectorTime": 35.226,
+                "SessionTime": 3804.58,
+                "TimelineCrossingTimeOfDay": 3804.58
+            }
+        }
+    }
+
+    gap_2 = calculate_race_gap(car_22, car_25)
+    assert gap_2 == pytest.approx(19.906, 0.001)
 
 
 @pytest.mark.skip(reason="Utility function that's occasionally useful")

@@ -33,7 +33,7 @@ class RaceControlMessage(TimingMessage):
             else:
                 msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
 
-            self._messageIndex = self.protocol.messages.length
+            self._messageIndex = len(self.protocol.messages)
         return sorted(msgs, key=lambda m: -m[0])
 
 
@@ -132,13 +132,21 @@ def calculate_race_gap(first, second):
             return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
         elif len(second_sectors) > 0:
             max_curr = max(second_sectors.keys())
-            return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_curr].get('TimelineCrossingTimeOfDay', 0)
+            return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_prev.get(max_curr, {}).get('TimelineCrossingTimeOfDay', 0)
         else:
             return '1 lap'
     else:
         max_curr = max(second_sectors.keys()) if len(second_sectors) > 0 else None
         if max_curr and max_curr in first_sectors:
             return second_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0) - first_sectors[max_curr].get('TimelineCrossingTimeOfDay', 0)
+        if len(second_prev) > 0:
+            max_prev = max(second_prev.keys())
+            return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
+
+        second_elapsed = second.get('LastElapsedTime', 0)
+        first_elapsed = first.get('LastElapsedTime', 0)
+        if first_elapsed > 0 and second_elapsed > 0:
+            return second_elapsed - first_elapsed
 
     return ''
 
@@ -156,7 +164,17 @@ def sort_car_in_race(args):
     current_sectors = car.get('current_sectors', {})
     latest_sector_idx = max(current_sectors.keys()) if len(current_sectors) > 0 else None
     latest_sector = current_sectors[latest_sector_idx] if latest_sector_idx else None
-    latest_sector_crossing_time = latest_sector.get('TimelineCrossingTimeOfDay', 0) if latest_sector else None
+
+    prev_sectors = car.get('previous_sectors', {})
+    prev_sector_idx = max(prev_sectors.keys()) if len(prev_sectors) > 0 else None
+    prev_sector = prev_sectors[prev_sector_idx] if prev_sector_idx else None
+
+    if latest_sector:
+        latest_sector_crossing_time = latest_sector.get('TimelineCrossingTimeOfDay', 0)
+    elif prev_sector:
+        latest_sector_crossing_time = prev_sector.get('TimelineCrossingTimeOfDay', 0)
+    else:
+        latest_sector_crossing_time = None
 
     return [
         -car.get('NumberOfLaps', 0),  # Highest first
@@ -288,13 +306,13 @@ class Service(lt_service):
         ]
 
     def _car_sort_function(self):
-        if self.protocol.session.get('SessionType') < 3:
+        if self.protocol.session.get('SessionType') < 3 and self.protocol.session.get('SessionType') > 0:
             return lambda (num, car): (car.get('BestLaptime', 999999), maybe_int(num))
         else:
             return sort_car_in_race
 
     def _gap_function(self):
-        if self.protocol.session.get('SessionType') < 3:
+        if self.protocol.session.get('SessionType') < 3 and self.protocol.session.get('SessionType') > 0:
             return calculate_practice_gap
         else:
             return calculate_race_gap
