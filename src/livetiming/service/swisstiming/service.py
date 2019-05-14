@@ -7,6 +7,7 @@ import time
 from livetiming.racing import Stat, FlagStatus
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
+from livetiming.utils import uncache
 
 STATE_LIVE = 1
 TYPES_AGGREGATE = [3, 6]
@@ -26,14 +27,6 @@ def parse_extra_args(args):
     parser.add_argument("--tz", type=int, help='Timezone offset in minutes from UTC', default=0)
 
     return parser.parse_known_args(args)
-
-
-def uncache(url):
-    def inner():
-        if "?" in url:
-            return "{}&t={}".format(url, int(time.time()))
-        return "{}?t={}".format(url, int(time.time()))
-    return inner
 
 
 def map_car_state(raw_state, in_pit):

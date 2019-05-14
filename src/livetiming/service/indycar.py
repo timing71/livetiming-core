@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
+from livetiming.utils import uncache
 from twisted.logger import Logger
 
 import urllib2
@@ -117,19 +118,30 @@ class PitOutDebouncer(object):
 
         values_list = values_list[-self.limit:]
 
-        has_double_bounced = len(values_list) > 4 and \
+        has_triple_bounced = len(values_list) > 5 and \
+            values_list[-1] != values_list[-2] and \
+            values_list[-2] == values_list[-3] == values_list[-4] and \
+            values_list[-1] == values_list[-5]
+        if has_triple_bounced:
+            # print "Fixing triple bounce"
+            values_list[-1] = values_list[-2]
+
+        has_double_bounced = len(values_list) > 3 and \
             values_list[-1] != values_list[-2] and \
             values_list[-2] == values_list[-3] and \
             values_list[-1] == values_list[-4]
-        if has_double_bounced:
+        if has_double_bounced and not has_triple_bounced:
+            # print "Fixing double bounce"
             values_list[-1] = values_list[-2]
 
         has_bounced = len(values_list) > 2 and \
             values_list[-1] == values_list[-3] and \
             values_list[-2] != values_list[-3]
-        if has_bounced and not has_double_bounced:
+        if has_bounced and not has_double_bounced and not has_triple_bounced:
+            # print "Fixing bounce"
             values_list[-1] = values_list[-2]
 
+        # print key, values_list
         self._values[key] = values_list
         return values_list[-1]
 
@@ -200,6 +212,7 @@ class Service(lt_service):
         timingResults = raw['timing_results']
 
         heartbeat = timingResults['heartbeat']
+        # print heartbeat['dateTime']
 
         shouldRepublish = False
         trackType = heartbeat.get('trackType', None)
@@ -335,7 +348,7 @@ class Service(lt_service):
 
     def getRawFeedData(self):
         try:
-            feed_url = "http://racecontrol.indycar.com/xml/timingscoring.json"
+            feed_url = uncache("http://racecontrol.indycar.com/xml/timingscoring.json", '_')()
             feed = urllib2.urlopen(feed_url)
             lines = feed.readlines()
             return simplejson.loads(lines[1])
