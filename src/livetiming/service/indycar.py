@@ -107,7 +107,7 @@ def map_tyre(raw_tyre):
 
 
 class PitOutDebouncer(object):
-    def __init__(self, limit=3):
+    def __init__(self, limit=6):
         self._values = defaultdict(list)
         self.limit = limit
 
@@ -117,10 +117,17 @@ class PitOutDebouncer(object):
 
         values_list = values_list[-self.limit:]
 
+        has_double_bounced = len(values_list) > 4 and \
+            values_list[-1] != values_list[-2] and \
+            values_list[-2] == values_list[-3] and \
+            values_list[-1] == values_list[-4]
+        if has_double_bounced:
+            values_list[-1] = values_list[-2]
+
         has_bounced = len(values_list) > 2 and \
             values_list[-1] == values_list[-3] and \
             values_list[-2] != values_list[-3]
-        if has_bounced:
+        if has_bounced and not has_double_bounced:
             values_list[-1] = values_list[-2]
 
         self._values[key] = values_list
