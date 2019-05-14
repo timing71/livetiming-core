@@ -117,13 +117,14 @@ class PitOutDebouncer(object):
 
         values_list = values_list[-self.limit:]
 
-        if len(values_list) < self.limit:
-            return feed_value
-        elif values_list[0] == 'PIT' and values_list[1] == 'RUN':
-            # Avoid the bounce of PIT => RUN => PIT => RUN => RUN... on successive updates
-            return 'RUN'
-        else:
-            return feed_value
+        has_bounced = len(values_list) > 2 and \
+            values_list[-1] == values_list[-3] and \
+            values_list[-2] != values_list[-3]
+        if has_bounced:
+            values_list[-1] = values_list[-2]
+
+        self._values[key] = values_list
+        return values_list[-1]
 
 
 class Service(lt_service):
