@@ -26,7 +26,7 @@ class Client(object):
 
         @sio.on('ready')
         def on_ready():
-            self.join(Channels.SEASONS)
+            self.join(Channels.SEASONS, with_season=False)
 
         return sio
 
@@ -35,7 +35,7 @@ class Client(object):
             channel = channel.value
 
         if with_season:
-            season_key = self._channel(Channels.SEASONS)
+            season_key = self._channel(Channels.SEASONS, False)
             season = self._data.get(season_key, {}).get('CurrentSeason')
             if season:
                 season = '_{}'.format(season)
@@ -49,7 +49,8 @@ class Client(object):
             channel
         )
 
-    def _handle_metadata(self, data, channel):
+    def _handle_metadata(self, data, channel, callback=None):
+        print "Handing metadata: {} {}".format(channel, data)
         requires_fetch = channel not in self._meta or self._meta[channel]['CurrentSync'] != data['CurrentSync']
         self._meta[channel] = data
         if requires_fetch:
@@ -59,30 +60,35 @@ class Client(object):
                 data['CurrentSync']
             )
             print "Requires fetch: {}".format(url_to_fetch)
-            self._fetch_data(channel, url_to_fetch)
+            self._fetch_data(channel, url_to_fetch, callback)
 
     @inlineCallbacks
-    def _fetch_data(self, channel, url):
+    def _fetch_data(self, channel, url, callback):
         response = yield self._agent.request('GET', url)
         body = yield readBody(response)
-        print "Received for {}".format(channel)
+
         parsed = simplejson.loads(body)
         self._apply_data(channel, parsed)
+        if callback:
+            callback(self._data[channel])
 
     def _apply_data(self, channel, data):
         content = data.get('content', {})
         if 'full' in content:
             self._data[channel] = content['full']
-            print self._data
         else:
             print "I don't know how to handle partial content yet!"
             print data
 
-    def join(self, channel):
+    def join(self, channel, with_season=True, callback=None):
+
+        def my_callback(data, channel):
+            self._handle_metadata(data, channel, callback)
+
         self._sio.emit(
             'join',
-            self._channel(channel, False),
-            callback=self._handle_metadata
+            self._channel(channel, with_season),
+            callback=my_callback
         )
 
     def start(self, in_thread=True):
@@ -97,3 +103,24 @@ class Client(object):
             socketThread.start()
         else:
             self._sio.wait()
+
+    def get_current_season(self, callback):
+        self.join(Channels.SEASON, callback=callback)
+
+    def get_schedule(self, meeting_id, callback):
+        self.join(
+            Channels.SCHEDULE.formatted_value(meeting_id=meeting_id.upper()),
+            callback
+        )
+
+    def get_timing(self, session_id, callback):
+        self.join(
+            Channels.TIMING.formatted_value(session_id=session_id.upper()),
+            callback
+        )
+
+    def get_comp_detail(self, session_id, callback):
+        self.join(
+            Channels.COMP_DETAIL.formatted_value(session_id=session_id.upper()),
+            callback
+        )

@@ -33,7 +33,14 @@
 
 from livetiming.service.swisstiming.client import Client
 from twisted.internet import reactor
+from threading import Thread
 
 c = Client('RAC_PROD', 'SRO')
 c.start()
-reactor.run()
+# reactor.run()
+
+
+def printy(*args):
+    print args
+
+Thread(target=reactor.run).start()

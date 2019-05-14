@@ -3,6 +3,13 @@ from enum import Enum
 
 class Channels(Enum):
     SEASONS = '_SEASONS_JSON'
+    SEASON = '_SEASON_JSON'
+    SCHEDULE = '_SCHEDULE_{meeting_id}_JSON'
+    TIMING = '_TIMING_{session_id}_JSON'
+    COMP_DETAIL = '_COMP_DETAIL_{session_id}_JSON'
+
+    def formatted_value(self, **kwargs):
+        return self.value.format(**kwargs)
 
 
 class CompetitionStatus(Enum):
