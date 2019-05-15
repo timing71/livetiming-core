@@ -5,8 +5,9 @@ from livetiming.service import Service as lt_service
 from livetiming.utils import uncache
 from twisted.logger import Logger
 
-import urllib2
 import simplejson
+import time
+import urllib2
 
 
 def mapFlagStates(rawState, session_type):
@@ -108,42 +109,23 @@ def map_tyre(raw_tyre):
 
 
 class PitOutDebouncer(object):
-    def __init__(self, limit=6):
-        self._values = defaultdict(list)
-        self.limit = limit
+    def __init__(self, threshold=25):
+        self._previous_changes = {}
+        self.threshold = threshold
+        self._init_time = time.time()
 
     def value_for(self, key, feed_value):
-        values_list = self._values[key]
-        values_list.append(feed_value)
+        prev_value, prev_time = self._previous_changes.get(key, (None, None))
+        if feed_value != prev_value:
+            now = time.time()
 
-        values_list = values_list[-self.limit:]
+            init_threshold_passed = self._init_time + self.threshold <= now
 
-        has_triple_bounced = len(values_list) > 5 and \
-            values_list[-1] != values_list[-2] and \
-            values_list[-2] == values_list[-3] == values_list[-4] and \
-            values_list[-1] == values_list[-5]
-        if has_triple_bounced:
-            # print "Fixing triple bounce"
-            values_list[-1] = values_list[-2]
+            if prev_time and now < prev_time + self.threshold and init_threshold_passed:
+                return prev_value
 
-        has_double_bounced = len(values_list) > 3 and \
-            values_list[-1] != values_list[-2] and \
-            values_list[-2] == values_list[-3] and \
-            values_list[-1] == values_list[-4]
-        if has_double_bounced and not has_triple_bounced:
-            # print "Fixing double bounce"
-            values_list[-1] = values_list[-2]
-
-        has_bounced = len(values_list) > 2 and \
-            values_list[-1] == values_list[-3] and \
-            values_list[-2] != values_list[-3]
-        if has_bounced and not has_double_bounced and not has_triple_bounced:
-            # print "Fixing bounce"
-            values_list[-1] = values_list[-2]
-
-        # print key, values_list
-        self._values[key] = values_list
-        return values_list[-1]
+            self._previous_changes[key] = (feed_value, time.time())
+        return feed_value
 
 
 class Service(lt_service):
