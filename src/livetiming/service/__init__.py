@@ -498,8 +498,11 @@ class DuePublisher(object):
     def start(self):
         def maybePublish():
             if self._due_publish:
+                self.log.debug('Publishing race state update')
                 self._updateAndPublishRaceState()
                 self._due_publish = False
+
+        self.log.info('Polling for publishable state updates.')
         LoopingCall(maybePublish).start(1)
 
         super(DuePublisher, self).start()
