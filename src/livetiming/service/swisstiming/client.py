@@ -1,4 +1,5 @@
 from .constants import Channels
+from .message import parse_message
 from .socketio import WebsocketOnlySocketIO
 from socketIO_client import BaseNamespace
 from threading import Thread
@@ -17,6 +18,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
 
             self._data = {}
             self._meta = {}
+            self._callbacks = {}
 
             self._agent = Agent(reactor)
 
@@ -25,6 +27,11 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
 
         def on_ready(self):
             self.join(Channels.SEASONS, with_season=False, callback=on_ready)
+
+        def on_message(self, data):
+            parsed = parse_message(data)
+            if parsed:
+                self._handle_async_data(parsed)
 
         def _channel(self, channel, with_season=True):
             if isinstance(channel, Channels):
@@ -45,7 +52,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                 channel
             )
 
-        def _handle_metadata(self, data, channel, callback=None):
+        def _handle_metadata(self, data, channel):
             log.debug("Handing metadata: {channel} {data}", channel=channel, data=data)
             requires_fetch = channel not in self._meta or self._meta[channel]['CurrentSync'] != data['CurrentSync']
             self._meta[channel] = data
@@ -56,16 +63,33 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                     data['CurrentSync']
                 )
                 log.debug("Requires fetch: {url}", url=url_to_fetch)
-                self._fetch_data(channel, url_to_fetch, callback)
+                self._fetch_data(channel, url_to_fetch)
+
+        def _handle_async_data(self, data):
+            channel = data['Channel']
+            if channel in self._meta:
+                meta = self._meta[channel]
+
+                requires_fetch = meta['CurrentSync'] != data['sync']
+                if requires_fetch:
+                    url_to_fetch = '{}{}/{}.json?t=0'.format(
+                        meta['CachingClusterURL'],
+                        channel.replace('|', '/'),
+                        data['sync']
+                    )
+                    log.debug("Requires fetch: {url}", url=url_to_fetch)
+                    self._fetch_data(channel, url_to_fetch)
 
         @inlineCallbacks
-        def _fetch_data(self, channel, url, callback):
+        def _fetch_data(self, channel, url):
             response = yield self._agent.request('GET', url)
             body = yield readBody(response)
             parsed = simplejson.loads(body)
             self._apply_data(channel, parsed)
-            if callback:
-                callback(self._data[channel])
+            if channel in self._callbacks:
+                cb = self._callbacks[channel]
+                print "Calling back {}".format(cb)
+                cb(self._data[channel])
 
         def _apply_data(self, channel, data):
             content = data.get('content', {})
@@ -77,15 +101,16 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
 
         def join(self, channel, with_season=True, callback=None):
 
-            def my_callback(data, channel):
-                self._handle_metadata(data, channel, callback)
-
             full_channel = self._channel(channel, with_season)
-            log.info("Joining {channel}", channel=full_channel)
+            log.debug("Joining {channel}", channel=full_channel)
+
+            if callback:
+                self._callbacks[full_channel] = callback
+
             self.emit(
                 'join',
                 full_channel,
-                callback=my_callback
+                callback=self._handle_metadata
             )
 
         def get_current_season(self, callback):

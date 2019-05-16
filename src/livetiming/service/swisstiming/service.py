@@ -1,7 +1,7 @@
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import Stat, FlagStatus
-from livetiming.service import Service as lt_service
+from livetiming.service import Service as lt_service, DuePublisher
 from livetiming.service.swisstiming.client import create_client, start_client
 
 import argparse
@@ -117,7 +117,7 @@ STATE_LIVE = 1
 TYPES_AGGREGATE = [3, 6]
 
 
-class Service(lt_service):
+class Service(lt_service, DuePublisher):
     auto_poll = False
 
     def __init__(self, args, extra_args):
@@ -211,9 +211,11 @@ class Service(lt_service):
 
     def _handle_timing(self, data):
         self._timing_data = data
+        self.set_due_publish()
 
     def _handle_session(self, data):
         self._session_data = data
+        self.set_due_publish()
 
     def getColumnSpec(self):
         return [
@@ -311,7 +313,7 @@ class Service(lt_service):
         session = {
             'flagState': map_session_flag(unt),
             'timeRemain': parse_session_time(unt['RemainingTime']),
-            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds() + (60 * self._tz_offset) if 'StartRealTime' in unt else 0
+            'timeElapsed': (datetime.utcnow() - parse_sro_date(unt['StartRealTime'])).total_seconds() + (60 * self.extra_args.tz) if 'StartRealTime' in unt else 0
         }
 
         return {'cars': cars, 'session': session}
