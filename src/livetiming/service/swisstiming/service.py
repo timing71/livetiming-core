@@ -1,23 +1,11 @@
-from livetiming.service import Service as lt_service, JSONFetcher
-import argparse
-import simplejson
-import urllib2
-from twisted.internet import reactor
-import time
-from livetiming.racing import Stat, FlagStatus
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
-from livetiming.utils import uncache
+from livetiming.racing import Stat, FlagStatus
+from livetiming.service import Service as lt_service
+from livetiming.service.swisstiming.client import create_client, start_client
 
-STATE_LIVE = 1
-TYPES_AGGREGATE = [3, 6]
-
-
-def json_get(url):
-    try:
-        return simplejson.load(urllib2.urlopen(url))
-    except simplejson.JSONDecodeError:
-        return None
+import argparse
+import time
 
 
 def parse_extra_args(args):
@@ -125,156 +113,107 @@ def map_session_flag(data):
     return 'none'
 
 
-class Service(lt_service):
+STATE_LIVE = 1
+TYPES_AGGREGATE = [3, 6]
 
-    default_name = "Swiss Timing feed"
+
+class Service(lt_service):
+    auto_poll = False
 
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
-        self.extra_args = extra_args
+        self.extra_args = parse_extra_args(extra_args)[0]
 
-        if not hasattr(self, 'URL_BASE'):
-            raise Exception("{} does not define a URL_BASE property! Fix your code!".format(self.__module__))
+        if not hasattr(self, 'namespace'):
+            raise Exception("{} does not declare a namespace. Fix your code!".format(self.__module__))
+        if not hasattr(self, 'profile'):
+            raise Exception("{} does not declare a profile. Fix your code!".format(self.__module__))
 
-        self.ROOT_URL = self.URL_BASE + "SEASON_JSON.json"
-        self.SCHEDULE_URL = self.URL_BASE + "SCHEDULE_{meeting}_JSON.json"
-        self.SESSION_TIMING_URL = self.URL_BASE + "TIMING_{session}_JSON.json"
-        self.SESSION_DETAIL_URL = self.URL_BASE + "COMP_DETAIL_{session}_JSON.json"
+        self.session = None
+        self.schedule = None
+        self.meeting = None
 
-        self._tz_offset = 0
-        self._timing_data = None
         self._session_data = None
+        self._timing_data = None
         self._messages = []
         self.mostRecentMessage = None
         self._previous_laps = {}
 
-        self.name = None
-        self.description = None
+        client_def = create_client(self.namespace, self.profile, self._load_season, self.log)
+        self._client = start_client(client_def)
 
-        self.sro_session = None
+    def _load_season(self, data):
+        self._client.get_current_season(self._handle_season)
 
-        self._init_session()
+    def _handle_season(self, season):
+        meetingID = self.extra_args.meeting
+        self.meeting = None
 
-    def _init_session(self):
-        ea, _ = parse_extra_args(self.extra_args)
+        meetings = season['Meetings']
+        if meetingID and meetingID.lower() in meetings:
+            self.log.info(
+                "Found requested meeting {meetingID}: {name}",
+                meetingID=meetingID.lower(),
+                name=meetings[meetingID.lower()]['Name']
+            )
+            self.meeting = meetings[meetingID.lower()]
+            self._client.get_schedule(meetingID, self._handle_schedule)
+        else:
+            live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
+            if live_meetings:
+                self.log.info(
+                    "Using currently live meeting {meetingID}: {name}",
+                    meetingID=live_meetings[0]['Id'].lower(),
+                    name=live_meetings[0]['Name']
+                )
+                self.meeting = live_meetings[0]
+                self._client.get_schedule(self.meeting['Id'], self._handle_schedule)
 
-        previous_session = self.sro_session
+        if not self.meeting:
+            self.log.warn("Could not find a live meeting!")
 
-        self._tz_offset = ea.tz
-        self.sro_session, self.name, self.description = self._find_session(ea.meeting, ea.session)
+    def _handle_schedule(self, schedule):
+        self.schedule = schedule
+        sessions = schedule['Units']
+        sessionID = self.extra_args.session
+
+        prev_session = self.session
+        self.session = None
+
+        if sessionID and sessionID.lower() in sessions:
+            self.session = sessions[sessionID.lower()]
+            self.log.info(
+                "Found requested session {sessionID}: {name}",
+                sessionID=sessionID.lower(),
+                name=session['Name']
+            )
+
+        else:
+            live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
+            if live_sessions:
+                self.session = live_sessions[-1]
+                self.log.info(
+                    "Using live session {sessionID}: {name}",
+                    sessionID=self.session['Id'].lower(),
+                    name=self.session['Name']
+                )
+
+        if self.session:
+            if prev_session and prev_session['Id'] != self.session['Id']:
+                self.log.info("Changing session from {old} to {new}", old=prev_session, new=self.session)
+                self.analyser.reset()
+                self._previous_laps = {}
+                self._session_data = None
+                self._timing_data = None
+            self._client.get_timing(self.session['Id'], self._handle_timing)
+            self._client.get_comp_detail(self.session['Id'], self._handle_session)
         self.publishManifest()
 
-        if self.sro_session:
-            if self.sro_session != previous_session:
-                if previous_session:
-                    self.log.info("Changing session from {old} to {new}", old=previous_session, new=self.sro_session)
-                    self.analyser.reset()
-                    self._previous_laps = {}
-                    self.session_fetcher.stop()
-                    self.timing_fetcher.stop()
-                    self._session_data = None
-                    self._timing_data = None
+    def _handle_timing(self, data):
+        self._timing_data = data
 
-                self.session_fetcher = JSONFetcher(uncache(self.SESSION_DETAIL_URL.format(session=self.sro_session)), self._receive_session, 20)
-                self.session_fetcher.start()
-
-                self.timing_fetcher = JSONFetcher(uncache(self.SESSION_TIMING_URL.format(session=self.sro_session)), self._receive_timing, 2)
-                self.timing_fetcher.start()
-
-            if not ea.session:
-                # Check for a session change every minute if we've not been given one explicitly
-                reactor.callLater(60, self._init_session)
-
-        else:
-            self.sro_session = previous_session  # Restore old session if we don't have a newer one
-            self.log.info("No session found, checking again in 30 seconds.")
-            reactor.callLater(30, self._init_session)
-
-    def _find_meeting(self, meetingID=None):
-        meetings_json = json_get(self.ROOT_URL)
-        if meetings_json:
-            meetings = meetings_json['content']['full']['Meetings']
-            if meetingID and meetingID.lower() in meetings:
-                self.log.info(
-                    "Found requested meeting {meetingID}: {name}",
-                    meetingID=meetingID.lower(),
-                    name=meetings[meetingID.lower()]['Name']
-                )
-                return meetings[meetingID.lower()]
-            else:
-                live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
-                if live_meetings:
-                    self.log.info(
-                        "Using currently live meeting {meetingID}: {name}",
-                        meetingID=live_meetings[0]['Id'].lower(),
-                        name=live_meetings[0]['Name']
-                    )
-                    return live_meetings[0]
-        self.log.warn("Could not find a live meeting!")
-        return None
-
-    def _find_session(self, meetingID=None, sessionID=None):
-        meeting = self._find_meeting(meetingID)
-        if meeting:
-            sessions_json = json_get(self.SCHEDULE_URL.format(meeting=meeting['Id'].upper()))
-            if sessions_json:
-                sessions = sessions_json['content']['full']['Units']
-                session = None
-                if sessionID and sessionID.lower() in sessions:
-                    session = sessions[sessionID.lower()]
-                    self.log.info(
-                        "Found requested session {sessionID}: {name}",
-                        sessionID=sessionID.lower(),
-                        name=session['Name']
-                    )
-
-                else:
-                    live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
-                    if live_sessions:
-                        session = live_sessions[-1]
-                        self.log.info(
-                            "Using live session {sessionID}: {name}",
-                            sessionID=session['Id'].lower(),
-                            name=session['Name']
-                        )
-
-                if session:
-                    return session['Id'].upper(), \
-                        sessions_json['content']['full']['Competitions'][session['CompetitionId']]['Name'], \
-                        u"{} - {}".format(meeting['Name'], session['Name'])
-        self.log.warn("Could not find a live session!")
-        return None, None, None
-
-    def no_service_state(self):
-        self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
-        return {
-            'cars': [],
-            'session': {
-                "flagState": "none",
-                "timeElapsed": 0
-            }
-        }
-
-    def _receive_session(self, data):
-        self.log.debug("Received session data")
-        if data['content']['full'].get('UnitId', '').upper() == self.sro_session:
-            self._session_data = data['content']['full']
-
-            if 'Messages' in self._session_data:
-                for message in self._session_data['Messages']:
-                    msg_time = datetime.strptime(message['Time'], "%d.%m.%Y %H:%M:%S")
-                    if not self.mostRecentMessage or self.mostRecentMessage < msg_time:
-                        self._messages.append(message['Text'].upper())
-                        self.mostRecentMessage = msg_time
-        else:
-            self.log.warn("Received data for {this}, expecting {that}", this=data['content']['full'].get('UnitId'), that=self.sro_session)
-
-    def _receive_timing(self, data):
-        self.log.debug("Received timing data")
-        if data['content']['full'].get('UnitId', '').upper() == self.sro_session:
-            self._timing_data = data['content']['full']
-        else:
-            self.log.warn("Received data for {this}, expecting {that}", this=data['content']['full'].get('UnitId'), that=self.sro_session)
+    def _handle_session(self, data):
+        self._session_data = data
 
     def getColumnSpec(self):
         return [
@@ -296,19 +235,33 @@ class Service(lt_service):
         ]
 
     def getPollInterval(self):
-        return 10
+        return 1
 
     def getName(self):
-        return self.name if self.name else self.default_name
+        if self.schedule and self.session:
+            return self.schedule['Competitions'][self.session['CompetitionId']]['Name']
+        return self.default_name
 
     def getDefaultDescription(self):
-        return self.description if self.description else ""
+        if self.meeting and self.session:
+            return u"{} - {}".format(self.meeting['Name'], self.session['Name'])
+        return ''
+
+    def _no_service_state(self):
+        self.state['messages'] = [[int(time.time()), "System", "Currently no live session", "system"]]
+        return {
+            'cars': [],
+            'session': {
+                "flagState": "none",
+                "timeElapsed": 0
+            }
+        }
 
     def getRaceState(self):
-        if self.sro_session:
+        if self.session:
             if self._session_data and self._timing_data:
                 return self._compile_state()
-        return self.no_service_state()
+        return self._no_service_state()
 
     def getExtraMessageGenerators(self):
         return [RaceControlMessage(self._messages)]
