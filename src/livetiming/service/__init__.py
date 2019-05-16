@@ -489,6 +489,7 @@ class DuePublisher(object):
     auto_poll = False
 
     def __init__(self, *args, **kwargs):
+        super(DuePublisher, self).__init__(*args, **kwargs)
         self._due_publish = False
 
     def set_due_publish(self):

@@ -117,7 +117,7 @@ STATE_LIVE = 1
 TYPES_AGGREGATE = [3, 6]
 
 
-class Service(lt_service, DuePublisher):
+class Service(DuePublisher, lt_service):
     auto_poll = False
 
     def __init__(self, args, extra_args):

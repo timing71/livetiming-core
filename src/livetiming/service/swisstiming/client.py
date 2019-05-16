@@ -1,4 +1,5 @@
 from .constants import Channels
+from .data import patch
 from .message import parse_message
 from .socketio import WebsocketOnlySocketIO
 from socketIO_client import BaseNamespace
@@ -88,7 +89,6 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
             self._apply_data(channel, parsed)
             if channel in self._callbacks:
                 cb = self._callbacks[channel]
-                print "Calling back {}".format(cb)
                 cb(self._data[channel])
 
         def _apply_data(self, channel, data):
@@ -96,8 +96,15 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
             if 'full' in content:
                 self._data[channel] = content['full']
             else:
-                log.error("I don't know how to handle partial content yet!")
-                print data
+                try:
+                    patch(self._data[channel], data)
+                except Exception as e:
+                    log.error(
+                        'Failed to apply patch! Original data was {orig}, patch was {patch}, error was {exc}',
+                        orig=self_data[channel],
+                        patch=data,
+                        exc=e
+                    )
 
         def join(self, channel, with_season=True, callback=None):
 

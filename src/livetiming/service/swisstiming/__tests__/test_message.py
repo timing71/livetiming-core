@@ -6,4 +6,9 @@ raw_message = u"0000000050{\"compressor\":\"lzw\",\"format\":\"json\",\"type\":\
 
 def test_parse_message():
     parsed = parse_message(raw_message)
-    assert parsed == '{"code":"data","Channel":"RAC_PROD|ADAC_SEASONS_JSON","sync":7,"pushData":[]}'
+    assert parsed == {
+        "Channel": "RAC_PROD|ADAC_SEASONS_JSON",
+        "code": "data",
+        "sync": 7,
+        "pushData": []
+    }
