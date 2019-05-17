@@ -332,7 +332,10 @@ class Service(lt_service):
             'event_id': event_id,
             'session_id': session['session_id']
         }
-        self._config = simplejson.loads(session['cfg'])
+        try:
+            self._config = simplejson.loads(session['cfg'])
+        except TypeError:
+            self.log.warn('Could not parse session config! Raw data was: {raw}', raw=session['cfg'])
 
         if session_changed:
             self.log.info("Session has been changed to: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
