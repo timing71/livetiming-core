@@ -26,7 +26,7 @@ def get_current_season(series):
         API_ROOT,
         series
     ))
-    return seasons[-1]
+    return seasons[0]
 
 
 def get_current_event(series, season):
@@ -228,8 +228,8 @@ def map_session(session):
     offset = now - session.get('last_update', 0)
 
     session = {
-        'timeElapsed': session.get('elapsed_time', 0) + offset,
-        'timeRemain': max(0, session.get('remaining_time', 0) - offset),
+        'timeElapsed': (session.get('elapsed_time', 0) / 1000) + offset,
+        'timeRemain': max(0, (session.get('remaining_time', 0) / 1000) - offset),
         'flagState': SESSION_FLAG_MAP.get(session.get('race_flag'), 'none').lower(),
     }
 
@@ -286,6 +286,7 @@ class Service(lt_service):
     def _fetch_session_data(self):
         data = yield get_session_data(self.http_client, self._ssid)
         self._session.update(data)
+        self._session['last_update'] = time.time()
 
     @inlineCallbacks
     def _fetch_last_message(self):
@@ -306,7 +307,7 @@ class Service(lt_service):
     def _set_session(self, series, season, event_id):
         session = get_current_session(series, season['name'], event_id)
         if not self._session:
-            self.log.info("Found session: {session}", session=session)
+            self.log.info("Found session: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
 
         session_changed = self._session and session['full_id'] != self._session['full_id']
 
@@ -369,7 +370,7 @@ class Service(lt_service):
                     self._standingsData.get('boaTime')
                 ),
                 sorted(
-                    self._standingsData['cars'].values(),
+                    [c for c in self._standingsData['cars'].values() if c['pos'] > 0],
                     key=lambda c: c['pos']
                 )
             ),
