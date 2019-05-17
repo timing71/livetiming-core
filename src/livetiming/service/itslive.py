@@ -353,8 +353,10 @@ class Service(lt_service):
         return session
 
     def _timing_sector_count(self):
-        ts = [s for s in self._config['inters'] if s['type'] == 0 and s['distance'] > 0]
-        return min(5, len(ts))
+        if 'inters' in self._config:
+            ts = [s for s in self._config['inters'] if s['type'] == 0 and s['distance'] > 0]
+            return min(5, len(ts))
+        return 3  # It's probably a good guess...
 
     def getName(self):
         return self._session.get('folder_name', 'ITS Chrono')
