@@ -20,7 +20,7 @@ def create_ws_protocol(log, handler, eventID):
         def onConnect(self, response):
             log.info('Connected to upstream timing source')
             self.factory.resetDelay()
-            self.sendMessage('{"eventId": "' + eventID + '"}')
+            self.sendMessage('{"eventId": "' + eventID + '","eventPid":[0,3,4]}')
 
         def onMessage(self, payload, isBinary):
             log.debug('Received message: {msg}', msg=payload)
@@ -89,6 +89,7 @@ def mapState(raw, ontrack):
         '9': 'OUT',
         '10': 'RUN',  # This and below are guesses
         '11': 'RUN',
+        '12': 'PIT',
         '14': 'PIT'
     }
     if not ontrack:
@@ -194,17 +195,21 @@ class Service(lt_service):
             connectWS(factory)
 
     def handle(self, data):
-        needs_republish = False
-        if data.get('CUP', None) != self._data.get('CUP', None):
-            needs_republish = True
-        if data.get('HEAT', None) != self._data.get('HEAT', None):
-            needs_republish = True
 
-        self._data = data
+        if data.get('PID') == "0":
+            needs_republish = False
+            if data.get('CUP', None) != self._data.get('CUP', None):
+                needs_republish = True
+            if data.get('HEAT', None) != self._data.get('HEAT', None):
+                needs_republish = True
 
-        if needs_republish:
-            self.publishManifest()
-        self._updateAndPublishRaceState()
+            self._data = data
+
+            if needs_republish:
+                self.publishManifest()
+            self._updateAndPublishRaceState()
+        else:
+            self.log.warn(u'Received message with nonzero PID: {msg}', msg=data)
 
     def getName(self):
         return self._data.get('CUP', 'wige Solutions')
