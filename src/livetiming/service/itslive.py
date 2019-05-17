@@ -217,9 +217,14 @@ SESSION_FLAG_MAP = {
     'GREEN FLAG': FlagStatus.GREEN.name,
     'RED FLAG': FlagStatus.RED.name,
     'SAFETY CAR': FlagStatus.SC.name,
-    'SLOW ZONE': FlagStatus.SLOW_ZONE.name,
-    'YELLOW FLAG': FlagStatus.YELLOW.name
+    'SLOW ZONE': FlagStatus.SLOW_ZONE.name
 }
+
+
+def map_session_flag(flag):
+    if flag.startswith('YELLOW'):
+        return FlagStatus.YELLOW.name.lower()
+    return SESSION_FLAG_MAP.get(flag, 'none').lower()
 
 
 def map_session(session):
@@ -230,7 +235,7 @@ def map_session(session):
     session = {
         'timeElapsed': (session.get('elapsed_time', 0) / 1000) + offset,
         'timeRemain': max(0, (session.get('remaining_time', 0) / 1000) - offset),
-        'flagState': SESSION_FLAG_MAP.get(session.get('race_flag'), 'none').lower(),
+        'flagState': map_session_flag(session.get('race_flag')),
     }
 
     laps_remaining = session.get('remaining_lap', 0)
@@ -292,9 +297,9 @@ class Service(lt_service):
     def _fetch_last_message(self):
         data = yield get_last_message(self.http_client, self._ssid)
 
-        if data.get('data_id', 0) > self._lastMessage:
+        if data.get('data_id', 0) != self._lastMessage:
             self._messages.append(data['msg'][9:])
-            self._lastMessage = data['epoch_ms']
+            self._lastMessage = data['data_id']
 
     def _find_session(self, series):
         season = get_current_season(series)
