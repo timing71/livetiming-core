@@ -17,7 +17,7 @@ API_ROOT = 'https://api-live.its-live.net/v1'
 def json_get(url):
     try:
         return simplejson.load(urllib2.urlopen(url))
-    except simplejson.JSONDecodeError:
+    except simplejson.JSONDecodeError, ValueError:
         return None
 
 
@@ -74,8 +74,14 @@ def json_post(client, url, body):
         }
     )
 
-    body = yield response.json()
-    returnValue(body)
+    if response.code == 200:
+        json = yield response.json()
+        returnValue(json)
+    elif response.code == 204:  # No content
+        returnValue(None)
+    else:
+        print "Error {} parsing JSON from POST to {} with body {}".format(response.code, url, body)
+        returnValue(None)
 
 
 @inlineCallbacks
@@ -152,7 +158,7 @@ def map_car_state(car):
 def map_sector(car, sector, boa):
     last = car['inter_{}'.format(sector)]
     best = car['best_inter_{}'.format(sector)]
-    sb = boa[sector]
+    sb = boa[sector] if sector in boa else None
 
     last_flag = ''
     if last == best:
@@ -278,26 +284,29 @@ class Service(lt_service):
     def _fetch_ranking_data(self):
         data = yield get_session_standings(self.http_client, self._ssid, self._start_id)
 
-        self._standingsData['boa'] = data['boa']
-        self._standingsData['sboa'] = data['sboa']
-        self._standingsData['boaTime'] = data['boaTime']
+        if data:
 
-        for car in data['ranking']:
-            id = car['competitor_id']
-            self._standingsData['cars'].setdefault(id, {}).update(car)
-            self._start_id = max(self._start_id, car.get('data_id', 0))
+            self._standingsData['boa'] = data['boa']
+            self._standingsData['sboa'] = data['sboa']
+            self._standingsData['boaTime'] = data['boaTime']
+
+            for car in data['ranking']:
+                id = car['competitor_id']
+                self._standingsData['cars'].setdefault(id, {}).update(car)
+                self._start_id = max(self._start_id, car.get('data_id', 0))
 
     @inlineCallbacks
     def _fetch_session_data(self):
         data = yield get_session_data(self.http_client, self._ssid)
-        self._session.update(data)
-        self._session['last_update'] = time.time()
+        if data:
+            self._session.update(data)
+            self._session['last_update'] = time.time()
 
     @inlineCallbacks
     def _fetch_last_message(self):
         data = yield get_last_message(self.http_client, self._ssid)
 
-        if data.get('data_id', 0) != self._lastMessage:
+        if data and data.get('data_id', 0) != self._lastMessage:
             self._messages.append(data['msg'][9:])
             self._lastMessage = data['data_id']
 
@@ -326,8 +335,17 @@ class Service(lt_service):
         self._config = simplejson.loads(session['cfg'])
 
         if session_changed:
-            self.log.info("Session has been changed: {session}", session=session)
+            self.log.info("Session has been changed to: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
             self.publishManifest()
+            self._standingsData = {
+                'boa': [None] * 8,
+                'sboa': [None] * 8,
+                'boaTime': None,
+                'cars': {}
+            }
+            self._start_id = 0
+            if self.analyser:
+                self.analyser.reset()
 
         return session
 
