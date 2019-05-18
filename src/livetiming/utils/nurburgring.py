@@ -282,6 +282,7 @@ class Nurburgring(object):
             if self._verbose:
                 print self._marshal_posts
 
+        self.log.info('Starting poll for GPSauge NBR data...')
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):

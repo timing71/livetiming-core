@@ -32,7 +32,7 @@ def create_ws_protocol(log, handler, eventID):
 
 def parse_extra_args(extra_args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--ws', help='WebSocket URL to connect to', required=True)
+    parser.add_argument('-w', '--ws', help='WebSocket URL to connect to', default='wss://livetiming.azurewebsites.net')
     parser.add_argument('-e', '--event-id', help='Event ID', required=True)
     parser.add_argument('--nurburgring', help='Use Nurburgring-specific features', action='store_true')
 
@@ -162,15 +162,6 @@ class SlowZoneMessage(TimingMessage):
         return msgs
 
 
-SECTOR_STATS = [
-    Stat.S1,
-    Stat.S2,
-    Stat.S3,
-    Stat.S4,
-    Stat.S5
-]
-
-
 class Service(lt_service):
     attribution = ['wige Solutions']
     auto_poll = False
@@ -226,7 +217,7 @@ class Service(lt_service):
     def getColumnSpec(self):
 
         num_sectors = int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1
-        sector_cols = SECTOR_STATS[:num_sectors]
+        sector_cols = map(lambda s: Stat.sector(s + 1), range(num_sectors))
 
         return [
             Stat.NUM,
@@ -295,8 +286,14 @@ class Service(lt_service):
                 flag = FlagStatus.SLOW_ZONE
             elif yellows > 0:
                 flag = FlagStatus.YELLOW
-            # elif 'TRACKSTATE' in self._data and self._data['TRACKSTATE'] == "0":
-            #    flag = FlagStatus.NONE
+            elif 'TRACKSTATE' in self._data:
+                ts = self._data['TRACKSTATE']
+                if ts == "0":
+                    flag = FlagStatus.GREEN
+                elif ts == "1":
+                    flag = FlagStatus.YELLOW
+                elif ts == "2":
+                    flag = FlagStatus.RED
             else:
                 flag = FlagStatus.GREEN
 
@@ -346,11 +343,10 @@ class Service(lt_service):
     def postprocess_cars(self, cars):
 
         colspec = self.getColumnSpec()
-        num_sectors = int(self._data.get('NROFINTERMEDIATETIMES', 4))
 
         last_lap_idx = colspec.index(Stat.LAST_LAP)
         best_lap_idx = colspec.index(Stat.BEST_LAP)
-        last_sector_idx = colspec.index(SECTOR_STATS[num_sectors])
+        last_sector_idx = len(colspec) - 3
 
         fastest = (None, None)
         for car in cars:
