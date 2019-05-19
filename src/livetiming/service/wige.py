@@ -45,7 +45,7 @@ def parseDate(raw):
 
 
 def parseTime(formattedTime):
-    if formattedTime == "" or formattedTime is None:
+    if formattedTime == "" or formattedTime is None or formattedTime[0] == '-':
         return ''
     try:
         return float(formattedTime)
