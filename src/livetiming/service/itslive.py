@@ -41,9 +41,13 @@ def get_current_event(series, season):
 
     if current:
         return current[0]
+    elif events:
+        print 'No current event, using most recent one.'
+        recent = sorted([e for e in events if e['begin_epoch'] <= now], key=lambda e: e['begin_epoch'])
+        return recent[-1]
     else:
-        print 'No current event, using latest one.'
-        return events[-1]
+        print "No events found!"
+        return None
 
 
 def get_current_session(series, season, event):
@@ -59,9 +63,12 @@ def get_current_session(series, season, event):
 
     if current:
         return current[-1]
-    else:
+    elif sessions:
         print "No current session, using most recent one."
         return sessions[-1]
+    else:
+        print 'No sessions. What do I do?'
+        return None
 
 
 @inlineCallbacks
@@ -273,13 +280,6 @@ class Service(lt_service):
 
         session = self._find_session(self.extra_args.series)
 
-        if session:
-            LoopingCall(self._fetch_ranking_data).start(1)
-            LoopingCall(self._fetch_session_data).start(1)
-            LoopingCall(self._fetch_last_message).start(1)
-        else:
-            raise RuntimeError('No session found!')
-
     @inlineCallbacks
     def _fetch_ranking_data(self):
         data = yield get_session_standings(self.http_client, self._ssid, self._start_id)
@@ -320,35 +320,41 @@ class Service(lt_service):
 
     def _set_session(self, series, season, event_id):
         session = get_current_session(series, season['name'], event_id)
-        if not self._session:
-            self.log.info("Found session: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
+        if session:
 
-        session_changed = self._session and session['full_id'] != self._session['full_id']
+            session_changed = self._session and session['full_id'] != self._session['full_id']
 
-        self._session = session
-        self._ssid = {
-            'cs_id': series,
-            'season': season['name'],
-            'event_id': event_id,
-            'session_id': session['session_id']
-        }
-        try:
-            self._config = simplejson.loads(session['cfg'])
-        except TypeError:
-            self.log.warn('Could not parse session config! Raw data was: {raw}', raw=session['cfg'])
-
-        if session_changed:
-            self.log.info("Session has been changed to: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
-            self.publishManifest()
-            self._standingsData = {
-                'boa': [None] * 8,
-                'sboa': [None] * 8,
-                'boaTime': None,
-                'cars': {}
+            self._ssid = {
+                'cs_id': series,
+                'season': season['name'],
+                'event_id': event_id,
+                'session_id': session['session_id']
             }
-            self._start_id = 0
-            if self.analyser:
-                self.analyser.reset()
+
+            if not self._session:
+                self.log.info("Found session: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
+                LoopingCall(self._fetch_ranking_data).start(1)
+                LoopingCall(self._fetch_session_data).start(1)
+                LoopingCall(self._fetch_last_message).start(1)
+
+            self._session = session
+            try:
+                self._config = simplejson.loads(session['cfg'])
+            except TypeError:
+                self.log.warn('Could not parse session config! Raw data was: {raw}', raw=session['cfg'])
+
+            if session_changed:
+                self.log.info("Session has been changed to: {folder} - {name}", folder=session.get('folder_name'), name=session.get('race_name'))
+                self.publishManifest()
+                self._standingsData = {
+                    'boa': [None] * 8,
+                    'sboa': [None] * 8,
+                    'boaTime': None,
+                    'cars': {}
+                }
+                self._start_id = 0
+                if self.analyser:
+                    self.analyser.reset()
 
         return session
 
