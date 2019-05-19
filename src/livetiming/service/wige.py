@@ -92,7 +92,9 @@ def mapState(raw, ontrack):
         '11': 'RUN',
         '12': 'PIT',
         '14': 'PIT',
-        '16': 'OUT'
+        '15': 'RUN',
+        '16': 'OUT',
+        '20': 'RUN'
     }
     if not ontrack:
         return 'PIT'
