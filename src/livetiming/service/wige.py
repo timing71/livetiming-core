@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
-from livetiming.messages import TimingMessage
+from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.utils.nurburgring import Nurburgring
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
@@ -164,6 +164,46 @@ class SlowZoneMessage(TimingMessage):
         return msgs
 
 
+class RaceControlMessage(TimingMessage):
+    def __init__(self, messages):
+        self._messages = messages
+        self._mostRecentID = 0
+
+    def process(self, _, __):
+        new_messages = [m for m in self._messages if m.get('ID', 0) > self._mostRecentID]
+
+        # current = rcm.get('currentMessages', {})
+        # for idx, msg in current.iteritems():
+        #     if self._seen_current_msgs.get(idx) != msg['message']:
+        #         new_messages.append(msg)
+        #         self._seen_current_msgs[idx] = msg['message']
+
+        msgs = []
+
+        for msg in new_messages:
+            hasCarNum = CAR_NUMBER_REGEX.search(msg['MESSAGE'])
+
+            this_msg_time = datetime.now()
+            msgTime = msg.get('MESSAGETIME')
+            if msgTime:
+                parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
+                this_msg_time = this_msg_time.replace(
+                    hour=parsed_msgtime.hour,
+                    minute=parsed_msgtime.minute,
+                    second=parsed_msgtime.second
+                )
+
+            this_msg_timestamp = time.mktime(this_msg_time.timetuple())
+
+            if hasCarNum:
+                msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl", hasCarNum.group('race_num')])
+            else:
+                msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl"])
+
+            self._mostRecentID = self._messages[-1]['ID']
+        return sorted(msgs, key=lambda m: -m[0])
+
+
 class Service(lt_service):
     attribution = ['wige Solutions']
     auto_poll = False
@@ -171,6 +211,8 @@ class Service(lt_service):
     def __init__(self, args, extra):
         lt_service.__init__(self, args, extra)
         self._extra = parse_extra_args(extra)
+        self._messages = []
+        self._rc_messages = RaceControlMessage(self._messages)
 
         self._data = {}
 
@@ -189,7 +231,7 @@ class Service(lt_service):
 
     def handle(self, data):
 
-        if data.get('PID') == "0":
+        if data.get('PID') == "0":  # Timing data
             needs_republish = False
             if data.get('CUP', None) != self._data.get('CUP', None):
                 needs_republish = True
@@ -201,8 +243,11 @@ class Service(lt_service):
             if needs_republish:
                 self.publishManifest()
             self._updateAndPublishRaceState()
+        elif data.get('PID') == "3":  # Messages
+            self._messages = data.get('MESSAGES', [])
+            self._rc_messages._messages = self._messages
         else:
-            self.log.warn(u'Received message with nonzero PID: {msg}', msg=data)
+            self.log.warn(u'Received message with unknown PID: {msg}', msg=data)
 
     def getName(self):
         return self._data.get('CUP', 'wige Solutions')
@@ -251,9 +296,10 @@ class Service(lt_service):
     def getExtraMessageGenerators(self):
         if self._extra.nurburgring:
             return [
-                SlowZoneMessage(self._last_zones, self._current_zones)
+                SlowZoneMessage(self._last_zones, self._current_zones),
+                self._rc_messages
             ]
-        return []
+        return [self._rc_messages]
 
     def getRaceState(self):
         if self._extra.nurburgring:
