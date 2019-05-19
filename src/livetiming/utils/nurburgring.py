@@ -10,10 +10,10 @@ import copy
 import re
 import simplejson
 
-OVER_IP_APP = 'IPHNGR24'
-MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'.format(OVER_IP_APP)
-MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'.format(OVER_IP_APP)
-ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'.format(OVER_IP_APP)
+OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
+MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'
+MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'
+ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'
 # TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'.format(OVER_IP_APP)
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
@@ -259,10 +259,11 @@ def _parse_objects(data):
 class Nurburgring(object):
     log = Logger()
 
-    def __init__(self, verbose=False):
+    def __init__(self, app=OVER_IP_APP, verbose=False):
         self._zones = {}
         self._verbose = verbose
-        client.getPage(MARSHAL_POST_ADDRESS_URL).addCallbacks(self._parse_addresses, self._handle_errback)
+        self.app = app
+        client.getPage(MARSHAL_POST_ADDRESS_URL.format(self.app)).addCallbacks(self._parse_addresses, self._handle_errback)
 
     def _parse_addresses(self, data):
         addresses = _parse_objects(data)
@@ -270,7 +271,7 @@ class Nurburgring(object):
         for obj in addresses.values():
             if "geoobjectid" in obj:
                 self._names[obj['geoobjectid']] = base64.b64decode(obj.get('name')).lower()
-        client.getPage(MARSHAL_POST_ID_URL).addCallbacks(self._parse_marshal_posts, self._handle_errback)
+        client.getPage(MARSHAL_POST_ID_URL.format(self.app)).addCallbacks(self._parse_marshal_posts, self._handle_errback)
 
     def _parse_marshal_posts(self, data):
         objs = _parse_objects(data)
@@ -286,7 +287,7 @@ class Nurburgring(object):
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
-        client.getPage(ACTIVE_ZONES_URL).addCallbacks(self._parse_zones, self._handle_errback)
+        client.getPage(ACTIVE_ZONES_URL.format(self.app)).addCallbacks(self._parse_zones, self._handle_errback)
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
