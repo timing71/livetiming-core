@@ -10,6 +10,8 @@ class Service(wige):
         extra_args.append('-e')
         extra_args.append('50')
         extra_args.append('--nurburgring')
+        extra_args.append('--gpsauge')
+        extra_args.append('IPHADAC24H')
         super(Service, self).__init__(args, extra_args)
 
     def getName(self):

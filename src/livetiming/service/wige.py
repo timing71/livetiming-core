@@ -35,6 +35,7 @@ def parse_extra_args(extra_args):
     parser.add_argument('-w', '--ws', help='WebSocket URL to connect to', default='wss://livetiming.azurewebsites.net')
     parser.add_argument('-e', '--event-id', help='Event ID', required=True)
     parser.add_argument('--nurburgring', help='Use Nurburgring-specific features', action='store_true')
+    parser.add_argument('--gpsauge', help='GPSauge app ID to use for Nbr features')
 
     return parser.parse_args(extra_args)
 
@@ -90,7 +91,8 @@ def mapState(raw, ontrack):
         '10': 'RUN',  # This and below are guesses
         '11': 'RUN',
         '12': 'PIT',
-        '14': 'PIT'
+        '14': 'PIT',
+        '16': 'OUT'
     }
     if not ontrack:
         return 'PIT'
@@ -173,7 +175,7 @@ class Service(lt_service):
         self._data = {}
 
         if self._extra.nurburgring:
-            self._nbr = Nurburgring()
+            self._nbr = Nurburgring(self._extra.gpsauge)
             self._current_zones = {}
             self._last_zones = {}
 
