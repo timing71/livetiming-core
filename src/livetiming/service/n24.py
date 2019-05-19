@@ -15,4 +15,10 @@ class Service(wige):
         super(Service, self).__init__(args, extra_args)
 
     def getName(self):
-        return 'Nurburgring 24 Hours'
+        return 'Nürburgring 24 Hours'
+
+    def getDefaultDescription(self):
+        return u'{} - {}'.format(
+            self._data.get('CUP', ''),
+            self._data.get('HEAT', '')
+        )
