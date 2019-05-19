@@ -167,11 +167,9 @@ class SlowZoneMessage(TimingMessage):
 class RaceControlMessage(TimingMessage):
     def __init__(self, messages):
         self._messages = messages
-        self._mostRecentID = 0
+        self._mostRecentTime = 0
 
     def process(self, _, __):
-        new_messages = [m for m in self._messages if m.get('ID', 0) > self._mostRecentID]
-
         # current = rcm.get('currentMessages', {})
         # for idx, msg in current.iteritems():
         #     if self._seen_current_msgs.get(idx) != msg['message']:
@@ -180,7 +178,7 @@ class RaceControlMessage(TimingMessage):
 
         msgs = []
 
-        for msg in new_messages:
+        for msg in self._messages:
             hasCarNum = CAR_NUMBER_REGEX.search(msg['MESSAGE'])
 
             this_msg_time = datetime.now()
@@ -188,19 +186,22 @@ class RaceControlMessage(TimingMessage):
             if msgTime:
                 parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
                 this_msg_time = this_msg_time.replace(
-                    hour=parsed_msgtime.hour,
+                    hour=parsed_msgtime.hour - 1 if parsed_msgtime.hour > 1 else 23,
                     minute=parsed_msgtime.minute,
                     second=parsed_msgtime.second
                 )
 
             this_msg_timestamp = time.mktime(this_msg_time.timetuple())
 
-            if hasCarNum:
-                msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl", hasCarNum.group('race_num')])
-            else:
-                msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl"])
+            if this_msg_timestamp > self._mostRecentTime:
 
-            self._mostRecentID = self._messages[-1]['ID']
+                if hasCarNum:
+                    msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl", hasCarNum.group('race_num')])
+                else:
+                    msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl"])
+
+            if len(msgs) > 0:
+                self._mostRecentTime = max(max(self._mostRecentTime, map(lambda m: m[0], msgs)))
         return sorted(msgs, key=lambda m: -m[0])
 
 
