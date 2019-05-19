@@ -85,15 +85,15 @@ def mapState(raw, ontrack):
         '4': 'RUN',
         '5': 'RUN',
         '6': 'RUN',
-        '7': 'PIT',
-        '8': 'PIT',
-        '9': 'OUT',
+        '7': 'RUN',
+        '8': 'RUN',
+        '9': 'RUN',
         '10': 'RUN',  # This and below are guesses
         '11': 'RUN',
-        '12': 'PIT',
+        '12': 'RUN',
         '14': 'PIT',
-        '15': 'RUN',
-        '16': 'OUT',
+        '15': 'OUT',
+        '16': 'RUN',
         '20': 'RUN'
     }
     if not ontrack:
