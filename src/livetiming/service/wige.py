@@ -77,34 +77,6 @@ def parseGap(raw):
         return raw
 
 
-def mapState(raw, ontrack):
-    states = {
-        '0': 'N/S',
-        '1': 'RUN',
-        '2': 'RUN',
-        '3': 'RUN',
-        '4': 'RUN',
-        '5': 'RUN',
-        '6': 'RUN',
-        '7': 'RUN',
-        '8': 'RUN',
-        '9': 'RUN',
-        '10': 'RUN',  # This and below are guesses
-        '11': 'RUN',
-        '12': 'RUN',
-        '14': 'PIT',
-        '15': 'OUT',
-        '16': 'RUN',
-        '20': 'RUN'
-    }
-    if not ontrack:
-        return 'PIT'
-    if raw in states:
-        return states[raw]
-    print "Unknown state: {}".format(raw)
-    return "? {}".format(raw)
-
-
 class SlowZoneMessage(TimingMessage):
     def __init__(self, prevZones, currentZones):
         self._prev = prevZones
@@ -374,6 +346,49 @@ class Service(lt_service):
             }
         }
 
+    def map_car_state(self, raw, ontrack):
+        version = self._data.get('VER', '1')
+        states = {
+            '1': {
+                '1': 'RUN',
+                '2': 'RUN',
+                '3': 'RUN',
+                '4': 'RUN',
+                '5': 'RUN',
+                '6': 'RUN',
+                '7': 'RUN',
+                '8': 'PIT',
+                '9': 'OUT',
+                '10': 'RUN',
+                '14': 'RUN'
+            },
+            '2': {
+                '0': 'N/S',
+                '1': 'RUN',
+                '2': 'RUN',
+                '3': 'RUN',
+                '4': 'RUN',
+                '5': 'RUN',
+                '6': 'RUN',
+                '7': 'RUN',
+                '8': 'RUN',
+                '9': 'RUN',
+                '10': 'RUN',
+                '11': 'RUN',
+                '12': 'RUN',
+                '14': 'PIT',
+                '15': 'OUT',
+                '16': 'RUN',
+                '20': 'RUN'
+            }
+        }
+        if not ontrack:
+            return 'PIT'
+        if raw in states[version]:
+            return states[version][raw]
+        print "Unknown state: {}".format(raw)
+        return "? {}".format(raw)
+
     def map_car(self, accum):
         def inner(car):
             sector_cols = map(
@@ -401,7 +416,7 @@ class Service(lt_service):
 
             return [
                 car['STNR'],
-                mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
+                self.map_car_state(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
                 # car['LASTINTERMEDIATENUMBER'],
                 car['CLASSNAME'],
                 car['CLASSRANK'],
