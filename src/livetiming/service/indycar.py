@@ -11,7 +11,7 @@ import urllib2
 
 
 def mapFlagStates(rawState, session_type):
-    if session_type == 'P' and rawState == 'YELLOW':
+    if session_type != 'R' and rawState == 'YELLOW':
         return FlagStatus.YELLOW.name.lower()
     flagMap = {
         "GREEN": FlagStatus.GREEN,
