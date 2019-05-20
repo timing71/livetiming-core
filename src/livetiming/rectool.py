@@ -32,9 +32,9 @@ def manifest_set(args, extras):
 def inspect(args, extras):
     f = RecordingFile(args.recfile)
     print "##########"
-    print f.manifest['description']
+    print u'{}'.format(f.manifest['description'])
     print "##########"
-    print "Service: {} ({})".format(f.manifest['name'], f.manifest['uuid'])
+    print u"Service: {} ({})".format(f.manifest['name'], f.manifest['uuid'])
     print "{} frames ({}k/{}i), {} duration".format(f.frames, len(f.keyframes), len(f.iframes), f.duration)
     print "Start time: {}".format(f.startTime)
     print "Full manifest:"
