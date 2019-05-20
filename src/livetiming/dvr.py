@@ -66,6 +66,7 @@ class DirectoryTimingRecorder(TimingRecorder):
     def writeManifest(self, serviceRegistration):
         if self._finalised:
             raise Exception("Cannot write manifest to a finalised DTR")
+        serviceRegistration = serviceRegistration.copy()
         serviceRegistration["startTime"] = self.first_frame or time.time()
         serviceRegistration["version"] = 1
         self.manifest = serviceRegistration
