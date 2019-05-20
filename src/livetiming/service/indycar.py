@@ -146,14 +146,17 @@ class Service(lt_service):
         return self.description
 
     def getColumnSpec(self):
+
+        ptp_col = [] if self._oval_mode else [Stat.PUSH_TO_PASS]
+
         return [
             Stat.NUM,
             Stat.STATE,
             Stat.DRIVER,
             Stat.TEAM,
             Stat.LAPS,
-            Stat.TYRE,
-            Stat.PUSH_TO_PASS,
+            Stat.TYRE
+        ] + ptp_col + [
             Stat.GAP,
             Stat.INT
         ] + self._get_sector_colspec() + [
@@ -285,14 +288,16 @@ class Service(lt_service):
 
             state_value = "PIT" if (car["status"].lower() == "in pit" or car["onTrack"] == "False") else "RUN"
 
+            ptp_col = [] if self._oval_mode else [[car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""]]
+
             cars.append([
                 car["no"],
                 self._debouncer.value_for(car['no'], state_value),
                 "{0} {1}".format(car.get("firstName", ""), car.get("lastName", "")),
                 car.get('team', ''),
                 car["laps"],
-                map_tyre(car.get('Tire', '')),
-                [car["OverTake_Remain"], "ptp-active" if car["OverTake_Active"] == 1 else ""],
+                map_tyre(car.get('Tire', ''))
+            ] + ptp_col + [
                 diff if len(diff) > 0 and diff[0] != '-' and diff != '0.0000' else '',
                 gap if gap > 0 and gap != '0.0000' else '',
             ] + sector_cols + [
@@ -305,6 +310,10 @@ class Service(lt_service):
 
         bestLapIdx = 17
         lastLapIdx = 15
+        bs1_idx = 9 if self._oval_mode else 10
+        s1_idx = bs1_idx - 1
+        bs2_idx = 11 if self._oval_mode else 12
+        s2_idx = bs2_idx - 1
         lastSectorIdx = 13
 
         for car in cars:
@@ -314,13 +323,13 @@ class Service(lt_service):
                 if car[bestLapIdx][0] == car[lastLapIdx][0]:
                     car[lastLapIdx] = [car[lastLapIdx][0], 'sb-new' if car[lastSectorIdx][0] != '' and car[1] != 'PIT' else 'sb']
             if num == fastSectors[0][1]:
-                car[10] = [car[10][0], 'sb']
-                if car[9][0] == car[10][0]:
-                    car[9] = [car[9][0], 'sb']
+                car[bs1_idx] = [car[bs1_idx][0], 'sb']
+                if car[s1_idx][0] == car[bs1_idx][0]:
+                    car[s1_idx] = [car[s1_idx][0], 'sb']
             if num == fastSectors[1][1]:
-                car[12] = [car[12][0], 'sb']
-                if car[11][0] == car[12][0]:
-                    car[11] = [car[11][0], 'sb']
+                car[bs2_idx] = [car[bs2_idx][0], 'sb']
+                if car[s2_idx][0] == car[bs2_idx][0]:
+                    car[s2_idx - 1] = [car[s2_idx][0], 'sb']
             if not self._oval_mode and num == fastSectors[1][1]:
                 car[14] = [car[14][0], 'sb']
                 if car[13][0] == car[14][0]:
