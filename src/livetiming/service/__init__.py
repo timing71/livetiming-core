@@ -41,7 +41,6 @@ client._HTTP11ClientFactory.noisy = False
 VERSION = 'unknown'
 try:
     VERSION = pkg_resources.get_distribution('livetiming').version
-    print "Live Timing Aggregator version {}".format(VERSION)
 except:
     pass
 
@@ -531,7 +530,9 @@ def main():
         if not args.verbose:  # log to file, not stdout
             txaio.start_logging(out=logFile, level=level)
 
-        Logger().info("Starting timing service {}...".format(service_class.__module__))
+        logger = Logger()
+        logger.info("Live Timing Aggregator version {version}", version=VERSION)
+        logger.info("Starting timing service {}...".format(service_class.__module__))
         service = service_class(args, extra_args)
         service.start()
 
