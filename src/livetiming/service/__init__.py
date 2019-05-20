@@ -24,6 +24,7 @@ import argparse
 import codecs
 import copy
 import os
+import pkg_resources
 import sentry_sdk
 import simplejson
 import time
@@ -35,6 +36,14 @@ sentry()
 
 client.HTTPClientFactory.noisy = False
 client._HTTP11ClientFactory.noisy = False
+
+
+VERSION = 'unknown'
+try:
+    VERSION = pkg_resources.get_distribution('livetiming').version
+    print "Live Timing Aggregator version {}".format(VERSION)
+except:
+    pass
 
 
 def create_service_session(service):
@@ -273,7 +282,8 @@ class Service(object):
             "trackDataSpec": self.getTrackDataSpec(),
             "pollInterval": self.getPollInterval() or 1,
             "hasAnalysis": not self.args.disable_analysis,
-            "hidden": self.args.hidden
+            "hidden": self.args.hidden,
+            "livetimingVersion": VERSION
         }
 
         if hasattr(self, 'attribution'):
