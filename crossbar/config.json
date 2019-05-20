@@ -97,16 +97,44 @@
             "type": "tcp",
             "port": 8443,
             "tls": {
-              "key": "/etc/letsencrypt/live/master.timing.71wytham.org.uk/privkey.pem",
-              "certificate": "/etc/letsencrypt/live/master.timing.71wytham.org.uk/cert.pem",
+              "key": "/etc/letsencrypt/live/timing.71wytham.org.uk/privkey.pem",
+              "certificate": "/etc/letsencrypt/live/timing.71wytham.org.uk/cert.pem",
               "chain_certificates": [
-                "/etc/letsencrypt/live/master.timing.71wytham.org.uk/chain.pem"
+                "/etc/letsencrypt/live/timing.71wytham.org.uk/chain.pem"
               ],
-              "dhparam": "/etc/letsencrypt/live/master.timing.71wytham.org.uk/dhparam.pem",
+              "dhparam": "/home/timing/livetiming-git/crossbar/dhparam.pem",
               "ciphers": "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AES:RSA+3DES:!ADH:!AECDH:!MD5:!DSS"
             }
           },
           "url": "wss://master.timing.71wytham.org.uk:8443/ws",
+          "auth": {
+            "wampcra": {
+              "type": "dynamic",
+              "authenticator": "livetiming.authenticate"
+            },
+            "anonymous": {
+              "type": "static",
+              "role": "anonymous"
+            },
+            "options": {
+              "compression": {
+                "deflate": {
+                  "request_no_context_takeover": false,
+                  "request_max_window_bits": 11,
+                  "no_context_takeover": false,
+                  "max_window_bits": 11,
+                  "memory_level": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "rawsocket",
+          "endpoint": {
+            "type": "unix",
+            "path": "/tmp/crossbar.socket"
+          },
           "auth": {
             "wampcra": {
               "type": "dynamic",
