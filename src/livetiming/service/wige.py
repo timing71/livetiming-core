@@ -10,6 +10,7 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 
 import argparse
 import copy
+import re
 import simplejson
 import time
 
@@ -207,6 +208,9 @@ class RaceControlMessage(TimingMessage):
         return sorted(msgs, key=lambda m: -m[0])
 
 
+CAR_LAP_REGEX = re.compile('Lap (?P<lap_num>[0-9]+)', re.IGNORECASE)
+
+
 class Service(lt_service):
     attribution = ['wige Solutions']
     auto_poll = False
@@ -278,6 +282,7 @@ class Service(lt_service):
             Stat.DRIVER,
             Stat.TEAM,
             Stat.CAR,
+            Stat.LAPS,
             Stat.GAP,
             Stat.INT
         ] + sector_cols + [
@@ -358,8 +363,10 @@ class Service(lt_service):
             flag = FlagStatus.NONE
             track_data = []
 
+        accum = {}
+
         return {
-            'cars': self.postprocess_cars(map(self.map_car, self._data.get('RESULT', {}))),
+            'cars': self.postprocess_cars(map(self.map_car(accum), self._data.get('RESULT', {}))),
             'session': {
                 "flagState": flag.name.lower(),
                 "timeElapsed": 0,
@@ -367,29 +374,49 @@ class Service(lt_service):
             }
         }
 
-    def map_car(self, car):
+    def map_car(self, accum):
+        def inner(car):
+            sector_cols = map(
+                lambda s: (parseTime(car.get('S{}TIME'.format(s + 1), '')), ''),
+                range(int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1)
+            )
 
-        sector_cols = map(
-            lambda s: (parseTime(car.get('S{}TIME'.format(s + 1), '')), ''),
-            range(int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1)
-        )
+            gap = parseGap(car['GAP'])
+            interval = parseGap(car['INT'])
+            has_new_lap = CAR_LAP_REGEX.match(str(gap))
+            if has_new_lap:
+                new_lap = int(has_new_lap.group('lap_num'))
+                if 'leader_lap' in accum:
+                    gap_laps = accum['leader_lap'] - new_lap
+                    gap = '{} lap{}'.format(
+                        gap_laps,
+                        '' if gap_laps == 1 else 's'
+                    )
+                else:
+                    gap = ''
+                    interval = ''
+                    accum['leader_lap'] = new_lap
 
-        return [
-            car['STNR'],
-            mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
-            # car['LASTINTERMEDIATENUMBER'],
-            car['CLASSNAME'],
-            car['CLASSRANK'],
-            car['NAME'],
-            car['TEAM'],
-            car['CAR'],
-            parseGap(car['GAP']),
-            parseGap(car['INT'])
-        ] + sector_cols + [
-            (parseTime(car['LASTLAPTIME']), ''),
-            (parseTime(car['FASTESTLAP']), ''),
-            car['PITSTOPCOUNT']
-        ]
+                accum['lap'] = new_lap
+
+            return [
+                car['STNR'],
+                mapState(car['LASTINTERMEDIATENUMBER'], car.get('ONTRACK', True)),
+                # car['LASTINTERMEDIATENUMBER'],
+                car['CLASSNAME'],
+                car['CLASSRANK'],
+                car['NAME'],
+                car['TEAM'],
+                car['CAR'],
+                accum.get('lap', ''),
+                gap,
+                interval,
+            ] + sector_cols + [
+                (parseTime(car['LASTLAPTIME']), ''),
+                (parseTime(car['FASTESTLAP']), ''),
+                car['PITSTOPCOUNT']
+            ]
+        return inner
 
     def postprocess_cars(self, cars):
 
