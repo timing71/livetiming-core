@@ -122,7 +122,9 @@ def map_car_rows(rows, column_spec):
 def map_car_state(state_td):
     if state_td:
         clazz = state_td['class']
-        if 'chronos_run' in clazz:
+        if state_td.string == 'IN':
+            return 'PIT'
+        elif 'chronos_run' in clazz:
             return 'RUN'
         elif 'chronos_pitin' in clazz:
             return 'PIT'
