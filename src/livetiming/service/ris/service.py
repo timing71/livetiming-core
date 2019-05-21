@@ -17,7 +17,8 @@ ROOT_URL = 'http://www.ris-timing.be/vitesse/'
 
 def parse_extra_args(eargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-e', '--event', help='Event name (from URL)', required=True)
+    parser.add_argument('-e', '--event', help='Event name (used to create URL)')
+    parser.add_argument('-u', '--url', help='Full URL of timing page')
     parser.add_argument('-y', '--year', help='Event year (if not current)', default=time.strftime("%Y"))
 
     return parser.parse_args(eargs)
@@ -48,6 +49,9 @@ class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self._extra_args = parse_extra_args(extra_args)
+
+        if not self._extra_args.event and not self._extra_args.url:
+            raise Exception('Either event or URL must be specified!')
 
         self._data = {
             'series': 'RIS Timing',
@@ -107,14 +111,14 @@ class Service(lt_service):
     @inlineCallbacks
     def _get_raw_feed(self):
 
-        url = uncache(
-            os.path.join(
-                ROOT_URL,
-                self._extra_args.event,
-                self._extra_args.year,
-                'live.htm'
-            )
-        )()
+        url_base = self._extra_args.url or os.path.join(
+            ROOT_URL,
+            self._extra_args.event,
+            self._extra_args.year,
+            'live.htm'
+        )
+
+        url = uncache(url_base)()
 
         self.log.debug('Getting {url}', url=url)
 

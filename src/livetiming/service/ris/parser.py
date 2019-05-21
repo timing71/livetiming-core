@@ -49,6 +49,13 @@ def parse_laptime(formattedTime):
             return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
 
 
+def maybe_unicode(raw):
+    if raw:
+        return unicode(raw)
+    else:
+        return None
+
+
 LAPS_REGEX = re.compile('==(?P<lapcount>[0-9]+)==')
 
 
@@ -60,9 +67,9 @@ def map_car_rows(rows, column_spec):
 
         def get(col, string=True):
             idx = column_spec.index(col) if col in column_spec else None
-            if idx:
+            if idx is not None:
                 if string:
-                    return tds[idx].string
+                    return maybe_unicode(tds[idx].string)
                 return tds[idx]
             else:
                 return None
@@ -93,7 +100,7 @@ def map_car_rows(rows, column_spec):
                     pass
 
         return {
-            'pos': get('pos'),
+            'pos': get('Pos'),
             'state': map_car_state(get('Now', False)),
             'num': get('#'),
             'class': get('Cla'),
@@ -132,14 +139,14 @@ def map_laptime(time_td):
             flag = 'sb'
         elif 'chronos_bestperso' in clazz:
             flag = 'pb'
-        return (parse_laptime(time_td.string), flag)
+        return (parse_laptime(maybe_unicode(time_td.string)), flag)
     return None
 
 
 def map_sector(sector_td):
     if sector_td:
         val = ''
-        raw = sector_td.string
+        raw = maybe_unicode(sector_td.string)
         if raw:
             val = parse_laptime(raw)
         else:
