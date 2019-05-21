@@ -125,22 +125,26 @@ def map_car_state(state_td):
 
 
 def map_laptime(time_td):
-    clazz = time_td['class']
-    flag = ''
-    if 'chronos_bestgen' in clazz:
-        flag = 'sb'
-    elif 'chronos_bestperso' in clazz:
-        flag = 'pb'
-    return (parse_laptime(time_td.string), flag)
+    if time_td:
+        clazz = time_td['class']
+        flag = ''
+        if 'chronos_bestgen' in clazz:
+            flag = 'sb'
+        elif 'chronos_bestperso' in clazz:
+            flag = 'pb'
+        return (parse_laptime(time_td.string), flag)
+    return None
 
 
 def map_sector(sector_td):
-    val = ''
-    raw = sector_td.string
-    if raw:
-        val = parse_laptime(raw)
-    else:
-        if 'chronos_bestgen' in sector_td['class']:
-            val = '*'
+    if sector_td:
+        val = ''
+        raw = sector_td.string
+        if raw:
+            val = parse_laptime(raw)
+        else:
+            if 'chronos_bestgen' in sector_td['class']:
+                val = '*'
 
-    return (val, '')
+        return (val, '')
+    return None
