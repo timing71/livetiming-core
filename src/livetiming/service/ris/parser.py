@@ -15,11 +15,16 @@ def parse_feed(fp):
     session_times_row = all_rows[3].find_all('td')
     time_remain = parse_session_time(session_times_row[0].string)
 
+    column_spec = map(
+        lambda t: t.string,
+        soup.body.table.find_all('td', recursive=False)
+    )
+
     return {
         "series": series,
         "session": session,
         "timeRemain": time_remain,
-        "cars": map_car_rows(all_rows[8:-1])
+        "cars": map_car_rows(all_rows[8:-1], column_spec)
     }
 
 
@@ -47,63 +52,76 @@ def parse_laptime(formattedTime):
 LAPS_REGEX = re.compile('==(?P<lapcount>[0-9]+)==')
 
 
-def map_car_rows(rows):
+def map_car_rows(rows, column_spec):
     accum = {}
 
     def map_car_row(row):
         tds = row.find_all('td')
 
-        laps_or_gap = tds[10].string
-
-        maybe_lap = LAPS_REGEX.match(laps_or_gap)
-        gap = laps_or_gap
-        if maybe_lap:
-            new_lap = int(maybe_lap.group('lapcount'))
-            if 'leader_lap' in accum:
-                gap_laps = accum['leader_lap'] - new_lap
-                gap = '{} lap{}'.format(
-                    gap_laps,
-                    '' if gap_laps == 1 else 's'
-                )
+        def get(col, string=True):
+            idx = column_spec.index(col) if col in column_spec else None
+            if idx:
+                if string:
+                    return tds[idx].string
+                return tds[idx]
             else:
-                gap = ''
-                accum['leader_lap'] = new_lap
+                return None
 
-            accum['lap'] = new_lap
-        else:
-            try:
-                gap = float(laps_or_gap)
-            except ValueError:
-                pass
+        gap_idx = column_spec.index('Gap') if 'Gap' in column_spec else None
+        if gap_idx:
+            laps_or_gap = tds[gap_idx].string
+
+            maybe_lap = LAPS_REGEX.match(laps_or_gap)
+            gap = laps_or_gap
+            if maybe_lap:
+                new_lap = int(maybe_lap.group('lapcount'))
+                if 'leader_lap' in accum:
+                    gap_laps = accum['leader_lap'] - new_lap
+                    gap = '{} lap{}'.format(
+                        gap_laps,
+                        '' if gap_laps == 1 else 's'
+                    )
+                else:
+                    gap = ''
+                    accum['leader_lap'] = new_lap
+
+                accum['lap'] = new_lap
+            else:
+                try:
+                    gap = float(laps_or_gap)
+                except ValueError:
+                    pass
 
         return {
-            'pos': tds[0].string,
-            'state': map_car_state(tds[1]),
-            'num': tds[2].string,
-            'class': tds[3].string,
-            'team': tds[4].string,
-            'driver': tds[5].string,
-            's1': map_sector(tds[6]),
-            's2': map_sector(tds[7]),
-            's3': map_sector(tds[8]),
-            'best_lap': map_laptime(tds[9]),
-            'last_lap': map_laptime(tds[11]),
+            'pos': get('pos'),
+            'state': map_car_state(get('Now', False)),
+            'num': get('#'),
+            'class': get('Cla'),
+            'team': get('Team'),
+            'driver': get('Drivers on Track'),
+            's1': map_sector(get('S1', False)),
+            's2': map_sector(get('S2', False)),
+            's3': map_sector(get('S3', False)),
+            'best_lap': map_laptime(get('Best Time', False)),
+            'last_lap': map_laptime(get('Last Time', False)),
             'laps': accum['lap'],
             'gap': gap,
-            'pits': tds[12].string
+            'pits': get('PS')
         }
 
     return map(map_car_row, rows)
 
 
 def map_car_state(state_td):
-    clazz = state_td['class']
-    if 'chronos_run' in clazz:
-        return 'RUN'
-    elif 'chronos_pitin' in clazz:
-        return 'PIT'
-    elif 'chronos_pitout' in clazz:
-        return 'OUT'
+    if state_td:
+        clazz = state_td['class']
+        if 'chronos_run' in clazz:
+            return 'RUN'
+        elif 'chronos_pitin' in clazz:
+            return 'PIT'
+        elif 'chronos_pitout' in clazz:
+            return 'OUT'
+    return ''
 
 
 def map_laptime(time_td):
