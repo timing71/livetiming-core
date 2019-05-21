@@ -1,8 +1,14 @@
 from livetiming.racing import Stat
 from livetiming.service import Service as lt_service
+from livetiming.service.ris import parse_feed
+from livetiming.utils import uncache
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
+from twisted.web.client import Agent, readBody
 
 import argparse
+import os
 import time
 
 
@@ -17,6 +23,24 @@ def parse_extra_args(eargs):
     return parser.parse_args(eargs)
 
 
+def _map_car(car):
+    return [
+        car.get('num'),
+        car.get('state'),
+        car.get('class'),
+        car.get('driver'),
+        car.get('team'),
+        car.get('laps'),
+        car.get('gap'),
+        car.get('s1'),
+        car.get('s2'),
+        car.get('s3'),
+        car.get('last_lap'),
+        car.get('best_lap'),
+        car.get('pits')
+    ]
+
+
 class Service(lt_service):
     attribution = ['RIS Timing', 'http://ris-timing.be/']
     auto_poll = False
@@ -26,8 +50,13 @@ class Service(lt_service):
         self._extra_args = parse_extra_args(extra_args)
 
         self._data = {
+            'series': 'RIS Timing',
+            'session': '',
+            'timeRemain': 0,
             'cars': []
         }
+
+        self._agent = Agent(reactor)
 
     def getName(self):
         return self._data.get('series', 'RIS Timing')
@@ -66,14 +95,36 @@ class Service(lt_service):
         }
 
     def _map_cars(self):
-        return []
+        return map(_map_car, self._data['cars'])
 
     def _map_session(self):
         return {
-            "flagState": "none",
-            "timeElapsed": 0
+            "flagState": "green",
+            "timeElapsed": 0,
+            'timeRemain': self._data['timeRemain']
         }
 
+    @inlineCallbacks
     def _get_raw_feed(self):
-        self.log.info("Pretending to get raw feed")
+
+        url = uncache(
+            os.path.join(
+                ROOT_URL,
+                self._extra_args.event,
+                self._extra_args.year,
+                'live.htm'
+            )
+        )()
+
+        self.log.debug('Getting {url}', url=url)
+
+        response = yield self._agent.request(
+            'GET',
+            url
+        )
+
+        feed = yield readBody(response)
+
+        self._data = parse_feed(feed)
+
         self._updateAndPublishRaceState()
