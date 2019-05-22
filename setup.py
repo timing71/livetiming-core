@@ -25,6 +25,7 @@ setup(
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
         "autobahn[twisted]>=17.6.2",
+        "beautifulsoup4",
         "crossbar==18.4.1",  # Latest version that supports Python 2.7
         "dictdiffer",
         "enum34",
@@ -32,6 +33,7 @@ setup(
         "icalendar",
         "kitchen",
         "livetimingrelay",  # Only really required for the master relay
+        "lxml",
         "lzstring==1.0.3",
         "meteor-ejson",
         "oauth2client",  # Not included in google-api-python-client despite what Google say
