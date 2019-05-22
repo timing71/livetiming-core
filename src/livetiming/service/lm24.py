@@ -7,3 +7,8 @@ class Service(WECService):
 
     def getName(self):
         return "Le Mans 24 Hours"
+
+    def getDefaultDescription(self):
+        if self.session:
+            return self.session.get('name_en')
+        return ''
