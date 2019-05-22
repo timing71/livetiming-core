@@ -1,7 +1,8 @@
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import run
+from autobahn.twisted.wamp import ApplicationSession
 from autobahn.twisted.websocket import WebSocketClientFactory
 from autobahn.wamp.types import PublishOptions, RegisterOptions
-from livetiming import configure_sentry_twisted, load_env, sentry
+from livetiming import configure_sentry_twisted, load_env, sentry, make_component
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -120,8 +121,6 @@ class Service(object):
 
     def start(self):
         session_class = create_service_session(self)
-        router = unicode(os.environ["LIVETIMING_ROUTER"])
-        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
 
         if self.auto_poll:
             updater = LoopingCall(self._updateAndPublishRaceState)
@@ -135,7 +134,9 @@ class Service(object):
             LoopingCall(saveAsync).start(60)
             LoopingCall(self.analyser._publish_pending).start(60)
 
-        runner.run(session_class, auto_reconnect=True, log_level="debug" if self.args.debug else "info")
+        component = make_component(session_class)
+        run(component, log_level='debug' if self.args.debug else 'info')
+
         self.log.info("Service terminated.")
 
     ###################################################

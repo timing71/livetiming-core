@@ -1,8 +1,8 @@
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import run
+from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.types import RegisterOptions, PublishOptions
-from livetiming import configure_sentry_twisted, load_env
+from livetiming import configure_sentry_twisted, load_env, make_component
 from livetiming.network import Channel, Message, MessageClass, Realm, RPC, authenticatedService
-from os import environ
 from twisted.internet import reactor, task
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
@@ -77,9 +77,9 @@ configure_sentry_twisted()
 def main():
     load_env()
     Logger().info("Starting directory service...")
-    router = unicode(environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(Directory, auto_reconnect=True)
+
+    component = make_component(Directory)
+    run(component)
 
 
 if __name__ == '__main__':

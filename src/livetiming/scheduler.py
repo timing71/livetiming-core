@@ -1,7 +1,8 @@
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import run
+from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.types import PublishOptions
 from collections import defaultdict
-from livetiming import servicemanager, load_env, sentry
+from livetiming import servicemanager, load_env, sentry, make_component
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
 from twisted.internet import reactor, task
@@ -169,9 +170,10 @@ class Scheduler(object):
         execute.start(60)  # Start and stop services every minute
 
         session_class = create_scheduler_session(self)
-        router = unicode(os.environ["LIVETIMING_ROUTER"])
-        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-        runner.run(session_class, auto_reconnect=True)
+
+        component = make_component(session_class)
+        run(component)
+
         self.log.info("Scheduler terminated.")
 
     def listSchedule(self):
