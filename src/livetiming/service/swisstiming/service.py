@@ -185,7 +185,7 @@ class Service(DuePublisher, lt_service):
             self.log.info(
                 "Found requested session {sessionID}: {name}",
                 sessionID=sessionID.lower(),
-                name=session['Name']
+                name=self.session['Name']
             )
 
         else:
@@ -196,6 +196,11 @@ class Service(DuePublisher, lt_service):
                     "Using live session {sessionID}: {name}",
                     sessionID=self.session['Id'].lower(),
                     name=self.session['Name']
+                )
+            else:
+                self.log.warn(
+                    'No live sessions detected and no session specified. Available sessions: {sessions}',
+                    sessions=sessions.keys()
                 )
 
         if self.session:
