@@ -100,6 +100,7 @@ def parse_extra_args(extra_args):
     parser.add_argument("--host", help="HH host", default='live-api.hhtiming.com')
     parser.add_argument("--port", help="HH port", type=int, default=24688)
     parser.add_argument('--time', '-t', help='Total time in session', type=int, default=None)
+    parser.add_argument('--no-dump', help='Don\'t dump HH state to file', action='store_true')
 
     a, _ = parser.parse_known_args(extra_args)
     return a
@@ -213,13 +214,14 @@ class Service(lt_service):
         self._last_update = time.time()
         self._due_publish_state = True
 
-        with open(self._state_dump_file(), 'w') as outfile:
-            simplejson.dump(
-                self.protocol.dump_data(),
-                outfile,
-                sort_keys=True,
-                indent='  '
-            )
+        if not self._extra_args.no_dump:
+            with open(self._state_dump_file(), 'w') as outfile:
+                simplejson.dump(
+                    self.protocol.dump_data(),
+                    outfile,
+                    sort_keys=True,
+                    indent='  '
+                )
 
         if msg_type == 'HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage' and not self._has_weather:
             self._has_weather = True
