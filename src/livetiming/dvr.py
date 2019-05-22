@@ -1,7 +1,8 @@
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import run
+from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.types import SubscribeOptions
 from collections import defaultdict
-from livetiming import configure_sentry_twisted, load_env
+from livetiming import configure_sentry_twisted, load_env, make_component
 from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
 from livetiming.recording import TimingRecorder, INTRA_FRAMES
@@ -306,9 +307,8 @@ class StandaloneDVR(DVR):
                 super(MyDVRSession, elf).__init__(config, dvr=self)
 
         session_class = MyDVRSession
-        router = unicode(os.environ["LIVETIMING_ROUTER"])
-        runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-        runner.run(session_class, auto_reconnect=True)
+        component = make_component(session_class)
+        run(component)
         self.log.info("DVR terminated.")
 
 

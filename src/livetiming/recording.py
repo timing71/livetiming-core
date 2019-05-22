@@ -1,6 +1,7 @@
-from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
+from autobahn.twisted.component import run
+from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.types import PublishOptions
-from livetiming import configure_sentry_twisted, load_env, sentry
+from livetiming import configure_sentry_twisted, load_env, sentry, make_component
 from livetiming.analysis import Analyser
 from livetiming.network import RPC, Realm, authenticatedService, Message,\
     MessageClass, Channel
@@ -484,9 +485,9 @@ def main():
     load_env()
     configure_sentry_twisted()
     Logger().info("Starting recording directory service...")
-    router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
-    runner = ApplicationRunner(url=router, realm=Realm.TIMING)
-    runner.run(RecordingsDirectory)
+
+    component = make_component(RecordingsDirectory)
+    run(component)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
+from autobahn.twisted.component import Component
 from dotenv import load_dotenv, find_dotenv
+from livetiming.network import Realm
 from twisted.python import log
 
 import os
@@ -45,3 +47,19 @@ def configure_sentry_twisted():
     if not _sentry_twisted_configured:
         log.addObserver(_log_to_sentry)
         _sentry_twisted_configured = True
+
+
+def make_component(session_class):
+    router = unicode(os.environ["LIVETIMING_ROUTER"])
+    return Component(
+        realm=Realm.TIMING,
+        session_factory=session_class,
+        transports=[
+            {
+                'url': router,
+                'options': {
+                    'autoFragmentSize': 1024 * 128
+                }
+            }
+        ]
+    )
