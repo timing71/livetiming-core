@@ -108,9 +108,15 @@ class Tweeter(object):
             self.log.info("No Twitter credentials provided (or credentials incomplete), Twitter functionality disabled.")
 
     def _construct_message(self, template, event):
+        if '-m' in event.serviceArgs:
+            service_name = event.serviceArgs[event.serviceArgs.index('-m') + 1]
+        elif '--masquerade' in event.serviceArgs:
+            service_name = event.serviceArgs[event.serviceArgs.index('--masquerade') + 1]
+        else:
+            service_name = event.service
         return template.format(
             name=event.name,
-            link="https://timing.71wytham.org.uk/s/{}".format(event.service)
+            link="https://timing.71wytham.org.uk/s/{}".format(service_name)
         )
 
     def tweet(self, text):

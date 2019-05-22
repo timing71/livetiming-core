@@ -296,7 +296,12 @@ class Service(object):
         return manifest
 
     def _getServiceClass(self):
-        return self.__module__[19:]  # Everything after 'livetiming.service.'
+        if self.args.masquerade:
+            return self.args.masquerade
+
+        # Return the segment of the module path after livetiming.service.
+        # e.g. livetiming.service.[swisstiming].service
+        return self.__module__.split('.')[2]
 
     def _getDescription(self):
         if self.args.description is not None:
@@ -491,6 +496,7 @@ def parse_args():
     parser.add_argument('--disable-analysis', action='store_true')
     parser.add_argument('-H', '--hidden', action='store_true', help='Hide this service from the UI except by UUID access')
     parser.add_argument('-N', '--do-not-record', action='store_true', help='Tell the DVR not to keep the recording of this service')
+    parser.add_argument('-m', '--masquerade', nargs='?', help='Masquerade as this service class')
 
     return parser.parse_known_args()
 
