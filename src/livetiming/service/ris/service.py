@@ -127,8 +127,12 @@ class Service(lt_service):
             url
         )
 
-        feed = yield readBody(response)
+        if response.code == 200:
 
-        self._data = parse_feed(feed)
+            feed = yield readBody(response)
 
-        self._updateAndPublishRaceState()
+            self._data = parse_feed(feed)
+
+            self._updateAndPublishRaceState()
+        else:
+            self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)
