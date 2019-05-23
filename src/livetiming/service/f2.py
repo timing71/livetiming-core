@@ -236,11 +236,14 @@ class Service(lt_service):
                             car[5] = line["intervalP"]["Value"]
                         if "pits" in line:
                             car[11] = line["pits"]["Value"]
-                try:
-                    if "Session" in message["A"][1]:
-                        self._setDescription(message["A"][1]["Session"])
-                except TypeError:
-                    pass
+                if "Session" in data:
+                    self._setDescription(data['Session'])
+                else:
+                    try:
+                        if "Session" in message["A"][1]:
+                            self._setDescription(message["A"][1]["Session"])
+                    except TypeError:
+                        pass
 
             if messageType == "statsfeed":
                 data = message["A"][1]
