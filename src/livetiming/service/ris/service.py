@@ -8,6 +8,8 @@ from twisted.internet.task import LoopingCall
 from twisted.web.client import Agent, readBody
 
 import argparse
+import datetime
+import dateutil.parser
 import os
 import time
 
@@ -60,6 +62,8 @@ class Service(lt_service):
             'cars': []
         }
 
+        self._last_modified = None
+
         self._agent = Agent(reactor)
 
     def getName(self):
@@ -102,10 +106,18 @@ class Service(lt_service):
         return map(_map_car, self._data['cars'])
 
     def _map_session(self):
+
+        time_remain = self._data.get('timeRemain', 0)
+
+        if self._last_modified:
+            now = datetime.datetime.utcnow()
+            delta = (now - self._last_modified).total_seconds()
+            time_remain -= delta
+
         return {
             "flagState": "green",
             "timeElapsed": 0,
-            'timeRemain': self._data['timeRemain']
+            'timeRemain': max(0, time_remain)
         }
 
     @inlineCallbacks
@@ -129,10 +141,16 @@ class Service(lt_service):
 
         if response.code == 200:
 
-            feed = yield readBody(response)
+            try:
+                feed = yield readBody(response)
 
-            self._data = parse_feed(feed)
+                self._data = parse_feed(feed)
+                self._last_modified = dateutil.parser.parse(response.headers.getRawHeaders('last-modified')[0])
+                self._last_modified = self._last_modified.replace(tzinfo=None) - self._last_modified.utcoffset()
 
-            self._updateAndPublishRaceState()
+                self._updateAndPublishRaceState()
+            except Exception as e:
+                print 'FAIL'
+                self.log.error(e)
         else:
             self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)
