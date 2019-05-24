@@ -38,6 +38,7 @@ setup(
         "meteor-ejson",
         "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pyopenssl",
+        "python-dateutil",
         "python-dotenv",
         "python-twitter",
         "sentry-sdk",
