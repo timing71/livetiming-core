@@ -1,3 +1,4 @@
+from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat
 from livetiming.service import Service as lt_service
 from livetiming.service.ris import parse_feed
@@ -12,6 +13,7 @@ import datetime
 import dateutil.parser
 import os
 import time
+import txaio
 
 
 ROOT_URL = 'http://www.ris-timing.be/vitesse/'
@@ -44,6 +46,30 @@ def _map_car(car):
     ]
 
 
+class RaceControlMessage(TimingMessage):
+    def __init__(self, get_messages):
+        self._get_messages = get_messages
+        self._prev_messages = []
+
+    def process(self, _, __):
+
+        messages = self._get_messages()
+        new_messages = [m for m in messages if m not in self._prev_messages]
+
+        msgs = []
+
+        for msg in new_messages:
+            hasCarNum = CAR_NUMBER_REGEX.search(msg)
+            if hasCarNum:
+                msgs.append([time.time(), "Race Control", msg.upper(), "raceControl", hasCarNum.group('race_num')])
+            else:
+                msgs.append([time.time(), "Race Control", msg.upper(), "raceControl"])
+
+        self._prev_messages = messages
+
+        return msgs
+
+
 class Service(lt_service):
     attribution = ['RIS Timing', 'http://ris-timing.be/']
     auto_poll = False
@@ -65,6 +91,10 @@ class Service(lt_service):
         self._last_modified = None
 
         self._agent = Agent(reactor)
+
+        def get_messages():
+            return self._data.get('messages', [])
+        self._rc_messages = RaceControlMessage(get_messages)
 
     def getName(self):
         return self._data.get('series', 'RIS Timing')
@@ -91,6 +121,11 @@ class Service(lt_service):
 
     def getPollInterval(self):
         return 5
+
+    def getExtraMessageGenerators(self):
+        return [
+            self._rc_messages
+        ]
 
     def start(self):
         LoopingCall(self._get_raw_feed).start(5)
@@ -159,7 +194,8 @@ class Service(lt_service):
 
                 self._updateAndPublishRaceState()
             except Exception as e:
-                print 'FAIL'
-                self.log.error(e)
+                fail = txaio.create_failure()
+                self.log.critical(txaio.failure_format_traceback(fail))
+                print feed
         else:
             self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)

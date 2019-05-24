@@ -20,11 +20,17 @@ def parse_feed(fp):
         soup.body.table.find_all('td', recursive=False)
     )
 
+    messages = map(
+        lambda td: unicode(td.string),
+        soup.body.table.find_all(class_='MessageDC1')
+    )
+
     return {
         "series": series,
         "session": session,
         "timeRemain": time_remain,
-        "cars": map_car_rows(all_rows[8:-1], column_spec)
+        "cars": map_car_rows(all_rows[8:-1], column_spec),
+        'messages': messages
     }
 
 
