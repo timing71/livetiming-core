@@ -45,8 +45,11 @@ def parse_laptime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%M:%S.%f")
             return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
         except ValueError:
-            ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
-            return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except:
+                return None
 
 
 def maybe_unicode(raw):
@@ -156,7 +159,7 @@ def map_sector(sector_td):
         flag = ''
         raw = maybe_unicode(sector_td.string)
         if raw:
-            val = parse_laptime(raw)
+            val = parse_laptime(raw) or '?'
 
         if 'chronos_bestgen' in sector_td['class']:
             flag = 'sb'
