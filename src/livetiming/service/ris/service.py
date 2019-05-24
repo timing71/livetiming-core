@@ -139,6 +139,9 @@ class Service(lt_service):
             url
         )
 
+        prev_series = self._data.get('series')
+        prev_session = self._data.get('session')
+
         if response.code == 200:
 
             try:
@@ -147,6 +150,12 @@ class Service(lt_service):
                 self._data = parse_feed(feed)
                 self._last_modified = dateutil.parser.parse(response.headers.getRawHeaders('last-modified')[0])
                 self._last_modified = self._last_modified.replace(tzinfo=None) - self._last_modified.utcoffset()
+
+                session_change = prev_series != self._data.get('series') or prev_session != self._data.get('session')
+                if session_change:
+                    self.publishManifest()
+                    if self.analyser:
+                        self.analyser.reset()
 
                 self._updateAndPublishRaceState()
             except Exception as e:
