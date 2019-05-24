@@ -75,8 +75,9 @@ def map_car_rows(rows, column_spec):
                 return None
 
         gap_idx = column_spec.index('Gap') if 'Gap' in column_spec else None
+        lap_idx = column_spec.index('Lap') if 'Lap' in column_spec else None
         if gap_idx:
-            laps_or_gap = tds[gap_idx].string
+            laps_or_gap = unicode(tds[gap_idx].string)
 
             maybe_lap = LAPS_REGEX.match(laps_or_gap)
             gap = laps_or_gap
@@ -97,7 +98,9 @@ def map_car_rows(rows, column_spec):
                 try:
                     gap = float(laps_or_gap)
                 except ValueError:
-                    pass
+                    gap = ''
+        if lap_idx:
+            accum['lap'] = unicode(tds[lap_idx].string)
 
         return {
             'pos': get('Pos'),
@@ -111,7 +114,7 @@ def map_car_rows(rows, column_spec):
             's3': map_sector(get('S3', False)),
             'best_lap': map_laptime(get('Best Time', False)),
             'last_lap': map_laptime(get('Last Time', False)),
-            'laps': accum['lap'],
+            'laps': accum.get('lap'),
             'gap': gap,
             'pits': get('PS')
         }
@@ -124,6 +127,8 @@ def map_car_state(state_td):
         clazz = state_td['class']
         if state_td.string == 'IN':
             return 'PIT'
+        elif state_td.string == 'OUT':
+            return 'OUT'
         elif 'chronos_run' in clazz:
             return 'RUN'
         elif 'chronos_pitin' in clazz:
@@ -148,12 +153,15 @@ def map_laptime(time_td):
 def map_sector(sector_td):
     if sector_td:
         val = ''
+        flag = ''
         raw = maybe_unicode(sector_td.string)
         if raw:
             val = parse_laptime(raw)
-        else:
-            if 'chronos_bestgen' in sector_td['class']:
-                val = '*'
 
-        return (val, '')
+        if 'chronos_bestgen' in sector_td['class']:
+            flag = 'sb'
+        elif 'chronos_bestperso' in sector_td['class']:
+            flag = 'pb'
+
+        return (val, flag)
     return None
