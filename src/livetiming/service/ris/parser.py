@@ -105,7 +105,7 @@ def map_car_rows(rows, column_spec):
                 accum['lap'] = new_lap
             else:
                 try:
-                    gap = float(laps_or_gap)
+                    gap = parse_laptime(laps_or_gap)
                 except ValueError:
                     gap = ''
         if lap_idx:
