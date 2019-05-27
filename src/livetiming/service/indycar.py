@@ -308,13 +308,13 @@ class Service(lt_service):
                 car["pitStops"]
             ])
 
-        bestLapIdx = 17
-        lastLapIdx = 15
+        bestLapIdx = 16 if self._oval_mode else 17
+        lastLapIdx = 14 if self._oval_mode else 15
         bs1_idx = 9 if self._oval_mode else 10
         s1_idx = bs1_idx - 1
         bs2_idx = 11 if self._oval_mode else 12
         s2_idx = bs2_idx - 1
-        lastSectorIdx = 13
+        lastSectorIdx = 10 if self._oval_mode else 13
 
         for car in cars:
             num = car[0]
