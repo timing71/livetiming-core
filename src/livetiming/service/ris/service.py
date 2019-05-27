@@ -196,6 +196,5 @@ class Service(lt_service):
             except Exception as e:
                 fail = txaio.create_failure()
                 self.log.critical(txaio.failure_format_traceback(fail))
-                print feed
         else:
             self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)
