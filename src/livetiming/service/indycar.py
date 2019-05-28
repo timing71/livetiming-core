@@ -53,7 +53,10 @@ def parseSessionTime(formattedTime):
             ttime = datetime.strptime(formattedTime, "%M:%S")
             return (60 * ttime.minute) + ttime.second
         except ValueError:
-            return formattedTime
+            try:
+                return int(formattedTime)
+            except ValueError:
+                return formattedTime
 
 
 def parseSpeed(formatted):
