@@ -7,7 +7,7 @@ from livetiming.network import authenticatedService, Realm, RPC, Channel,\
     MessageClass, Message
 from livetiming.recording import TimingRecorder, INTRA_FRAMES
 from lzstring import LZString
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import DeferredLock, inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
@@ -63,6 +63,7 @@ class DirectoryTimingRecorder(TimingRecorder):
         super(DirectoryTimingRecorder, self).__init__(deduped_recfile)
         os.mkdir(deduped_recfile)
         self._finalised = False
+        self._lock = DeferredLock()
 
     def writeManifest(self, serviceRegistration):
         if self._finalised:
@@ -77,6 +78,9 @@ class DirectoryTimingRecorder(TimingRecorder):
             simplejson.dump(serviceRegistration, mf)
 
     def writeState(self, state, timestamp=None):
+        self._lock.run(self._writeStateInternal, state, timestamp)
+
+    def _writeStateInternal(self, state, timestamp=None):
         if self._finalised:
             raise Exception("Cannot write state to a finalised DTR")
         if not timestamp:
