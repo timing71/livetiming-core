@@ -7,7 +7,7 @@ from livetiming.network import RPC, Realm, authenticatedService, Message,\
     MessageClass, Channel
 from livetiming.racing import Stat
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import DeferredLock, inlineCallbacks
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
@@ -64,6 +64,7 @@ class TimingRecorder(object):
         self.first_frame = None
         self.latest_frame = time.time()
         self.manifest = None
+        self._lock = DeferredLock()
 
     def writeManifest(self, serviceRegistration):
         serviceRegistration["startTime"] = time.time()
@@ -76,6 +77,9 @@ class TimingRecorder(object):
         updateZip(self.recordFile, "manifest.json", simplejson.dumps(serviceRegistration))
 
     def writeState(self, state, timestamp=None):
+        self._lock.run(self._writeStateInternal, state, timestamp)
+
+    def _writeStateInternal(self, state, timestamp=None):
         if not timestamp:
             timestamp = int(time.time())
         with zipfile.ZipFile(self.recordFile, 'a', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
