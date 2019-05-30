@@ -104,7 +104,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                 except Exception as e:
                     log.error(
                         'Failed to apply patch! Original data was {orig}, patch was {patch}, error was {exc}',
-                        orig=self_data[channel],
+                        orig=self._data[channel],
                         patch=data,
                         exc=e
                     )

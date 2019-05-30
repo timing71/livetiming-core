@@ -135,8 +135,8 @@ class Service(DuePublisher, lt_service):
 
         self._session_data = None
         self._timing_data = None
-        self._messages = []
-        self.mostRecentMessage = None
+        self._rc_messages = RaceControlMessage([])
+        self._last_msg_time = -1
         self._previous_laps = {}
 
         client_def = create_client(self.namespace, self.profile, self._load_season, self.log)
@@ -220,6 +220,12 @@ class Service(DuePublisher, lt_service):
 
     def _handle_session(self, data):
         self._session_data = data
+
+        rc_messages = [m for m in data.get('Messages', []) if m['Time'] > self._last_msg_time]
+        for m in rc_messages:
+            self._rc_messages.messageList.append(m['Text'])
+            self._last_msg_time = max(self._last_msg_time, m['Time'])
+
         self.set_due_publish()
 
     def getColumnSpec(self):
@@ -271,12 +277,12 @@ class Service(DuePublisher, lt_service):
         return self._no_service_state()
 
     def getExtraMessageGenerators(self):
-        return [RaceControlMessage(self._messages)]
+        return [self._rc_messages]
 
     def _compile_state(self):
         cars = []
 
-        for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e['ListIndex']):
+        for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e.get('ListIndex', 9999)):
             competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
             if competitor:
                 driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
