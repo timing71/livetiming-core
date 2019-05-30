@@ -61,7 +61,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                 url_to_fetch = '{}{}.json?s={}'.format(
                     data['CachingClusterURL'],
                     channel.replace('|', '/'),
-                    data['CurrentSync']
+                    data.get('CurrentSync', 0)
                 )
                 log.debug("Requires fetch: {url}", url=url_to_fetch)
                 self._fetch_data(channel, url_to_fetch)
@@ -71,7 +71,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
             if channel in self._meta:
                 meta = self._meta[channel]
 
-                requires_fetch = meta['CurrentSync'] != data['sync']
+                requires_fetch = meta.get('CurrentSync') != data.get('sync')
                 if requires_fetch:
                     url_to_fetch = '{}{}/{}.json?t=0'.format(
                         meta['CachingClusterURL'],
