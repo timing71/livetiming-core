@@ -84,12 +84,15 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
         @inlineCallbacks
         def _fetch_data(self, channel, url):
             response = yield self._agent.request('GET', url)
-            body = yield readBody(response)
-            parsed = simplejson.loads(body)
-            self._apply_data(channel, parsed)
-            if channel in self._callbacks:
-                cb = self._callbacks[channel]
-                cb(self._data[channel])
+            if response.code == 200:
+                body = yield readBody(response)
+                parsed = simplejson.loads(body)
+                self._apply_data(channel, parsed)
+                if channel in self._callbacks:
+                    cb = self._callbacks[channel]
+                    cb(self._data[channel])
+            else:
+                log.warn("Received response code {code} for URL {url}", code=response.code, url=url)
 
         def _apply_data(self, channel, data):
             content = data.get('content', {})
