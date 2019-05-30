@@ -283,39 +283,42 @@ class Service(DuePublisher, lt_service):
         cars = []
 
         for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e.get('ListIndex', 9999)):
-            competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
-            if competitor:
-                driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
-                if 'ClassId' in competitor:
-                    clazz = self._session_data['Classes'][competitor['ClassId']].get('ShortName', '') if competitor['ClassId'] in self._session_data['Classes'] else competitor['ClassId']
+            if 'CompetitorId' in entry:
+                competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
+                if competitor:
+                    driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
+                    if 'ClassId' in competitor:
+                        clazz = self._session_data['Classes'][competitor['ClassId']].get('ShortName', '') if competitor['ClassId'] in self._session_data['Classes'] else competitor['ClassId']
+                    else:
+                        clazz = ''
+
+                    main_result = entry['MainResult']
+
+                    cars.append([
+                        competitor['Bib'],
+                        map_car_state(main_result['Status'], competitor['InPitLane']),
+                        clazz,
+                        u"{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
+                        competitor.get('CarTypeName', ''),
+                        competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
+                        main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,
+                        main_result['Behind'] if 'Behind' in main_result else '',
+                        main_result['Diff'] if 'Diff' in main_result else '',
+                        parse_time_data(main_result['LastLap']['Intermediates'][0]) if 'LastLap' in main_result else ('', ''),
+                        parse_time_data(main_result['LastLap']['Intermediates'][1]) if 'LastLap' in main_result else ('', ''),
+                        parse_time_data(main_result['LastLap']['Intermediates'][2]) if 'LastLap' in main_result else ('', ''),
+                        parse_time_data(main_result['LastLap']) if 'LastLap' in main_result else ('', ''),
+                        parse_time_data(main_result['BestTime']) if 'BestTime' in main_result else ('', ''),
+                        competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
+                    ])
+
+                    # Hack in previous lap before it disappears from the data feed
+                    if cars[-1][12][0] == '':
+                        cars[-1][12] = self._previous_laps.get(competitor['Bib'], ('', ''))
+                    else:
+                        self._previous_laps[competitor['Bib']] = cars[-1][12]
                 else:
-                    clazz = ''
-
-                main_result = entry['MainResult']
-
-                cars.append([
-                    competitor['Bib'],
-                    map_car_state(main_result['Status'], competitor['InPitLane']),
-                    clazz,
-                    u"{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
-                    competitor.get('CarTypeName', ''),
-                    competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
-                    main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,
-                    main_result['Behind'] if 'Behind' in main_result else '',
-                    main_result['Diff'] if 'Diff' in main_result else '',
-                    parse_time_data(main_result['LastLap']['Intermediates'][0]) if 'LastLap' in main_result else ('', ''),
-                    parse_time_data(main_result['LastLap']['Intermediates'][1]) if 'LastLap' in main_result else ('', ''),
-                    parse_time_data(main_result['LastLap']['Intermediates'][2]) if 'LastLap' in main_result else ('', ''),
-                    parse_time_data(main_result['LastLap']) if 'LastLap' in main_result else ('', ''),
-                    parse_time_data(main_result['BestTime']) if 'BestTime' in main_result else ('', ''),
-                    competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
-                ])
-
-                # Hack in previous lap before it disappears from the data feed
-                if cars[-1][12][0] == '':
-                    cars[-1][12] = self._previous_laps.get(competitor['Bib'], ('', ''))
-                else:
-                    self._previous_laps[competitor['Bib']] = cars[-1][12]
+                    self.log.warn('Unknown competitor for entry {entry}', entry=entry)
             else:
                 self.log.warn('Unknown competitor for entry {entry}', entry=entry)
 

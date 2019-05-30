@@ -12,6 +12,9 @@ from twisted.web.client import Agent, readBody
 import simplejson
 
 
+FETCH_RETRIES = 2
+
+
 def create_client(namespace, profile, on_ready=None, log=Logger()):
     class Client(BaseNamespace):
         def __init__(self, *args, **kwargs):
@@ -73,7 +76,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
 
                 requires_fetch = meta.get('CurrentSync') != data.get('sync')
                 if requires_fetch:
-                    url_to_fetch = '{}{}/{}.json?t=0'.format(
+                    url_to_fetch = '{}{}/{}.json'.format(
                         meta['CachingClusterURL'],
                         channel.replace('|', '/'),
                         data['sync']
@@ -82,17 +85,28 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                     self._fetch_data(channel, url_to_fetch)
 
         @inlineCallbacks
-        def _fetch_data(self, channel, url):
+        def _fetch_data(self, channel, url, tries_remaining=FETCH_RETRIES):
+
+            url = '{}?t={}'.format(
+                url,
+                FETCH_RETRIES - tries_remaining
+            )
+
             response = yield self._agent.request('GET', url)
-            if response.code == 200:
-                body = yield readBody(response)
-                parsed = simplejson.loads(body)
-                self._apply_data(channel, parsed)
-                if channel in self._callbacks:
-                    cb = self._callbacks[channel]
-                    cb(self._data[channel])
-            else:
-                log.warn("Received response code {code} for URL {url}", code=response.code, url=url)
+            try:
+                if response.code == 200:
+                    body = yield readBody(response)
+                    parsed = simplejson.loads(body)
+                    self._apply_data(channel, parsed)
+                    if channel in self._callbacks:
+                        cb = self._callbacks[channel]
+                        cb(self._data[channel])
+                    return
+            except Exception as e:
+                log.error('Exception retrieving data: {e}', e=e)
+            log.warn("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
+            if tries_remaining > 0:
+                reactor.callLater(0.5, self._fetch_data, channel, url, tries_remaining - 1)
 
         def _apply_data(self, channel, data):
             content = data.get('content', {})
