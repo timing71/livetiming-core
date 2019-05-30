@@ -192,11 +192,6 @@ class Service(DuePublisher, lt_service):
             live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
             if live_sessions:
                 self.session = live_sessions[-1]
-                self.log.info(
-                    "Using live session {sessionID}: {name}",
-                    sessionID=self.session['Id'].lower(),
-                    name=self.session['Name']
-                )
             else:
                 self.log.warn(
                     'No live sessions detected and no session specified. Available sessions: {sessions}',
@@ -204,12 +199,19 @@ class Service(DuePublisher, lt_service):
                 )
 
         if self.session:
-            if prev_session and prev_session['Id'] != self.session['Id']:
-                self.log.info("Changing session from {old} to {new}", old=prev_session, new=self.session)
-                self.analyser.reset()
-                self._previous_laps = {}
-                self._session_data = None
-                self._timing_data = None
+            if prev_session:
+                if prev_session['Id'] != self.session['Id']:
+                    self.log.info("Changing session from {old} to {new}", old=prev_session, new=self.session)
+                    self.analyser.reset()
+                    self._previous_laps = {}
+                    self._session_data = None
+                    self._timing_data = None
+            else:
+                self.log.info(
+                    "Using live session {sessionID}: {name}",
+                    sessionID=self.session['Id'].lower(),
+                    name=self.session['Name']
+                )
             self._client.get_timing(self.session['Id'], self._handle_timing)
             self._client.get_comp_detail(self.session['Id'], self._handle_session)
         self.publishManifest()

@@ -104,9 +104,11 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                     return
             except Exception as e:
                 log.error('Exception retrieving data: {e}', e=e)
-            log.warn("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
+            log.debug("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
             if tries_remaining > 0:
                 reactor.callLater(0.5, self._fetch_data, channel, url, tries_remaining - 1)
+            else:
+                log.error("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
 
         def _apply_data(self, channel, data):
             content = data.get('content', {})
