@@ -15,6 +15,10 @@ import simplejson
 FETCH_RETRIES = 2
 
 
+class AsyncDataFetchException(Exception):
+    pass
+
+
 def create_client(namespace, profile, on_ready=None, log=Logger()):
     class Client(BaseNamespace):
         def __init__(self, *args, **kwargs):
@@ -61,13 +65,21 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
             requires_fetch = channel not in self._meta or self._meta[channel]['CurrentSync'] != data['CurrentSync']
             self._meta[channel] = data
             if requires_fetch:
+                self._init_channel(channel)
+
+        def _init_channel(self, channel):
+            if channel in self._meta:
+                meta = self._meta[channel]
                 url_to_fetch = '{}{}.json?s={}'.format(
-                    data['CachingClusterURL'],
+                    meta['CachingClusterURL'],
                     channel.replace('|', '/'),
-                    data.get('CurrentSync', 0)
+                    meta.get('CurrentSync', 0)
                 )
                 log.debug("Requires fetch: {url}", url=url_to_fetch)
-                self._fetch_data(channel, url_to_fetch)
+                try:
+                    self._fetch_data(channel, url_to_fetch)
+                except AsyncDataFetchException:
+                    log.error('Failed to fetch {url}!', url=url_to_fetch)
 
         def _handle_async_data(self, data):
             channel = data['Channel']
@@ -82,7 +94,12 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                         data['sync']
                     )
                     log.debug("Requires fetch: {url}", url=url_to_fetch)
-                    self._fetch_data(channel, url_to_fetch)
+                    try:
+                        self._fetch_data(channel, url_to_fetch)
+                    except AsyncDataFetchException:
+                        # Go for a full reload of the data
+                        log.warn('Failed to fetch data for {channel}, going to fully reload it.', channel=channel)
+                        self._init_channel(channel)
 
         @inlineCallbacks
         def _fetch_data(self, channel, url, tries_remaining=FETCH_RETRIES):
@@ -102,13 +119,16 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                         cb = self._callbacks[channel]
                         cb(self._data[channel])
                     return
+
             except Exception as e:
                 log.error('Exception retrieving data: {e}', e=e)
+
             log.debug("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
             if tries_remaining > 0:
                 reactor.callLater(0.5, self._fetch_data, channel, url, tries_remaining - 1)
             else:
                 log.error("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
+                raise AsyncDataFetchException()
 
         def _apply_data(self, channel, data):
             content = data.get('content', {})
@@ -124,6 +144,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                         patch=data,
                         exc=e
                     )
+                    raise AsyncDataFetchException()
 
         def join(self, channel, with_season=True, callback=None):
 
