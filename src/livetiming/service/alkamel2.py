@@ -3,7 +3,7 @@ from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
+from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory, DuePublisher
 from livetiming.utils.meteor import MeteorClient, MeteorClientException, DDPProtocolFactory
 from twisted.internet.task import LoopingCall
 
@@ -347,12 +347,12 @@ def augment_data_with_loops(data):
     return data_with_loops
 
 
-class Service(lt_service):
+class Service(DuePublisher, lt_service):
     attribution = ['Al Kamel Systems', 'http://www.alkamelsystems.com/']
     auto_poll = False
 
     def __init__(self, args, extra_args, feed=None):
-        lt_service.__init__(self, args, extra_args)
+        super(Service, self).__init__(args, extra_args)
         self.feed = feed
         self._prev_session_id = None
         self._client = AlkamelV2Client(self._getFeedName(parse_extra_args(extra_args)))
@@ -365,17 +365,12 @@ class Service(lt_service):
 
         self._rcMessageGenerator = RaceControlMessage(self._client)
 
-        self._due_publish_state = False
-
-        def set_due_publish():
-            self._due_publish_state = True
-
-        self._client.on_collection_change('standings', set_due_publish)
-        self._client.on_collection_change('session_status', set_due_publish)
-        self._client.on_collection_change('weather', set_due_publish)
-        self._client.on_collection_change('best_results', set_due_publish)
-        self._client.on_collection_change('race_control', set_due_publish)
-        self._client.on_collection_change('sessionBestResultsByClass', set_due_publish)
+        self._client.on_collection_change('standings', self.set_due_publish)
+        self._client.on_collection_change('session_status', self.set_due_publish)
+        self._client.on_collection_change('weather', self.set_due_publish)
+        self._client.on_collection_change('best_results', self.set_due_publish)
+        self._client.on_collection_change('race_control', self.set_due_publish)
+        self._client.on_collection_change('sessionBestResultsByClass', self.set_due_publish)
         self._client.on_collection_change('track_info', self.on_track_info_change)
 
     def _getFeedName(self, args):
@@ -385,15 +380,6 @@ class Service(lt_service):
             return args.feed
         else:
             raise RuntimeError("No feed ID specified for Al Kamel! Cannot continue.")
-
-    def start(self):
-        def maybePublish():
-            if self._due_publish_state:
-                self._updateAndPublishRaceState()
-                self._due_publish_state = False
-        LoopingCall(maybePublish).start(1)
-
-        super(Service, self).start()
 
     def getName(self):
         return self._name
@@ -447,6 +433,7 @@ class Service(lt_service):
         )
         self._prev_session_id = new_session['id']
         self.publishManifest()
+        self.set_due_publish()
 
     def on_track_info_change(self):
         track_info = self._client.find_one('track_info', {'session': self._client._current_session_id})
@@ -460,11 +447,13 @@ class Service(lt_service):
                 else:
                     self._num_sectors = sector_count
                 self.publishManifest()
+                self.set_due_publish()
 
     def _set_has_classes(self, has_classes):
         if has_classes != self._has_classes:
             self._has_classes = has_classes
             self.publishManifest()
+            self.set_due_publish()
 
     def getRaceState(self):
         # print self._client.collection_data.collections()

@@ -485,6 +485,29 @@ class Watchdog(object):
             self._action_method(*self._action_args, **self._action_kwargs)
 
 
+class DuePublisher(object):
+    auto_poll = False
+
+    def __init__(self, *args, **kwargs):
+        super(DuePublisher, self).__init__(*args, **kwargs)
+        self._due_publish = False
+
+    def set_due_publish(self):
+        self._due_publish = True
+
+    def start(self):
+        def maybePublish():
+            if self._due_publish:
+                self.log.debug('Publishing race state update')
+                self._updateAndPublishRaceState()
+                self._due_publish = False
+
+        self.log.info('Polling for publishable state updates.')
+        LoopingCall(maybePublish).start(1)
+
+        super(DuePublisher, self).start()
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Run a Live Timing service.')
 

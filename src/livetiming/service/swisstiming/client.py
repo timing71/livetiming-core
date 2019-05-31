@@ -1,4 +1,8 @@
 from .constants import Channels
+from .data import patch
+from .message import parse_message
+from .socketio import WebsocketOnlySocketIO
+from socketIO_client import BaseNamespace
 from threading import Thread
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -6,121 +10,190 @@ from twisted.logger import Logger
 from twisted.web.client import Agent, readBody
 
 import simplejson
-import socketio
 
 
-class Client(object):
+FETCH_RETRIES = 2
 
-    def __init__(self, namespace, profile):
-        self.namespace = namespace
-        self.profile = profile
 
-        self._data = {}
-        self._meta = {}
+class AsyncDataFetchException(Exception):
+    pass
 
-        self._agent = Agent(reactor)
-        self._sio = self._create_sio()
 
-    def _create_sio(self):
-        sio = socketio.Client(logger=True)
+def create_client(namespace, profile, on_ready=None, log=Logger()):
+    class Client(BaseNamespace):
+        def __init__(self, *args, **kwargs):
+            super(Client, self).__init__(*args, **kwargs)
 
-        @sio.on('ready')
-        def on_ready():
-            self.join(Channels.SEASONS, with_season=False)
+            self._data = {}
+            self._meta = {}
+            self._callbacks = {}
 
-        return sio
+            self._agent = Agent(reactor)
 
-    def _channel(self, channel, with_season=True):
-        if isinstance(channel, Channels):
-            channel = channel.value
+        def on_connect(self):
+            log.info("Client connected")
 
-        if with_season:
-            season_key = self._channel(Channels.SEASONS, False)
-            season = self._data.get(season_key, {}).get('CurrentSeason')
-            if season:
-                season = '_{}'.format(season)
-        else:
-            season = ''
+        def on_ready(self):
+            self.join(Channels.SEASONS, with_season=False, callback=on_ready)
 
-        return '{}|{}{}{}'.format(
-            self.namespace,
-            self.profile,
-            season,
-            channel
-        )
+        def on_message(self, data):
+            parsed = parse_message(data)
+            if parsed:
+                self._handle_async_data(parsed)
 
-    def _handle_metadata(self, data, channel, callback=None):
-        print "Handing metadata: {} {}".format(channel, data)
-        requires_fetch = channel not in self._meta or self._meta[channel]['CurrentSync'] != data['CurrentSync']
-        self._meta[channel] = data
-        if requires_fetch:
-            url_to_fetch = '{}{}.json?s={}'.format(
-                data['CachingClusterURL'],
-                channel.replace('|', '/'),
-                data['CurrentSync']
+        def _channel(self, channel, with_season=True):
+            if isinstance(channel, Channels):
+                channel = channel.value
+
+            if with_season:
+                season_key = self._channel(Channels.SEASONS, False)
+                season = self._data.get(season_key, {}).get('CurrentSeason')
+                if season:
+                    season = '_{}'.format(season)
+            else:
+                season = ''
+
+            return '{}|{}{}{}'.format(
+                namespace,
+                profile,
+                season,
+                channel
             )
-            print "Requires fetch: {}".format(url_to_fetch)
-            self._fetch_data(channel, url_to_fetch, callback)
 
-    @inlineCallbacks
-    def _fetch_data(self, channel, url, callback):
-        response = yield self._agent.request('GET', url)
-        body = yield readBody(response)
+        def _handle_metadata(self, data, channel):
+            log.debug("Handing metadata: {channel} {data}", channel=channel, data=data)
+            requires_fetch = channel not in self._meta or self._meta[channel]['CurrentSync'] != data['CurrentSync']
+            self._meta[channel] = data
+            if requires_fetch:
+                self._init_channel(channel)
 
-        parsed = simplejson.loads(body)
-        self._apply_data(channel, parsed)
-        if callback:
-            callback(self._data[channel])
+        def _init_channel(self, channel):
+            if channel in self._meta:
+                meta = self._meta[channel]
+                url_to_fetch = '{}{}.json?s={}'.format(
+                    meta['CachingClusterURL'],
+                    channel.replace('|', '/'),
+                    meta.get('CurrentSync', 0)
+                )
+                log.debug("Requires fetch: {url}", url=url_to_fetch)
+                try:
+                    self._fetch_data(channel, url_to_fetch)
+                except AsyncDataFetchException:
+                    log.error('Failed to fetch {url}!', url=url_to_fetch)
 
-    def _apply_data(self, channel, data):
-        content = data.get('content', {})
-        if 'full' in content:
-            self._data[channel] = content['full']
-        else:
-            print "I don't know how to handle partial content yet!"
-            print data
+        def _handle_async_data(self, data):
+            channel = data['Channel']
+            if channel in self._meta:
+                meta = self._meta[channel]
 
-    def join(self, channel, with_season=True, callback=None):
+                requires_fetch = meta.get('CurrentSync') != data.get('sync')
+                if requires_fetch:
+                    url_to_fetch = '{}{}/{}.json'.format(
+                        meta['CachingClusterURL'],
+                        channel.replace('|', '/'),
+                        data['sync']
+                    )
+                    log.debug("Requires fetch: {url}", url=url_to_fetch)
+                    try:
+                        self._fetch_data(channel, url_to_fetch)
+                    except AsyncDataFetchException:
+                        # Go for a full reload of the data
+                        log.warn('Failed to fetch data for {channel}, going to fully reload it.', channel=channel)
+                        self._init_channel(channel)
 
-        def my_callback(data, channel):
-            self._handle_metadata(data, channel, callback)
+        @inlineCallbacks
+        def _fetch_data(self, channel, url, tries_remaining=FETCH_RETRIES):
 
-        self._sio.emit(
-            'join',
-            self._channel(channel, with_season),
-            callback=my_callback
-        )
+            url_to_fetch = '{}?t={}'.format(
+                url,
+                FETCH_RETRIES - tries_remaining
+            )
 
-    def start(self, in_thread=True):
-        self._sio.connect(
-            'https://livestats-lb.sportresult.com',
-            transports=['websocket']
-        )
+            response = yield self._agent.request('GET', url_to_fetch)
+            try:
+                if response.code == 200:
+                    body = yield readBody(response)
+                    parsed = simplejson.loads(body)
+                    self._apply_data(channel, parsed)
+                    if channel in self._callbacks:
+                        cb = self._callbacks[channel]
+                        cb(self._data[channel])
+                    return
 
-        if in_thread:
-            socketThread = Thread(target=self._sio.wait)
-            socketThread.daemon = True
-            socketThread.start()
-        else:
-            self._sio.wait()
+            except Exception as e:
+                log.error('Exception retrieving data: {e}', e=e)
 
-    def get_current_season(self, callback):
-        self.join(Channels.SEASON, callback=callback)
+            log.debug("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url_to_fetch, i=tries_remaining)
+            if tries_remaining > 0:
+                reactor.callLater(0.5, self._fetch_data, channel, url, tries_remaining - 1)
+            else:
+                log.error("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url_to_fetch, i=tries_remaining)
+                raise AsyncDataFetchException()
 
-    def get_schedule(self, meeting_id, callback):
-        self.join(
-            Channels.SCHEDULE.formatted_value(meeting_id=meeting_id.upper()),
-            callback
-        )
+        def _apply_data(self, channel, data):
+            content = data.get('content', {})
+            if 'full' in content:
+                self._data[channel] = content['full']
+            else:
+                try:
+                    patch(self._data[channel], data)
+                except Exception as e:
+                    log.error(
+                        'Failed to apply patch! Original data was {orig}, patch was {patch}, error was {exc}',
+                        orig=self._data[channel],
+                        patch=data,
+                        exc=e
+                    )
+                    raise AsyncDataFetchException()
 
-    def get_timing(self, session_id, callback):
-        self.join(
-            Channels.TIMING.formatted_value(session_id=session_id.upper()),
-            callback
-        )
+        def join(self, channel, with_season=True, callback=None):
 
-    def get_comp_detail(self, session_id, callback):
-        self.join(
-            Channels.COMP_DETAIL.formatted_value(session_id=session_id.upper()),
-            callback
-        )
+            full_channel = self._channel(channel, with_season)
+            log.debug("Joining {channel}", channel=full_channel)
+
+            if callback:
+                self._callbacks[full_channel] = callback
+
+            self.emit(
+                'join',
+                full_channel,
+                callback=self._handle_metadata
+            )
+
+        def get_current_season(self, callback):
+            self.join(Channels.SEASON, callback=callback)
+
+        def get_schedule(self, meeting_id, callback):
+            self.join(
+                Channels.SCHEDULE.formatted_value(meeting_id=meeting_id.upper()),
+                callback=callback
+            )
+
+        def get_timing(self, session_id, callback):
+            self.join(
+                Channels.TIMING.formatted_value(session_id=session_id.upper()),
+                callback=callback
+            )
+
+        def get_comp_detail(self, session_id, callback):
+            self.join(
+                Channels.COMP_DETAIL.formatted_value(session_id=session_id.upper()),
+                callback=callback
+            )
+
+    return Client
+
+
+def start_client(client):
+    sio = WebsocketOnlySocketIO(
+        'https://livestats-lb.sportresult.com',
+        Namespace=client,
+        transports=['websocket'],
+        verify=False
+    )
+
+    socketThread = Thread(target=sio.wait)
+    socketThread.daemon = True
+    socketThread.start()
+
+    return sio.get_namespace()
