@@ -10,9 +10,7 @@ def patch(orig, delta):
             except KeyError:
                 pass
         elif isinstance(i, list):
-            # e.updateProperty(n, $HR(i));
-            print 'TODO', orig, n, i
-            pass
+            orig[n] = i
         elif i is None:
             orig[n] = None
         elif isinstance(i, dict) and i.get('__jsondiff_t') == 'a':
@@ -33,9 +31,15 @@ def patch_array(orig, delta):
         n = int(n)
         if isinstance(i, dict) and i.get('__jsondiff_t') == 'a':
             patch_array(orig[n], i)
-        elif isinstance(orig[n], dict):
+        elif len(orig) > n and isinstance(orig[n], dict):
             patch(orig[n], i)
         else:
+            while len(orig) <= n:
+                orig.append(None)
             orig[n] = i
+    if 'i' in delta:
+        original_items = delta['i']
+        for orig_item in original_items:
+            orig.append(orig_item)
 
     return orig
