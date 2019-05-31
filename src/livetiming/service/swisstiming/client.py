@@ -104,12 +104,12 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
         @inlineCallbacks
         def _fetch_data(self, channel, url, tries_remaining=FETCH_RETRIES):
 
-            url = '{}?t={}'.format(
+            url_to_fetch = '{}?t={}'.format(
                 url,
                 FETCH_RETRIES - tries_remaining
             )
 
-            response = yield self._agent.request('GET', url)
+            response = yield self._agent.request('GET', url_to_fetch)
             try:
                 if response.code == 200:
                     body = yield readBody(response)
@@ -123,11 +123,11 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
             except Exception as e:
                 log.error('Exception retrieving data: {e}', e=e)
 
-            log.debug("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
+            log.debug("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url_to_fetch, i=tries_remaining)
             if tries_remaining > 0:
                 reactor.callLater(0.5, self._fetch_data, channel, url, tries_remaining - 1)
             else:
-                log.error("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url, i=tries_remaining)
+                log.error("Received response code {code} for URL {url} ({i} tries remaining)", code=response.code, url=url_to_fetch, i=tries_remaining)
                 raise AsyncDataFetchException()
 
         def _apply_data(self, channel, data):
