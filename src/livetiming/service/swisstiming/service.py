@@ -178,27 +178,23 @@ class Service(DuePublisher, lt_service):
         sessionID = self.extra_args.session
 
         prev_session = self.session
-        self.session = None
+        new_session = None
 
         if sessionID and sessionID.lower() in sessions:
-            self.session = sessions[sessionID.lower()]
+            new_session = sessions[sessionID.lower()]
             self.log.info(
                 "Found requested session {sessionID}: {name}",
                 sessionID=sessionID.lower(),
-                name=self.session['Name']
+                name=new_session['Name']
             )
 
         else:
             live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
             if live_sessions:
-                self.session = live_sessions[-1]
-            else:
-                self.log.warn(
-                    'No live sessions detected and no session specified. Available sessions: {sessions}',
-                    sessions=sessions.keys()
-                )
+                new_session = live_sessions[-1]
 
-        if self.session:
+        if new_session:
+            self.session = new_session
             if prev_session:
                 if prev_session['Id'] != self.session['Id']:
                     self.log.info("Changing session from {old} to {new}", old=prev_session, new=self.session)
@@ -214,7 +210,15 @@ class Service(DuePublisher, lt_service):
                 )
             self._client.get_timing(self.session['Id'], self._handle_timing)
             self._client.get_comp_detail(self.session['Id'], self._handle_session)
-        self.publishManifest()
+            self.publishManifest()
+
+        elif self.session:
+            self.log.info('No live session detected, maintaining current session.')
+        else:
+            self.log.warn(
+                'No live sessions detected and no session specified. Available sessions: {sessions}',
+                sessions=sessions.keys()
+            )
 
     def _handle_timing(self, data):
         self._timing_data = data
