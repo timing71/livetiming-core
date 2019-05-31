@@ -14,6 +14,10 @@ class StrippedWSTransport(AbstractTransport):
             'EIO': ENGINEIO_PROTOCOL, 'transport': 'websocket'})
         request = http_session.prepare_request(requests.Request('GET', url))
         kw = {'header': ['%s: %s' % x for x in request.headers.items()]}
+
+        if engineIO_session:
+            kw['timeout'] = self._timeout = engineIO_session.ping_timeout
+
         ws_url = '%s://%s/?%s' % (
             'wss' if is_secure else 'ws', url, format_query(params))
         http_scheme = 'https' if is_secure else 'http'
