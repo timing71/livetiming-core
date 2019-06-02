@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
-from livetiming.service.hhtiming import create_protocol
+from livetiming.service.hhtiming import create_protocol, RaceControlMessage
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
@@ -11,30 +10,6 @@ from twisted.internet.task import LoopingCall
 import argparse
 import simplejson
 import time
-
-
-class RaceControlMessage(TimingMessage):
-
-    def __init__(self, protocol):
-        self.protocol = protocol
-        self._messageIndex = 0
-
-    def process(self, _, __):
-
-        new_messages = self.protocol.messages[self._messageIndex:]
-
-        msgs = []
-
-        for msg in sorted(new_messages, key=lambda m: m[0]):
-            hasCarNum = CAR_NUMBER_REGEX.search(msg[1])
-            msgDate = time.time() * 1000
-            if hasCarNum:
-                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl", hasCarNum.group('race_num')])
-            else:
-                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
-
-            self._messageIndex = len(self.protocol.messages)
-        return sorted(msgs, key=lambda m: -m[0])
 
 
 def _map_car_state(car):
@@ -78,12 +53,12 @@ def _extract_sector(sectorIndex, car, num, best_in_class):
     elif sector in previous_sectors:
         prev_sector_time = previous_sectors[sector]['SectorTime']
 
-        if best and best[1] == num and best[0] == prev_sector_time:
+        if len(current_sectors) > 0:
+            flag = 'old'
+        elif best and best[1] == num and best[0] == prev_sector_time:
             flag = 'sb'
         elif sector in pb_sectors and pb_sectors[sector] == prev_sector_time:
             flag = 'pb'
-        elif len(current_sectors) > 0:
-            flag = 'old'
         else:
             flag = ''
 
@@ -210,7 +185,7 @@ class Service(lt_service):
     def _state_dump_file(self):
         return 'hhtiming_state_dump_{}.json'.format(self.uuid)
 
-    def notify_update(self, msg_type):
+    def notify_update(self, msg_type, data):
         self._last_update = time.time()
         self._due_publish_state = True
 
@@ -284,7 +259,7 @@ class Service(lt_service):
         return self.protocol.session.get('EventName', 'Live Timing')
 
     def getDefaultDescription(self):
-        return self.protocol.session.get('SessionDescription')
+        return self.protocol.session.get('SessionDescription', '')
 
     def getRaceState(self):
         return {
@@ -363,6 +338,7 @@ class Service(lt_service):
 
                 bbc = best_by_class[clazz]
 
+                last_sector_data = {}
                 for s in self._sectors_list():
                     sector = s['EndTimeLine']
                     car_data.append(
@@ -373,6 +349,7 @@ class Service(lt_service):
                             bbc
                         )
                     )
+                    last_sector_idx = str(sector)
 
                     best_sec_time = car.get('PersonalBestSectors', {}).get(sector, '')
                     if best_sec_time < 0:
@@ -394,7 +371,7 @@ class Service(lt_service):
                 if last_lap == best_lap and best_lap != '':
                     if best_lap_flag == 'sb':
                         last_sector = car_data[-2]
-                        if last_sector[0] != '' and last_sector[1] != 'old':
+                        if last_sector[0] != '' and last_sector[1] != 'old' and last_sector_idx in car.get('current_sectors', {}):
                             last_lap_flag = 'sb-new'
                         else:
                             last_lap_flag = 'sb'

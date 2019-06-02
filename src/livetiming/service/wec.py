@@ -137,7 +137,6 @@ class Service(lt_service):
             self.log.info("Starting up in QUALIFYING mode")
 
         if self._parsed_extra_args.hh:
-            print self._parsed_extra_args
             if len(self._parsed_extra_args.hh.split(':')) != 2:
                 raise Exception('HH Timing API server must be specified as host:port')
             self._hhtiming = create_protocol(self)
@@ -262,6 +261,9 @@ class Service(lt_service):
         if self._hhtiming:
             return [self._race_control]
         return []
+
+    def notify_update(self, msg_type, msg):
+        self.log.info('HHTiming message {mt}', mt=msg_type)
 
     def _handleAppData(self, data):
         with self._data_lock:

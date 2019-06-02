@@ -1,6 +1,7 @@
 from collections import defaultdict
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.internet.protocol import Protocol
+from .types import MessageType
 
 import inspect
 import simplejson
@@ -51,6 +52,7 @@ def create_protocol(service, initial_state_file=None):
             return connectProtocol(endpoint, self)
 
         def connectionMade(self):
+            self.log('Established connection to HH Timing')
             self._buffer = ''
 
         def dump_data(self):
@@ -70,41 +72,42 @@ def create_protocol(service, initial_state_file=None):
 
         def handleMessage(self, msg):
             parsed_msg = simplejson.loads(msg)
-            msg_type = parsed_msg.pop('$type').split(',')[0]
+            if parsed_msg and '$type' in parsed_msg:
+                msg_type = parsed_msg.pop('$type').split(',')[0]
 
-            if msg_type in self._handlers:
-                self._handlers[msg_type](parsed_msg)
-            else:
-                self.log(
-                    'Unhandled message type {msg_type}: {data}',
-                    msg_type=msg_type,
-                    data=parsed_msg
-                )
-            if service and hasattr(service, 'notify_update'):
-                service.notify_update(msg_type)
+                if msg_type in self._handlers:
+                    self._handlers[msg_type](parsed_msg)
+                else:
+                    self.log(
+                        'Unhandled message type {msg_type}: {data}',
+                        msg_type=msg_type,
+                        data=parsed_msg
+                    )
+                if service and hasattr(service, 'notify_update'):
+                    service.notify_update(msg_type, parsed_msg)
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.HeartbeatMessage')
+        @handler(MessageType.HEARTBEAT)
         def heartbeat(self, data):
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.CompetitorMessage')
+        @handler(MessageType.COMPETITOR)
         def competitor(self, data):
             car = self.cars[data['CompetitorID']]
             update_present_values(data, car)
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.DriverMessage')
+        @handler(MessageType.DRIVER)
         def driver(self, data):
             if data.pop('IsInCar'):
                 car = self.cars[data.pop('CarID')]
                 car['driver'] = data
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.DriverUpdateMessage')
+        @handler(MessageType.DRIVER_UPDATE)
         def driver_update(self, data):
             car = self.cars[data.pop('CarID')]
             car['driver'] = data
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.AdvSectorTimeLineCrossing')
+        @handler(MessageType.SECTOR_TIME_ADV)
         def adv_sector_crossing(self, data):
             car_num = data.pop('CompetitorNumber')
             car = self.cars[car_num]
@@ -120,7 +123,7 @@ def create_protocol(service, initial_state_file=None):
             else:
                 pb_sectors[sector_index] = data['SectorTime']
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.SectorTimeResultsUpdateMessage')
+        @handler(MessageType.SECTOR_TIME_UPDATE)
         def sector_time_update(self, data):
             car = self.cars[data.pop('CarID')]
             pb_sectors = car.setdefault('PersonalBestSectors', {})
@@ -129,28 +132,28 @@ def create_protocol(service, initial_state_file=None):
             if sector_idx:
                 pb_sectors[sector_idx] = data['BestSectorTime']
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.EventMessage')
+        @handler(MessageType.EVENT)
         def event(self, data):
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage')
+        @handler(MessageType.SESSION_INFO)
         def session_info(self, data):
             if self.session.get('SessionID') != data.get('SessionID'):
                 self.cars.clear()
             update_present_values(data, self.session)
             self.session['LastUpdate'] = time.time()
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage')
+        @handler(MessageType.TRACK_INFO_ADV)
         def adv_track_info(self, data):
             update_present_values(data, self.track)
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.LaptimeResultsUpdateMessage')
+        @handler(MessageType.LAPTIME_UPDATE)
         def laptime_results_update(self, data):
             car = self.cars[data.pop('CarID')]
             update_present_values(data, car)
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.BasicTimeCrossingMessage')
+        @handler(MessageType.BASIC_TIME_CROSSING)
         def basic_time_crossing(self, data):
             car = self.cars[data.pop('CarID')]
             update_present_values(data, car)
@@ -158,26 +161,26 @@ def create_protocol(service, initial_state_file=None):
             car['current_sectors'] = {}
             car['OutLap'] = False
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.PitInMessage')
+        @handler(MessageType.PIT_IN)
         def pit_in(self, data):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = True
             car['OutLap'] = False
             car['Pits'] = car.get('Pits', 0) + 1
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.PitOutMessage')
+        @handler(MessageType.PIT_OUT)
         def pit_out(self, data):
             car = self.cars[data.pop('CarID')]
             car['InPit'] = False
             car['OutLap'] = True
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage')
+        @handler(MessageType.RACE_CONTROL_MESSAGE)
         def race_control_message(self, data):
             self.messages.append((data['MessageReceivedTime'], data['MessageString']))
 
         @handler(
-            'HTiming.Core.Definitions.Communication.Messages.SpeedTrapCrossingMessage',
-            'HTiming.Core.Definitions.Communication.Messages.TopSpeedResultsUpdateMessage'
+            MessageType.SPEED_TRAP,
+            MessageType.TOP_SPEED_UPDATE
         )
         def speed_trap_message(self, data):
             car = self.cars[data.pop('CarID')]
@@ -186,14 +189,14 @@ def create_protocol(service, initial_state_file=None):
             trap_data = traps.setdefault(trap_name, {})
             update_present_values(data, trap_data)
 
-        @handler('HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage')
+        @handler(MessageType.WEATHER)
         def weather_message(self, data):
             update_present_values(data, self.weather)
 
         @handler(
-            'HHTiming.Core.Definitions.Communication.Messages.CarGpsPointMessage',
-            'HTiming.Core.Definitions.Communication.Messages.InternalHHHeartbeatMessage',
-            'HTiming.Core.Definitions.Communication.Messages.ClassInformationMessage'  # <- this one is pointless so long as ID == description
+            MessageType.GPS,
+            MessageType.INTERNAL_HEARTBEAT,
+            MessageType.CLASS_INFORMATION  # <- this one is pointless so long as ID == description
         )
         def ignore(self, _):
             pass
