@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, Fetcher, JSONFetcher
-from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
+from livetiming.service import DuePublisher, Service as lt_service, Fetcher, JSONFetcher
+from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage, MessageType, SectorStatus
 from threading import Lock
 from twisted.internet import reactor, threads
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -21,7 +21,7 @@ def mapFlagState(params, hh):
 
     if hh:
         zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
-        if 8 in zone_states:
+        if SectorStatus.SLOW_ZONE in zone_states:
             return FlagStatus.SLOW_ZONE.name.lower()
 
     flagMap = {
@@ -117,12 +117,13 @@ APP_TIMING_URL = 'http://pipeline-production.netcosports.com/wec/1/live_standing
 WEB_TIMING_URL = "https://storage.googleapis.com/fiawec-prod/assets/live/WEC/__data.json?_t={}"
 
 
-class Service(lt_service):
+class Service(DuePublisher, lt_service):
     attribution = ['WEC', 'http://www.fiawec.com/']
     initial_description = 'World Endurance Championship'
+    auto_poll = False
 
     def __init__(self, args, extra_args):
-        lt_service.__init__(self, args, extra_args)
+        super(Service, self).__init__(args, extra_args)
 
         self._session_data = {}
         self._cars = {}
@@ -271,7 +272,40 @@ class Service(lt_service):
         return []
 
     def notify_update(self, msg_type, msg):
-        pass
+        handled_update = False
+
+        if 'CarID' in msg:
+            try:
+                car_id_int = int(msg['CarID'])
+            except:
+                car_id_int = None
+            car = self._cars.get(car_id_int or msg['CarID'])
+            hh_car = self._hhtiming.cars.get(msg['CarID'])
+            if car and hh_car:
+                if msg_type in [MessageType.BASIC_TIME_CROSSING, MessageType.LAPTIME_UPDATE]:
+                    if 'LastLaptime' in hh_car and hh_car['LastLaptime'] > 0:
+                        car['last_lap'] = hh_car['LastLaptime']
+                    if 'BestLaptime' in hh_car hh_car['BestLaptime'] > 0:
+                        car['best_lap'] = hh_car['BestLaptime']
+                    handled_update = True
+                elif msg_type in [MessageType.SECTOR_TIME_ADV, MessageType.SECTOR_TIME_UPDATE]:
+                    current_sectors = hh_car.get('current_sectors', {})
+                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', 0)
+                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', 0)
+                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', 0)
+
+                    best_sectors = hh_car.get('PersonalBestSectors', {})
+                    car['bs1'] = best_sectors.get('1', 0)
+                    car['bs2'] = best_sectors.get('2', 0)
+                    car['bs3'] = best_sectors.get('3', 0)
+
+                    handled_update = True
+
+        if handled_update:
+            print "Handled", msg
+            self._last_timestamp = datetime.utcnow()
+            self._last_source = 'C'
+            self.set_due_publish()
 
     def _handleAppData(self, data):
         with self._data_lock:
@@ -356,6 +390,7 @@ class Service(lt_service):
 
                         self._last_timestamp = pts
                         self._last_source = 'A'
+                        self.set_due_publish()
                     else:
                         self.log.debug("Not going backwards in time! Found {pts}, previously had {lts}", pts=pts, lts=self._last_timestamp)
                 except ValueError:
@@ -430,6 +465,7 @@ class Service(lt_service):
 
                     self._last_timestamp = pts
                     self._last_source = 'B'
+                    self.set_due_publish()
 
     def getRaceState(self):
 

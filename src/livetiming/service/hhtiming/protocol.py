@@ -82,7 +82,7 @@ def create_protocol_factory(service, initial_state_file=None):
                 msg_type = parsed_msg.pop('$type').split(',')[0]
 
                 if msg_type in self._handlers:
-                    self._handlers[msg_type](parsed_msg)
+                    self._handlers[msg_type](parsed_msg.copy())
                 else:
                     self.log(
                         'Unhandled message type {msg_type}: {data}',
