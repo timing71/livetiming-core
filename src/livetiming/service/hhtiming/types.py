@@ -12,6 +12,7 @@ class MessageType(object):
     PIT_IN = 'HTiming.Core.Definitions.Communication.Messages.PitInMessage'
     PIT_OUT = 'HTiming.Core.Definitions.Communication.Messages.PitOutMessage'
     RACE_CONTROL_MESSAGE = 'HTiming.Core.Definitions.Communication.Messages.GeneralRaceControlMessage'
+    SECTOR_STATUS = 'HTiming.Core.Definitions.Communication.Messages.TrackSectorStatusMessage'
     SECTOR_TIME_ADV = 'HTiming.Core.Definitions.Communication.Messages.AdvSectorTimeLineCrossing'
     SECTOR_TIME_UPDATE = 'HTiming.Core.Definitions.Communication.Messages.SectorTimeResultsUpdateMessage'
     SESSION_INFO = 'HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage'
@@ -19,3 +20,8 @@ class MessageType(object):
     TOP_SPEED_UPDATE = 'HTiming.Core.Definitions.Communication.Messages.TopSpeedResultsUpdateMessage'
     TRACK_INFO_ADV = 'HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage'
     WEATHER = 'HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage'
+
+
+class SectorStatus(object):
+    CLEAR = 0
+    SLOW_ZONE = 8

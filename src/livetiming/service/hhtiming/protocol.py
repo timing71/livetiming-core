@@ -10,9 +10,6 @@ import time
 
 END_OF_MESSAGE = '<EOM>'
 
-# Unhandled message type HTiming.Core.Definitions.Communication.Messages.TrackSectorStatusMessage: {'ZoneStatus': 8, 'SessionTime': 10260.286999940872, 'ZoneName': 'SZ8'}
-# Unhandled message type HTiming.Core.Definitions.Communication.Messages.TrackSectorStatusMessage: {'ZoneStatus': 0, 'SessionTime': 10455.325000047684, 'ZoneName': 'SZ8'}
-
 
 def handler(*msg_types):
     def inner(func):
@@ -36,6 +33,7 @@ def create_protocol_factory(service, initial_state_file=None):
             self.session = {}
             self.weather = {}
             self.messages = []
+            self.sector_states = {}
 
             self._handlers = {}
 
@@ -67,6 +65,7 @@ def create_protocol_factory(service, initial_state_file=None):
                 'cars': self.cars,
                 'track': self.track,
                 'session': self.session,
+                'sector_states': self.sector_states,
                 'messages': self.messages
             }
 
@@ -195,6 +194,12 @@ def create_protocol_factory(service, initial_state_file=None):
             trap_name = data.pop('SpeedTrapName')
             trap_data = traps.setdefault(trap_name, {})
             update_present_values(data, trap_data)
+
+        @handler(MessageType.SECTOR_STATUS)
+        def sector_status(self, data):
+            zone_name = data.pop('ZoneName')
+            zone = self.sector_states.setdefault(zone_name, {})
+            zone.update(data)
 
         @handler(MessageType.WEATHER)
         def weather_message(self, data):
