@@ -15,9 +15,14 @@ import wecapp
 import time
 
 
-def mapFlagState(params):
+def mapFlagState(params, hh):
     if 'safety_car' in params and params['safety_car'] == "true":
         return FlagStatus.SC.name.lower()
+
+    if hh:
+        zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
+        if 8 in zone_states:
+            return FlagStatus.SLOW_ZONE.name.lower()
 
     flagMap = {
         'green': FlagStatus.GREEN,
@@ -266,7 +271,7 @@ class Service(lt_service):
         return []
 
     def notify_update(self, msg_type, msg):
-        self.log.info('HHTiming message {mt}', mt=msg_type)
+        pass
 
     def _handleAppData(self, data):
         with self._data_lock:
@@ -542,7 +547,7 @@ class Service(lt_service):
                         car['pits']
                     ])
 
-            session['flagState'] = mapFlagState(self._session_data)
+            session['flagState'] = mapFlagState(self._session_data, self._hhtiming)
 
             delta = (datetime.utcnow() - self._last_timestamp).total_seconds()
             self.log.debug("Delta: {delta}", delta=delta)

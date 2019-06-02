@@ -410,7 +410,7 @@ class Service(lt_service):
         weather = self.protocol.weather
         delta = time.time() - hhs['LastUpdate'] if 'LastUpdate' in hhs else 0
         session = {
-            'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
+            'flagState': self._map_session_flag(),
             'timeElapsed': hhs.get('SessionTime', 0) + delta,
             'trackData': [
                 u"{}°C".format(round(weather['AirTemperature'], 1)) if 'AirTemperature' in weather else '-',
@@ -426,3 +426,10 @@ class Service(lt_service):
             session['timeRemain'] = max(0, self._extra_args.time - hhs.get('SessionTime', 0) - delta)
 
         return session
+
+    def _map_session_flag(self):
+        zone_states = map(lambda s: s.get('ZoneStatus', 0), self.sector_states.values())
+        if 8 in zone_states:
+            return FlagStatus.SLOW_ZONE.name.lower()
+        hhs = self.protocol.session
+        return FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower()
