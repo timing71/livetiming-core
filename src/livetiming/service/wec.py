@@ -2,7 +2,7 @@
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, Fetcher, JSONFetcher
-from livetiming.service.hhtiming import create_protocol, RaceControlMessage
+from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
 from threading import Lock
 from twisted.internet import reactor, threads
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -136,13 +136,11 @@ class Service(lt_service):
         if self.is_qualifying_mode:
             self.log.info("Starting up in QUALIFYING mode")
 
+        self._hhtiming = None
         if self._parsed_extra_args.hh:
             if len(self._parsed_extra_args.hh.split(':')) != 2:
                 raise Exception('HH Timing API server must be specified as host:port')
-            self._hhtiming = create_protocol(self)
-            self._race_control = RaceControlMessage(self._hhtiming)
-        else:
-            self._hhtiming = None
+            self._race_control = RaceControlMessage(None)
 
         self.description = self.initial_description
 
@@ -153,15 +151,20 @@ class Service(lt_service):
 
         LoopingCall(self._get_current_session).start(60)
 
+    def set_protocol(self, protocol):
+        self._hhtiming = protocol
+        self._race_control.protocol = protocol
+
     def start(self):
-        if self._hhtiming:
+        if self._parsed_extra_args.hh:
             host, port = self._parsed_extra_args.hh.split(':')
-            self._hhtiming.connect(
-                TCP4ClientEndpoint(
-                    reactor,
-                    host,
-                    int(port)
-                )
+
+            factory = create_protocol_factory(self)
+
+            reactor.connectTCP(
+                host,
+                int(port),
+                factory
             )
 
         super(Service, self).start()

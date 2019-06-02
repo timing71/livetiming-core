@@ -10,18 +10,19 @@ class RaceControlMessage(TimingMessage):
         self._messageIndex = 0
 
     def process(self, _, __):
+        if self.protocol:
+            new_messages = self.protocol.messages[self._messageIndex:]
 
-        new_messages = self.protocol.messages[self._messageIndex:]
+            msgs = []
 
-        msgs = []
+            for msg in sorted(new_messages, key=lambda m: m[0]):
+                hasCarNum = CAR_NUMBER_REGEX.search(msg[1])
+                msgDate = time.time() * 1000
+                if hasCarNum:
+                    msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl", hasCarNum.group('race_num')])
+                else:
+                    msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
 
-        for msg in sorted(new_messages, key=lambda m: m[0]):
-            hasCarNum = CAR_NUMBER_REGEX.search(msg[1])
-            msgDate = time.time() * 1000
-            if hasCarNum:
-                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl", hasCarNum.group('race_num')])
-            else:
-                msgs.append([msgDate / 1000, "Race Control", msg[1].upper(), "raceControl"])
-
-            self._messageIndex = len(self.protocol.messages)
-        return sorted(msgs, key=lambda m: -m[0])
+                self._messageIndex = len(self.protocol.messages)
+            return sorted(msgs, key=lambda m: -m[0])
+        return []

@@ -2,7 +2,7 @@
 from collections import defaultdict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
-from livetiming.service.hhtiming import create_protocol, RaceControlMessage
+from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
@@ -172,10 +172,10 @@ class Service(lt_service):
 
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
-        self.protocol = create_protocol(self, self._state_dump_file())
+        self._protocol_factory = create_protocol_factory(self, self._state_dump_file())
         self._extra_args = parse_extra_args(extra_args)
 
-        self._rcMessageGenerator = RaceControlMessage(self.protocol)
+        self._rcMessageGenerator = RaceControlMessage(None)
 
         self._due_publish_state = False
         self._last_update = time.time()
@@ -185,11 +185,15 @@ class Service(lt_service):
     def _state_dump_file(self):
         return 'hhtiming_state_dump_{}.json'.format(self.uuid)
 
+    def set_protocol(self, protocol):
+        self.protocol = protocol
+        self._rcMessageGenerator.protocol = protocol
+
     def notify_update(self, msg_type, data):
         self._last_update = time.time()
         self._due_publish_state = True
 
-        if not self._extra_args.no_dump:
+        if not self._extra_args.no_dump and self.protocol:
             with open(self._state_dump_file(), 'w') as outfile:
                 simplejson.dump(
                     self.protocol.dump_data(),
@@ -216,12 +220,10 @@ class Service(lt_service):
                 self._due_publish_state = False
         LoopingCall(maybePublish).start(1)
 
-        self.protocol.connect(
-            TCP4ClientEndpoint(
-                reactor,
-                self._extra_args.host,
-                self._extra_args.port
-            )
+        reactor.connectTCP(
+            self._extra_args.host,
+            self._extra_args.port,
+            self._protocol_factory
         )
 
         super(Service, self).start()
@@ -253,13 +255,19 @@ class Service(lt_service):
         return pre_sectors + sectors + post_sectors
 
     def _sectors_list(self):
-        return self.protocol.track.get('OrderedListOfOnTrackSectors', {}).get('$values', [])
+        if self.protocol:
+            return self.protocol.track.get('OrderedListOfOnTrackSectors', {}).get('$values', [])
+        return []
 
     def getName(self):
-        return self.protocol.session.get('EventName', 'Live Timing')
+        if self.protocol:
+            return self.protocol.session.get('EventName', 'Live Timing')
+        return 'Live Timing'
 
     def getDefaultDescription(self):
-        return self.protocol.session.get('SessionDescription', '')
+        if self.protocol:
+            return self.protocol.session.get('SessionDescription', '')
+        return ''
 
     def getRaceState(self):
         return {
@@ -295,6 +303,9 @@ class Service(lt_service):
             return calculate_race_gap
 
     def _map_cars(self):
+        if not self.protocol:
+            return []
+
         cars = []
 
         best_by_class = defaultdict(dict)
@@ -390,6 +401,11 @@ class Service(lt_service):
         return cars
 
     def _map_session(self):
+        if not self.protocol:
+            return {
+                'flagState': 'none',
+                'timeElapsed': 0
+            }
         hhs = self.protocol.session
         weather = self.protocol.weather
         delta = time.time() - hhs['LastUpdate'] if 'LastUpdate' in hhs else 0

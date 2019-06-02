@@ -1,6 +1,6 @@
 from collections import defaultdict
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
-from twisted.internet.protocol import Protocol
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from .types import MessageType
 
 import inspect
@@ -9,6 +9,9 @@ import time
 
 
 END_OF_MESSAGE = '<EOM>'
+
+# Unhandled message type HTiming.Core.Definitions.Communication.Messages.TrackSectorStatusMessage: {'ZoneStatus': 8, 'SessionTime': 10260.286999940872, 'ZoneName': 'SZ8'}
+# Unhandled message type HTiming.Core.Definitions.Communication.Messages.TrackSectorStatusMessage: {'ZoneStatus': 0, 'SessionTime': 10455.325000047684, 'ZoneName': 'SZ8'}
 
 
 def handler(*msg_types):
@@ -24,7 +27,7 @@ def update_present_values(source, destination):
             destination[key] = val
 
 
-def create_protocol(service, initial_state_file=None):
+def create_protocol_factory(service, initial_state_file=None):
     class HHProtocol(Protocol):
 
         def __init__(self):
@@ -40,6 +43,10 @@ def create_protocol(service, initial_state_file=None):
                 if hasattr(func, 'handles_message'):
                     for msg_type in func.handles_message:
                         self._handlers[msg_type] = func
+
+            if service:
+                if hasattr(service, 'set_protocol'):
+                    service.set_protocol(self)
 
         def log(self, *args, **kwargs):
             if service:
@@ -208,19 +215,24 @@ def create_protocol(service, initial_state_file=None):
                     return s['EndTimeLine']
             return None
 
-    protocol = HHProtocol()
+    class HHProtocolFactory(ReconnectingClientFactory):
+        def buildProtocol(self, addr):
+            self.resetDelay()
+            protocol = HHProtocol()
 
-    if initial_state_file:
-        try:
-            with open(initial_state_file, 'r') as statefile:
-                state = simplejson.load(statefile)
-                protocol.cars = state['cars']
-                protocol.session = state['session']
-                protocol.track = state['track']
-                protocol.messages = state['messages']
-        except IOError as e:
-            protocol.log('Failed to load existing state file')
-            print 'bad', e
-            pass
+            if initial_state_file:
+                try:
+                    with open(initial_state_file, 'r') as statefile:
+                        state = simplejson.load(statefile)
+                        protocol.cars = state['cars']
+                        protocol.session = state['session']
+                        protocol.track = state['track']
+                        protocol.messages = state['messages']
+                except Exception as e:
+                    protocol.log('Failed to load existing state file')
+                    print 'bad', e
+                    pass
 
-    return protocol
+            return protocol
+
+    return HHProtocolFactory()
