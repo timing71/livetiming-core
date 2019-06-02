@@ -415,7 +415,7 @@ class Service(lt_service):
     def _map_session(self):
         hhs = self.protocol.session
         weather = self.protocol.weather
-        delta = time.time() - hhs['LastUpdate']
+        delta = time.time() - hhs['LastUpdate'] if 'LastUpdate' in hhs else 0
         session = {
             'flagState': FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower(),
             'timeElapsed': hhs.get('SessionTime', 0) + delta,
