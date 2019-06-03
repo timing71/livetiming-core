@@ -2,7 +2,7 @@
 from collections import defaultdict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
-from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
+from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage, SectorStatus
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
@@ -428,8 +428,8 @@ class Service(lt_service):
         return session
 
     def _map_session_flag(self):
-        zone_states = map(lambda s: s.get('ZoneStatus', 0), self.sector_states.values())
-        if 8 in zone_states:
+        zone_states = map(lambda s: s.get('ZoneStatus', 0), self.protocol.sector_states.values())
+        if SectorStatus.SLOW_ZONE in zone_states:
             return FlagStatus.SLOW_ZONE.name.lower()
         hhs = self.protocol.session
         return FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower()
