@@ -274,38 +274,57 @@ class Service(DuePublisher, lt_service):
     def notify_update(self, msg_type, msg):
         handled_update = False
 
+        hh_car = None
+        car = None
+
         if 'CarID' in msg:
             try:
                 car_id_int = int(msg['CarID'])
             except:
                 car_id_int = None
-            car = self._cars.get(car_id_int or msg['CarID'])
             hh_car = self._hhtiming.cars.get(msg['CarID'])
-            if car and hh_car:
+            car = self._cars.get(car_id_int or msg['CarID'])
+        elif 'CompetitorNumber' in msg:
+            try:
+                car_id_int = int(msg['CompetitorNumber'])
+            except:
+                car_id_int = None
+            hh_car = self._hhtiming.cars.get(msg['CompetitorNumber'])
+            car = self._cars.get(car_id_int or msg['CompetitorNumber'])
+
+        if car and hh_car:
+            with self._data_lock:
                 if msg_type in [MessageType.BASIC_TIME_CROSSING, MessageType.LAPTIME_UPDATE]:
                     if 'LastLaptime' in hh_car and hh_car['LastLaptime'] > 0:
                         car['last_lap'] = hh_car['LastLaptime']
-                    if 'BestLaptime' in hh_car hh_car['BestLaptime'] > 0:
+                    if 'BestLaptime' in hh_car and hh_car['BestLaptime'] > 0:
                         car['best_lap'] = hh_car['BestLaptime']
                     handled_update = True
                 elif msg_type in [MessageType.SECTOR_TIME_ADV, MessageType.SECTOR_TIME_UPDATE]:
                     current_sectors = hh_car.get('current_sectors', {})
-                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', 0)
-                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', 0)
-                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', 0)
+
+                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', car['s1'])
+                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', car['s2'])
+                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', car['s3'])
 
                     best_sectors = hh_car.get('PersonalBestSectors', {})
-                    car['bs1'] = best_sectors.get('1', 0)
-                    car['bs2'] = best_sectors.get('2', 0)
-                    car['bs3'] = best_sectors.get('3', 0)
+                    bs1 = best_sectors.get('1', car.get('bs1', 0))
+                    if bs1 < car.get('bs1', 0):
+                        car['bs1'] = bs1
+                    bs2 = best_sectors.get('2', car.get('bs2', 0))
+                    if bs2 < car.get('bs2', 0):
+                        car['bs2'] = bs2
+                    bs3 = best_sectors.get('3', car.get('bs3', 0))
+                    if bs3 < car.get('bs3', 0):
+                        car['bs3'] = bs3
 
-                    handled_update = True
+                handled_update = True
 
-        if handled_update:
-            print "Handled", msg
-            self._last_timestamp = datetime.utcnow()
-            self._last_source = 'C'
-            self.set_due_publish()
+            if handled_update:
+                # Don't set update timestamp here - they're only comparable for
+                # sources A and B
+                self._last_source = 'C'
+                self.set_due_publish()
 
     def _handleAppData(self, data):
         with self._data_lock:
