@@ -2,7 +2,8 @@
 from collections import defaultdict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
-from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage, SectorStatus
+from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
+from livetiming.service.hhtiming.types import SectorStatus
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
