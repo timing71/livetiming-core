@@ -317,8 +317,13 @@ class Service(DuePublisher, lt_service):
                     bs3 = best_sectors.get('3', car.get('bs3', 0))
                     if bs3 < car.get('bs3', 0):
                         car['bs3'] = bs3
-
-                handled_update = True
+                    handled_update = True
+                elif msg_type == MessageType.PIT_IN:
+                    car['state'] = 'in'
+                    handled_update = True
+                elif msg_type == MessageType.PIT_OUT:
+                    car['state'] == 'out'
+                    handled_update = True
 
             if handled_update:
                 # Don't set update timestamp here - they're only comparable for
