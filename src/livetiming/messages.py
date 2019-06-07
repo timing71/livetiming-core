@@ -3,6 +3,7 @@ import time
 
 from racing import FlagStatus
 from livetiming.racing import Stat
+from twisted.logger import Logger
 
 
 def formatTime(seconds):
@@ -12,6 +13,8 @@ def formatTime(seconds):
 
 
 class TimingMessage(object):
+    log = Logger()
+
     def _consider(self, oldState, newState):
         pass
 
@@ -37,9 +40,22 @@ class PerCarMessage(TimingMessage):
         messages = []
         if Stat.NUM in self.columnSpec:
             for newCar in newState["cars"]:
-                oldCars = [c for c in oldState["cars"] if c[0] == newCar[0] and c[0] is not None and c[0] != ""]
-                if oldCars:
+                wanted_num = self.getValue(newCar, Stat.NUM)
+                wanted_car = self.getValue(newCar, Stat.CAR)
+                wanted_clazz = self.getValue(newCar, Stat.CLASS)
+                oldCars = [
+                    c for c in oldState["cars"] if self.getValue(c, Stat.NUM) == wanted_num and
+                    self.getValue(c, Stat.CAR) == wanted_car and
+                    self.getValue(c, Stat.CLASS) == wanted_clazz
+                ]
+                oldCar = None
+
+                if len(oldCars) == 1:
                     oldCar = oldCars[0]
+                elif len(oldCars) > 0:
+                    self.log.warn('Found {l} cars with race number {num} that are indistinguishable!', l=len(oldCars), num=newCar[0])
+
+                if oldCar:
                     msg = self._consider(oldCar, newCar)
                     if msg:
                         messages += [[int(time.time())] + msg + [newCar[0]]]
