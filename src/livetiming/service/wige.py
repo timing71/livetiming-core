@@ -282,6 +282,19 @@ class Service(lt_service):
         return [self._rc_messages]
 
     def getRaceState(self):
+
+        flag = FlagStatus.NONE
+        track_data = []
+
+        if 'TRACKSTATE' in self._data:
+            ts = self._data['TRACKSTATE']
+            if ts == "0":
+                flag = FlagStatus.GREEN
+            elif ts == "1":
+                flag = FlagStatus.YELLOW
+            elif ts == "2":
+                flag = FlagStatus.RED
+
         if self._extra.nurburgring:
             self._last_zones.clear()
             self._last_zones.update(self._current_zones)
@@ -314,16 +327,6 @@ class Service(lt_service):
                 flag = FlagStatus.SLOW_ZONE
             elif yellows > 0:
                 flag = FlagStatus.YELLOW
-            elif 'TRACKSTATE' in self._data:
-                ts = self._data['TRACKSTATE']
-                if ts == "0":
-                    flag = FlagStatus.GREEN
-                elif ts == "1":
-                    flag = FlagStatus.YELLOW
-                elif ts == "2":
-                    flag = FlagStatus.RED
-            else:
-                flag = FlagStatus.GREEN
 
             track_data = [
                 slow_zones,
@@ -331,9 +334,6 @@ class Service(lt_service):
                 code60_zones,
                 ', '.join(c60_locations)
             ]
-        else:
-            flag = FlagStatus.NONE
-            track_data = []
 
         accum = {}
 
@@ -360,6 +360,7 @@ class Service(lt_service):
                 '8': 'PIT',
                 '9': 'OUT',
                 '10': 'RUN',
+                '12': 'PIT',
                 '14': 'RUN'
             },
             '2': {
@@ -439,7 +440,10 @@ class Service(lt_service):
 
         last_lap_idx = colspec.index(Stat.LAST_LAP)
         best_lap_idx = colspec.index(Stat.BEST_LAP)
-        last_sector_idx = len(colspec) - 3
+        first_sector_idx = 10
+        last_sector_idx = len(colspec) - 4
+
+        best_sectors = self._data.get('BEST', [])
 
         fastest = (None, None)
         for car in cars:
@@ -460,7 +464,19 @@ class Service(lt_service):
 
             if race_num == fastest[1]:
                 car[best_lap_idx] = (best[0], 'sb')
-                if last[0] == best[0] and s5[0] != '':
-                    car[last_lap_idx] = (last[0], 'sb-new')
+                if last[0] == best[0]:
+                    if s5[0] != '':
+                        car[last_lap_idx] = (last[0], 'sb-new')
+                    else:
+                        car[last_lap_idx] = (last[0], 'sb')
+
+            for sector_idx in range(first_sector_idx, last_sector_idx):
+                best_sector_idx = sector_idx - first_sector_idx
+                if len(best_sectors) > best_sector_idx:
+                    best_car, best_time, _, __ = best_sectors[best_sector_idx]
+                    if str(best_car) == race_num:
+                        parsed_time = parseTime(best_time)
+                        if car[sector_idx][0] == parsed_time:
+                            car[sector_idx] = [car[sector_idx][0], 'sb']
 
         return cars
