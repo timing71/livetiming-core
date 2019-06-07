@@ -404,7 +404,7 @@ class Service(lt_service):
             if self.sessionID:
                 self.cars.clear()
             self.sessionID = data['ID']
-            self.publishManifest()
+        self.publishManifest()
 
     def on_sdbroadcast(self, data):
         self.on_session(data[0])
