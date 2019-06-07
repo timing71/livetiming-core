@@ -1,6 +1,6 @@
 from livetiming.racing import Stat
 from livetiming.service import parse_args
-from livetiming.service.hhtiming import create_protocol, Service
+from livetiming.service.hhtiming import create_protocol_factory, Service
 from livetiming.service.hhtiming.service import calculate_race_gap
 
 import os
@@ -18,7 +18,10 @@ class ServiceForTest(Service):
 
 @pytest.fixture
 def service():
-    return ServiceForTest(*parse_args())
+    s = ServiceForTest(*parse_args())
+    p_factory = create_protocol_factory(s, STATE_DUMP_FILE)
+    s.protocol = p_factory.buildProtocol('')
+    return s
 
 
 @pytest.fixture
