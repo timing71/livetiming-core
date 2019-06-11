@@ -268,7 +268,7 @@ class Service(DuePublisher, lt_service):
         return 5
 
     def getExtraMessageGenerators(self):
-        emgs = [SlowZoneMessage]
+        emgs = [SlowZoneMessage()]
         if self._hhtiming:
             emgs.append(self._race_control)
         return emgs
