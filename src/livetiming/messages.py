@@ -62,15 +62,21 @@ class PerCarMessage(TimingMessage):
         return messages
 
 
-# Emits a message if the flag status of the state has changed.
+def getFlag(s):
+    if "session" in s and "flagState" in s["session"]:
+        return FlagStatus.fromString(s["session"]["flagState"])
+    return FlagStatus.NONE
+
+
 class FlagChangeMessage(TimingMessage):
+    '''
+    Emits a message if the flag status of the state has changed, excluding slow zones.
 
+    Slow zones for VLN/N24 generate more detailed messages than can be created here,
+    so slow zone messages are opt-in using the SlowZoneMessage generator.
+
+    '''
     def _consider(self, oldState, newState):
-        def getFlag(s):
-            if "session" in s and "flagState" in s["session"]:
-                return FlagStatus.fromString(s["session"]["flagState"])
-            return FlagStatus.NONE
-
         oldFlag = getFlag(oldState)
         newFlag = getFlag(newState)
 
@@ -93,6 +99,21 @@ class FlagChangeMessage(TimingMessage):
                 return ["Track", "Virtual safety car deployed", "yellow"]
             elif newFlag == FlagStatus.CAUTION:
                 return ["Track", "Full course caution", "yellow"]
+
+
+class SlowZoneMessage(TimingMessage):
+    '''
+    Emits a message when slow zone(s) are put into operation.
+
+    Does NOT emit a message when slow zones are lifted - that's covered by the
+    normal FlagChangeMessage generator.
+    '''
+    def _consider(self, oldState, newState):
+        oldFlag = getFlag(oldState)
+        newFlag = getFlag(newState)
+
+        if oldFlag != FlagStatus.SLOW_ZONE and newFlag == FlagStatus.SLOW_ZONE:
+            return ['Track', 'Slow zone(s) in operation', 'yellow']
 
 
 # Emits a message if a car enters or leaves the pits, or retires.
