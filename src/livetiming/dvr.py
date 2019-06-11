@@ -37,6 +37,7 @@ class DVRSession(ApplicationSession):
         yield self.subscribe(self.dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match=u'prefix', details_arg='details'))
         yield self.subscribe(self.dvr.handle_analysis_message, u'livetiming.analysis', options=SubscribeOptions(match=u'prefix', details_arg='details'))
         yield self.subscribe(self.dvr.handle_control_message, Channel.CONTROL)
+        yield self.subscribe(self.dvr.handle_control_message, Channel.DIRECTORY)
 
     def onDisconnect(self):
         self.dvr.log.info("Disconnected from live timing service")
@@ -162,6 +163,9 @@ class DVR(object):
         msg = Message.parse(message)
         if msg.msgClass == MessageClass.SERVICE_REGISTRATION:
             self._store_manifest(msg.payload)
+        elif msg.msgClass == MessageClass.DIRECTORY_LISTING:
+            for manifest in msg.payload:
+                self._store_manifest(manifest)
 
     def _get_recording(self, service_uuid, force_new=False):
         if service_uuid not in self._in_progress_recordings or force_new:
@@ -178,7 +182,7 @@ class DVR(object):
     def _store_manifest(self, manifest):
         uuid = manifest['uuid']
         rec = self._get_recording(uuid)
-        if rec.manifest:
+        if rec and rec.manifest:
             # We've received a new manifest for a recording that already has one
             # If the title or description are different, then start a new recording file
             if rec.manifest['name'] != manifest['name'] or rec.manifest['description'] != manifest['description']:
