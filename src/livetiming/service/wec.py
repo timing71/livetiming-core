@@ -301,6 +301,7 @@ class Service(DuePublisher, lt_service):
                         car['last_lap'] = hh_car['LastLaptime']
                     if 'BestLaptime' in hh_car and hh_car['BestLaptime'] > 0:
                         car['best_lap'] = hh_car['BestLaptime']
+                    car['lap'] = hh_car.get('NumberOfLaps', car['lap'])
                     handled_update = True
                 elif msg_type in [MessageType.SECTOR_TIME_ADV, MessageType.SECTOR_TIME_UPDATE]:
                     current_sectors = hh_car.get('current_sectors', {})
@@ -322,9 +323,11 @@ class Service(DuePublisher, lt_service):
                     handled_update = True
                 elif msg_type == MessageType.PIT_IN:
                     car['state'] = 'in'
+                    car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
                 elif msg_type == MessageType.PIT_OUT:
                     car['state'] == 'out'
+                    car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
 
             if handled_update:
