@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from livetiming.messages import SlowZoneMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import DuePublisher, Service as lt_service, Fetcher, JSONFetcher
 from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage, MessageType, SectorStatus
@@ -267,9 +268,10 @@ class Service(DuePublisher, lt_service):
         return 5
 
     def getExtraMessageGenerators(self):
+        emgs = [SlowZoneMessage]
         if self._hhtiming:
-            return [self._race_control]
-        return []
+            emgs.append(self._race_control)
+        return emgs
 
     def notify_update(self, msg_type, msg):
         handled_update = False
