@@ -18,13 +18,10 @@ import time
 
 
 def mapFlagState(params, hh):
+    flag = 'none'
+
     if 'safety_car' in params and params['safety_car'] == "true":
         return FlagStatus.SC.name.lower()
-
-    if hh:
-        zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
-        if SectorStatus.SLOW_ZONE in zone_states:
-            return FlagStatus.SLOW_ZONE.name.lower()
 
     flagMap = {
         'green': FlagStatus.GREEN,
@@ -35,11 +32,18 @@ def mapFlagState(params, hh):
         'chk': FlagStatus.CHEQUERED,
         'off': FlagStatus.NONE,
     }
+
     if 'status' in params:
         if params['status'].lower() in flagMap:
-            return flagMap[params['status'].lower()].name.lower()
+            flag = flagMap[params['status'].lower()].name.lower()
         Logger().warn("Unknown flag state {flag}", flag=params['status'])
-    return 'none'
+
+    if hh:
+        zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
+        if SectorStatus.SLOW_ZONE in zone_states and flag != 'green':
+            return FlagStatus.SLOW_ZONE.name.lower()
+
+    return flag
 
 
 def mapCarState(rawState):
