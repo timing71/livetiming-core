@@ -46,8 +46,8 @@ def mapClasses(rawClass):
         6: "LMP3",
         8: "GTC",
         10: "LMGTE",
-        12: 'INV',
-        16: "GT3"
+        16: "GT3",
+        18: 'INV'
     }
     return classMap[rawClass] if rawClass in classMap else rawClass
 
