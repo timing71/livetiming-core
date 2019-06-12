@@ -188,7 +188,7 @@ class Service(DuePublisher, lt_service):
         self.session = get_session(self._parsed_extra_args.session)
 
         if self.session:
-            self.log.info("Using session {sessionid}", sessionid=self.session['id'])
+            self.log.debug("Using session {sessionid}", sessionid=self.session['id'])
             new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
             if new_description != self.description:
                 self.log.info("New session detected, clearing previous state.")
