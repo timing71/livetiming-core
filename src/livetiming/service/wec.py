@@ -342,7 +342,7 @@ class Service(DuePublisher, lt_service):
                     car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
                 elif msg_type == MessageType.PIT_OUT:
-                    car['state'] == 'OUT'
+                    car['state'] = 'OUT'
                     car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
 
