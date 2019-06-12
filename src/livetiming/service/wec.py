@@ -306,20 +306,33 @@ class Service(DuePublisher, lt_service):
                 elif msg_type in [MessageType.SECTOR_TIME_ADV, MessageType.SECTOR_TIME_UPDATE]:
                     current_sectors = hh_car.get('current_sectors', {})
 
-                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', 0)
-                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', 0)
-                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', 0)
+                    s1 = current_sectors.get('1', {}).get('SectorTime', 0)
+                    if s1 > 0:
+                        car['s1'] = s1
+
+                    s2 = current_sectors.get('2', {}).get('SectorTime', 0)
+                    if s2 > 0 or s1 > 0:
+                        car['s2'] = s2
+
+                    s3 = current_sectors.get('3', {}).get('SectorTime', 0)
+                    if s3 > 0 or s1 > 0:
+                        car['s3'] = s3
 
                     best_sectors = hh_car.get('PersonalBestSectors', {})
-                    bs1 = best_sectors.get('1', car.get('bs1', 0))
-                    if bs1 < car.get('bs1', 0):
+
+                    existing_bs1 = car.get('bs1', 0)
+                    bs1 = best_sectors.get('1')
+                    if bs1 > 0 and (bs1 < existing_bs1 or existing_bs1 == 0):
                         car['bs1'] = bs1
-                    bs2 = best_sectors.get('2', car.get('bs2', 0))
-                    if bs2 < car.get('bs2', 0):
+                    existing_bs2 = car.get('bs2', 0)
+                    bs2 = best_sectors.get('2')
+                    if bs2 > 0 and (bs2 < existing_bs2 or existing_bs2 == 0):
                         car['bs2'] = bs2
-                    bs3 = best_sectors.get('3', car.get('bs3', 0))
-                    if bs3 < car.get('bs3', 0):
+                    existing_bs3 = car.get('bs3', 0)
+                    bs3 = best_sectors.get('3')
+                    if bs3 > 0 and (bs3 < existing_bs3 or existing_bs3 == 0):
                         car['bs3'] = bs3
+
                     handled_update = True
                 elif msg_type == MessageType.PIT_IN:
                     car['state'] = 'PIT'
@@ -363,13 +376,28 @@ class Service(DuePublisher, lt_service):
                                 car['pos_in_class'] = car_data['rank_by_category']
                                 if not self._hhtiming or self._hhtiming.session.get('SessionTime', 0) < ls.get('elapsed', 0):
                                     car['s1'] = car_data['sectors']['0']['current'] or 0
-                                    car['bs1'] = car_data['sectors']['0']['best'] or 0
                                     car['s2'] = car_data['sectors']['1']['current'] or 0
-                                    car['bs2'] = car_data['sectors']['1']['best'] or 0
                                     car['s3'] = car_data['sectors']['2']['current'] or 0
-                                    car['bs3'] = car_data['sectors']['2']['best'] or 0
-
                                     car['last_lap'] = parseTime(car_data['last_lap'])
+
+                                existing_bs1 = car.get('bs1', 0)
+                                new_bs1 = car_data['sectors']['0']['best'] or 0
+                                if new_bs1 > 0:
+                                    if new_bs1 < existing_bs1 or existing_bs1 == 0:
+                                        car['bs1'] = new_bs1
+
+                                existing_bs2 = car.get('bs2', 0)
+                                new_bs2 = car_data['sectors']['1']['best'] or 0
+                                if new_bs2 > 0:
+                                    if new_bs2 < existing_bs2 or existing_bs2 == 0:
+                                        car['bs2'] = new_bs2
+
+                                existing_bs3 = car.get('bs3', 0)
+                                new_bs3 = car_data['sectors']['2']['best'] or 0
+                                if new_bs3 > 0:
+                                    if new_bs3 < existing_bs3 or existing_bs3 == 0:
+                                        car['bs3'] = new_bs3
+
                                 car['best_lap'] = min(parseTime(car_data['best_lap']), car.get('best_lap', 9999999))
 
                                 car['driver'] = car_data['current_pilot']
@@ -459,14 +487,30 @@ class Service(DuePublisher, lt_service):
 
                         car['pos_in_class'] = car_data['categoryPosition']
                         if not self._hhtiming or self._hhtiming.session.get('SessionTime', 0) < params.get('elapsed', 0):
-                            car['s1'] = parseTime(car_data['currentSector1'])
                             car['bs1'] = parseTime(car_data['bestSector1'])
-                            car['s2'] = parseTime(car_data['currentSector2'])
                             car['bs2'] = parseTime(car_data['bestSector2'])
-                            car['s3'] = parseTime(car_data['currentSector3'])
                             car['bs3'] = parseTime(car_data['bestSector3'])
 
                             car['last_lap'] = parseTime(car_data['lastlap'])
+
+                        existing_bs1 = car.get('bs1', 0)
+                        new_bs1 = car_data['bestSector1'] or 0
+                        if new_bs1 > 0:
+                            if new_bs1 < existing_bs1 or existing_bs1 == 0:
+                                car['bs1'] = new_bs1
+
+                        existing_bs2 = car.get('bs2', 0)
+                        new_bs2 = car_data['bestSector2'] or 0
+                        if new_bs2 > 0:
+                            if new_bs2 < existing_bs2 or existing_bs2 == 0:
+                                car['bs2'] = new_bs2
+
+                        existing_bs3 = car.get('bs3', 0)
+                        new_bs3 = car_data['bestSector3'] or 0
+                        if new_bs3 > 0:
+                            if new_bs3 < existing_bs3 or existing_bs3 == 0:
+                                car['bs3'] = new_bs3
+
                         car['best_lap'] = min(parseTime(car_data['bestlap']), car.get('best_lap', 9999999))
 
                         car['driver'] = car_data['driver']
@@ -520,12 +564,12 @@ class Service(DuePublisher, lt_service):
             for car in self._cars.values():
                 race_num = car['race_num']
                 category = car['category']
-                s1 = car['s1']
-                bs1 = car['bs1']
-                s2 = car['s2']
-                bs2 = car['bs2']
-                s3 = car['s3']
-                bs3 = car['bs3']
+                s1 = car.get('s1')
+                bs1 = car.get('bs1')
+                s2 = car.get('s2')
+                bs2 = car.get('bs2')
+                s3 = car.get('s3')
+                bs3 = car.get('bs3')
 
                 if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
                     bestSectorsByClass[1][category] = (race_num, bs1)
@@ -546,19 +590,19 @@ class Service(DuePublisher, lt_service):
             for car in sorted(self._cars.values(), key=lambda c: c['rank']):
                 race_num = car['race_num']
                 category = car['category']
-                s1 = car['s1']
-                bs1 = car['bs1']
-                s2 = car['s2']
-                bs2 = car['bs2']
-                s3 = car['s3']
-                bs3 = car['bs3']
+                s1 = car.get('s1')
+                bs1 = car.get('bs1')
+                s2 = car.get('s2')
+                bs2 = car.get('bs2')
+                s3 = car.get('s3')
+                bs3 = car.get('bs3')
                 last_lap = car['last_lap']
 
                 def sector_time(sector):
-                    stime = car['s{}'.format(sector)]
-                    best = car['bs{}'.format(sector)]
+                    stime = car.get('s{}'.format(sector))
+                    best = car.get('bs{}'.format(sector))
 
-                    if stime == best:
+                    if stime and best and stime == best:
                         if category in bestSectorsByClass[sector] and bestSectorsByClass[sector][category][0] == race_num:
                             flag = 'sb'
                         else:
