@@ -341,7 +341,7 @@ class Service(DuePublisher, lt_service):
                         car['bs3'] = bs3
 
                     handled_update = True
-                elif msg_type == MessageType.PIT_IN:
+                elif msg_type == MessageType.PIT_IN and car.get('state') != 'FIN':
                     car['state'] = 'PIT'
                     car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
