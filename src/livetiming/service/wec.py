@@ -36,7 +36,8 @@ def mapFlagState(params, hh):
     if 'status' in params:
         if params['status'].lower() in flagMap:
             flag = flagMap[params['status'].lower()].name.lower()
-        Logger().warn("Unknown flag state {flag}", flag=params['status'])
+        else:
+            Logger().warn("Unknown flag state {flag}", flag=params['status'])
 
     if hh:
         zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
