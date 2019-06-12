@@ -299,16 +299,16 @@ class Service(DuePublisher, lt_service):
                 if msg_type in [MessageType.BASIC_TIME_CROSSING, MessageType.LAPTIME_UPDATE]:
                     if 'LastLaptime' in hh_car and hh_car['LastLaptime'] > 0:
                         car['last_lap'] = hh_car['LastLaptime']
-                    if 'BestLaptime' in hh_car and hh_car['BestLaptime'] > 0:
+                    if 'BestLaptime' in hh_car and hh_car['BestLaptime'] > 0 and hh_car['BestLaptime'] < 1e7:
                         car['best_lap'] = hh_car['BestLaptime']
                     car['lap'] = hh_car.get('NumberOfLaps', car['lap'])
                     handled_update = True
                 elif msg_type in [MessageType.SECTOR_TIME_ADV, MessageType.SECTOR_TIME_UPDATE]:
                     current_sectors = hh_car.get('current_sectors', {})
 
-                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', car['s1'])
-                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', car['s2'])
-                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', car['s3'])
+                    car['s1'] = current_sectors.get('1', {}).get('SectorTime', 0)
+                    car['s2'] = current_sectors.get('2', {}).get('SectorTime', 0)
+                    car['s3'] = current_sectors.get('3', {}).get('SectorTime', 0)
 
                     best_sectors = hh_car.get('PersonalBestSectors', {})
                     bs1 = best_sectors.get('1', car.get('bs1', 0))
@@ -322,11 +322,11 @@ class Service(DuePublisher, lt_service):
                         car['bs3'] = bs3
                     handled_update = True
                 elif msg_type == MessageType.PIT_IN:
-                    car['state'] = 'in'
+                    car['state'] = 'PIT'
                     car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
                 elif msg_type == MessageType.PIT_OUT:
-                    car['state'] == 'out'
+                    car['state'] == 'OUT'
                     car['pits'] = hh_car.get('Pits', car['pits'])
                     handled_update = True
 
@@ -355,17 +355,22 @@ class Service(DuePublisher, lt_service):
                                 # These fields should always be set from either data source
                                 car['rank'] = car_data['rank']
                                 car['race_num'] = race_num
-                                car['state'] = mapCarState(car_data['status'])
-                                car['pos_in_class'] = car_data['rank_by_category']
-                                car['s1'] = car_data['sectors']['0']['current'] or 0
-                                car['bs1'] = car_data['sectors']['0']['best'] or 0
-                                car['s2'] = car_data['sectors']['1']['current'] or 0
-                                car['bs2'] = car_data['sectors']['1']['best'] or 0
-                                car['s3'] = car_data['sectors']['2']['current'] or 0
-                                car['bs3'] = car_data['sectors']['2']['best'] or 0
 
-                                car['last_lap'] = parseTime(car_data['last_lap'])
-                                car['best_lap'] = parseTime(car_data['best_lap'])
+                                new_state = mapCarState(car_data['status'])
+                                if not (car.get('state') == 'PIT' and new_state == 'STOP'):
+                                    car['state'] = new_state
+
+                                car['pos_in_class'] = car_data['rank_by_category']
+                                if not self._hhtiming or self._hhtiming.session.get('SessionTime', 0) < ls.get('elapsed', 0):
+                                    car['s1'] = car_data['sectors']['0']['current'] or 0
+                                    car['bs1'] = car_data['sectors']['0']['best'] or 0
+                                    car['s2'] = car_data['sectors']['1']['current'] or 0
+                                    car['bs2'] = car_data['sectors']['1']['best'] or 0
+                                    car['s3'] = car_data['sectors']['2']['current'] or 0
+                                    car['bs3'] = car_data['sectors']['2']['best'] or 0
+
+                                    car['last_lap'] = parseTime(car_data['last_lap'])
+                                car['best_lap'] = min(parseTime(car_data['best_lap']), car.get('best_lap', 9999999))
 
                                 car['driver'] = car_data['current_pilot']
                                 car['tyre'] = car_data['current_tyres']
@@ -447,17 +452,22 @@ class Service(DuePublisher, lt_service):
                         # These fields should always be set from either data source
                         car['rank'] = car_data['ranking']
                         car['race_num'] = race_num
-                        car['state'] = mapCarState(car_data['state'])
-                        car['pos_in_class'] = car_data['categoryPosition']
-                        car['s1'] = parseTime(car_data['currentSector1'])
-                        car['bs1'] = parseTime(car_data['bestSector1'])
-                        car['s2'] = parseTime(car_data['currentSector2'])
-                        car['bs2'] = parseTime(car_data['bestSector2'])
-                        car['s3'] = parseTime(car_data['currentSector3'])
-                        car['bs3'] = parseTime(car_data['bestSector3'])
 
-                        car['last_lap'] = parseTime(car_data['lastlap'])
-                        car['best_lap'] = parseTime(car_data['bestlap'])
+                        new_state = mapCarState(car_data['state'])
+                        if not (car.get('state') == 'PIT' and new_state == 'STOP'):
+                            car['state'] = new_state
+
+                        car['pos_in_class'] = car_data['categoryPosition']
+                        if not self._hhtiming or self._hhtiming.session.get('SessionTime', 0) < params.get('elapsed', 0):
+                            car['s1'] = parseTime(car_data['currentSector1'])
+                            car['bs1'] = parseTime(car_data['bestSector1'])
+                            car['s2'] = parseTime(car_data['currentSector2'])
+                            car['bs2'] = parseTime(car_data['bestSector2'])
+                            car['s3'] = parseTime(car_data['currentSector3'])
+                            car['bs3'] = parseTime(car_data['bestSector3'])
+
+                            car['last_lap'] = parseTime(car_data['lastlap'])
+                        car['best_lap'] = min(parseTime(car_data['bestlap']), car.get('best_lap', 9999999))
 
                         car['driver'] = car_data['driver']
                         car['tyre'] = car_data['tyre']
@@ -586,7 +596,15 @@ class Service(DuePublisher, lt_service):
                 we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
                 fastest = bestLapsByClass[category][1] if category in bestLapsByClass else None
                 final_sector = common_cols[-2]
-                last_flag = 'sb-new' if we_have_fastest and last_lap == fastest and final_sector[0] != '' else 'pb' if last_lap == best_lap else ''
+
+                last_flag = ''
+                if we_have_fastest and last_lap == fastest:
+                    if final_sector[0] != '':
+                        last_flag = 'sb-new'
+                    else:
+                        last_flag = 'sb'
+                elif last_lap == best_lap:
+                    last_flag = 'pb'
 
                 if self.is_qualifying_mode:
                     d1_lap = car['d1l1']
