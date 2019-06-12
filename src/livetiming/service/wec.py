@@ -4,6 +4,7 @@ from livetiming.messages import SlowZoneMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import DuePublisher, Service as lt_service, Fetcher, JSONFetcher
 from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage, MessageType, SectorStatus
+from livetiming.utils import PitOutDebouncer
 from threading import Lock
 from twisted.internet import reactor, threads
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -134,6 +135,8 @@ class Service(DuePublisher, lt_service):
         self._app_fetcher = None
         self._web_fetcher = None
         self._last_source = 'N'
+
+        self._debounce = PitOutDebouncer(20)
 
         self._data_lock = Lock()
 
@@ -619,7 +622,7 @@ class Service(DuePublisher, lt_service):
 
                 common_cols = [
                     race_num,
-                    car['state'],
+                    self._debounce.value_for(race_num, car['state']),
                     category,
                     car['pos_in_class'],
                     car['team'],

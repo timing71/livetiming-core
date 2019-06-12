@@ -2,11 +2,10 @@ from collections import defaultdict
 from datetime import datetime
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service
-from livetiming.utils import uncache
+from livetiming.utils import PitOutDebouncer, uncache
 from twisted.logger import Logger
 
 import simplejson
-import time
 import urllib2
 
 
@@ -109,26 +108,6 @@ def map_tyre(raw_tyre):
     if raw_tyre in mapp:
         return mapp[raw_tyre]
     return raw_tyre
-
-
-class PitOutDebouncer(object):
-    def __init__(self, threshold=25):
-        self._previous_changes = {}
-        self.threshold = threshold
-        self._init_time = time.time()
-
-    def value_for(self, key, feed_value):
-        prev_value, prev_time = self._previous_changes.get(key, (None, None))
-        if feed_value != prev_value:
-            now = time.time()
-
-            init_threshold_passed = self._init_time + self.threshold <= now
-
-            if prev_time and now < prev_time + self.threshold and init_threshold_passed:
-                return prev_value
-
-            self._previous_changes[key] = (feed_value, time.time())
-        return feed_value
 
 
 class Service(lt_service):
