@@ -83,7 +83,7 @@ def parse_extra_args(extra_args):
 
 
 def calculate_practice_gap(first, second):
-    if first and second and first.get('BestLaptime', 0) > 0 and second.get('BestLaptime', 0) > 0:
+    if first and second and 1e7 > first.get('BestLaptime', 0) > 0 and 1e7 > second.get('BestLaptime', 0) > 0:
         return second['BestLaptime'] - first['BestLaptime']
     return ''
 
@@ -394,7 +394,7 @@ class Service(lt_service):
 
                 car_data += [
                     (last_lap, last_lap_flag),
-                    (best_lap, best_lap_flag),
+                    (best_lap if best_lap < 1e7 else '', best_lap_flag),
                     car.get('Pits', '')
                 ]
 
