@@ -604,7 +604,7 @@ class Service(DuePublisher, lt_service):
                 bs2 = car.get('bs2')
                 s3 = car.get('s3')
                 bs3 = car.get('bs3')
-                last_lap = car['last_lap']
+                last_lap = car.get('last_lap')
 
                 def sector_time(sector):
                     stime = car.get('s{}'.format(sector))
@@ -635,8 +635,8 @@ class Service(DuePublisher, lt_service):
                     car['car'],
                     car['tyre'],
                     car['lap'],
-                    car['gap'] if car['gap'] > 0 else '',
-                    car['int'] if car['int'] > 0 else '',
+                    car['gap'] if car.get('gap') > 0 else '',
+                    car['int'] if car.get('int') > 0 else '',
                     sector_time(1),
                     (bs1 if bs1 > 0 else '', bs_flag(1)),
                     sector_time(2),
@@ -674,7 +674,7 @@ class Service(DuePublisher, lt_service):
                         (av_lap or '', '')
                     ])
                 else:
-                    best_lap = parseTime(car['best_lap'])
+                    best_lap = parseTime(car.get('best_lap'))
                     last_flag = 'sb-new' if we_have_fastest and last_lap == fastest and final_sector[0] != '' else 'pb' if last_lap == best_lap else ''
                     cars.append(common_cols + [
                         (last_lap if last_lap > 0 else '', last_flag),
