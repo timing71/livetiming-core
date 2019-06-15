@@ -134,6 +134,7 @@ class Service(DuePublisher, lt_service):
 
         self._session_data = {}
         self._cars = {}
+        self.session = None
 
         self._last_timestamp = datetime.utcfromtimestamp(0)
         self._last_retrieved = None
@@ -189,13 +190,13 @@ class Service(DuePublisher, lt_service):
         new_session = get_session(self._parsed_extra_args.session)
 
         if new_session:
-            self.log.debug("Using session {sessionid}", sessionid=self.session['id'])
+            self.log.debug("Using session {sessionid}", sessionid=new_session['id'])
             new_description = u'{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
             if new_description != self.description:
                 self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
                 self._session_data = {
-                    'alkamel_session_id': self.session.get('alkamel_session_id')
+                    'alkamel_session_id': new_session.get('alkamel_session_id')
                 }
                 self._cars = {}
                 if self.session:
