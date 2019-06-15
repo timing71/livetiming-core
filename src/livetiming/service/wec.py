@@ -186,11 +186,11 @@ class Service(DuePublisher, lt_service):
 
     def _get_current_session(self):
         self.log.debug("Updating WEC session...")
-        self.session = get_session(self._parsed_extra_args.session)
+        new_session = get_session(self._parsed_extra_args.session)
 
-        if self.session:
+        if new_session:
             self.log.debug("Using session {sessionid}", sessionid=self.session['id'])
-            new_description = u'{} - {}'.format(self.session['race']['name_en'], self.session['name_en'])
+            new_description = u'{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
             if new_description != self.description:
                 self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
@@ -198,7 +198,9 @@ class Service(DuePublisher, lt_service):
                     'alkamel_session_id': self.session.get('alkamel_session_id')
                 }
                 self._cars = {}
-                self.analyser.reset()
+                if self.session:
+                    self.analyser.reset()
+                self.session = new_session
                 self.publishManifest()
 
             if self._app_fetcher:
