@@ -174,6 +174,7 @@ class Service(lt_service):
     def __init__(self, args, extra_args):
         super(Service, self).__init__(args, extra_args)
         self._protocol_factory = create_protocol_factory(self, self._state_dump_file())
+        self.protocol = None
         self._extra_args = parse_extra_args(extra_args)
 
         self._rcMessageGenerator = RaceControlMessage(None)
