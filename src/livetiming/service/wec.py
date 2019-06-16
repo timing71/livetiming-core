@@ -678,7 +678,17 @@ class Service(DuePublisher, lt_service):
                     ])
                 else:
                     best_lap = parseTime(car.get('best_lap'))
-                    last_flag = 'sb-new' if we_have_fastest and last_lap == fastest and final_sector[0] != '' else 'pb' if last_lap == best_lap else ''
+
+                    last_flag = ''
+
+                    if we_have_fastest and last_lap == fastest:
+                        if final_sector[0] != '':
+                            last_flag = 'sb-new'
+                        else:
+                            last_flag = 'sb'
+                    elif last_lap == best_lap:
+                        last_flag = 'pb'
+
                     cars.append(common_cols + [
                         (last_lap if last_lap > 0 else '', last_flag),
                         (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
