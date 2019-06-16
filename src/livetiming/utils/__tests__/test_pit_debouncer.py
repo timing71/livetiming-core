@@ -1,4 +1,4 @@
-from livetiming.service.indycar import PitOutDebouncer, time
+from livetiming.utils import PitOutDebouncer, time
 
 
 def test_debounce_on_exit(monkeypatch):
