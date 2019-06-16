@@ -41,7 +41,7 @@ def mapFlagState(params, hh):
 
     if hh:
         zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
-        if SectorStatus.SLOW_ZONE in zone_states and flag != 'green' and flag != 'red':
+        if SectorStatus.SLOW_ZONE in zone_states and flag == 'yellow':
             return FlagStatus.SLOW_ZONE.name.lower()
 
     return flag
