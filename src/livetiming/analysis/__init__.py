@@ -31,6 +31,7 @@ PROCESSING_MODULES = [  # Order is important!
     'static',
     'driver',
     'car',
+    'messages',  # 163k without, 309k with. I'll take that.
     'session'
 ]
 
