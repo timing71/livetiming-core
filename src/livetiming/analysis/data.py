@@ -232,6 +232,7 @@ class DataCentre(object):
         self.column_spec = []
         self.leader_lap = 0
         self.lap_chart = LaptimeChart()
+        self.messages = []
 
     def flag_change(self, new_flag, timestamp):
         self.session.flag_change(new_flag, self.leader_lap, timestamp)
