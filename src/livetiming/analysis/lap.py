@@ -5,7 +5,7 @@ import math
 import re
 
 
-def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
+def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp, new_messages):
     if old_car:
         old_lap = f.get(old_car, Stat.LAST_LAP)
         new_lap = f.get(new_car, Stat.LAST_LAP)

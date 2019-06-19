@@ -14,7 +14,7 @@ def get_data(dc):
     return data
 
 
-def receive_state_update(dc, old_state, new_state, colspec, timestamp):
+def receive_state_update(dc, old_state, new_state, colspec, timestamp, new_messages):
     flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
     f = FieldExtractor(colspec)
     result = []
@@ -24,7 +24,7 @@ def receive_state_update(dc, old_state, new_state, colspec, timestamp):
             old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
 
             for module in SUBMODULES.values():
-                update = module.receive_state_update(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp)
+                update = module.receive_state_update(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp, new_messages)
                 if update:
                     result.append(update)
 

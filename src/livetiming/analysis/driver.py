@@ -7,7 +7,7 @@ def get_data(dc):
 
 
 @per_car('driver', get_data)
-def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
+def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp, new_messages):
     old_driver = f.get(old_car, Stat.DRIVER)
     new_driver = f.get(new_car, Stat.DRIVER)
 
