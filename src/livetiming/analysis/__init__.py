@@ -65,13 +65,13 @@ class Analyser(object):
         self._modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
 
     @with_dc_lock
-    def receiveStateUpdate(self, newState, colSpec, timestamp=None):
+    def receiveStateUpdate(self, newState, colSpec, timestamp=None, new_messages=[]):
         if not timestamp:
             timestamp = time.time()
         self.data_centre.current_state = copy.deepcopy(newState)
         for key in PROCESSING_MODULES:
             module = self._modules[key]
-            updates = module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp)
+            updates = module.receive_state_update(self.data_centre, self._current_state, newState, colSpec, timestamp, new_messages)
             for key, data in updates:
                 self._publish_data(key, data)
 
@@ -161,7 +161,7 @@ class FieldExtractor(object):
 
 def per_car(key, data_func):
     def per_car_inner(func):
-        def inner(dc, old_state, new_state, colspec, timestamp):
+        def inner(dc, old_state, new_state, colspec, timestamp, new_messages):
             flag = FlagStatus.fromString(new_state["session"].get("flagState", "none"))
             f = FieldExtractor(colspec)
             changed = False
@@ -169,7 +169,7 @@ def per_car(key, data_func):
                 race_num = f.get(new_car, Stat.NUM)
                 if race_num:
                     old_car = next(iter([c for c in old_state["cars"] if f.get(c, Stat.NUM) == race_num] or []), None)
-                    changed = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp) or changed
+                    changed = func(dc, race_num, idx + 1, old_car, new_car, f, flag, timestamp, new_messages) or changed
             if changed:
                 return [(key, data_func(dc))]
             else:

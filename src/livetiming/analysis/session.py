@@ -3,7 +3,7 @@ from livetiming.racing import FlagStatus
 _prev_leader_lap = 0
 
 
-def receive_state_update(dc, old_state, new_state, colspec, timestamp):
+def receive_state_update(dc, old_state, new_state, colspec, timestamp, new_messages):
     global _prev_leader_lap
 
     changed = False

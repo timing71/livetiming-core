@@ -4,7 +4,7 @@ from livetiming.analysis import map_stint_with
 PIT_STATES = ["PIT", "FUEL", "N/S", "FIN"]
 
 
-def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp):
+def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, timestamp, new_messages):
     old_car_state = f.get(old_car, Stat.STATE)
     new_car_state = f.get(new_car, Stat.STATE)
     car = dc.car(race_num)
