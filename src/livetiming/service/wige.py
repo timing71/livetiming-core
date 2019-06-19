@@ -383,6 +383,7 @@ class Service(lt_service):
                 '14': 'PIT',
                 '15': 'OUT',
                 '16': 'RUN',
+                '17': 'RUN',
                 '20': 'RUN'
             }
         }
