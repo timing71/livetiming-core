@@ -445,7 +445,15 @@ def generate_analysis(rec_file, out_file, report_progress=False):
         data = {}
         for idx, frame in enumerate(frames):
             newState = rec.getStateAtTimestamp(frame)
-            a.receiveStateUpdate(newState, pcs, frame)
+
+            oldState = data.get('state')
+            new_messages = []
+            if oldState:
+                for newMsg in newState['messages']:
+                    if len(oldState['messages']) == 0 or newMsg[0] > oldState['messages'][0][0]:
+                        new_messages.append(newMsg)
+
+            a.receiveStateUpdate(newState, pcs, frame, new_messages=new_messages)
             data['state'] = newState
 
             if report_progress:
