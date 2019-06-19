@@ -97,14 +97,18 @@ class TimingRecorder(object):
     def _diffState(self, newState):
         carsDiff = dictdiffer.diff(self.prevState['cars'], newState['cars'])
         sessionDiff = dictdiffer.diff(self.prevState['session'], newState['session'])
-        messagesDiff = []
-        for newMsg in newState['messages']:
-            if len(self.prevState['messages']) == 0 or newMsg[0] > self.prevState['messages'][0][0]:
-                messagesDiff.append(newMsg)
+
+        # This looks potentially costly but remember oldState['messages'] is bounded to 100 entries
+        prev_recent_message = max(map(lambda m: m[0], self.prevState['messages'])) if len(self.prevState['messages']) > 0 else None
+        if prev_recent_message:
+            new_messages = [m for m in newState['messages'] if m[0] > prev_recent_message]
+        else:
+            new_messages = newState['messages']
+
         return {
             'cars': list(carsDiff),
             'session': list(sessionDiff),
-            'messages': messagesDiff,
+            'messages': new_messages,
             'highlight': newState.get('highlight', [])
         }
 
@@ -449,9 +453,12 @@ def generate_analysis(rec_file, out_file, report_progress=False):
             oldState = data.get('state')
             new_messages = []
             if oldState:
-                for newMsg in newState['messages']:
-                    if len(oldState['messages']) == 0 or newMsg[0] > oldState['messages'][0][0]:
-                        new_messages.append(newMsg)
+                # This looks potentially costly but remember oldState['messages'] is bounded to 100 entries
+                prev_recent_message = max(map(lambda m: m[0], oldState['messages'])) if len(oldState['messages']) > 0 else None
+                if prev_recent_message:
+                    new_messages = [m for m in newState['messages'] if m[0] > prev_recent_message]
+                else:
+                    new_messages = newState['messages']
 
             a.receiveStateUpdate(newState, pcs, frame, new_messages=new_messages)
             data['state'] = newState
