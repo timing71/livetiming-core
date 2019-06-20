@@ -228,6 +228,8 @@ class Service(DuePublisher, lt_service):
                 needs_republish = True
             if data.get('HEAT', None) != self._data.get('HEAT', None):
                 needs_republish = True
+            if data.get('NROFINTERMEDIATETIMES', None) != self._data.get('NROFINTERMEDIATETIMES', None):
+                needs_republish = True
 
             self._data = data
 
