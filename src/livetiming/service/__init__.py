@@ -322,7 +322,8 @@ class Service(object):
                 reactor.callInThread(  # This could take some time, let's be sure to not block the reactor
                     self.analyser.receiveStateUpdate,
                     newState,
-                    self.getColumnSpec()
+                    self.getColumnSpec(),
+                    new_messages=new_messages
                 )
 
             self._saveState()
