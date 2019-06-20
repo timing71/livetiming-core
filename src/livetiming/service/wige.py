@@ -37,6 +37,7 @@ def parse_extra_args(extra_args):
     parser.add_argument('-e', '--event-id', help='Event ID', required=True)
     parser.add_argument('--nurburgring', help='Use Nurburgring-specific features', action='store_true')
     parser.add_argument('--gpsauge', help='GPSauge app ID to use for Nbr features')
+    parser.add_argument('--tz', help='Adjust timestamps by this many hours', type=int, default=1)
 
     return parser.parse_args(extra_args)
 
@@ -143,9 +144,10 @@ class SlowZoneMessage(TimingMessage):
 
 
 class RaceControlMessage(TimingMessage):
-    def __init__(self, messages):
+    def __init__(self, messages, tz_adjustment=1):
         self._messages = messages
         self._mostRecentTime = 0
+        self._tz_adjustment = tz_adjustment
 
     def process(self, _, __):
         # current = rcm.get('currentMessages', {})
@@ -163,8 +165,9 @@ class RaceControlMessage(TimingMessage):
             msgTime = msg.get('MESSAGETIME')
             if msgTime:
                 parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
+
                 this_msg_time = this_msg_time.replace(
-                    hour=parsed_msgtime.hour - 1 if parsed_msgtime.hour > 1 else 23,
+                    hour=parsed_msgtime.hour - self._tz_adjustment if parsed_msgtime.hour >= self._tz_adjustment else (24 - parsed_msgtime.hour - self._tz_adjustment),
                     minute=parsed_msgtime.minute,
                     second=parsed_msgtime.second
                 )
@@ -194,7 +197,7 @@ class Service(lt_service):
         lt_service.__init__(self, args, extra)
         self._extra = parse_extra_args(extra)
         self._messages = []
-        self._rc_messages = RaceControlMessage(self._messages)
+        self._rc_messages = RaceControlMessage(self._messages, self._extra.tz)
 
         self._data = {}
 
