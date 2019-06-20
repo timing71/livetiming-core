@@ -387,7 +387,7 @@ class Service(lt_service):
                 '15': 'OUT',
                 '16': 'RUN',
                 '17': 'RUN',
-                '20': 'RUN'
+                '20': 'PIT'
             }
         }
         if not ontrack:
