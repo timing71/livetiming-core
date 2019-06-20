@@ -439,7 +439,7 @@ class Service(DuePublisher, lt_service):
                 car['NAME'],
                 car['TEAM'],
                 car['CAR'],
-                accum.get('lap', ''),
+                accum.get('lap', car.get('LAPS', '')),
                 gap,
                 interval,
             ] + sector_cols + [
