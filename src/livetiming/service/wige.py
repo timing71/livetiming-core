@@ -161,13 +161,15 @@ class RaceControlMessage(TimingMessage):
         for msg in self._messages:
             hasCarNum = CAR_NUMBER_REGEX.search(msg['MESSAGE'])
 
-            this_msg_time = datetime.now()
+            this_msg_time = datetime.utcnow()
             msgTime = msg.get('MESSAGETIME')
             if msgTime:
                 parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
 
+                new_hour = parsed_msgtime.hour - self._tz_adjustment if parsed_msgtime.hour >= self._tz_adjustment else (24 - parsed_msgtime.hour - self._tz_adjustment)
+
                 this_msg_time = this_msg_time.replace(
-                    hour=parsed_msgtime.hour - self._tz_adjustment if parsed_msgtime.hour >= self._tz_adjustment else (24 - parsed_msgtime.hour - self._tz_adjustment),
+                    hour=new_hour,
                     minute=parsed_msgtime.minute,
                     second=parsed_msgtime.second
                 )
@@ -445,6 +447,7 @@ class Service(lt_service):
 
         colspec = self.getColumnSpec()
 
+        state_idx = colspec.index(Stat.STATE)
         last_lap_idx = colspec.index(Stat.LAST_LAP)
         best_lap_idx = colspec.index(Stat.BEST_LAP)
         first_sector_idx = 10
@@ -468,11 +471,12 @@ class Service(lt_service):
             last = car[last_lap_idx]
             best = car[best_lap_idx]
             s5 = car[last_sector_idx]
+            state = car[state_idx]
 
             if race_num == fastest[1]:
                 car[best_lap_idx] = (best[0], 'sb')
                 if last[0] == best[0]:
-                    if s5[0] != '':
+                    if s5[0] != '' and state == 'RUN':
                         car[last_lap_idx] = (last[0], 'sb-new')
                     else:
                         car[last_lap_idx] = (last[0], 'sb')
