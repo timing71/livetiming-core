@@ -214,7 +214,10 @@ class Service(lt_service):
     def _connectWS(self, url, event_id):
             factory = ReconnectingWebSocketClientFactory(url)
             factory.protocol = create_ws_protocol(self.log, self.handle, event_id)
-            connectWS(factory)
+            factory.setProtocolOptions(
+                openHandshakeTimeout=120
+            )
+            connectWS(factory, timeout=120)
 
     def handle(self, data):
 

@@ -449,6 +449,7 @@ def MultiLineFetcher(url, callback, interval):
 
 class ReconnectingWebSocketClientFactory(WebSocketClientFactory, ReconnectingClientFactory):
     log = Logger()
+    maxDelay = 30
 
     def clientConnectionFailed(self, connector, reason):
         self.log.warn("Connection to upstream source failed! Reason: {reason}. Retrying...", reason=reason)
