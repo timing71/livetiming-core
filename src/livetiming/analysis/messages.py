@@ -7,4 +7,4 @@ def receive_state_update(dc, old_state, new_state, colspec, timestamp, new_messa
 
 
 def get_data(dc):
-    return dc.messages
+    return {'messages': dc.messages}
