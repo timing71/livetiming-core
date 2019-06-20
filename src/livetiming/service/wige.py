@@ -3,7 +3,7 @@ from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.utils.nurburgring import Nurburgring
-from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory
+from livetiming.service import DuePublisher, Service as lt_service, ReconnectingWebSocketClientFactory
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
@@ -191,11 +191,12 @@ class RaceControlMessage(TimingMessage):
 CAR_LAP_REGEX = re.compile('Lap (?P<lap_num>[0-9]+)', re.IGNORECASE)
 
 
-class Service(lt_service):
+class Service(DuePublisher, lt_service):
     attribution = ['wige Solutions']
     auto_poll = False
 
     def __init__(self, args, extra):
+        super(Service, self).__init__(args, extra)
         lt_service.__init__(self, args, extra)
         self._extra = parse_extra_args(extra)
         self._messages = []
@@ -232,7 +233,7 @@ class Service(lt_service):
 
             if needs_republish:
                 self.publishManifest()
-            self._updateAndPublishRaceState()
+            self.set_due_publish()
         elif data.get('PID') == "3":  # Messages
             self._messages = data.get('MESSAGES', [])
             self._rc_messages._messages = self._messages
