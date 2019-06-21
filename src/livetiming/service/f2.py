@@ -220,6 +220,8 @@ class Service(lt_service):
                             car[3] = line["laps"]["Value"]
                         if "status" in line:
                             car[1] = parseState(line["status"])
+                            if car[1] == 'PIT' and car[9][1] == 'sb-new':
+                                car[9][1] == 'sb'
                         if "last" in line:
                             car[9] = parseTime(line["last"])
                             if car[9][0] == car[10][0] and car[9][1] == 'sb' and car[8][0] != '' and car[1] == 'RUN':  # last == best == sb and just set S3
