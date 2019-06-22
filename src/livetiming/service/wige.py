@@ -33,6 +33,10 @@ def create_ws_protocol(log, handler, eventID):
             self._watchdog.notify()
             handler(simplejson.loads(payload))
 
+        def onClose(self, wasClean, code, reason):
+            log.info("Closed connection to uostream timing source")
+            self._watchdog.stop()
+
     return ClientProtocol
 
 
@@ -151,7 +155,7 @@ class SlowZoneMessage(TimingMessage):
 class RaceControlMessage(TimingMessage):
     def __init__(self, messages, tz_adjustment=1):
         self._messages = messages
-        self._mostRecentTime = 0
+        self._mostRecentTime = time.time()
         self._tz_adjustment = tz_adjustment
 
     def process(self, _, __):
