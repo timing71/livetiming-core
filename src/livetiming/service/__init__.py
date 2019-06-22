@@ -133,6 +133,7 @@ class Service(object):
                 return deferToThread(self.analyser.save_data_centre)
             LoopingCall(saveAsync).start(60)
             LoopingCall(self.analyser._publish_pending).start(60)
+            self.analyser.publish_all()
 
         component = make_component(session_class)
         run(component, log_level='debug' if self.args.debug else 'info')
