@@ -3,7 +3,7 @@ from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
 from datetime import datetime
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.utils.nurburgring import Nurburgring
-from livetiming.service import DuePublisher, Service as lt_service, ReconnectingWebSocketClientFactory
+from livetiming.service import DuePublisher, Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
@@ -18,14 +18,19 @@ import time
 def create_ws_protocol(log, handler, eventID):
     class ClientProtocol(WebSocketClientProtocol):
 
+        def __init__(self):
+            super(ClientProtocol, self).__init__()
+            self._watchdog = Watchdog(60, self.dropConnection, abort=True)
+
         def onConnect(self, response):
             log.info('Connected to upstream timing source')
             self.factory.resetDelay()
+            self._watchdog.start()
             self.sendMessage('{"eventId": "' + eventID + '","eventPid":[0,3,4]}')
 
         def onMessage(self, payload, isBinary):
             log.debug('Received message: {msg}', msg=payload)
-
+            self._watchdog.notify()
             handler(simplejson.loads(payload))
 
     return ClientProtocol
