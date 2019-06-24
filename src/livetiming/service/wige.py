@@ -159,12 +159,6 @@ class RaceControlMessage(TimingMessage):
         self._tz_adjustment = tz_adjustment
 
     def process(self, _, __):
-        # current = rcm.get('currentMessages', {})
-        # for idx, msg in current.iteritems():
-        #     if self._seen_current_msgs.get(idx) != msg['message']:
-        #         new_messages.append(msg)
-        #         self._seen_current_msgs[idx] = msg['message']
-
         msgs = []
 
         for msg in self._messages:
@@ -176,8 +170,10 @@ class RaceControlMessage(TimingMessage):
                 parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
 
                 new_hour = parsed_msgtime.hour - self._tz_adjustment if parsed_msgtime.hour >= self._tz_adjustment else (24 - parsed_msgtime.hour - self._tz_adjustment)
+                new_day = parsed_msgtime.day - 1 if new_hour > this_msg_time.hour else parsed_msgtime.day
 
                 this_msg_time = this_msg_time.replace(
+                    day=new_day,
                     hour=new_hour,
                     minute=parsed_msgtime.minute,
                     second=parsed_msgtime.second
