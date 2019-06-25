@@ -4,7 +4,7 @@ from livetiming.analysis import FieldExtractor, per_car
 import importlib
 
 
-SUBMODULES = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in ['lap', 'stint']}
+SUBMODULES = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in ['lap', 'stint', 'car_messages']}
 
 
 def get_data(dc):
