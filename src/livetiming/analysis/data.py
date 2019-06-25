@@ -108,6 +108,7 @@ class Car(object):
         self.fuel_times = []
         self.last_pass = None
         self.drivers = []
+        self.messages = []
 
         # Public static data
         self.race_class = None
