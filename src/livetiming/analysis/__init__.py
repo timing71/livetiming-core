@@ -190,9 +190,9 @@ def map_stint_with(car, timestamp):
         if not stint:
             return None
         return [
-            stint.start_lap,
+            int(stint.start_lap) if stint.start_lap else None,
             stint.start_time,
-            stint.end_lap if not stint.in_progress else car.current_lap,
+            int(stint.end_lap) if not stint.in_progress else int(car.current_lap),
             stint.end_time if not stint.in_progress else timestamp,
             stint.in_progress,
             drivers.index(stint.driver) if stint.driver in drivers else -1,
