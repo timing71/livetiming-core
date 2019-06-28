@@ -288,6 +288,8 @@ class Service(lt_service):
             self.sessionState["flagState"] = FlagStatus.CHEQUERED.name.lower()  # Override trackfeed value
         elif self.sessionFeed == 'Aborted':
             self.sessionState["flagState"] = FlagStatus.RED.name.lower()
+        elif self.sessionFeed == 'Inactive':
+            self.sessionState["flagState"] = FlagStatus.NONE.name.lower()
         else:
             self.sessionState["flagState"] = parseFlag(self.trackFeed)
 
