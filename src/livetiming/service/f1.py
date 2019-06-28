@@ -12,7 +12,7 @@ from requests.sessions import Session
 from signalr import Connection
 from threading import Thread
 
-
+import dateutil.parser
 import math
 import simplejson
 import time
@@ -61,7 +61,7 @@ class F1Client(Thread):
             connection.received += handle
 
             with connection:
-                hub.server.invoke('Subscribe', ['SPFeed', 'ExtrapolatedClock'])
+                hub.server.invoke('Subscribe', ['SPFeed', 'ExtrapolatedClock', 'RaceControlMessages'])
                 connection.wait(None)
 
 
@@ -240,16 +240,11 @@ class Service(lt_service):
                     self.log.info(u"New session: {desc}", desc=new_desc)
                     self.publishManifest()
 
-            comms = self._getData('commentary')
-            if comms:
-                pd = comms.get('PD', [])
-                if len(pd) > 0:
-                    if 'h' in pd[0]:
-                        idx = pd[0]['h']
-                        if self._commsIndex != idx:
-                            self._fetch_comms(idx)
         elif payload[0] == 'ExtrapolatedClock':
             self.on_extrapolatedclock(payload)
+
+        elif payload[0] == 'RaceControlMessages':
+            self.on_racecontrolmessages(payload)
 
         self.dataLastUpdated = datetime.now()
         self._needs_publish = True
@@ -261,28 +256,16 @@ class Service(lt_service):
         _apply_patch_children(self._clock, clock[1])
         self._needs_publish = True
 
-    def _fetch_comms(self, idx):
-        if 'path' in self.dataMap:
-            comms_url = 'https://livetiming.formula1.com/static/{}com.rc.js?{}'.format(self.dataMap['path'], idx)
-
-            def handle_comms(comms):
-                comm_json = simplejson.loads(comms[5:-2])
-                msgs = filter(lambda m: m['id'] > self.prevRaceControlMessage and (m['type'] != 'TEAM_AUDIO'), comm_json['feed']['e'])
-                for msg in msgs:
-                    self.messages.append([msg['pub'], msg['text']])
-                    self.prevRaceControlMessage = max(self.prevRaceControlMessage, msg['id'])
-
-            def handle_comm_response(resp):
-                d = readBody(resp)
-                d.addCallback(handle_comms)
-
-            req = _web_agent.request(
-                'GET',
-                comms_url
-            )
-            req.addCallback(handle_comm_response)
-
-        self._commsIndex = idx
+    def on_racecontrolmessages(self, rcm):
+        messages = rcm[1]['Messages']
+        if isinstance(messages, list):
+            new_msgs = filter(lambda m: m['Utc'] > self.prevRaceControlMessage, rcm[1]['Messages'])
+        else:
+            new_msgs = filter(lambda m: m['Utc'] > self.prevRaceControlMessage, rcm[1]['Messages'].values())
+        for msg in new_msgs:
+            parsed_date = dateutil.parser.parse(msg['Utc'])
+            self.messages.append([(parsed_date - datetime(1970, 1, 1)).total_seconds(), msg['Message']])
+            self.prevRaceControlMessage = max(self.prevRaceControlMessage, msg['Utc'])
 
     def getName(self):
         return "Formula 1"
