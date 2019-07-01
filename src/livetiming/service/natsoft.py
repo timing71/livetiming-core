@@ -8,7 +8,7 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import argparse
 import re
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib
 import xml.etree.ElementTree as ET
 
 
@@ -24,6 +24,7 @@ def create_ws_protocol(log, handler):
 
         def onMessage(self, payload, isBinary):
             log.debug('Received message: {msg}', msg=payload)
+            payload = payload.decode('utf-8')
 
             if payload == '<NotFound />\r\n':
                 log.warn('Timing feed not found. Delaying reconnection attempt')
