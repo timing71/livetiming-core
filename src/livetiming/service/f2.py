@@ -6,7 +6,7 @@ from livetiming.service import Service as lt_service, ReconnectingWebSocketClien
 from twisted.internet.task import LoopingCall
 
 import simplejson
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 
 def createProtocol(series, service):
@@ -17,8 +17,8 @@ def createProtocol(series, service):
             self.factory.resetDelay()
 
         def onOpen(self):
-            self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}')
-            self.sendMessage('{"H":"streaming","M":"GetData2","A":["' + series + '",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
+            self.sendMessage(bytes('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}', 'utf-8'))
+            self.sendMessage(bytes('{"H":"streaming","M":"GetData2","A":["' + series + '",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}', 'utf-8'))
 
         def onMessage(self, payload, isBinary):
             service.onTimingPayload(simplejson.loads(payload.decode('utf8')))

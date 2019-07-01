@@ -200,9 +200,9 @@ class Service(lt_service):
         lt_service.__init__(self, args, extra_args)
         self.dataMap = {}
         self._clock = {}
-        self.prevRaceControlMessage = -1
+        self.prevRaceControlMessage = datetime.utcnow().strftime("%Y-%m-%dT%H:%I:%S")
         self.messages = []
-        self.dataLastUpdated = datetime.now()
+        self.dataLastUpdated = datetime.utcnow()
         self._commsIndex = None
 
         self._description = 'Formula 1'

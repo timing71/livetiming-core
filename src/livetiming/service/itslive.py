@@ -8,7 +8,7 @@ import argparse
 import requests
 import simplejson
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 
 API_ROOT = 'https://api-live.its-live.net/v1'
