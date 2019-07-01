@@ -109,7 +109,7 @@ def create_client(namespace, profile, on_ready=None, log=Logger()):
                 FETCH_RETRIES - tries_remaining
             )
 
-            response = yield self._agent.request('GET', url_to_fetch)
+            response = yield self._agent.request(b'GET', bytes(url_to_fetch, 'utf-8'))
             try:
                 if response.code == 200:
                     body = yield readBody(response)

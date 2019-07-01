@@ -1,7 +1,7 @@
 from io import StringIO
 from kitchen.text.converters import to_bytes, to_unicode
 import simplejson
-import urllib.request, urllib.parse, urllib.error
+import urllib
 
 
 PREHEADER_LENGTH = 10

@@ -136,7 +136,7 @@ class Service(DuePublisher, lt_service):
         self._session_data = None
         self._timing_data = None
         self._rc_messages = RaceControlMessage([])
-        self._last_msg_time = -1
+        self._last_msg_time = datetime.utcnow()
         self._previous_laps = {}
 
         client_def = create_client(self.namespace, self.profile, self._load_season, self.log)
@@ -226,11 +226,13 @@ class Service(DuePublisher, lt_service):
 
     def _handle_session(self, data):
         self._session_data = data
+        for msg in data.get('Messages', []):
+            msg['ParsedTime'] = datetime.strptime(msg['Time'], '%d.%m.%Y %H:%M:%S')
 
-        rc_messages = [m for m in data.get('Messages', []) if m['Time'] > self._last_msg_time]
+        rc_messages = [m for m in data.get('Messages', []) if m['ParsedTime'] > self._last_msg_time]
         for m in rc_messages:
             self._rc_messages.messageList.append(m['Text'])
-            self._last_msg_time = max(self._last_msg_time, m['Time'])
+            self._last_msg_time = max(self._last_msg_time, m['ParsedTime'])
 
         self.set_due_publish()
 
