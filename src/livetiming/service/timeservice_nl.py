@@ -5,15 +5,16 @@ from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
 from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
 from lzstring import LZString
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.task import LoopingCall
+from twisted.internet import reactor
+from twisted.web.client import Agent, readBody
 
 import argparse
 import simplejson
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib
 import re
-from twisted.internet import reactor
 
 
 def create_protocol(service):
@@ -140,8 +141,8 @@ def ident(val):
 
 def nonnegative(val):
     try:
-        return max(val[0], 0)
-    except (ValueError, IndexError):
+        return max(int(val[0]), 0)
+    except (ValueError, IndexError, TypeError):
         return val
 
 
@@ -277,23 +278,30 @@ class Service(lt_service):
         else:
             return self._trackIDFromServiceName(self.myArgs.tk)
 
+    @inlineCallbacks
     def _trackIDFromServiceName(self, service_name):
-        d = Deferred()
-        tid_matcher = re.compile("(?:new liveTiming.LiveTimingApp\()(?P<service_data>[^;]+)\);")
+        agent = Agent(reactor)
+        tid_matcher = re.compile(b"(?:new liveTiming.LiveTimingApp\()(?P<service_data>[^;]+)\);")
         print("Searching for tid for service '{service_name}'".format(service_name=service_name))
-        while not d.called:
-            tsnl = urllib.request.urlopen("https://{}/{}".format(self.getHost(), service_name)).read()
+
+        found_one = False
+
+        while not found_one:
+
+            tsnl_response = yield agent.request(
+                b'GET',
+                "https://{}/{}".format(self.getHost(), service_name).encode('utf-8')
+            )
+            tsnl = yield readBody(tsnl_response)
 
             matches = tid_matcher.search(tsnl)
             if matches:
                 svc_data = simplejson.loads(matches.group('service_data'))
                 self.log.info("Found TSNL service data: {service_data}", service_data=svc_data)
-                d.callback(svc_data['tid'])
-                break
+                return svc_data['tid']
             else:
                 print("No tid found, trying again in 30 seconds.")
                 time.sleep(30)
-        return d
 
     def getName(self):
         return "timeservice.nl feed"
@@ -434,7 +442,7 @@ class Service(lt_service):
                 s3Idx = colSpec.index(Stat.S3) if Stat.S3 in colSpec else None
 
                 if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
-                    if result[stateIdx] == "RUN" and (s3Idx is None or result[s3Idx][0] > 0):  # Not if in pits or have completed next lap S1
+                    if result[stateIdx] == "RUN" and (s3Idx is None or (result[s3Idx] != '' and result[s3Idx][0] > 0)):  # Not if in pits or have completed next lap S1
                         result[lastIdx] = (result[lastIdx][0], "sb-new")
 
         return result
