@@ -1,9 +1,9 @@
-from urllib.parse import quote_plus
-
 import hashlib
 import simplejson
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 
 CLIENT_ID = "c87d1a87-00fa-4229-aa8c-6b151ba25f99"
@@ -64,17 +64,17 @@ def build_url(base_url, params):
 def ag(string):
     if string == "" or string is None:
         return ""
-    return quote_plus(string).replace("+", "%20")
+    return urllib.parse.quote_plus(string).replace("+", "%20")
 
 
 def ae(string):
     digest = hashlib.sha1()
-    digest.update(string)
+    digest.update(string.encode('utf-8'))
 
     result = ""
 
     for c in digest.digest():
-        b = ord(c)
+        b = c
         i = (rshift(b, 4)) & 15
         i2 = 0
         while True:
