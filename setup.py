@@ -26,7 +26,7 @@ setup(
     install_requires=[
         "autobahn[twisted]>=17.6.2",
         "beautifulsoup4",
-        "crossbar==18.4.1",  # Latest version that supports Python 2.7
+        "crossbar",
         "dictdiffer",
         "enum34",
         "google-api-python-client",
@@ -47,7 +47,7 @@ setup(
         "simplejson",
         "socketio-client",
         "subprocess32",
-        "twisted==17.9.0"  # Latest version supported by Crossbar
+        "twisted"
     ],
     setup_requires=[
         'pytest-runner',
