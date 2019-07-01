@@ -17,7 +17,7 @@ def _parse_args():
 
     subparsers = parser.add_subparsers(help='Format-specific help')
 
-    for format_name, format_module in _FORMATS.iteritems():
+    for format_name, format_module in _FORMATS.items():
         subparser = subparsers.add_parser(format_name)
         if hasattr(format_module, 'generate_parser_args') and callable(getattr(format_module, 'generate_parser_args')):
             format_module.generate_parser_args(subparser)
@@ -40,13 +40,13 @@ def main():
     events = sorted(args.create_events(args), key=lambda e: e.timestamp)
     evt_count = len(events)
 
-    print "Generated {} events".format(evt_count)
+    print("Generated {} events".format(evt_count))
 
     message_generators = args.message_generators()
 
     car_state = initial_state
     state = {
-        'cars': args.sort_cars(args, car_state.values()),
+        'cars': args.sort_cars(args, list(car_state.values())),
         'session': {
             'timeElapsed': 0,
             'timeRemain': args.duration or None
@@ -60,7 +60,7 @@ def main():
         'description': 'Converted chrono dump',
         'name': 'converted',
         'uuid': my_uuid,
-        'colSpec': map(lambda s: s.value if isinstance(s, Stat) else s, args.colspec)
+        'colSpec': [s.value if isinstance(s, Stat) else s for s in args.colspec]
     })
     next_frame_threshold = 0
 
@@ -83,7 +83,7 @@ def main():
         elapsed = evt_time - session_start_time
 
         new_state = {
-            'cars': args.sort_cars(args, car_state.values()),
+            'cars': args.sort_cars(args, list(car_state.values())),
             'session': {
                 'timeElapsed': elapsed,
                 'timeRemain': int(args.duration) - elapsed
@@ -100,10 +100,10 @@ def main():
 
         state = new_state
 
-    print ''
+    print('')
     recorder.writeState(state, int(events[-1].timestamp))
     of = recorder.finalise()
-    print "Created {} (UUID {})".format(of, my_uuid)
+    print("Created {} (UUID {})".format(of, my_uuid))
 
 
 def if_positive(val, otherwise=''):
@@ -163,7 +163,7 @@ def _generate_messages(generators, timestamp, old_state, new_state):
         new_messages += generator.process(old_state, new_state)
 
     # Fix up message timestamps
-    new_messages = map(lambda m: [timestamp] + m[1:], new_messages)
+    new_messages = [[timestamp] + m[1:] for m in new_messages]
 
     return (new_messages + old_state['messages'])[0:100]
 

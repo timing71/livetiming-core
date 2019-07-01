@@ -3,7 +3,7 @@ from livetiming.service import Service as lt_service
 
 import random
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import simplejson
 
 
@@ -110,12 +110,12 @@ class Service(lt_service):
         url = "{}".format(self._getFeedURL())
         self.log.debug("Using url {}".format(url))
         try:
-            request = urllib2.Request(url)
+            request = urllib.request.Request(url)
             request.add_header("User-Agent", "livetiming")
-            feed = urllib2.urlopen(request)
+            feed = urllib.request.urlopen(request)
             return simplejson.load(feed)
         except Exception as e:
-            print e
+            print(e)
 
     def getSeriesTag(self):
         return ""
@@ -126,9 +126,9 @@ class Service(lt_service):
             self.log.info("Retrieving feed URL from http://www.nascar.com/{}racecenter".format(series))
             raw = None
             while raw is None or raw.getcode() != 200:
-                rq = urllib2.Request("http://www.nascar.com/{}racecenter".format(series))
+                rq = urllib.request.Request("http://www.nascar.com/{}racecenter".format(series))
                 rq.add_header("User-Agent", "livetiming")
-                raw = urllib2.urlopen(rq)
+                raw = urllib.request.urlopen(rq)
             m = re.search("http://www.nascar.com/live/feeds/series.*\.json", raw.read())
             self.feedURL = m.group(0)
             self.log.info("Using feed URL {}".format(self.feedURL))

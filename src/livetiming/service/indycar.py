@@ -6,7 +6,7 @@ from livetiming.utils import PitOutDebouncer, uncache
 from twisted.logger import Logger
 
 import simplejson
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 def mapFlagStates(rawState, session_type):
@@ -322,7 +322,7 @@ class Service(lt_service):
     def getRawFeedData(self):
         try:
             feed_url = uncache("http://racecontrol.indycar.com/xml/timingscoring.json", '_')()
-            feed = urllib2.urlopen(feed_url)
+            feed = urllib.request.urlopen(feed_url)
             lines = feed.readlines()
             return simplejson.loads(lines[1])
         except (simplejson.JSONDecodeError, IndexError):

@@ -8,7 +8,7 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import argparse
 import re
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import xml.etree.ElementTree as ET
 
 
@@ -95,7 +95,7 @@ def map_flag(raw):
     }
     if raw in mapp:
         return mapp[raw]
-    print "Unknown flag {}".format(raw)
+    print("Unknown flag {}".format(raw))
     return FlagStatus.NONE
 
 
@@ -360,7 +360,7 @@ class NatsoftState(object):
 
 
 def _get_websocket_url(http_url):
-    response = urllib2.urlopen(http_url.rstrip('/'))
+    response = urllib.request.urlopen(http_url.rstrip('/'))
     ws_url = response.geturl()
 
     if '?' in ws_url:
@@ -538,7 +538,7 @@ class Service(lt_service):
                     session['timeRemain'] = value
 
         return {
-            'cars': map(self.map_car, [value for (key, value) in sorted(self._state._positions.items())]),
+            'cars': list(map(self.map_car, [value for (key, value) in sorted(self._state._positions.items())])),
             'session': session
         }
 

@@ -41,6 +41,6 @@ c.start()
 
 
 def printy(*args):
-    print args
+    print(args)
 
 Thread(target=reactor.run).start()

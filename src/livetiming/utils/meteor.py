@@ -37,11 +37,11 @@ class CollectionData(object):
             self.data[collection] = {}
         if id not in self.data[collection]:
             self.data[collection][id] = {}
-        for key, value in fields.items():
+        for key, value in list(fields.items()):
             self.data[collection][id][key] = value
 
     def change_data(self, collection, id, fields, cleared):
-        for key, value in fields.items():
+        for key, value in list(fields.items()):
             self.data[collection][id][key] = value
 
         for key in cleared:
@@ -51,12 +51,12 @@ class CollectionData(object):
         del self.data[collection][id]
 
     def collections(self):
-        return self.data.keys()
+        return list(self.data.keys())
 
     def __repr__(self):
-        result = u""
-        for coll, data in self.data.iteritems():
-            result += u"{} :=> {}\n".format(coll, data)
+        result = ""
+        for coll, data in self.data.items():
+            result += "{} :=> {}\n".format(coll, data)
         return result
 
 
@@ -315,11 +315,11 @@ class MeteorClient(EventEmitter):
         Keyword Arguments:
         selector - the query (default returns all items in a collection)"""
         results = []
-        for _id, doc in self.collection_data.data.get(collection, {}).items():
+        for _id, doc in list(self.collection_data.data.get(collection, {}).items()):
             doc.update({'_id': _id})
             if selector == {}:
                 results.append(doc)
-            for key, value in selector.items():
+            for key, value in list(selector.items()):
                 if key in doc and doc[key] == value:
                     results.append(doc)
         return results
@@ -330,11 +330,11 @@ class MeteorClient(EventEmitter):
         collection - collection to search
         Keyword Arguments:
         selector - the query (default returns first item found)"""
-        for _id, doc in self.collection_data.data.get(collection, {}).items():
+        for _id, doc in list(self.collection_data.data.get(collection, {}).items()):
             doc.update({'_id': _id})
             if selector == {}:
                 return doc
-            for key, value in selector.items():
+            for key, value in list(selector.items()):
                 if key in doc and doc[key] == value:
                     return doc
         return None

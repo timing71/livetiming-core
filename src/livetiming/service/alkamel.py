@@ -107,7 +107,7 @@ def parseTime(formattedTime):
 
 def formatDriverName(driver):
     if driver['name'] != "":
-        return u"{}, {}".format(driver['surname'].upper(), driver['name'])
+        return "{}, {}".format(driver['surname'].upper(), driver['name'])
     else:
         return driver['surname'].upper()
 
@@ -276,7 +276,7 @@ class Service(lt_service):
             elif msg['txt'] == "CODE 60":
                 flags_in_messages.append(FlagStatus.CODE_60)
 
-        self.prevRaceControlMessages = map(lambda m: m['txt'], data)
+        self.prevRaceControlMessages = [m['txt'] for m in data]
 
         if flags_in_messages:
             self.flag_from_messages = max(flags_in_messages)
@@ -330,7 +330,7 @@ class Service(lt_service):
         if "event_name" in self.sessionData:
             desc = self.sessionData["event_name"].title()
             if "session_name" in self.sessionData:
-                desc = u"{} - {}".format(desc, self.sessionData["session_name"].title())
+                desc = "{} - {}".format(desc, self.sessionData["session_name"].title())
         elif "session_name" in self.sessionData:
             desc = self.sessionData["session_name"].title()
         return desc
@@ -339,8 +339,8 @@ class Service(lt_service):
         session = {}
         if self.hasTrackData:
             session['trackData'] = [
-                u"{:.3g}°C".format(float(self.meteoData["temp"])) if "temp" in self.meteoData else "",
-                u"{:.3g}°C".format(float(self.meteoData["track"])) if "track" in self.meteoData else "",
+                "{:.3g}°C".format(float(self.meteoData["temp"])) if "temp" in self.meteoData else "",
+                "{:.3g}°C".format(float(self.meteoData["track"])) if "track" in self.meteoData else "",
                 "{}%".format(self.meteoData["hum"]) if "hum" in self.meteoData else "",
                 "{} mbar".format(self.meteoData["pres"]) if "pres" in self.meteoData else "",
                 "{:.2g} kph".format(float(self.meteoData["wind"])) if "wind" in self.meteoData else "",
@@ -364,7 +364,7 @@ class Service(lt_service):
                 session['lapsRemain'] = max(0, current_remaining['lapsTotal'] - current_remaining['lapsElapsed'])
 
         colspec = self.getColumnSpec()
-        cars = map(lambda c: c.values(), self.currentStanding.values())
+        cars = [list(c.values()) for c in list(self.currentStanding.values())]
         classes_count = {}
         for car in cars:
 

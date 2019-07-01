@@ -9,8 +9,8 @@ from simplejson.scanner import JSONDecodeError
 
 def find_todays_data(all_data):
     today = date.today().isoformat()
-    for key, tests in all_data.iteritems():
-        for day, test in tests.iteritems():
+    for key, tests in all_data.items():
+        for day, test in tests.items():
             if "date" in test and test["date"] == today:
                 test["description"] = "{} - {}".format(key, day)
                 return test

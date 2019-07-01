@@ -1,7 +1,7 @@
 from livetiming.service import Service as lt_service, JSONFetcher
 import argparse
 import simplejson
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from twisted.internet import reactor
 import time
 from livetiming.racing import Stat, FlagStatus
@@ -15,7 +15,7 @@ TYPES_AGGREGATE = [3, 6]
 
 def json_get(url):
     try:
-        return simplejson.load(urllib2.urlopen(url))
+        return simplejson.load(urllib.request.urlopen(url))
     except simplejson.JSONDecodeError:
         return None
 
@@ -202,7 +202,7 @@ class Service(lt_service):
                 )
                 return meetings[meetingID.lower()]
             else:
-                live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
+                live_meetings = [m for m in list(meetings.values()) if m['State'] == STATE_LIVE]
                 if live_meetings:
                     self.log.info(
                         "Using currently live meeting {meetingID}: {name}",
@@ -229,7 +229,7 @@ class Service(lt_service):
                     )
 
                 else:
-                    live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
+                    live_sessions = [s for s in list(sessions.values()) if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
                     if live_sessions:
                         session = live_sessions[-1]
                         self.log.info(
@@ -241,7 +241,7 @@ class Service(lt_service):
                 if session:
                     return session['Id'].upper(), \
                         sessions_json['content']['full']['Competitions'][session['CompetitionId']]['Name'], \
-                        u"{} - {}".format(meeting['Name'], session['Name'])
+                        "{} - {}".format(meeting['Name'], session['Name'])
         self.log.warn("Could not find a live session!")
         return None, None, None
 
@@ -316,7 +316,7 @@ class Service(lt_service):
     def _compile_state(self):
         cars = []
 
-        for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e['ListIndex']):
+        for entry in sorted(list(self._timing_data['Results'].values()), key=lambda e: e['ListIndex']):
             competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
             if competitor:
                 driver = competitor['Drivers'][competitor['CurrentDriverId']] if 'CurrentDriverId' in competitor and competitor['CurrentDriverId'] in competitor['Drivers'] else None
@@ -331,7 +331,7 @@ class Service(lt_service):
                     competitor['Bib'],
                     map_car_state(main_result['Status'], competitor['InPitLane']),
                     clazz,
-                    u"{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
+                    "{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
                     competitor.get('CarTypeName', ''),
                     competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
                     main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,

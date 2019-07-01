@@ -33,7 +33,7 @@ class TSLClient(Thread):
             hub = connection.register_hub('livetiming')
 
             def print_error(error):
-                print('error: ', error)
+                print(('error: ', error))
 
             def delegate(method, data):
                 handler_method = "on_{}".format(method.lower())
@@ -75,7 +75,7 @@ class SprintStateMessage(PerCarMessage):
 
         if newState != oldState:
             if newState == "RUN":
-                return [clazz, u"#{} ({}) has started a run".format(carNum, driver), "green"]
+                return [clazz, "#{} ({}) has started a run".format(carNum, driver), "green"]
 
 
 def mapState(state, inPit):
@@ -122,13 +122,13 @@ def mapSessionState(state):
     }
     if state in mapping:
         return mapping[state]
-    print "Unknown flag state: {}".format(state)
+    print("Unknown flag state: {}".format(state))
     return FlagStatus.NONE
 
 
 def format_driver_name(driver):
     if 'FirstName' in driver and 'LastName' in driver:
-        return u"{} {}".format(driver['FirstName'], driver['LastName'].upper())
+        return "{} {}".format(driver['FirstName'], driver['LastName'].upper())
     return ''
 
 
@@ -273,7 +273,7 @@ class Service(lt_service):
     def getCars(self):
         cars = []
 
-        for car in sorted(self.cars.values(), key=lambda c: c['Pos']):
+        for car in sorted(list(self.cars.values()), key=lambda c: c['Pos']):
             car_state = "OUT" if 'out_lap' in car else mapState(car['Status'], car['InPits'])
             bestTime = parseTime(car['CurrentSessionBest'])
             bestTimeFlag = 'sb' if self.bestLap and self.bestLap[0] == car['ID'] else ''
@@ -311,7 +311,7 @@ class Service(lt_service):
 
     def getSprintCars(self):
         cars = []
-        for car in sorted(self.sprint_competitors.values(), key=lambda c: c['Position'] if c['Position'] > 0 else 9999):
+        for car in sorted(list(self.sprint_competitors.values()), key=lambda c: c['Position'] if c['Position'] > 0 else 9999):
             runs = self.sprint_runs.get(car['ID'], [])
             classification = self.cars.get(car['ID'], {})
             isOnRun = False
@@ -360,13 +360,13 @@ class Service(lt_service):
                 "timeElapsed": (now - self.startTime).total_seconds() if self.startTime else 0,
                 "timeRemain": max(self.timeRemaining - (now - self.timeReference).total_seconds(), 0) if self.clockRunning else self.timeRemaining,
                 "trackData": [
-                    u"{}°C".format(self.weather['tracktemp'] or '-'),
+                    "{}°C".format(self.weather['tracktemp'] or '-'),
                     self.weather['trackstate'],
-                    u"{}°C".format(self.weather['airtemp'] or '-'),
+                    "{}°C".format(self.weather['airtemp'] or '-'),
                     self.weather['conditions'],
                     "{}mb".format(self.weather['airpressure'] or '-'),
                     "{}mph".format(self.weather['windspeed'] or '-'),
-                    u"{}°".format(self.weather['winddir'] or '-'),
+                    "{}°".format(self.weather['winddir'] or '-'),
                     "{}%".format(self.weather['humidity'] or '-')
                 ]
             }
@@ -475,7 +475,7 @@ class Service(lt_service):
             if cid in self.cars:
                 self.cars[cid]['out_lap'] = True
             else:
-                print "Pit out for unknown competitor: {}".format(c)
+                print("Pit out for unknown competitor: {}".format(c))
 
     def on_updatesprintdriver(self, data):
         for driver in data:

@@ -10,7 +10,7 @@ import argparse
 import re
 import simplejson
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 SERVER_SPEC_URL = 'http://52.36.59.170/data/server/server.json'
 
@@ -111,7 +111,7 @@ class RaceNowState:
         })
 
     def handle_R(self, payload):
-        print "Reset request received"
+        print("Reset request received")
 
     def handle_T(self, payload):
         self._handle_rc_message(payload['msg'])
@@ -246,7 +246,7 @@ def map_session_flag(raw):
 
 def get_websocket_url(extra_args):
     if extra_args.tk:
-        servers = simplejson.load(urllib2.urlopen(SERVER_SPEC_URL))
+        servers = simplejson.load(urllib.request.urlopen(SERVER_SPEC_URL))
 
         track_ip_key = '{}_server'.format(track)
         track_port_key = '{}_port1'.format(track)
@@ -358,7 +358,7 @@ class Service(lt_service):
         session_type = self._state.session.get('RACE_TYPE', 'B')
 
         sort_func = car_sort_key(session_type)
-        cars = map(map_car, sorted(self._state.cars.values(), key=sort_func, reverse=True))
+        cars = list(map(map_car, sorted(list(self._state.cars.values()), key=sort_func, reverse=True)))
 
         if len(cars) > 0:  # Now we need to calculate gap/int from the original dataset, and highlight sb's
             leader = self._state.cars[cars[0][0]]
@@ -435,7 +435,7 @@ class Service(lt_service):
         to_go = self._state.flag.get('togo', '')
 
         if re.match("[0-9]{2}:[0-9]{2}:[0-9]{2}", to_go):
-            times = map(int, to_go.split(':'))
+            times = list(map(int, to_go.split(':')))
             session['timeRemain'] = (times[0] * 3600) + (times[1] * 60) + times[2]
 
         return session

@@ -145,7 +145,7 @@ def get_start_time(args):
 
     with open(args.chronological_analysis, 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
-        row = reader.next()
+        row = next(reader)
 
         clock_time = _parse_clock_time(row[' HOUR'])
 

@@ -8,7 +8,7 @@ from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
 import copy
-import cPickle
+import pickle
 import importlib
 import simplejson
 import time
@@ -80,7 +80,7 @@ class Analyser(object):
         self.data_centre.latest_timestamp = timestamp
 
     def publish_all(self):
-            for key, module in self._modules.iteritems():
+            for key, module in self._modules.items():
                 self._publish_data(key, module.get_data(self.data_centre))
 
     def _publish_data(self, key, data):
@@ -90,12 +90,12 @@ class Analyser(object):
 
     def _publish_pending(self):
         now = time.time()
-        for key, data in copy.copy(self._pending_publishes).iteritems():
+        for key, data in copy.copy(self._pending_publishes).items():
             if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
                 self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
                 retain = key not in ['lap', 'stint']
                 self.publish(
-                    u"livetiming.analysis/{}/{}".format(self.uuid, key),
+                    "livetiming.analysis/{}/{}".format(self.uuid, key),
                     _make_data_message(data, retain),
                     options=self.publish_options if retain else None
                 )
@@ -112,7 +112,7 @@ class Analyser(object):
     def save_data_centre(self):
         start = time.time()
         with open(self._data_centre_file(), "wb") as data_dump_file:
-            cPickle.dump(self.data_centre, data_dump_file, cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.data_centre, data_dump_file, pickle.HIGHEST_PROTOCOL)
         duration = time.time() - start
         if duration < 0.5:
             self.log.debug("Analysis state saved in {secs} seconds", secs=duration)
@@ -125,7 +125,7 @@ class Analyser(object):
         try:
             with open(self._data_centre_file(), "rb") as data_dump_file:
                 self.log.info("Using existing data centre dump from {}".format(os.path.realpath(data_dump_file.name)))
-                self.data_centre = cPickle.load(data_dump_file)
+                self.data_centre = pickle.load(data_dump_file)
         except IOError:
             self.data_centre = DataCentre()
 
@@ -139,11 +139,11 @@ class Analyser(object):
     def get_current_state(self):
         data = {}
 
-        for key, module in self._modules.iteritems():
+        for key, module in self._modules.items():
             data[key] = module.get_data(self.data_centre)
 
         car_stats = data.pop('car')
-        for k, v in car_stats.iteritems():
+        for k, v in car_stats.items():
             data[k] = v
 
         return data
@@ -199,6 +199,6 @@ def map_stint_with(car, timestamp):
             stint.best_lap_time,
             stint.yellow_laps,
             stint.average_lap_time,
-            map(lambda ls: ls.for_json(), stint.laps)
+            [ls.for_json() for ls in stint.laps]
         ]
     return map_stint

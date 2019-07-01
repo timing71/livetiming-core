@@ -300,11 +300,11 @@ class Service(lt_service):
 
         if 'trackTemp' in self.params:
             session['trackData'] = [
-                u"{}°C".format(self.params['trackTemp']),
-                u"{}°C".format(self.params['airTemp']),
+                "{}°C".format(self.params['trackTemp']),
+                "{}°C".format(self.params['airTemp']),
                 "{}%".format(self.params['humidity']),
                 "{}kph".format(self.params['windSpeed']),
-                u"{}°".format(self.params['windDirection']),
+                "{}°".format(self.params['windDirection']),
                 self.params['weather'].replace('_', ' ').title()
             ]
 

@@ -98,7 +98,7 @@ class SlowZoneMessage(TimingMessage):
     def process(self, oldState, newState):
         msgs = []
 
-        for zone, state in self._curr.iteritems():
+        for zone, state in self._curr.items():
             severity, mp, location = state
             if zone not in self._prev:
                 if severity == 0:
@@ -139,7 +139,7 @@ class SlowZoneMessage(TimingMessage):
                         "code60"
                     ])
 
-        for zone, state in self._prev.iteritems():
+        for zone, state in self._prev.items():
             if zone not in self._curr:
                 severity, mp, location = state
                 msgs.append([
@@ -189,7 +189,7 @@ class RaceControlMessage(TimingMessage):
                     msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl"])
 
             if len(msgs) > 0:
-                self._mostRecentTime = max(max(self._mostRecentTime, map(lambda m: m[0], msgs)))
+                self._mostRecentTime = max(max(self._mostRecentTime, [m[0] for m in msgs]))
         return sorted(msgs, key=lambda m: -m[0])
 
 
@@ -245,13 +245,13 @@ class Service(DuePublisher, lt_service):
             self._messages = data.get('MESSAGES', [])
             self._rc_messages._messages = self._messages
         else:
-            self.log.warn(u'Received message with unknown PID: {msg}', msg=data)
+            self.log.warn('Received message with unknown PID: {msg}', msg=data)
 
     def getName(self):
         return self._data.get('CUP', 'wige Solutions')
 
     def getDefaultDescription(self):
-        return u'{} - {}'.format(
+        return '{} - {}'.format(
             self._data.get('HEAT', ''),
             self._data.get('TRACKNAME', '')
         )
@@ -262,7 +262,7 @@ class Service(DuePublisher, lt_service):
     def getColumnSpec(self):
 
         num_sectors = int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1
-        sector_cols = map(lambda s: Stat.sector(s + 1), range(num_sectors))
+        sector_cols = [Stat.sector(s + 1) for s in range(num_sectors)]
 
         return [
             Stat.NUM,
@@ -327,7 +327,7 @@ class Service(DuePublisher, lt_service):
             sz_locations = set()
             c60_locations = set()
 
-            for z in sorted(self._current_zones.values(), key=lambda z: z[1]):
+            for z in sorted(list(self._current_zones.values()), key=lambda z: z[1]):
                 speed = z[0]
                 if speed == 0:
                     yellows += 1
@@ -338,7 +338,7 @@ class Service(DuePublisher, lt_service):
                     slow_zones += 1
                     sz_locations.add(z[2])
 
-            if len(self._current_zones) == 209 and self._current_zones.values()[0][0] == 80:
+            if len(self._current_zones) == 209 and list(self._current_zones.values())[0][0] == 80:
                 flag = FlagStatus.RED
             elif code60_zones > 0:
                 flag = FlagStatus.CODE_60_ZONE
@@ -357,7 +357,7 @@ class Service(DuePublisher, lt_service):
         accum = {}
 
         return {
-            'cars': self.postprocess_cars(map(self.map_car(accum), self._data.get('RESULT', {}))),
+            'cars': self.postprocess_cars(list(map(self.map_car(accum), self._data.get('RESULT', {})))),
             'session': {
                 "flagState": flag.name.lower(),
                 "timeElapsed": 0,
@@ -407,15 +407,12 @@ class Service(DuePublisher, lt_service):
             return 'PIT'
         if raw in states[version]:
             return states[version][raw]
-        print "Unknown state: {}".format(raw)
+        print("Unknown state: {}".format(raw))
         return "? {}".format(raw)
 
     def map_car(self, accum):
         def inner(car):
-            sector_cols = map(
-                lambda s: (parseTime(car.get('S{}TIME'.format(s + 1), '')), ''),
-                range(int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1)
-            )
+            sector_cols = [(parseTime(car.get('S{}TIME'.format(s + 1), '')), '') for s in range(int(self._data.get('NROFINTERMEDIATETIMES', 4)) + 1)]
 
             gap = parseGap(car['GAP'])
             interval = parseGap(car['INT'])

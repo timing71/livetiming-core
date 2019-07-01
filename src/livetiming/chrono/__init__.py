@@ -80,7 +80,7 @@ class SectorEvent(Event):
         if not prev_best or self._sector_time < prev_best[0]:
             self._set_field(car, bs_idx, (self._sector_time, 'pb'))
 
-        for sn, stats in _sector_by_num.iteritems():
+        for sn, stats in _sector_by_num.items():
             if sn != self._sector_num:
                 sec = self._get_field(car, stats[0])
                 if sec[1] == '':

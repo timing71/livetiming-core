@@ -1,6 +1,6 @@
 from collections import defaultdict, OrderedDict
 from livetiming.racing import Stat, FlagStatus
-import cPickle
+import pickle
 import copy
 import re
 import sys
@@ -19,7 +19,7 @@ class LaptimeChart(object):
             self._seen_on_lap[lap.lap_num].append(race_num)
 
     def iteritems(self):
-        return self.laps.iteritems()
+        return iter(self.laps.items())
 
 
 class Lap(object):
@@ -44,7 +44,7 @@ class Lap(object):
         ]
 
     def __repr__(self, *args, **kwargs):
-        return u"<Lap {}: {} pos {} {} {} {}>".format(*self.for_json())
+        return "<Lap {}: {} pos {} {} {} {}>".format(*self.for_json())
 
 
 class Stint(object):
@@ -69,7 +69,7 @@ class Stint(object):
 
     @property
     def best_lap_time(self):
-        return min(map(lambda l: l.laptime, self.laps)) if len(self.laps) > 0 else None
+        return min([l.laptime for l in self.laps]) if len(self.laps) > 0 else None
 
     @property
     def average_lap_time(self):
@@ -77,15 +77,15 @@ class Stint(object):
             return None
         if self.in_progress:
             # Exclude first lap (out lap)
-            return sum(map(lambda l: l.laptime, self.laps[1:])) / (len(self.laps) - 1)
+            return sum([l.laptime for l in self.laps[1:]]) / (len(self.laps) - 1)
         else:
             # Exclude first (out) and last (in) laps
             if len(self.laps) == 2:
                 return None
-            return sum(map(lambda l: l.laptime, self.laps[1:-1])) / (len(self.laps) - 2)
+            return sum([l.laptime for l in self.laps[1:-1]]) / (len(self.laps) - 2)
 
     def __repr__(self, *args, **kwargs):
-        return u"<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
+        return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
             self.driver,
             self.start_lap,
             self.end_lap,
@@ -237,7 +237,7 @@ class DataCentre(object):
 
     def flag_change(self, new_flag, timestamp):
         self.session.flag_change(new_flag, self.leader_lap, timestamp)
-        for car in self._cars.values():
+        for car in list(self._cars.values()):
             car.see_flag(new_flag)
 
     def car(self, race_num):
@@ -252,4 +252,4 @@ if __name__ == '__main__':
 
     if filename.endswith(".data.p"):
         with open(filename, "rb") as data_dump_file:
-            dc = cPickle.load(data_dump_file)
+            dc = pickle.load(data_dump_file)

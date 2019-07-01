@@ -10,7 +10,7 @@ from twisted.internet import reactor, threads
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
-from urllib2 import HTTPError
+from urllib.error import HTTPError
 
 import argparse
 import wecapp
@@ -40,7 +40,7 @@ def mapFlagState(params, hh):
             Logger().warn("Unknown flag state {flag}", flag=params['status'])
 
     if hh:
-        zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
+        zone_states = [s.get('ZoneStatus', 0) for s in list(hh.sector_states.values())]
         if SectorStatus.SLOW_ZONE in zone_states and flag == 'yellow':
             return FlagStatus.SLOW_ZONE.name.lower()
 
@@ -191,7 +191,7 @@ class Service(DuePublisher, lt_service):
 
         if new_session:
             self.log.debug("Using session {sessionid}", sessionid=new_session['id'])
-            new_description = u'{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
+            new_description = '{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
             if new_description != self.description:
                 self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
@@ -434,7 +434,7 @@ class Service(DuePublisher, lt_service):
                                 if 'car' not in car:
                                     brand = car_data['participation']['car'].get('brand', {})
                                     model = car_data['participation']['car'].get('model', '')
-                                    car['car'] = u'{} {}'.format(brand.get('name_id', ''), model).strip()
+                                    car['car'] = '{} {}'.format(brand.get('name_id', ''), model).strip()
 
                             sd = self._session_data
 
@@ -572,7 +572,7 @@ class Service(DuePublisher, lt_service):
         with self._data_lock:
 
             # First pass: identify fastest sectors/lap per class
-            for car in self._cars.values():
+            for car in list(self._cars.values()):
                 race_num = car['race_num']
                 category = car['category']
                 s1 = car.get('s1')
@@ -598,7 +598,7 @@ class Service(DuePublisher, lt_service):
                         bestLapsByClass[category] = (race_num, best_lap)
 
             # Second pass: assemble cars in order
-            for car in sorted(self._cars.values(), key=lambda c: c['rank']):
+            for car in sorted(list(self._cars.values()), key=lambda c: c['rank']):
                 race_num = car['race_num']
                 category = car['category']
                 s1 = car.get('s1')
@@ -717,12 +717,12 @@ class Service(DuePublisher, lt_service):
             last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
 
             session['trackData'] = [
-                u"{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
-                u"{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
+                "{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
+                "{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
                 "{}%".format(self._session_data['humidity']) if 'humidity' in self._session_data else '',
                 "{}mbar".format(self._session_data['pressure']) if 'pressure' in self._session_data else '',
                 "{}kph".format(self._session_data['windSpeed']) if 'windSpeed' in self._session_data else '',
-                u"{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
+                "{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
                 self._session_data.get('weather', '').replace('_', ' ').title(),
                 self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
                 '{} {}'.format(self._last_source, last_retrieved_time)

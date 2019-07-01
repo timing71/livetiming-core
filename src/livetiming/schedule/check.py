@@ -17,16 +17,16 @@ def run(service, _):
         try:
             _check_event(event['summary'])
         except BadEventException as e:
-            print e.message, event
+            print(e.message, event)
             all_ok = False
 
     if all_ok:
-        print "{} event{} all OK".format(
+        print("{} event{} all OK".format(
             len(events),
             '' if len(events) == 1 else 's'
-        )
+        ))
     else:
-        print "Some events failed validation. See details above."
+        print("Some events failed validation. See details above.")
 
 
 def _check_event(summary):

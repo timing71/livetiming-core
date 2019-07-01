@@ -27,18 +27,18 @@ class Directory(ApplicationSession):
         count = len(self.services)
         if count > 0:
             self.log.info("Checking liveness of {} service(s)".format(count))
-        for service in self.services.keys():
+        for service in list(self.services.keys()):
             _ = self.call(RPC.LIVENESS_CHECK.format(service)).addErrback(self.removeService, serviceUUID=service)
 
     def broadcastServicesList(self):
         self.publish(
             Channel.DIRECTORY,
-            Message(MessageClass.DIRECTORY_LISTING, self.services.values(), retain=True).serialise(),
+            Message(MessageClass.DIRECTORY_LISTING, list(self.services.values()), retain=True).serialise(),
             options=self.publish_options
         )
 
     def getServicesList(self, includeHidden=False):
-        return [s for s in self.services.values() if includeHidden or not s.get('hidden')]
+        return [s for s in list(self.services.values()) if includeHidden or not s.get('hidden')]
 
     @inlineCallbacks
     def onJoin(self, details):
@@ -59,7 +59,7 @@ class Directory(ApplicationSession):
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
-        self.log.debug(u"Received message {msg}", msg=msg)
+        self.log.debug("Received message {msg}", msg=msg)
         if (msg.msgClass == MessageClass.SERVICE_REGISTRATION):
             reg = msg.payload
             self.services[reg["uuid"]] = reg

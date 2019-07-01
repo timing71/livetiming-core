@@ -7,6 +7,6 @@ def run(service, _):
     if events:
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
-            print start, event['summary']
+            print(start, event['summary'])
     else:
-        print "No events scheduled"
+        print("No events scheduled")

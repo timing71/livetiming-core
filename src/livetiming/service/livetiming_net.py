@@ -5,7 +5,7 @@ from livetiming.service import Service as lt_service, MultiLineFetcher
 import argparse
 import simplejson
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 def parse_extra_args(args):
@@ -22,9 +22,9 @@ COL_LABEL_REGEX = re.compile(r"(?:ltColLabel = )([^;]+)")
 
 def getBaseData(series):
     url = "http://livetiming.net/{}".format(series)
-    rq = urllib2.Request(url)
+    rq = urllib.request.Request(url)
     rq.add_header("User-Agent", "livetiming")
-    raw = urllib2.urlopen(rq).read()
+    raw = urllib.request.urlopen(rq).read()
 
     used_columns = []
     for colset in re.findall(r"(?:'800' : )(.+)(?:,)", raw):
@@ -232,7 +232,7 @@ class Service(lt_service):
 
         if self.packet:
             header = self.packet[0][2:].split("|")
-            car_rows = [c for c in map(lambda s: map(lambda c: c.strip(), s.split("|")), self.packet[1:]) if c[0] != "" and c[0] != "<end>"]
+            car_rows = [c for c in [[c.strip() for c in s.split("|")] for s in self.packet[1:]] if c[0] != "" and c[0] != "<end>"]
             for car_row in car_rows:
                 car = []
                 for idx, mapFunc in self.colMapping:

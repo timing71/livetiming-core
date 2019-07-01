@@ -7,9 +7,9 @@ import simplejson
 
 def _dump_dc(dc):
     modules = {m: importlib.import_module("livetiming.analysis.{}".format(m)) for m in PROCESSING_MODULES}
-    data = {k: module.get_data(dc) for k, module in modules.iteritems()}
+    data = {k: module.get_data(dc) for k, module in modules.items()}
     data['state'] = dc.current_state
-    print simplejson.dumps(data, separators=(',', ':'))
+    print(simplejson.dumps(data, separators=(',', ':')))
 
 
 if __name__ == '__main__':
