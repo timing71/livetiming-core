@@ -28,7 +28,6 @@ setup(
         "beautifulsoup4",
         "crossbar",
         "dictdiffer",
-        "enum34",
         "google-api-python-client",
         "icalendar",
         "kitchen",
