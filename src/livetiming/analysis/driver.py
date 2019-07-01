@@ -3,7 +3,7 @@ from livetiming.analysis import per_car
 
 
 def get_data(dc):
-    return {car.race_num: car.drivers for car in dc._cars.values()}
+    return {car.race_num: car.drivers for car in list(dc._cars.values())}
 
 
 @per_car('driver', get_data)

@@ -268,7 +268,7 @@ class Nurburgring(object):
     def _parse_addresses(self, data):
         addresses = _parse_objects(data)
         self._names = {}
-        for obj in addresses.values():
+        for obj in list(addresses.values()):
             if "geoobjectid" in obj:
                 self._names[obj['geoobjectid']] = base64.b64decode(obj.get('name')).lower()
         client.getPage(MARSHAL_POST_ID_URL.format(self.app)).addCallbacks(self._parse_marshal_posts, self._handle_errback)
@@ -277,11 +277,11 @@ class Nurburgring(object):
         objs = _parse_objects(data)
         self._marshal_posts = {}
 
-        for obj in objs.values():
+        for obj in list(objs.values()):
             self._marshal_posts[obj['ruleid']] = self._names.get(obj['refid'], obj['refid'])
 
             if self._verbose:
-                print self._marshal_posts
+                print(self._marshal_posts)
 
         self.log.info('Starting poll for GPSauge NBR data...')
         LoopingCall(self._update_zones).start(10)
@@ -300,7 +300,7 @@ class Nurburgring(object):
             self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
         if self._verbose:
-            print self._zones
+            print(self._zones)
 
     def _handle_errback(self, err):
         self.log.error("Encountered an error: {err}", err=err)

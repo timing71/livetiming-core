@@ -14,4 +14,4 @@ def _message_is_relevant(race_num, message):
 
 
 def get_data(dc):
-    return {car.race_num: car.messages for car in dc._cars.values()}
+    return {car.race_num: car.messages for car in list(dc._cars.values())}

@@ -49,14 +49,14 @@ class FakeAnalysis(ApplicationSession):
 
     @inlineCallbacks
     def onJoin(self, details):
-        print "Joined"
+        print("Joined")
 
         def true():
             return True
         yield self.register(true, RPC.LIVENESS_CHECK.format(TEST_UUID))
         yield self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self.manifest).serialise())
 
-        print "All registered"
+        print("All registered")
         pcs = Stat.parse_colspec(self.rec.manifest['colSpec'])
 
         def preprocess():
@@ -77,13 +77,13 @@ class FakeAnalysis(ApplicationSession):
                 now = time.time()
                 current_fps = float(idx) / (now - start_time)
                 eta = datetime.fromtimestamp(start_time + (frame_count / current_fps) if current_fps > 0 else 0)
-                print "{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S"))
+                print("{}/{} ({:.2%}) {:.3f}fps eta:{}".format(idx, frame_count, float(idx) / frame_count, current_fps, eta.strftime("%H:%M:%S")))
                 # time.sleep(0.1)
             stop_time = time.time()
-            print "Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time))
+            print("Processed {} frames in {}s == {:.3f} frames/s".format(self.rec.frames, stop_time - start_time, self.rec.frames / (stop_time - start_time)))
             self.a.save_data_centre()
             # Republish all data at the end
-            for key, module in self.a._modules.iteritems():
+            for key, module in self.a._modules.items():
                 self.a._publish_data(key, module.get_data(self.a.data_centre))
 
         reactor.callInThread(preprocess)
@@ -94,7 +94,7 @@ class FakeAnalysis(ApplicationSession):
 
 def main():
     load_env()
-    router = unicode(os.environ.get("LIVETIMING_ROUTER", u"ws://crossbar:8080/ws"))
+    router = str(os.environ.get("LIVETIMING_ROUTER", "ws://crossbar:8080/ws"))
 
     component = Component(
         realm=Realm.TIMING,
