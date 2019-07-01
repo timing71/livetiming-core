@@ -61,7 +61,7 @@ def _get_lap_count(car, new_car, f, cars):
     if from_timing:
         try:
             return math.floor(float(from_timing))
-        except ValueError:
+        except (ValueError, TypeError):
             pass
     our_num = f.get(new_car, Stat.NUM)
     # TSNL put lap count in the "gap" column FSR
