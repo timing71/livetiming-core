@@ -7,7 +7,7 @@ from twisted.internet import reactor
 import time
 import re
 import simplejson
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 
 def hackDataFromJSONP(data, var):
@@ -70,7 +70,7 @@ def parseTime(formattedTime):
                 return formattedTime
 
 
-SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
+SESSION_TIME_REGEX = re.compile(b"(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
 
 
 def parseSessionTime(formattedTime):
@@ -100,9 +100,12 @@ class Service(lt_service):
         self.setStaticData()
 
         def feedUrl():
-            return self.getRawFeedDataUrl().format(
-                "",
-                int(time.time() / 15)
+            return bytes(
+                self.getRawFeedDataUrl().format(
+                    "",
+                    int(time.time() / 15)
+                ),
+                'utf-8'
             )
 
         fetcher = JSONFetcher(feedUrl, self.setRawData, 15)
@@ -148,11 +151,11 @@ class Service(lt_service):
         self.log.info("Retrieving static data...")
         feed = urllib.request.urlopen(self.getStaticDataUrl())
         raw = feed.read()
-        if re.search("No race actually", raw):
+        if re.search(b"No race actually", raw):
             self.log.warn("No static data available. Has the session started yet?")
             reactor.callLater(30, self.setStaticData)
         else:
-            description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
+            description = re.search(b"<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
             if description:
                 new_description = description.group("desc").replace("/", "-").decode('utf-8')
                 if self.description != new_description:
