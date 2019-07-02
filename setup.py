@@ -24,15 +24,12 @@ setup(
     package_dir={'': 'src'},
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
-        "autobahn[twisted]>=17.6.2",
+        "autobahn[serialization,twisted]>=17.6.2",
         "beautifulsoup4",
-        "crossbar",
         "dictdiffer",
-        "enum34",
         "google-api-python-client",
         "icalendar",
         "kitchen",
-        "livetimingrelay",  # Only really required for the master relay
         "lxml",
         "lzstring==1.0.3",
         "meteor-ejson",
@@ -47,6 +44,7 @@ setup(
         "simplejson",
         "socketio-client",
         "subprocess32",
+        "treq",
         "twisted"
     ],
     setup_requires=[
