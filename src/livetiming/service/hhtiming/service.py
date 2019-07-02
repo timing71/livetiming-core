@@ -395,7 +395,7 @@ class Service(lt_service):
 
                 car_data += [
                     (last_lap, last_lap_flag),
-                    (best_lap if best_lap < 1e7 else '', best_lap_flag),
+                    (best_lap if best_lap and best_lap < 1e7 else '', best_lap_flag),
                     car.get('Pits', '')
                 ]
 
