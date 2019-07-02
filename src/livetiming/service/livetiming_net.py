@@ -5,7 +5,7 @@ from livetiming.service import Service as lt_service, MultiLineFetcher
 import argparse
 import simplejson
 import re
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 
 def parse_extra_args(args):
@@ -16,7 +16,7 @@ def parse_extra_args(args):
 
 
 FILE_PACKET_REGEX = re.compile(r"(?:ltFilePKT = ')([^']+)")
-TITLE_REGEX = re.compile(r"(?:ltBaseTitle = ')([^']+)")
+TITLE_REGEX = re.compile(r"(?:ltBaseTitle = ')(.*)';")
 COL_LABEL_REGEX = re.compile(r"(?:ltColLabel = )([^;]+)")
 
 
@@ -26,19 +26,21 @@ def getBaseData(series):
     rq.add_header("User-Agent", "livetiming")
     raw = urllib.request.urlopen(rq).read()
 
+    response = raw.decode('utf-8')
+
     used_columns = []
-    for colset in re.findall(r"(?:'800' : )(.+)(?:,)", raw):
+    for colset in re.findall(r"(?:'800' : )(.+)(?:,)", response):
         for c in simplejson.loads(colset):
             if int(c) not in used_columns:
                 used_columns.append(int(c))
 
-    available_cols = simplejson.loads(COL_LABEL_REGEX.search(raw).group(1))
+    available_cols = simplejson.loads(COL_LABEL_REGEX.search(response).group(1))
 
     return {
-        "filename": FILE_PACKET_REGEX.search(raw).group(1),
+        "filename": FILE_PACKET_REGEX.search(response).group(1),
         "available_cols": available_cols,
         "used_cols": used_columns,
-        "title": TITLE_REGEX.search(raw).group(1)
+        "title": TITLE_REGEX.search(response).group(1).encode('utf-8').decode('unicode_escape')
     }
 
 
@@ -151,6 +153,7 @@ FULL_COL_SPEC = [
     (Stat.POS_IN_CLASS, "PIC", ident),
     (Stat.DRIVER, "Name", ident),
     (Stat.CAR, "Make", ident),
+    (Stat.CAR, "Chassis", ident),
     (Stat.TEAM, "Team", ident),
     (Stat.LAPS, "Laps", dashToBlank),
     (Stat.TYRE, "Tire", ident),
@@ -158,8 +161,12 @@ FULL_COL_SPEC = [
     (Stat.GAP, "Diff", parseDelta),
     (Stat.INT, "Gap", parseDelta),
     (Stat.S1, "S1", parseSectorTime),
+    (Stat.S1, "Section 1", parseSectorTime),
     (Stat.S2, "S2", parseSectorTime),
+    (Stat.S2, "Section 2", parseSectorTime),
     (Stat.S3, "S3", parseSectorTime),
+    (Stat.S3, "Section 3", parseSectorTime),
+    (Stat.S4, "Section 4", parseSectorTime),
     (Stat.LAST_LAP, "LapTime", parseLaptime),
     (Stat.SPEED, "Spd", stripFlags),
     (Stat.BEST_LAP, "FTime", parseLaptime)
@@ -184,9 +191,12 @@ class Service(lt_service):
         self._configure(getBaseData(self.getSeries()))
 
         f = MultiLineFetcher(
-            "http://livetiming.net/{}/LoadPKT.asp?filename={}".format(
-                self.getSeries(),
-                self.filename
+            bytes(
+                "http://livetiming.net/{}/LoadPKT.asp?filename={}".format(
+                    self.getSeries(),
+                    self.filename
+                ),
+                'utf-8'
             ),
             self.handlePacket,
             5)
@@ -216,9 +226,9 @@ class Service(lt_service):
         return self.description
 
     def handlePacket(self, packet):
-        self.packet = packet
+        self.packet = list(map(lambda p: p.decode('utf-8'), packet))
 
-        header = packet[0][2:].split("|")
+        header = self.packet[0][2:].split("|")
         newDesc = header[0]
         if newDesc != self.description:
             self.description = newDesc
