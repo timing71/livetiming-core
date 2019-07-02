@@ -6,7 +6,7 @@ from livetiming.utils import PitOutDebouncer, uncache
 from twisted.logger import Logger
 
 import simplejson
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 
 def mapFlagStates(rawState, session_type):
@@ -281,7 +281,7 @@ class Service(lt_service):
                 map_tyre(car.get('Tire', ''))
             ] + ptp_col + [
                 diff if len(diff) > 0 and diff[0] != '-' and diff != '0.0000' else '',
-                gap if gap > 0 and gap != '0.0000' else '',
+                gap if (isinstance(gap, str) or gap > 0) and gap != '0.0000' else '',
             ] + sector_cols + [
                 [lastLapTime if lastLapTime > 0 else '', "pb" if lastLapTime == bestLapTime and bestLapTime > 0 else ""],
                 car["LastSpeed"] if "LastSpeed" in car else "",
