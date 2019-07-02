@@ -10,7 +10,7 @@ import argparse
 import re
 import simplejson
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib
 
 SERVER_SPEC_URL = 'http://52.36.59.170/data/server/server.json'
 
@@ -248,8 +248,8 @@ def get_websocket_url(extra_args):
     if extra_args.tk:
         servers = simplejson.load(urllib.request.urlopen(SERVER_SPEC_URL))
 
-        track_ip_key = '{}_server'.format(track)
-        track_port_key = '{}_port1'.format(track)
+        track_ip_key = '{}_server'.format(extra_args.tk)
+        track_port_key = '{}_port1'.format(extra_args.tk)
 
         if track_ip_key in servers and track_port_key in servers:
             return 'ws://{}:{}/get'.format(
@@ -257,7 +257,7 @@ def get_websocket_url(extra_args):
                 servers[track_port_key]
             )
 
-        raise Exception('Cannot find {} in server config: {}'.format(track, list(servers.keys())))
+        raise Exception('Cannot find {} in server config: {}'.format(extra_args.tk, list(servers.keys())))
     elif extra_args.ws:
         return extra_args.ws
     else:
@@ -354,7 +354,6 @@ class Service(lt_service):
         ]
 
     def _mapCars(self):
-
         session_type = self._state.session.get('RACE_TYPE', 'B')
 
         sort_func = car_sort_key(session_type)
@@ -390,13 +389,13 @@ class Service(lt_service):
                     interval = ''
 
                     if session_type == 'R':
-                        if this_laps < leader_laps:
+                        if isinstance(this_laps, int) and this_laps < leader_laps:
                             gap_laps = leader_laps - this_laps
                             gap = '{} lap{}'.format(gap_laps, 's' if gap_laps > 1 else '')
                         else:
                             gap = maybe_float(this_car.get('TOTAL_TIME', 0)) - maybe_float(leader.get('TOTAL_TIME', 0))
 
-                        if this_laps < prev_laps:
+                        if isinstance(this_laps, int) and this_laps < prev_laps:
                             int_laps = prev_laps - this_laps
                             interval = '{} lap{}'.format(int_laps, 's' if int_laps > 1 else '')
                         else:
@@ -406,8 +405,8 @@ class Service(lt_service):
                         gap = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(leader.get('BEST_TIME', 0))
                         interval = maybe_float(this_car.get('BEST_TIME', 0)) - maybe_float(prev_car.get('BEST_TIME', 0))
 
-                    car[7] = gap if isinstance(gap, str) or gap >= 0 else ''
-                    car[8] = interval if isinstance(interval, str) or interval >= 0 else ''
+                    car[7] = gap if isinstance(gap, str) or gap > 0 else ''
+                    car[8] = interval if isinstance(interval, str) or interval > 0 else ''
 
                 if car[0] == sb_lap_car and car[18][0] == sb_lap_time:
                     car[18] = [car[18][0], 'sb-new' if car[17][0] == car[18][0] and car[15][0] != '' else 'sb']
