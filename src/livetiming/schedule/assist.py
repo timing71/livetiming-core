@@ -33,10 +33,21 @@ TAG_TO_SERVICE_CLASS = {
     'V8 Supercars': 'v8sc',
     'Supercars': 'v8sc',
     'VLN': 'vln',
+    'W': 'wige',
     'WEC': 'wec'
 }
 
-ALWAYS_HIDDEN_SERVICES = ['f1', 'formulae']
+_MAPPED_TAGS = {
+    '24H': '24H Series',
+    'W': 'W Series'
+}
+
+_DEFAULT_ARGS = {
+    'Blancpain GT': '--tz 120',
+    'F1': '--hidden',
+    'Formula E': '--hidden',
+    'W': '-e 31'
+}
 
 
 def add_parser_args(parser):
@@ -82,11 +93,13 @@ def run(service, args):
             else:
                 print u"New event: {} ({} - {})".format(event['summary'], event['start'], event['end'])
 
+                default_args = _DEFAULT_ARGS.get(event['tag'])
+
                 event_body = {
                     'summary': u"{} [{}{}]".format(
                         event['summary'],
                         event['service'],
-                        ',--hidden' if event['service'] in ALWAYS_HIDDEN_SERVICES else ''
+                        ', {}'.format(default_args) if default_args else ''
                     ),
                     'start': {
                         'dateTime': event['start'].strftime("%Y-%m-%dT%H:%M:%S%z")
@@ -117,7 +130,8 @@ def _parse_event(event):
         'service': TAG_TO_SERVICE_CLASS.get(tag),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),
-        'id': event['id']
+        'id': event['id'],
+        'tag': tag
     }
 
 
@@ -131,12 +145,6 @@ def _parse_scheduled_event(event):
         'end': parse_datetime(event['end']['dateTime']),
         'correlationId': event.get('extendedProperties', {}).get('private', {}).get('correlationId')
     }
-
-
-_MAPPED_TAGS = {
-    '24H': '24H Series',
-    'W': 'W Series'
-}
 
 
 def _map_tag_to_name(tag):
