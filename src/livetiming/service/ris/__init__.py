@@ -1,2 +1,2 @@
-from .parser import parse_feed
+from .parser import Parser
 from .service import Service

@@ -1,7 +1,7 @@
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat
 from livetiming.service import Service as lt_service
-from livetiming.service.ris import parse_feed
+from livetiming.service.ris import Parser
 from livetiming.utils import uncache
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -91,6 +91,8 @@ class Service(lt_service):
         self._last_modified = None
 
         self._agent = Agent(reactor)
+
+        self.parser = Parser()
 
         def get_messages():
             return self._data.get('messages', [])
@@ -182,7 +184,7 @@ class Service(lt_service):
             try:
                 feed = yield readBody(response)
 
-                self._data = parse_feed(feed)
+                self._data = self.parser.parse_feed(feed)
                 self._last_modified = dateutil.parser.parse(response.headers.getRawHeaders('last-modified')[0])
                 self._last_modified = self._last_modified.replace(tzinfo=None) - self._last_modified.utcoffset()
 

@@ -8,55 +8,58 @@ import re
 FLAG_MESSAGE_CLASSES = re.compile('MessageDC[2-4]')
 
 
-def parse_feed(fp):
-    soup = BeautifulSoup(fp, "lxml")
-    all_rows = soup.body.table.find_all('tr')
+class Parser(object):
 
-    headings_row = all_rows[2].find_all('td')
-    series = headings_row[0].string
-    session = headings_row[1].string
+    def __init__(self):
+        self.flag = FlagStatus.GREEN
 
-    session_times_row = all_rows[3].find_all('td')
-    time_remain = parse_session_time(session_times_row[0].string)
+    def parse_feed(self, fp):
+        soup = BeautifulSoup(fp, "lxml")
+        all_rows = soup.body.table.find_all('tr')
 
-    column_spec = map(
-        lambda t: t.string,
-        soup.body.table.find_all('td', recursive=False)
-    )
+        headings_row = all_rows[2].find_all('td')
+        series = headings_row[0].string
+        session = headings_row[1].string
 
-    messages = map(
-        lambda td: unicode(td.string.strip()),
-        soup.body.table.find_all(class_='MessageDC1')
-    )
+        session_times_row = all_rows[3].find_all('td')
+        time_remain = parse_session_time(session_times_row[0].string)
 
-    flag = FlagStatus.NONE
+        column_spec = map(
+            lambda t: t.string,
+            soup.body.table.find_all('td', recursive=False)
+        )
 
-    flag_messages = soup.body.table.find_all(class_=FLAG_MESSAGE_CLASSES)
-    if len(flag_messages) == 1:
-        flag_message = flag_messages[0]
-        clazz = flag_message['class'][0]
-        text = flag_message.string.strip()
-        if clazz == 'MessageDC2' and text == 'RED FLAG':
-            flag = FlagStatus.RED
-        elif clazz == 'MessageDC3':
-            if 'YELLOW FLAG' in text:
-                flag = FlagStatus.YELLOW
-                messages.append(text)
-            elif text == 'SAFETY CAR':
-                flag = FlagStatus.SC
-        elif clazz == 'MessageDC4' and text == 'GREEN FLAG':
-            flag = FlagStatus.GREEN
-        else:
-            print "Unknown flag/class combo {} {}".format(text, clazz)
+        messages = map(
+            lambda td: unicode(td.string.strip()),
+            soup.body.table.find_all(class_='MessageDC1')
+        )
 
-    return {
-        "series": series,
-        "session": session,
-        "timeRemain": time_remain,
-        "cars": map_car_rows(all_rows[8:-1], column_spec),
-        'messages': messages,
-        'flag': flag
-    }
+        flag_messages = soup.body.table.find_all(class_=FLAG_MESSAGE_CLASSES)
+        if len(flag_messages) == 1:
+            flag_message = flag_messages[0]
+            clazz = flag_message['class'][0]
+            text = flag_message.string.strip()
+            if clazz == 'MessageDC2' and text == 'RED FLAG':
+                self.flag = FlagStatus.RED
+            elif clazz == 'MessageDC3':
+                if 'YELLOW FLAG' in text:
+                    self.flag = FlagStatus.YELLOW
+                    messages.append(text)
+                elif text == 'SAFETY CAR':
+                    self.flag = FlagStatus.SC
+            elif clazz == 'MessageDC4' and text == 'GREEN FLAG':
+                self.flag = FlagStatus.GREEN
+            else:
+                print "Unknown flag/class combo {} {}".format(text, clazz)
+
+        return {
+            "series": series,
+            "session": session,
+            "timeRemain": time_remain,
+            "cars": map_car_rows(all_rows[8:-1], column_spec),
+            'messages': messages,
+            'flag': self.flag
+        }
 
 
 def parse_session_time(raw):
