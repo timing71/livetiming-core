@@ -172,8 +172,8 @@ class Service(lt_service):
         self.log.debug('Getting {url}', url=url)
 
         response = yield self._agent.request(
-            'GET',
-            url
+            b'GET',
+            bytes(url, 'utf-8')
         )
 
         prev_series = self._data.get('series')

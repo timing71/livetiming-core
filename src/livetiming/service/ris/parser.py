@@ -51,7 +51,7 @@ class Parser(object):
             elif clazz == 'MessageDC4' and text == 'GREEN FLAG':
                 self.flag = FlagStatus.GREEN
             else:
-                print "Unknown flag/class combo {} {}".format(text, clazz)
+                print("Unknown flag/class combo {} {}".format(text, clazz))
         elif self.flag != FlagStatus.GREEN and self.flag != FlagStatus.RED:
             # Yellow has been withdrawn, they haven't bothered to put the green message up
             # This assumes that the yellow messages will be left up for the duration!
