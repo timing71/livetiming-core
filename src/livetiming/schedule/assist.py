@@ -113,7 +113,7 @@ def _parse_event(event):
     tag = summary[1:summary.index(']')]
 
     return {
-        'summary': MULTI_SPACE_REGEX.sub(' ', u"{}: {}".format(tag, summary[summary.index(']') + 1:])),
+        'summary': MULTI_SPACE_REGEX.sub(' ', u"{}: {}".format(_map_tag_to_name(tag), summary[summary.index(']') + 1:])),
         'service': TAG_TO_SERVICE_CLASS.get(tag),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),
@@ -131,3 +131,13 @@ def _parse_scheduled_event(event):
         'end': parse_datetime(event['end']['dateTime']),
         'correlationId': event.get('extendedProperties', {}).get('private', {}).get('correlationId')
     }
+
+
+_MAPPED_TAGS = {
+    '24H': '24H Series',
+    'W': 'W Series'
+}
+
+
+def _map_tag_to_name(tag):
+    return _MAPPED_TAGS.get(tag, tag)
