@@ -52,10 +52,13 @@ _MAPPED_TAGS = {
 # non-interactively.
 _DEFAULT_ARGS = {
     'Blancpain GT': '--tz ?',
+    'ELMS': '--hidden',
     'F1': '--hidden',
     'Formula E': '--hidden',
+    'Michelin Le Mans Cup': '--hidden',
     'TCA': '--event ?',
-    'W': '-e 31'
+    'W': '-e 31',
+    'WEC': '--hidden --hh live-api.hhtiming.com:24688'
 }
 
 
