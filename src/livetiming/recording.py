@@ -287,7 +287,7 @@ class ReplayManager(object):
         except IOError:
             return False
 
-        old_manifest = [i for i in index if i['uuid'] == uuid][0]
+        old_manifest = [i for i in index.values() if i['uuid'] == uuid][0]
         old_manifest.update(manifest)
 
         with open(self._index_filename, 'w') as index_file:
