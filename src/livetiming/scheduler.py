@@ -14,7 +14,7 @@ import icalendar
 import re
 import os
 import pytz
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import sentry_sdk
 import time
 import twitter
@@ -40,7 +40,7 @@ class Event(object):
         self.endDate = endDate
 
     def __repr__(self, *args, **kwargs):
-        return u"Event: {} (Service: {} {}) {} - {} [{}] {}".format(
+        return "Event: {} (Service: {} {}) {} - {} [{}] {}".format(
             self.name,
             self.service,
             self.serviceArgs,
@@ -74,7 +74,7 @@ class Event(object):
             if logger:
                 logger.warn("Incorrect event format: {}".format(summary))
             else:
-                print "Incorrect event format: {}".format(summary)
+                print("Incorrect event format: {}".format(summary))
 
     def serialize(self):
         return {
@@ -87,7 +87,7 @@ class Event(object):
 
 class Tweeter(object):
 
-    EVENT_START_MESSAGE = u"Starting now: {name}. Follow live at {link}"
+    EVENT_START_MESSAGE = "Starting now: {name}. Follow live at {link}"
 
     def __init__(self):
         self.log = Logger()
@@ -178,14 +178,14 @@ class Scheduler(object):
 
     def listSchedule(self):
         now = datetime.datetime.now(pytz.utc)
-        upcoming = [j for j in self.events.values() if j.startDate > now and j.uid not in self.runningEvents]
-        return map(lambda j: j.serialize(), upcoming)
+        upcoming = [j for j in list(self.events.values()) if j.startDate > now and j.uid not in self.runningEvents]
+        return [j.serialize() for j in upcoming]
 
     def updateSchedule(self):
         with self.lock:
             self.log.info("Syncing schedule with Google Calendar...")
             try:
-                ics = urllib2.urlopen(self.calendarAddress).read()
+                ics = urllib.request.urlopen(self.calendarAddress).read()
                 cal = icalendar.Calendar.from_ical(ics)
 
                 cutoff = datetime.datetime.now(pytz.utc) - EVENT_END_BUFFER - datetime.timedelta(seconds=60)
@@ -198,7 +198,7 @@ class Scheduler(object):
                         e = Event.from_ical(evt, self.log)
                         if e:
                             self.events[e.uid] = e
-                            self.log.debug(u"Found event: {evt}", evt=e)
+                            self.log.debug("Found event: {evt}", evt=e)
 
                 self.log.info("Sync complete, {num} event(s) found", num=len(self.events))
             except Exception as e:
@@ -216,8 +216,8 @@ class Scheduler(object):
             cutoff_start = now + EVENT_START_BUFFER + poll_interval
             cutoff_end = now - EVENT_END_BUFFER
 
-            toStart = [j for j in self.events.values() if j.startDate < cutoff_start and j.endDate > now and j.uid not in self.runningEvents]
-            toEnd = [j for j in self.events.values() if j.endDate < cutoff_end]
+            toStart = [j for j in list(self.events.values()) if j.startDate < cutoff_start and j.endDate > now and j.uid not in self.runningEvents]
+            toEnd = [j for j in list(self.events.values()) if j.endDate < cutoff_end]
 
             hasChanged = False
 

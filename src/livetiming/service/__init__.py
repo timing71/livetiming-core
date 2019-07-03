@@ -273,7 +273,7 @@ class Service(object):
             self.recorder.writeState(self.state)
 
     def _createServiceRegistration(self):
-        colspec = map(lambda s: s.value if isinstance(s, Stat) else s, self.getColumnSpec())
+        colspec = [s.value if isinstance(s, Stat) else s for s in self.getColumnSpec()]
         manifest = {
             "uuid": self.uuid,
             "name": self.getName(),
@@ -375,7 +375,7 @@ class Service(object):
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
-        self.log.debug(u"Received message {msg}", msg=msg)
+        self.log.debug("Received message {msg}", msg=msg)
         if msg.msgClass == MessageClass.INITIALISE_DIRECTORY:
             self.log.info("Publishing manifest on request of directory service.")
             self.publishManifest()

@@ -76,7 +76,7 @@ def run(service, args):
         singleEvents=True
     ).execute().get('items', [])
 
-    scheduled = map(_parse_scheduled_event, get_events(service))
+    scheduled = list(map(_parse_scheduled_event, get_events(service)))
 
     def already_scheduled(event):
         for scheduled_event in scheduled:
@@ -90,24 +90,24 @@ def run(service, args):
 
     for e in upcoming:
         if 'dateTime' not in e['start']:
-            print u"Skipping event without session time: {}".format(e['summary'])
+            print("Skipping event without session time: {}".format(e['summary']))
         else:
             event = _parse_event(e)
 
             if not event['service']:
-                print u"Skipping event with no associated service: {}".format(e['summary'])
+                print("Skipping event with no associated service: {}".format(e['summary']))
             elif event['summary'].endswith('Event'):
-                print u"Skipping event without session time: {}".format(e['summary'])
+                print("Skipping event without session time: {}".format(e['summary']))
             elif already_scheduled(event):
-                print u"Already scheduled: {}".format(e['summary'])
+                print("Already scheduled: {}".format(e['summary']))
             else:
-                print u"New event: {} ({} - {})".format(event['summary'], event['start'], event['end'])
+                print("New event: {} ({} - {})".format(event['summary'], event['start'], event['end']))
 
                 try:
                     default_args = _get_default_args(event['tag'], args)
 
                     event_body = {
-                        'summary': u"{} [{}{}]".format(
+                        'summary': "{} [{}{}]".format(
                             event['summary'],
                             event['service'],
                             ', {}'.format(default_args) if default_args else ''
@@ -139,7 +139,7 @@ def _parse_event(event):
     tag = summary[1:summary.index(']')]
 
     return {
-        'summary': MULTI_SPACE_REGEX.sub(' ', u"{}: {}".format(_map_tag_to_name(tag), summary[summary.index(']') + 1:])),
+        'summary': MULTI_SPACE_REGEX.sub(' ', "{}: {}".format(_map_tag_to_name(tag), summary[summary.index(']') + 1:])),
         'service': TAG_TO_SERVICE_CLASS.get(tag),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),

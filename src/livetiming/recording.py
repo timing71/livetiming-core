@@ -99,7 +99,7 @@ class TimingRecorder(object):
         sessionDiff = dictdiffer.diff(self.prevState['session'], newState['session'])
 
         # This looks potentially costly but remember oldState['messages'] is bounded to 100 entries
-        prev_recent_message = max(map(lambda m: m[0], self.prevState['messages'])) if len(self.prevState['messages']) > 0 else None
+        prev_recent_message = max([m[0] for m in self.prevState['messages']]) if len(self.prevState['messages']) > 0 else None
         if prev_recent_message:
             new_messages = [m for m in newState['messages'] if m[0] > prev_recent_message]
         else:
@@ -233,7 +233,7 @@ class DirectoryBackedRecording(object):
                         ifr = simplejson.load(iframe)
                         state = applyIntraFrame(state, ifr)
                 except Exception as e:
-                    print "WARN {} on iframe {}".format(e, iframeIndex)
+                    print("WARN {} on iframe {}".format(e, iframeIndex))
                     pass
 
             return state
@@ -266,7 +266,7 @@ class ReplayManager(object):
         self._scan_task.start(600)
 
     def update_index(self):
-        self.recordings = sorted(update_recordings_index(self._index_filename).values(), key=lambda r: r['startTime'], reverse=True)
+        self.recordings = sorted(list(update_recordings_index(self._index_filename).values()), key=lambda r: r['startTime'], reverse=True)
         self.recordings_by_uuid = {r['uuid']: r for r in self.recordings}
         self.log.info("Directory scan completed, {count} recording{s} found", count=len(self.recordings), s='' if len(self.recordings) == 1 else 's')
 
@@ -334,13 +334,7 @@ class RecordingsDirectory(ApplicationSession):
 
     def get_page(self, page_number=1, filter_name=None, show_hidden=False):
         start_idx = (page_number - 1) * self.PAGE_SIZE
-        possible_recordings = filter(
-            lambda r: r['name'] == filter_name or filter_name is None,
-            filter(
-                lambda r: show_hidden or not r.get('hidden'),
-                self._manager.recordings
-            )
-        )
+        possible_recordings = [r for r in [r for r in self._manager.recordings if show_hidden or not r.get('hidden')] if r['name'] == filter_name or filter_name is None]
         return {
             'recordings': possible_recordings[start_idx:start_idx + self.PAGE_SIZE],
             'pages': math.ceil(len(possible_recordings) / float(self.PAGE_SIZE)),
@@ -350,13 +344,7 @@ class RecordingsDirectory(ApplicationSession):
     def get_names(self, show_hidden=False):
         return list(
             set(
-                map(
-                    lambda r: r['name'],
-                    filter(
-                        lambda r: show_hidden or not r.get('hidden'),
-                        self._manager.recordings
-                    )
-                )
+                [r['name'] for r in [r for r in self._manager.recordings if show_hidden or not r.get('hidden')]]
             )
         )
 
@@ -386,7 +374,7 @@ def update_recordings_index(index_filename):
 
     rec_files = glob.glob('*.zip')
 
-    for extant in index.keys():
+    for extant in list(index.keys()):
         filename = extant.replace(':', '_') + '.zip'
         if filename not in rec_files:
             log.info('Removing deleted recording file {filename} from index', filename=filename)
@@ -454,7 +442,7 @@ def generate_analysis(rec_file, out_file, report_progress=False):
             new_messages = []
             if oldState:
                 # This looks potentially costly but remember oldState['messages'] is bounded to 100 entries
-                prev_recent_message = max(map(lambda m: m[0], oldState['messages'])) if len(oldState['messages']) > 0 else None
+                prev_recent_message = max([m[0] for m in oldState['messages']]) if len(oldState['messages']) > 0 else None
                 if prev_recent_message:
                     new_messages = [m for m in newState['messages'] if m[0] > prev_recent_message]
                 else:
@@ -471,15 +459,15 @@ def generate_analysis(rec_file, out_file, report_progress=False):
                 sys.stdout.flush()
 
         if report_progress:
-            print ""
+            print("")
             stop_time = time.time()
-            print "Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time))
+            print("Processed {} frames in {}s == {:.3f} frames/s".format(rec.frames, stop_time - start_time, rec.frames / (stop_time - start_time)))
 
-        for key, module in a._modules.iteritems():
+        for key, module in a._modules.items():
             data[key] = module.get_data(a.data_centre)
 
         car_stats = data.pop('car')
-        for k, v in car_stats.iteritems():
+        for k, v in car_stats.items():
             data[k] = v
 
         data['service'] = manifest
@@ -488,7 +476,7 @@ def generate_analysis(rec_file, out_file, report_progress=False):
             simplejson.dump(data, outfile, separators=(',', ':'))
 
         if report_progress:
-            print "Generation complete."
+            print("Generation complete.")
     finally:
         if rec:
             shutil.rmtree(rec.directory)

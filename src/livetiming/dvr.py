@@ -34,8 +34,8 @@ class DVRSession(ApplicationSession):
         if not self.dvr.started:
             self.dvr.start()
         self.dvr.log.info("DVR session ready")
-        yield self.subscribe(self.dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match=u'prefix', details_arg='details'))
-        yield self.subscribe(self.dvr.handle_analysis_message, u'livetiming.analysis', options=SubscribeOptions(match=u'prefix', details_arg='details'))
+        yield self.subscribe(self.dvr.handle_service_message, RPC.STATE_PUBLISH.format(''), options=SubscribeOptions(match='prefix', details_arg='details'))
+        yield self.subscribe(self.dvr.handle_analysis_message, 'livetiming.analysis', options=SubscribeOptions(match='prefix', details_arg='details'))
         yield self.subscribe(self.dvr.handle_control_message, Channel.CONTROL)
         yield self.subscribe(self.dvr.handle_control_message, Channel.DIRECTORY)
 
@@ -210,7 +210,7 @@ class DVR(object):
 
         finished_recordings = []
 
-        for service_uuid, recording in self._in_progress_recordings.iteritems():
+        for service_uuid, recording in self._in_progress_recordings.items():
             if recording.latest_frame:
 
                 if service_uuid in self._recordings_without_frames:
@@ -281,13 +281,13 @@ class DVR(object):
                         dest
                     )
 
-                    os.chmod(dest, 0664)
+                    os.chmod(dest, 0o664)
                     self.log.info("Saved recording to {dest}", dest=dest)
 
                     analysis_filename = dest.replace('.zip', '.json')
                     with open(analysis_filename, 'w') as analysis_file:
                         simplejson.dump(self._in_progress_analyses[uuid], analysis_file, separators=(',', ':'))
-                        os.chmod(analysis_filename, 0664)
+                        os.chmod(analysis_filename, 0o664)
                         self.log.info("Created analysis file {filename}", filename=analysis_filename)
 
             d = deferToThread(recording.finalise)  # This could take a long time!

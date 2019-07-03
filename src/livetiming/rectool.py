@@ -31,14 +31,14 @@ def manifest_set(args, extras):
 
 def inspect(args, extras):
     f = RecordingFile(args.recfile)
-    print "##########"
-    print u'{}'.format(f.manifest['description'])
-    print "##########"
-    print u"Service: {} ({})".format(f.manifest['name'], f.manifest['uuid'])
-    print "{} frames ({}k/{}i), {} duration".format(f.frames, len(f.keyframes), len(f.iframes), f.duration)
-    print "Start time: {}".format(f.startTime)
-    print "Full manifest:"
-    print simplejson.dumps(f.manifest, indent="  ")
+    print("##########")
+    print('{}'.format(f.manifest['description']))
+    print("##########")
+    print("Service: {} ({})".format(f.manifest['name'], f.manifest['uuid']))
+    print("{} frames ({}k/{}i), {} duration".format(f.frames, len(f.keyframes), len(f.iframes), f.duration))
+    print("Start time: {}".format(f.startTime))
+    print("Full manifest:")
+    print(simplejson.dumps(f.manifest, indent="  "))
 
 
 def convert(args, extras):
@@ -56,14 +56,14 @@ def convert(args, extras):
                 firstKeyframe = min(orig.keyframes)
                 info = z.getinfo("{:05d}.json".format(firstKeyframe))
                 startTime = time.mktime(info.date_time + (0, 0, 0)) - firstKeyframe
-                print "Start time not available, inferring from first keyframe as {}".format(startTime)
+                print("Start time not available, inferring from first keyframe as {}".format(startTime))
 
         with zipfile.ZipFile(outfile, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             for frame in orig.keyframes:
-                print "{} => {}".format(frame, int(startTime + frame))
+                print("{} => {}".format(frame, int(startTime + frame)))
                 z.write(os.path.join(tempdir, "{:05d}.json".format(frame)), "{:011d}.json".format(int(startTime + frame)))
             for frame in orig.iframes:
-                print "{}i => {}i".format(frame, int(startTime + frame))
+                print("{}i => {}i".format(frame, int(startTime + frame)))
                 z.write(os.path.join(tempdir, "{:05d}i.json".format(frame)), "{:011d}i.json".format(int(startTime + frame)))
             orig.manifest['version'] = 1
             del orig.manifest['startTime']
@@ -106,7 +106,7 @@ def scan(args, extras):
     r = RecordingFile(args.recfile)
     startTime = r.manifest['startTime']
     interval = int(r.manifest['pollInterval']) if 'pollInterval' in r.manifest else 1
-    print "First frame: {}".format(startTime)
+    print("First frame: {}".format(startTime))
     initialState = r.getStateAt(0)
     curTime = int(startTime)
     endTime = int(startTime + r.duration)
@@ -123,16 +123,16 @@ def scan(args, extras):
         messageDiffs = list(dictdiffer.diff(initialState['messages'], nowState['messages'])) if not foundMessageChange else []
         carDiffs = list(dictdiffer.diff(initialState['cars'], nowState['cars'])) if not foundCarsChange else []
         if not foundSessionChange and len(sessionDiffs) > 0:
-            print "\nFirst session change at {} (@{})".format(curTime - startTime, curTime)
+            print("\nFirst session change at {} (@{})".format(curTime - startTime, curTime))
             foundSessionChange = True
-            print list(sessionDiffs)
+            print(list(sessionDiffs))
         if not foundMessageChange and len(messageDiffs) > 0:
-            print "\nFirst message change at {} (@{})".format(curTime - startTime, curTime)
-            print list(messageDiffs)
+            print("\nFirst message change at {} (@{})".format(curTime - startTime, curTime))
+            print(list(messageDiffs))
             foundMessageChange = True
         if not foundCarsChange and len(carDiffs) > 0:
-            print "\nFirst car change at {} (@{})".format(curTime - startTime, curTime)
-            print list(carDiffs)
+            print("\nFirst car change at {} (@{})".format(curTime - startTime, curTime))
+            print(list(carDiffs))
             foundCarsChange = True
         if foundCarsChange and foundMessageChange and foundSessionChange:
             break
@@ -143,9 +143,9 @@ def show(args, extras):
     r = RecordingFile(args.recfile)
     idx = extras[0]
     if idx[0] == "@":
-        print simplejson.dumps(r.getStateAtTimestamp(int(idx[1:])))
+        print(simplejson.dumps(r.getStateAtTimestamp(int(idx[1:]))))
     else:
-        print simplejson.dumps(r.getStateAt(int(idx)))
+        print(simplejson.dumps(r.getStateAt(int(idx))))
 
 
 ACTIONS = {
@@ -160,19 +160,19 @@ ACTIONS = {
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Tool for manipulating Live Timing recordings.')
-    parser.add_argument('action', choices=ACTIONS.keys(), help='Action to perform')
+    parser.add_argument('action', choices=list(ACTIONS.keys()), help='Action to perform')
     parser.add_argument('recfile', help='Recording file to use')
     return parser.parse_known_args()
 
 
 def main():
     args, extras = _parse_args()
-    if args.action in ACTIONS.keys():
+    if args.action in list(ACTIONS.keys()):
         ACTIONS[args.action](args, extras)
     else:
         # argparse should prevent us from getting here
-        print "Unrecognised action: {}".format(args.action)
-        print "Available actions: {}".format(ACTIONS.keys())
+        print("Unrecognised action: {}".format(args.action))
+        print("Available actions: {}".format(list(ACTIONS.keys())))
 
 
 if __name__ == '__main__':

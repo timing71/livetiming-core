@@ -50,7 +50,7 @@ def configure_sentry_twisted():
 
 
 def make_component(session_class):
-    router = unicode(os.environ["LIVETIMING_ROUTER"])
+    router = str(os.environ["LIVETIMING_ROUTER"])
     return Component(
         realm=Realm.TIMING,
         session_factory=session_class,
