@@ -68,7 +68,7 @@ class AlkamelV2Client(MeteorClient):
 
     def recv_feeds(self, _):
         feeds = self.find('feeds')
-        self.log.debug("Found feeds: {feeds}", feeds=map(lambda f: f['name'], feeds))
+        self.log.debug("Found feeds: {feeds}", feeds=[f['name'] for f in feeds])
 
         if len(feeds) == 0:
             raise Exception('No valid feeds found')
@@ -117,7 +117,7 @@ class RaceControlMessage(TimingMessage):
         if rc:
             rcm = rc.get('raceControlMessages', {})
             messages = rcm.get('log', {})
-            new_messages = [m for m in messages.values() if m.get('date', 0) > self._mostRecentTimestamp]
+            new_messages = [m for m in list(messages.values()) if m.get('date', 0) > self._mostRecentTimestamp]
 
             # current = rcm.get('currentMessages', {})
             # for idx, msg in current.iteritems():
@@ -144,7 +144,7 @@ def parse_sectors(sectorString, defaultFlag=''):
     sectors = {}
     parts = sectorString.split(';')
     len_parts = len(parts)
-    for i in range(len_parts / 6):
+    for i in range(len_parts // 6):
         idx = 6 * i
         if len_parts > idx and parts[idx] != '':
             sector = int(parts[idx])
@@ -220,7 +220,7 @@ def _parse_loops(loops):
         splits = loops.split(';')
         t = {}
 
-        for r in xrange(0, len(splits) - 1, 2):
+        for r in range(0, len(splits) - 1, 2):
             t[int(splits[r])] = int(splits[r + 1])
         return t
     return {}
@@ -427,7 +427,7 @@ class Service(DuePublisher, lt_service):
             self.analyser.reset()
         info = session_info.get('info', {})
         self._name = info.get('champName', 'Al Kamel Timing')
-        self._description = u"{} - {}".format(
+        self._description = "{} - {}".format(
             info.get('eventName', ''),
             new_session.get('name', '')
         )
@@ -487,7 +487,7 @@ class Service(DuePublisher, lt_service):
                 lead_car = None
                 class_count = {}
 
-                for position in sorted(map(int, standings.keys())):
+                for position in sorted(map(int, list(standings.keys()))):
                     data = standings[str(position)]
 
                     race_num = data.get('number')
@@ -543,7 +543,7 @@ class Service(DuePublisher, lt_service):
                     car = [
                         race_num,
                         state,
-                        entry.get('name') if 'name' in entry else u"{}, {}".format(entry.get('lastname', data.get('lastname', '')).upper(), entry.get('firstname', data.get('firstname', '')).title()),
+                        entry.get('name') if 'name' in entry else "{}, {}".format(entry.get('lastname', data.get('lastname', '')).upper(), entry.get('firstname', data.get('firstname', '')).title()),
                         entry.get('team', data.get('team', '')),
                         entry.get('vehicle', data.get('vehicle', '')),
                         laps,
@@ -615,8 +615,8 @@ class Service(DuePublisher, lt_service):
             weather = weather_data.get('weather')
             if weather:
                 return [
-                    u"{:.3g}°C".format(weather.get('ambientTemperature', '')),
-                    u"{:.3g}°C".format(weather.get('trackTemperature', '')),
+                    "{:.3g}°C".format(weather.get('ambientTemperature', '')),
+                    "{:.3g}°C".format(weather.get('trackTemperature', '')),
                     "{}%".format(weather.get('humidity', '')),
                     "{:.2g} km/h".format(weather.get('windSpeed', '')),
                 ]

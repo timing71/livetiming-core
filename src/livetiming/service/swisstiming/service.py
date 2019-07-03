@@ -136,7 +136,7 @@ class Service(DuePublisher, lt_service):
         self._session_data = None
         self._timing_data = None
         self._rc_messages = RaceControlMessage([])
-        self._last_msg_time = -1
+        self._last_msg_time = datetime.utcnow()
         self._previous_laps = {}
 
         client_def = create_client(self.namespace, self.profile, self._load_season, self.log)
@@ -159,7 +159,7 @@ class Service(DuePublisher, lt_service):
             self.meeting = meetings[meetingID.lower()]
             self._client.get_schedule(meetingID, self._handle_schedule)
         else:
-            live_meetings = [m for m in meetings.values() if m['State'] == STATE_LIVE]
+            live_meetings = [m for m in list(meetings.values()) if m['State'] == STATE_LIVE]
             if live_meetings:
                 self.log.info(
                     "Using currently live meeting {meetingID}: {name}",
@@ -189,7 +189,7 @@ class Service(DuePublisher, lt_service):
             )
 
         else:
-            live_sessions = [s for s in sessions.values() if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
+            live_sessions = [s for s in list(sessions.values()) if s['State'] == STATE_LIVE and s['Type'] not in TYPES_AGGREGATE]
             if live_sessions:
                 new_session = live_sessions[-1]
 
@@ -217,7 +217,7 @@ class Service(DuePublisher, lt_service):
         else:
             self.log.warn(
                 'No live sessions detected and no session specified. Available sessions: {sessions}',
-                sessions=sessions.keys()
+                sessions=list(sessions.keys())
             )
 
     def _handle_timing(self, data):
@@ -226,11 +226,13 @@ class Service(DuePublisher, lt_service):
 
     def _handle_session(self, data):
         self._session_data = data
+        for msg in data.get('Messages', []):
+            msg['ParsedTime'] = datetime.strptime(msg['Time'], '%d.%m.%Y %H:%M:%S')
 
-        rc_messages = [m for m in data.get('Messages', []) if m['Time'] > self._last_msg_time]
+        rc_messages = [m for m in data.get('Messages', []) if m['ParsedTime'] > self._last_msg_time]
         for m in rc_messages:
             self._rc_messages.messageList.append(m['Text'])
-            self._last_msg_time = max(self._last_msg_time, m['Time'])
+            self._last_msg_time = max(self._last_msg_time, m['ParsedTime'])
 
         self.set_due_publish()
 
@@ -263,7 +265,7 @@ class Service(DuePublisher, lt_service):
 
     def getDefaultDescription(self):
         if self.meeting and self.session:
-            return u"{} - {}".format(self.meeting['Name'], self.session['Name'])
+            return "{} - {}".format(self.meeting['Name'], self.session['Name'])
         return ''
 
     def _no_service_state(self):
@@ -288,7 +290,7 @@ class Service(DuePublisher, lt_service):
     def _compile_state(self):
         cars = []
 
-        for entry in sorted(self._timing_data['Results'].values(), key=lambda e: e.get('ListIndex', 9999)):
+        for entry in sorted(list(self._timing_data['Results'].values()), key=lambda e: e.get('ListIndex', 9999)):
             if 'CompetitorId' in entry:
                 competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
                 if competitor:
@@ -304,7 +306,7 @@ class Service(DuePublisher, lt_service):
                         competitor['Bib'],
                         map_car_state(main_result['Status'], competitor['InPitLane']),
                         clazz,
-                        u"{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
+                        "{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
                         competitor.get('CarTypeName', ''),
                         competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
                         main_result['TotalLapCount'] if 'TotalLapCount' in main_result else 0,

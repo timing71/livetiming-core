@@ -6,7 +6,7 @@ from livetiming.service import Service as lt_service, ReconnectingWebSocketClien
 from twisted.internet.task import LoopingCall
 
 import simplejson
-import urllib2
+import urllib
 
 
 def createProtocol(series, service):
@@ -17,8 +17,8 @@ def createProtocol(series, service):
             self.factory.resetDelay()
 
         def onOpen(self):
-            self.sendMessage('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}')
-            self.sendMessage('{"H":"streaming","M":"GetData2","A":["' + series + '",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}')
+            self.sendMessage(bytes('{H: "streaming", M: "JoinFeeds", A: ["' + series + '", ["data", "weather", "status", "time"]], I: 0}', 'utf-8'))
+            self.sendMessage(bytes('{"H":"streaming","M":"GetData2","A":["' + series + '",["data","statsfeed","weatherfeed","sessionfeed","trackfeed","timefeed"]],"I":1}', 'utf-8'))
 
         def onMessage(self, payload, isBinary):
             service.onTimingPayload(simplejson.loads(payload.decode('utf8')))
@@ -26,12 +26,12 @@ def createProtocol(series, service):
 
 
 def getToken():
-    tokenData = simplejson.load(urllib2.urlopen("http://gpserieslivetiming.cloudapp.net/streaming/negotiate?clientProtocol=1.5"))
+    tokenData = simplejson.load(urllib.request.urlopen("http://gpserieslivetiming.cloudapp.net/streaming/negotiate?clientProtocol=1.5"))
     return (tokenData["ConnectionId"], tokenData["ConnectionToken"])
 
 
 def getWebSocketURL(token):
-    return "ws://gpserieslivetiming.cloudapp.net/streaming/connect?transport=webSockets&clientProtocol=1.5&connectionToken={}&connectionData=%5B%7B%22name%22%3A%22streaming%22%7D%5D&tid=9".format(urllib2.quote(token[1]))
+    return "ws://gpserieslivetiming.cloudapp.net/streaming/connect?transport=webSockets&clientProtocol=1.5&connectionToken={}&connectionData=%5B%7B%22name%22%3A%22streaming%22%7D%5D&tid=9".format(urllib.parse.quote(token[1]))
 
 
 def parseState(rawState):
@@ -169,7 +169,7 @@ class Service(lt_service):
         elif "R" in payload:
             if "data" in payload["R"]:
                 self.carState = []
-                carList = payload["R"]["data"][2].itervalues()
+                carList = iter(payload["R"]["data"][2].values())
                 self.carState = []
                 for car in carList:
                     self.carState.append([
@@ -201,7 +201,7 @@ class Service(lt_service):
             if "weatherfeed" in payload["R"]:
                 self.weatherFeed.update(payload["R"]["weatherfeed"][1])
         elif payload:  # is not empty
-            print "What is {}?".format(payload)
+            print("What is {}?".format(payload))
         self._due_publish_state = True
 
     def handleTimingMessage(self, message):
@@ -303,10 +303,10 @@ class Service(lt_service):
             return formatString.format(self.weatherFeed[key]) if key in self.weatherFeed else None
 
         return [
-            maybeValue('tracktemp', u"{}°C"),
-            maybeValue('airtemp', u"{}°C"),
+            maybeValue('tracktemp', "{}°C"),
+            maybeValue('airtemp', "{}°C"),
             maybeValue('windspeed', "{}m/s"),
-            maybeValue('winddir', u"{}°"),
+            maybeValue('winddir', "{}°"),
             maybeValue('humidity', "{}%"),
             maybeValue('pressure', "{}mBar"),
             'Wet' if self.weatherFeed.get('rainfall', 0) == 1 else 'Dry'

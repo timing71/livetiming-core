@@ -13,7 +13,6 @@ class CrappyDataException(Exception):
 
 
 class Parser(object):
-
     def __init__(self):
         self.flag = FlagStatus.GREEN
 
@@ -32,15 +31,9 @@ class Parser(object):
         session_times_row = all_rows[3].find_all('td')
         time_remain = parse_session_time(session_times_row[0].string)
 
-        column_spec = map(
-            lambda t: t.string,
-            soup.body.table.find_all('td', recursive=False)
-        )
+        column_spec = [t.string for t in soup.body.table.find_all('td', recursive=False)]
 
-        messages = map(
-            lambda td: unicode(td.string.strip()),
-            soup.body.table.find_all(class_='MessageDC1')
-        )
+        messages = [str(td.string.strip()) for td in soup.body.table.find_all(class_='MessageDC1')]
 
         flag_messages = soup.body.table.find_all(class_=FLAG_MESSAGE_CLASSES)
         if len(flag_messages) == 1:
@@ -100,7 +93,7 @@ def parse_laptime(formattedTime):
 
 def maybe_unicode(raw):
     if raw:
-        return unicode(raw)
+        return str(raw)
     else:
         return None
 
@@ -126,7 +119,7 @@ def map_car_rows(rows, column_spec):
         gap_idx = column_spec.index('Gap') if 'Gap' in column_spec else None
         lap_idx = column_spec.index('Lap') if 'Lap' in column_spec else None
         if gap_idx:
-            laps_or_gap = unicode(tds[gap_idx].string)
+            laps_or_gap = str(tds[gap_idx].string)
 
             maybe_lap = LAPS_REGEX.match(laps_or_gap)
             gap = laps_or_gap
@@ -149,7 +142,7 @@ def map_car_rows(rows, column_spec):
                 except ValueError:
                     gap = ''
         if lap_idx:
-            accum['lap'] = unicode(tds[lap_idx].string)
+            accum['lap'] = str(tds[lap_idx].string)
 
         return {
             'pos': get('Pos'),
@@ -168,7 +161,7 @@ def map_car_rows(rows, column_spec):
             'pits': get('PS')
         }
 
-    return map(map_car_row, rows)
+    return list(map(map_car_row, rows))
 
 
 def map_car_state(state_td):

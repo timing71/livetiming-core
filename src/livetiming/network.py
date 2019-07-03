@@ -6,31 +6,31 @@ import time
 
 
 class Realm:
-    TIMING = u'timing'
+    TIMING = 'timing'
 
 
 class Channel:
-    CONTROL = u'livetiming.control'
-    DIRECTORY = u'livetiming.directory'
-    SCHEDULER = u'livetiming.scheduler'
-    RECORDING = u'livetiming.replay'
+    CONTROL = 'livetiming.control'
+    DIRECTORY = 'livetiming.directory'
+    SCHEDULER = 'livetiming.scheduler'
+    RECORDING = 'livetiming.replay'
 
 
 class RPC:
-    DIRECTORY_LISTING = u"livetiming.directory.listServices"
-    RECORDING_LISTING = u"livetiming.directory.listRecordings"
-    SCHEDULE_LISTING = u"livetiming.schedule.list"
-    LIVENESS_CHECK = u"livetiming.service.isAlive.{}"
-    REQUEST_STATE = u"livetiming.service.requestState.{}"
-    REQUEST_ANALYSIS_MANIFEST = u"livetiming.service.requestAnalysisManifest.{}"
-    REQUEST_ANALYSIS_DATA = u"livetiming.service.requestAnalysisData.{}"
-    REQUEST_ANALYSIS_CAR_LIST = u"livetiming.service.requestAnalysisCarList.{}"
-    STATE_PUBLISH = u"livetiming.service.{}"
-    GET_DIRECTORY_LISTING = u'livetiming.directory.listServices'
-    GET_RECORDINGS_PAGE = u'livetiming.recordings.page'
-    GET_RECORDINGS_NAMES = u'livetiming.recordings.names'
-    GET_RECORDINGS_MANIFEST = u'livetiming.recordings.manifest'
-    UPDATE_RECORDING_MANIFEST = u'livetiming.recordings.updateManifest'
+    DIRECTORY_LISTING = "livetiming.directory.listServices"
+    RECORDING_LISTING = "livetiming.directory.listRecordings"
+    SCHEDULE_LISTING = "livetiming.schedule.list"
+    LIVENESS_CHECK = "livetiming.service.isAlive.{}"
+    REQUEST_STATE = "livetiming.service.requestState.{}"
+    REQUEST_ANALYSIS_MANIFEST = "livetiming.service.requestAnalysisManifest.{}"
+    REQUEST_ANALYSIS_DATA = "livetiming.service.requestAnalysisData.{}"
+    REQUEST_ANALYSIS_CAR_LIST = "livetiming.service.requestAnalysisCarList.{}"
+    STATE_PUBLISH = "livetiming.service.{}"
+    GET_DIRECTORY_LISTING = 'livetiming.directory.listServices'
+    GET_RECORDINGS_PAGE = 'livetiming.recordings.page'
+    GET_RECORDINGS_NAMES = 'livetiming.recordings.names'
+    GET_RECORDINGS_MANIFEST = 'livetiming.recordings.manifest'
+    UPDATE_RECORDING_MANIFEST = 'livetiming.recordings.updateManifest'
 
 
 class MessageClass(Enum):
@@ -69,7 +69,7 @@ class Message(object):
         return Message(MessageClass(rawMsg['msgClass']), rawMsg['payload'], int(rawMsg['date'] / 1000) if 'date' in rawMsg else None)
 
     def __str__(self):
-        return u"<Message class={0} payload={1}>".format(self.msgClass, self.payload)
+        return "<Message class={0} payload={1}>".format(self.msgClass, self.payload)
 
 
 def authenticatedService(clazz):
@@ -78,14 +78,14 @@ def authenticatedService(clazz):
     '''
     def onConnect(self):
         self.log.info("Client session connected. Starting WAMP-CRA authentication on realm '{}' as user '{}' ..".format(self.config.realm, "services"))
-        self.join(self.config.realm, [u"wampcra", u"anonymous"], u"services")
+        self.join(self.config.realm, ["wampcra", "anonymous"], "services")
 
     def onChallenge(self, challenge):
         user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
-        if challenge.method == u"wampcra":
+        if challenge.method == "wampcra":
             self.log.debug("WAMP-CRA challenge received: {}".format(challenge))
 
-            if u'salt' in challenge.extra:
+            if 'salt' in challenge.extra:
                 # salted secret
                 key = auth.derive_key(user_secret,
                                       challenge.extra['salt'],

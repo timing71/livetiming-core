@@ -10,7 +10,7 @@ from twisted.internet import reactor, threads
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
-from urllib2 import HTTPError
+from urllib.error import HTTPError
 
 import argparse
 import wecapp
@@ -40,7 +40,7 @@ def mapFlagState(params, hh):
             Logger().warn("Unknown flag state {flag}", flag=params['status'])
 
     if hh:
-        zone_states = map(lambda s: s.get('ZoneStatus', 0), hh.sector_states.values())
+        zone_states = [s.get('ZoneStatus', 0) for s in list(hh.sector_states.values())]
         if SectorStatus.SLOW_ZONE in zone_states and flag == 'yellow':
             return FlagStatus.SLOW_ZONE.name.lower()
 
@@ -86,7 +86,11 @@ def parseTime(formattedTime):
                 ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
                 return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
             except ValueError:
-                return formattedTime
+                try:
+                    ttime = datetime.strptime(formattedTime, "%M'%S.%f")
+                    return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+                except:
+                    return formattedTime
 
 
 def maybeInt(raw):
@@ -161,7 +165,7 @@ class Service(DuePublisher, lt_service):
         self.description = self.initial_description
 
         def data_url():
-            return WEB_TIMING_URL.format(int(1000 * time.time()))
+            return bytes(WEB_TIMING_URL.format(int(1000 * time.time())), 'utf-8')
 
         self._web_fetcher = JSONFetcher(data_url, self._handleWebData, 10)
 
@@ -191,7 +195,7 @@ class Service(DuePublisher, lt_service):
 
         if new_session:
             self.log.debug("Using session {sessionid}", sessionid=new_session['id'])
-            new_description = u'{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
+            new_description = '{} - {}'.format(new_session['race']['name_en'], new_session['name_en'])
             if new_description != self.description:
                 self.log.info("New session detected, clearing previous state.")
                 self.description = new_description
@@ -386,37 +390,42 @@ class Service(DuePublisher, lt_service):
 
                                 car['pos_in_class'] = car_data['rank_by_category']
                                 if not self._hhtiming or self._hhtiming.session.get('SessionTime', 0) < ls.get('elapsed', 0):
-                                    car['s1'] = car_data['sectors']['0']['current'] or 0
-                                    car['s2'] = car_data['sectors']['1']['current'] or 0
-                                    car['s3'] = car_data['sectors']['2']['current'] or 0
-                                    car['last_lap'] = parseTime(car_data['last_lap'])
+                                    if 'sectors' in car_data:
+                                        car['s1'] = car_data['sectors']['0']['current'] or 0
+                                        car['s2'] = car_data['sectors']['1']['current'] or 0
+                                        car['s3'] = car_data['sectors']['2']['current'] or 0
+                                    if 'last_lap' in car_data:
+                                        car['last_lap'] = parseTime(car_data['last_lap'])
 
-                                existing_bs1 = car.get('bs1', 0)
-                                new_bs1 = car_data['sectors']['0']['best'] or 0
-                                if new_bs1 > 0:
-                                    if new_bs1 < existing_bs1 or existing_bs1 == 0:
-                                        car['bs1'] = new_bs1
+                                if 'sectors' in car_data:
+                                    existing_bs1 = car.get('bs1', 0)
+                                    new_bs1 = car_data['sectors']['0']['best'] or 0
+                                    if new_bs1 > 0:
+                                        if new_bs1 < existing_bs1 or existing_bs1 == 0:
+                                            car['bs1'] = new_bs1
 
-                                existing_bs2 = car.get('bs2', 0)
-                                new_bs2 = car_data['sectors']['1']['best'] or 0
-                                if new_bs2 > 0:
-                                    if new_bs2 < existing_bs2 or existing_bs2 == 0:
-                                        car['bs2'] = new_bs2
+                                    existing_bs2 = car.get('bs2', 0)
+                                    new_bs2 = car_data['sectors']['1']['best'] or 0
+                                    if new_bs2 > 0:
+                                        if new_bs2 < existing_bs2 or existing_bs2 == 0:
+                                            car['bs2'] = new_bs2
 
-                                existing_bs3 = car.get('bs3', 0)
-                                new_bs3 = car_data['sectors']['2']['best'] or 0
-                                if new_bs3 > 0:
-                                    if new_bs3 < existing_bs3 or existing_bs3 == 0:
-                                        car['bs3'] = new_bs3
+                                    existing_bs3 = car.get('bs3', 0)
+                                    new_bs3 = car_data['sectors']['2']['best'] or 0
+                                    if new_bs3 > 0:
+                                        if new_bs3 < existing_bs3 or existing_bs3 == 0:
+                                            car['bs3'] = new_bs3
 
-                                car['best_lap'] = min(parseTime(car_data['best_lap']), car.get('best_lap', 9999999))
+                                car['best_lap'] = min(parseTime(car_data.get('best_lap')), car.get('best_lap', 9999999))
 
                                 car['driver'] = car_data['current_pilot']
                                 car['tyre'] = car_data['current_tyres']
                                 car['lap'] = car_data['current_lap']
                                 car['gap'] = parseTime(car_data['gap'])
-                                car['int'] = parseTime(car_data['gap_prev'])
-                                car['pits'] = car_data['pitstop']
+                                if 'gap_prev' in car_data:
+                                    car['int'] = parseTime(car_data['gap_prev'])
+                                if 'pitstop' in car_data:
+                                    car['pits'] = car_data['pitstop']
 
                                 # Quali fields
                                 car['d1l1'] = parseTime(car_data.get('average_d1_l1', ''))
@@ -434,7 +443,7 @@ class Service(DuePublisher, lt_service):
                                 if 'car' not in car:
                                     brand = car_data['participation']['car'].get('brand', {})
                                     model = car_data['participation']['car'].get('model', '')
-                                    car['car'] = u'{} {}'.format(brand.get('name_id', ''), model).strip()
+                                    car['car'] = '{} {}'.format(brand.get('name_id', ''), model).strip()
 
                             sd = self._session_data
 
@@ -483,6 +492,13 @@ class Service(DuePublisher, lt_service):
                 session_via_app = self._session_data.get('alkamel_session_id')
                 correct_session = session_via_app == params.get('sessionId') or not session_via_app
 
+                def maybe_record_best_sector(car, car_data, sector_idx):
+                    existing_bs = car.get('bs{}'.format(sector_idx), 0)
+                    new_bs = parseTime(car_data.get('bestSector{}'.format(sector_idx), 0))
+                    if new_bs and new_bs > 0:
+                        if new_bs < existing_bs or existing_bs == 0:
+                            car['bs{}'.format(sector_idx)] = new_bs
+
                 if data_new_enough and correct_session:
                     for car_data in data.get('entries', []):
                         race_num = car_data['number']
@@ -504,23 +520,9 @@ class Service(DuePublisher, lt_service):
 
                             car['last_lap'] = parseTime(car_data['lastlap'])
 
-                        existing_bs1 = car.get('bs1', 0)
-                        new_bs1 = car_data['bestSector1'] or 0
-                        if new_bs1 > 0:
-                            if new_bs1 < existing_bs1 or existing_bs1 == 0:
-                                car['bs1'] = new_bs1
-
-                        existing_bs2 = car.get('bs2', 0)
-                        new_bs2 = car_data['bestSector2'] or 0
-                        if new_bs2 > 0:
-                            if new_bs2 < existing_bs2 or existing_bs2 == 0:
-                                car['bs2'] = new_bs2
-
-                        existing_bs3 = car.get('bs3', 0)
-                        new_bs3 = car_data['bestSector3'] or 0
-                        if new_bs3 > 0:
-                            if new_bs3 < existing_bs3 or existing_bs3 == 0:
-                                car['bs3'] = new_bs3
+                        maybe_record_best_sector(car, car_data, 1)
+                        maybe_record_best_sector(car, car_data, 2)
+                        maybe_record_best_sector(car, car_data, 3)
 
                         car['best_lap'] = min(parseTime(car_data['bestlap']), car.get('best_lap', 9999999))
 
@@ -569,12 +571,19 @@ class Service(DuePublisher, lt_service):
         bestLapsByClass = {}
         bestSectorsByClass = {1: {}, 2: {}, 3: {}}
 
+        def maybe_record_best_sector(sector_idx, category, race_num, bs):
+            if bs and bs > 0:
+                if category not in bestSectorsByClass[sector_idx] or \
+                    bestSectorsByClass[sector_idx][category][1] is None or \
+                        bestSectorsByClass[sector_idx][category][1] > bs:
+                            bestSectorsByClass[sector_idx][category] = (race_num, bs)
+
         with self._data_lock:
 
             # First pass: identify fastest sectors/lap per class
-            for car in self._cars.values():
+            for car in list(self._cars.values()):
                 race_num = car['race_num']
-                category = car['category']
+                category = car.get('category')
                 s1 = car.get('s1')
                 bs1 = car.get('bs1')
                 s2 = car.get('s2')
@@ -582,25 +591,24 @@ class Service(DuePublisher, lt_service):
                 s3 = car.get('s3')
                 bs3 = car.get('bs3')
 
-                if bs1 > 0 and (category not in bestSectorsByClass[1] or bestSectorsByClass[1][category][1] > bs1):
-                    bestSectorsByClass[1][category] = (race_num, bs1)
-                if bs2 > 0 and (category not in bestSectorsByClass[2] or bestSectorsByClass[2][category][1] > bs2):
-                    bestSectorsByClass[2][category] = (race_num, bs2)
-                if bs3 > 0 and (category not in bestSectorsByClass[3] or bestSectorsByClass[3][category][1] > bs3):
-                    bestSectorsByClass[3][category] = (race_num, bs3)
+                if category:
+                    maybe_record_best_sector(1, category, race_num, bs1)
+                    maybe_record_best_sector(2, category, race_num, bs2)
+                    maybe_record_best_sector(3, category, race_num, bs3)
 
                 if self.is_qualifying_mode:
                     best_lap = car['aggregate_best']
                 else:
                     best_lap = car['best_lap']
 
-                if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
-                        bestLapsByClass[category] = (race_num, best_lap)
+                if category:
+                    if best_lap > 0 and (category not in bestLapsByClass or bestLapsByClass[category][1] > best_lap):
+                            bestLapsByClass[category] = (race_num, best_lap)
 
             # Second pass: assemble cars in order
-            for car in sorted(self._cars.values(), key=lambda c: c['rank']):
+            for car in sorted(list(self._cars.values()), key=lambda c: c['rank']):
                 race_num = car['race_num']
-                category = car['category']
+                category = car.get('category')
                 s1 = car.get('s1')
                 bs1 = car.get('bs1')
                 s2 = car.get('s2')
@@ -621,12 +629,15 @@ class Service(DuePublisher, lt_service):
                     else:
                         flag = ''
 
-                    return (stime if stime > 0 else '', flag)
+                    return (stime if stime and stime > 0 else '', flag)
 
                 def bs_flag(bsector):
                     if category in bestSectorsByClass[bsector] and bestSectorsByClass[bsector][category][0] == race_num:
                         return 'sb'
                     return 'old'
+
+                maybe_gap = car.get('gap', 0)
+                maybe_int = car.get('int', 0)
 
                 common_cols = [
                     race_num,
@@ -638,14 +649,14 @@ class Service(DuePublisher, lt_service):
                     car['car'],
                     car['tyre'],
                     car['lap'],
-                    car['gap'] if car.get('gap') > 0 else '',
-                    car['int'] if car.get('int') > 0 else '',
+                    maybe_gap if isinstance(maybe_gap, str) or maybe_gap > 0 else '',
+                    maybe_int if isinstance(maybe_int, str) or maybe_int > 0 else '',
                     sector_time(1),
-                    (bs1 if bs1 > 0 else '', bs_flag(1)),
+                    (bs1 if bs1 and bs1 > 0 else '', bs_flag(1)),
                     sector_time(2),
-                    (bs2 if bs2 > 0 else '', bs_flag(2)),
+                    (bs2 if bs2 and bs2 > 0 else '', bs_flag(2)),
                     sector_time(3),
-                    (bs3 if bs3 > 0 else '', bs_flag(3))
+                    (bs3 if bs3 and bs3 > 0 else '', bs_flag(3))
                 ]
 
                 we_have_fastest = (category in bestLapsByClass and bestLapsByClass[category][0] == race_num)
@@ -690,9 +701,9 @@ class Service(DuePublisher, lt_service):
                         last_flag = 'pb'
 
                     cars.append(common_cols + [
-                        (last_lap if last_lap > 0 else '', last_flag),
-                        (best_lap if best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
-                        car['pits']
+                        (last_lap if last_lap and last_lap > 0 else '', last_flag),
+                        (best_lap if best_lap and best_lap > 0 else '', 'sb' if we_have_fastest and best_lap == fastest else ''),
+                        car.get('pits')
                     ])
 
             session['flagState'] = mapFlagState(self._session_data, self._hhtiming)
@@ -717,12 +728,12 @@ class Service(DuePublisher, lt_service):
             last_retrieved_time = self._last_retrieved.strftime("%H:%M:%S") if self._last_retrieved else '-'
 
             session['trackData'] = [
-                u"{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
-                u"{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
+                "{}°C".format(self._session_data['trackTemp']) if 'trackTemp' in self._session_data else '',
+                "{}°C".format(self._session_data['airTemp']) if 'airTemp' in self._session_data else '',
                 "{}%".format(self._session_data['humidity']) if 'humidity' in self._session_data else '',
                 "{}mbar".format(self._session_data['pressure']) if 'pressure' in self._session_data else '',
                 "{}kph".format(self._session_data['windSpeed']) if 'windSpeed' in self._session_data else '',
-                u"{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
+                "{}°".format(self._session_data['windDirection']) if 'windDirection' in self._session_data else '',
                 self._session_data.get('weather', '').replace('_', ' ').title(),
                 self._last_timestamp.strftime("%H:%M:%S") if self._last_timestamp else '',
                 '{} {}'.format(self._last_source, last_retrieved_time)

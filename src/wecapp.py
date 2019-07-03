@@ -1,9 +1,9 @@
-from urllib import quote_plus
-
 import hashlib
 import simplejson
 import sys
-import urllib2
+import urllib.request
+import urllib.error
+import urllib.parse
 
 
 CLIENT_ID = "c87d1a87-00fa-4229-aa8c-6b151ba25f99"
@@ -14,12 +14,12 @@ def get(base_url, params=[]):
 
     headers = get_headers(base_url, params)
 
-    request = urllib2.Request(
+    request = urllib.request.Request(
         build_url(base_url, params),
         headers=headers
     )
 
-    rq = urllib2.urlopen(request)
+    rq = urllib.request.urlopen(request)
     if rq.getcode() != 200:
         return {}
     return simplejson.load(rq)
@@ -64,17 +64,17 @@ def build_url(base_url, params):
 def ag(string):
     if string == "" or string is None:
         return ""
-    return quote_plus(string).replace("+", "%20")
+    return urllib.parse.quote_plus(string).replace("+", "%20")
 
 
 def ae(string):
     digest = hashlib.sha1()
-    digest.update(string)
+    digest.update(string.encode('utf-8'))
 
     result = ""
 
     for c in digest.digest():
-        b = ord(c)
+        b = c
         i = (rshift(b, 4)) & 15
         i2 = 0
         while True:
@@ -97,11 +97,11 @@ def rshift(val, n):
 if __name__ == "__main__":
     base_url = sys.argv[1]
 
-    params = map(lambda param: param.split("="), sys.argv[2:])
+    params = [param.split("=") for param in sys.argv[2:]]
 
-    print simplejson.dumps(
+    print(simplejson.dumps(
         get(base_url, params),
         sort_keys=True,
         indent=4,
         separators=(',', ': ')
-    )
+    ))

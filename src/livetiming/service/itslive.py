@@ -8,7 +8,7 @@ import argparse
 import requests
 import simplejson
 import time
-import urllib2
+import urllib
 
 
 API_ROOT = 'https://api-live.its-live.net/v1'
@@ -16,8 +16,8 @@ API_ROOT = 'https://api-live.its-live.net/v1'
 
 def json_get(url):
     try:
-        return simplejson.load(urllib2.urlopen(url))
-    except simplejson.JSONDecodeError, ValueError:
+        return simplejson.load(urllib.request.urlopen(url))
+    except simplejson.JSONDecodeError as ValueError:
         return None
 
 
@@ -42,11 +42,11 @@ def get_current_event(series, season):
     if current:
         return current[0]
     elif events:
-        print 'No current event, using most recent one.'
+        print('No current event, using most recent one.')
         recent = sorted([e for e in events if e['begin_epoch'] <= now], key=lambda e: e['begin_epoch'])
         return recent[-1]
     else:
-        print "No events found!"
+        print("No events found!")
         return None
 
 
@@ -64,10 +64,10 @@ def get_current_session(series, season, event):
     if current:
         return current[-1]
     elif sessions:
-        print "No current session, using most recent one."
+        print("No current session, using most recent one.")
         return sessions[-1]
     else:
-        print 'No sessions. What do I do?'
+        print('No sessions. What do I do?')
         return None
 
 
@@ -87,7 +87,7 @@ def json_post(client, url, body):
     elif response.code == 204:  # No content
         returnValue(None)
     else:
-        print "Error {} parsing JSON from POST to {} with body {}".format(response.code, url, body)
+        print("Error {} parsing JSON from POST to {} with body {}".format(response.code, url, body))
         returnValue(None)
 
 
@@ -397,17 +397,17 @@ class Service(lt_service):
 
     def getRaceState(self):
         return {
-            'cars': map(
+            'cars': list(map(
                 map_car(
                     self._timing_sector_count(),
                     self._standingsData.get('boa'),
                     self._standingsData.get('boaTime')
                 ),
                 sorted(
-                    [c for c in self._standingsData['cars'].values() if c['pos'] > 0],
+                    [c for c in list(self._standingsData['cars'].values()) if c['pos'] > 0],
                     key=lambda c: c['pos']
                 )
-            ),
+            )),
             'session': map_session(self._session)
         }
 

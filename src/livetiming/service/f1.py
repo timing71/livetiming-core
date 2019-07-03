@@ -36,7 +36,7 @@ class F1Client(Thread):
             hub = connection.register_hub('streaming')
 
             def print_error(error):
-                print('error: ', error)
+                print(('error: ', error))
 
             def delegate(method, data):
                 handler_method = "on_{}".format(method.lower())
@@ -51,7 +51,7 @@ class F1Client(Thread):
                     for msg in kwargs['M']:
                         delegate(msg['M'], msg['A'])
                 if 'R' in kwargs:
-                    for msg, payload in kwargs['R'].iteritems():
+                    for msg, payload in kwargs['R'].items():
                         delegate(msg, [msg, payload])
                 if 'M' not in kwargs and 'R' not in kwargs:
                     if len(kwargs) > 0:
@@ -132,7 +132,7 @@ def parse_time(formattedTime):
 def obj_to_array(obj):
     try:
         result = []
-        for key, val in sorted(obj.iteritems(), key=lambda i: int(i[0])):
+        for key, val in sorted(iter(obj.items()), key=lambda i: int(i[0])):
             result[int(key)] = val
         return result
     except (ValueError, AttributeError):
@@ -159,7 +159,7 @@ def _apply_patch_children(orig, patch):
                     del orig[key]
         del patch['_kf']
 
-    for name, value in sorted(patch.iteritems(), key=lambda i: i[0]):
+    for name, value in sorted(iter(patch.items()), key=lambda i: i[0]):
         try:
             name = int(name)
         except ValueError:
@@ -200,9 +200,9 @@ class Service(lt_service):
         lt_service.__init__(self, args, extra_args)
         self.dataMap = {}
         self._clock = {}
-        self.prevRaceControlMessage = -1
+        self.prevRaceControlMessage = datetime.utcnow().strftime("%Y-%m-%dT%H:%I:%S")
         self.messages = []
-        self.dataLastUpdated = datetime.now()
+        self.dataLastUpdated = datetime.utcnow()
         self._commsIndex = None
 
         self._description = 'Formula 1'
@@ -230,14 +230,14 @@ class Service(lt_service):
 
                 free = self._getData('free')
 
-                new_desc = u'{} - {}'.format(
+                new_desc = '{} - {}'.format(
                     free['R'].title(),
                     free['S']
                 )
 
                 if new_desc != self._description:
                     self._description = new_desc
-                    self.log.info(u"New session: {desc}", desc=new_desc)
+                    self.log.info("New session: {desc}", desc=new_desc)
                     self.publishManifest()
 
         elif payload[0] == 'ExtrapolatedClock':
@@ -259,9 +259,9 @@ class Service(lt_service):
     def on_racecontrolmessages(self, rcm):
         messages = rcm[1]['Messages']
         if isinstance(messages, list):
-            new_msgs = filter(lambda m: m['Utc'] > self.prevRaceControlMessage, rcm[1]['Messages'])
+            new_msgs = [m for m in rcm[1]['Messages'] if m['Utc'] > self.prevRaceControlMessage]
         else:
-            new_msgs = filter(lambda m: m['Utc'] > self.prevRaceControlMessage, rcm[1]['Messages'].values())
+            new_msgs = [m for m in list(rcm[1]['Messages'].values()) if m['Utc'] > self.prevRaceControlMessage]
         for msg in new_msgs:
             parsed_date = dateutil.parser.parse(msg['Utc'])
             self.messages.append([(parsed_date - datetime(1970, 1, 1)).total_seconds(), msg['Message']])
@@ -375,7 +375,7 @@ class Service(lt_service):
             dnd["extra"] = extra[idx]
             denormalised.append(dnd)
 
-        fastestLap = min(map(lambda d: parse_time(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999, denormalised))
+        fastestLap = min([parse_time(d["timeLine"][1]) if d["timeLine"][1] != "" else 9999 for d in denormalised])
 
         for dnd in sorted(denormalised, key=lambda d: int(d["latestTimeLine"][4])):
             driver = dnd["driver"]
@@ -460,7 +460,7 @@ class Service(lt_service):
 
     def _getTimeRemaining(self):
         if 'Remaining' in self._clock:
-            remaining_parts = map(int, self._clock['Remaining'].split(':'))
+            remaining_parts = list(map(int, self._clock['Remaining'].split(':')))
             remaining = remaining_parts[2] + (60 * remaining_parts[1]) + (3600 * remaining_parts[0])
 
             if self._clock.get('Extrapolating', False):
@@ -482,10 +482,10 @@ class Service(lt_service):
         w = self._getData("sq", "W")
         if w:
             return [
-                u"{}°C".format(w[0]),
-                u"{}°C".format(w[1]),
+                "{}°C".format(w[0]),
+                "{}°C".format(w[1]),
                 "{}m/s".format(w[3]),
-                u"{}°".format(float(w[6])),
+                "{}°".format(float(w[6])),
                 "{}%".format(w[4]),
                 "{} mbar".format(w[5]),
                 "Wet" if w[2] == 1 else "Dry",

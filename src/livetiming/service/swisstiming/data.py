@@ -2,7 +2,7 @@ PROPERTY_DELETED_FLAG = '_jsondiff_del'
 
 
 def patch(orig, delta):
-    for n, i in delta.iteritems():
+    for n, i in delta.items():
 
         if i == PROPERTY_DELETED_FLAG:
             try:
@@ -27,7 +27,7 @@ def patch(orig, delta):
 
 
 def patch_array(orig, delta):
-    for n, i in delta.get('u', {}).iteritems():
+    for n, i in delta.get('u', {}).items():
         n = int(n)
         if isinstance(i, dict) and i.get('__jsondiff_t') == 'a':
             patch_array(orig[n], i)

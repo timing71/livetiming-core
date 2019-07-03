@@ -1,7 +1,7 @@
 import re
 import time
 
-from racing import FlagStatus
+from .racing import FlagStatus
 from livetiming.racing import Stat
 from twisted.logger import Logger
 
@@ -129,17 +129,17 @@ class CarPitMessage(PerCarMessage):
 
         if oldStatus != newStatus and carNum is not None:
             if (oldStatus != 'RUN' and newStatus == "OUT") or (newStatus == "RUN" and oldStatus == "PIT"):
-                return [clazz, u"#{} ({}) has left the pits".format(carNum, driver), "out"]
+                return [clazz, "#{} ({}) has left the pits".format(carNum, driver), "out"]
             elif newStatus == "PIT":
-                return [clazz, u"#{} ({}) has entered the pits".format(carNum, driver), "pit"]
+                return [clazz, "#{} ({}) has entered the pits".format(carNum, driver), "pit"]
             elif newStatus == "FUEL":
-                return [clazz, u"#{} ({}) has entered the fuelling area".format(carNum, driver), "pit"]
+                return [clazz, "#{} ({}) has entered the fuelling area".format(carNum, driver), "pit"]
             elif newStatus == "RET":
-                return [clazz, u"#{} ({}) has retired".format(carNum, driver), ""]
+                return [clazz, "#{} ({}) has retired".format(carNum, driver), ""]
             elif newStatus == 'STOP':
-                return [clazz, u"#{} ({}) is running slowly or stopped".format(carNum, driver), ""]
+                return [clazz, "#{} ({}) is running slowly or stopped".format(carNum, driver), ""]
             elif oldStatus == 'STOP' and newStatus == 'RUN':
-                return [clazz, u"#{} ({}) has resumed".format(carNum, driver), ""]
+                return [clazz, "#{} ({}) has resumed".format(carNum, driver), ""]
 
 
 # Emits a message if the driver of a car changes.
@@ -151,9 +151,9 @@ class DriverChangeMessage(PerCarMessage):
         carNum = self.getValue(newCar, Stat.NUM)
         if oldDriver != newDriver and carNum is not None:
             if oldDriver == "":
-                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change (to {})".format(carNum, newDriver), None]
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), "#{} Driver change (to {})".format(carNum, newDriver), None]
             elif newDriver != "":
-                return [self.getValue(newCar, Stat.CLASS, "Pits"), u"#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver), None]
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), "#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver), None]
 
 
 # Emits a message if a car sets a personal or overall best.
@@ -171,9 +171,9 @@ class FastLapMessage(PerCarMessage):
 
             if (newTime[0] or 0) > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
                 if newFlags == "pb" and (oldFlags == "" or newTime[0] < oldTime[0]):
-                    return [clazz, u"#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
+                    return [clazz, "#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
                 elif newFlags == "sb-new":
-                    return [clazz, u"#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
+                    return [clazz, "#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
 
 
 CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)

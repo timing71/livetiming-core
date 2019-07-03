@@ -77,10 +77,10 @@ def _start_service(args, extras):
     if existing_pid is not None:
         if _process_exists(existing_pid):
             raise ServiceManagementException("Service for {} already running!".format(args.service_class))
-        print "Ignoring stale PID {}".format(existing_pid)
+        print("Ignoring stale PID {}".format(existing_pid))
     p = Popen(['livetiming-service', args.service_class] + extras)
     _write_pid_for(args.service_class, p.pid, args.pid_directory)
-    print "Started livetiming-service {} (PID {})".format(args.service_class, p.pid)
+    print("Started livetiming-service {} (PID {})".format(args.service_class, p.pid))
     return p.pid
 
 
@@ -95,7 +95,7 @@ def _stop_service(args):
             if e.errno != errno.ESRCH:
                 raise e
         _clear_pid_for(args.service_class, args.pid_directory)
-        print "Stopped livetiming-service {} (PID {})".format(args.service_class, pid)
+        print("Stopped livetiming-service {} (PID {})".format(args.service_class, pid))
 
 
 def _restart_service(args, extras):
@@ -107,7 +107,7 @@ def _restart_service(args, extras):
                 "{}.json".format(uuid)
             )
             if os.path.exists(statefile):
-                print "Reusing existing state for {}: {}".format(uuid, statefile)
+                print("Reusing existing state for {}: {}".format(uuid, statefile))
                 extras += ["-s", statefile]
     try:
         _stop_service(args)

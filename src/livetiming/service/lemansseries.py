@@ -7,7 +7,7 @@ from twisted.internet import reactor
 import time
 import re
 import simplejson
-import urllib2
+import urllib
 
 
 def hackDataFromJSONP(data, var):
@@ -70,7 +70,7 @@ def parseTime(formattedTime):
                 return formattedTime
 
 
-SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
+SESSION_TIME_REGEX = re.compile(b"(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
 
 
 def parseSessionTime(formattedTime):
@@ -100,9 +100,12 @@ class Service(lt_service):
         self.setStaticData()
 
         def feedUrl():
-            return self.getRawFeedDataUrl().format(
-                "",
-                int(time.time() / 15)
+            return bytes(
+                self.getRawFeedDataUrl().format(
+                    "",
+                    int(time.time() / 15)
+                ),
+                'utf-8'
             )
 
         fetcher = JSONFetcher(feedUrl, self.setRawData, 15)
@@ -146,18 +149,18 @@ class Service(lt_service):
 
     def setStaticData(self):
         self.log.info("Retrieving static data...")
-        feed = urllib2.urlopen(self.getStaticDataUrl())
+        feed = urllib.request.urlopen(self.getStaticDataUrl())
         raw = feed.read()
-        if re.search("No race actually", raw):
+        if re.search(b"No race actually", raw):
             self.log.warn("No static data available. Has the session started yet?")
             reactor.callLater(30, self.setStaticData)
         else:
-            description = re.search("<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
+            description = re.search(b"<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
             if description:
                 new_description = description.group("desc").replace("/", "-").decode('utf-8')
                 if self.description != new_description:
                     self.description = new_description
-                    self.log.info(u"Setting description: {desc}", desc=self.description)
+                    self.log.info("Setting description: {desc}", desc=self.description)
                     self.publishManifest()
 
             self.staticData = {
@@ -194,7 +197,7 @@ class Service(lt_service):
         rawCarData = raw[0]
 
         try:
-            for car in rawCarData.values():
+            for car in list(rawCarData.values()):
                 lastLap = parseTime(car["8"])
                 carClass = self.staticData["tabEngages"][car["2"]]["categorie"] if car["2"] in self.staticData["tabEngages"] else -1
                 if lastLap > 0 and (carClass not in fastLapsPerClass or fastLapsPerClass[carClass] > lastLap):
@@ -214,7 +217,7 @@ class Service(lt_service):
             return ""
 
         try:
-            carKeys = rawCarData.iterkeys()
+            carKeys = iter(rawCarData.keys())
         except AttributeError:  # can happen if rawCarData is empty - server returns list rather than empty object in that case
             carKeys = []
 
@@ -255,8 +258,8 @@ class Service(lt_service):
                 mapClasses(classe),
                 class_count[classe],
                 team["nom"],
-                u"{}, {}".format(driver["nom"].upper(), driver['prenom']),
-                u"{} {}".format(marque, voiture["nom"]).strip(),
+                "{}, {}".format(driver["nom"].upper(), driver['prenom']),
+                "{} {}".format(marque, voiture["nom"]).strip(),
                 car["6"],
                 car["13"],
                 gap if gap > 0 else '',
@@ -276,11 +279,11 @@ class Service(lt_service):
             "timeElapsed": parseSessionTime(course["4"]),
             "timeRemain": 0 if "7" not in course or course["7"][0] == "-" else parseSessionTime(course["7"]),
             "trackData": [
-                u"{}°C".format(trackData["6"]),
-                u"{}°C".format(trackData["3"]),
+                "{}°C".format(trackData["6"]),
+                "{}°C".format(trackData["3"]),
                 "{}%".format(trackData["2"]),
                 "{}kph".format(trackData["8"]),
-                u"{}°".format(trackData["0"]),
+                "{}°".format(trackData["0"]),
                 trackData["1"].replace("_", " ").title(),
                 self._last_update.strftime("%H:%M:%S UTC") if self._last_update else "-"
             ]

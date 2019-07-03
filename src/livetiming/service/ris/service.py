@@ -140,7 +140,7 @@ class Service(lt_service):
         }
 
     def _map_cars(self):
-        return map(_map_car, self._data['cars'])
+        return list(map(_map_car, self._data['cars']))
 
     def _map_session(self):
 

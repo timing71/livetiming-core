@@ -13,7 +13,7 @@ class StrippedWSTransport(AbstractTransport):
         params = dict(http_session.params, **{
             'EIO': ENGINEIO_PROTOCOL, 'transport': 'websocket'})
         request = http_session.prepare_request(requests.Request('GET', url))
-        kw = {'header': ['%s: %s' % x for x in request.headers.items()]}
+        kw = {'header': ['%s: %s' % x for x in list(request.headers.items())]}
 
         if engineIO_session:
             kw['timeout'] = self._timeout = engineIO_session.ping_timeout

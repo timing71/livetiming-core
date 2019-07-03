@@ -11,9 +11,9 @@ import re
 import simplejson
 
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
-MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'
-MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'
-ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'
+MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'.format(OVER_IP_APP)
+MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'.format(OVER_IP_APP)
+ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'.format(OVER_IP_APP)
 # TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'.format(OVER_IP_APP)
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
@@ -243,7 +243,7 @@ MARSHAL_POST_LOCATIONS = {
 
 def _parse_objects(data):
     result = {}
-    tokens = data[11:].split(';')
+    tokens = data.decode()[11:].split(';')
 
     for token in tokens:
         split = TOKEN_SPLIT_REGEX.match(token)
@@ -263,31 +263,31 @@ class Nurburgring(object):
         self._zones = {}
         self._verbose = verbose
         self.app = app
-        client.getPage(MARSHAL_POST_ADDRESS_URL.format(self.app)).addCallbacks(self._parse_addresses, self._handle_errback)
+        client.getPage(bytes(MARSHAL_POST_ADDRESS_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_addresses, self._handle_errback)
 
     def _parse_addresses(self, data):
         addresses = _parse_objects(data)
         self._names = {}
-        for obj in addresses.values():
+        for obj in list(addresses.values()):
             if "geoobjectid" in obj:
                 self._names[obj['geoobjectid']] = base64.b64decode(obj.get('name')).lower()
-        client.getPage(MARSHAL_POST_ID_URL.format(self.app)).addCallbacks(self._parse_marshal_posts, self._handle_errback)
+        client.getPage(bytes(MARSHAL_POST_ID_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_marshal_posts, self._handle_errback)
 
     def _parse_marshal_posts(self, data):
         objs = _parse_objects(data)
         self._marshal_posts = {}
 
-        for obj in objs.values():
+        for obj in list(objs.values()):
             self._marshal_posts[obj['ruleid']] = self._names.get(obj['refid'], obj['refid'])
 
             if self._verbose:
-                print self._marshal_posts
+                print(self._marshal_posts)
 
         self.log.info('Starting poll for GPSauge NBR data...')
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
-        client.getPage(ACTIVE_ZONES_URL.format(self.app)).addCallbacks(self._parse_zones, self._handle_errback)
+        client.getPage(bytes(ACTIVE_ZONES_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_zones, self._handle_errback)
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
@@ -300,7 +300,7 @@ class Nurburgring(object):
             self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
         if self._verbose:
-            print self._zones
+            print(self._zones)
 
     def _handle_errback(self, err):
         self.log.error("Encountered an error: {err}", err=err)

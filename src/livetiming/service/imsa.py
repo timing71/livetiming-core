@@ -1,4 +1,4 @@
-from alkamel2 import Service as AlKamelService
+from .alkamel2 import Service as AlKamelService
 
 
 class Service(AlKamelService):

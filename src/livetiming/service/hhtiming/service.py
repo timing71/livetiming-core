@@ -294,7 +294,7 @@ class Service(lt_service):
 
     def _car_sort_function(self):
         if self.protocol.session.get('SessionType') < 3 and self.protocol.session.get('SessionType') > 0:
-            return lambda (num, car): (car.get('BestLaptime', 999999), maybe_int(num))
+            return lambda num_car: (num_car[1].get('BestLaptime', 999999), maybe_int(num_car[0]))
         else:
             return sort_car_in_race
 
@@ -312,7 +312,7 @@ class Service(lt_service):
 
         best_by_class = defaultdict(dict)
 
-        for num, car in self.protocol.cars.iteritems():
+        for num, car in self.protocol.cars.items():
             clazz = car.get('CategoryID')
             best_lap = car.get('BestLaptime', None)
             existing_best = best_by_class[clazz].get(0, None)
@@ -327,7 +327,7 @@ class Service(lt_service):
 
         gap_func = self._gap_function()
 
-        sorted_cars = sorted(self.protocol.cars.iteritems(), key=self._car_sort_function())
+        sorted_cars = sorted(iter(self.protocol.cars.items()), key=self._car_sort_function())
 
         for num, car in sorted_cars:
             if car.get('CompetitorID', False):  # Exclude course cars etc.
@@ -342,7 +342,7 @@ class Service(lt_service):
                     _map_car_state(car),
                     clazz,
                     car.get('TeamName'),
-                    u"{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
+                    "{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                     car.get('CarMake'),
                     car.get('NumberOfLaps'),
                     gap_func(leader, car),
@@ -395,7 +395,7 @@ class Service(lt_service):
 
                 car_data += [
                     (last_lap, last_lap_flag),
-                    (best_lap if best_lap < 1e7 else '', best_lap_flag),
+                    (best_lap if best_lap and best_lap < 1e7 else '', best_lap_flag),
                     car.get('Pits', '')
                 ]
 
@@ -415,10 +415,10 @@ class Service(lt_service):
             'flagState': self._map_session_flag(),
             'timeElapsed': hhs.get('SessionTime', 0) + delta,
             'trackData': [
-                u"{}°C".format(round(weather['AirTemperature'], 1)) if 'AirTemperature' in weather else '-',
-                u"{}%".format(int(weather['Humidity'])) if 'Humidity' in weather else '-',
-                u"{} m/s".format(round(weather['WindSpeed'], 1)) if 'WindSpeed' in weather else '-',
-                u"{}°".format(round(weather['WindDirection'], 1)) if 'WindDirection' in weather else '-'
+                "{}°C".format(round(weather['AirTemperature'], 1)) if 'AirTemperature' in weather else '-',
+                "{}%".format(int(weather['Humidity'])) if 'Humidity' in weather else '-',
+                "{} m/s".format(round(weather['WindSpeed'], 1)) if 'WindSpeed' in weather else '-',
+                "{}°".format(round(weather['WindDirection'], 1)) if 'WindDirection' in weather else '-'
             ]
         }
 
@@ -430,7 +430,7 @@ class Service(lt_service):
         return session
 
     def _map_session_flag(self):
-        zone_states = map(lambda s: s.get('ZoneStatus', 0), self.protocol.sector_states.values())
+        zone_states = [s.get('ZoneStatus', 0) for s in list(self.protocol.sector_states.values())]
         if SectorStatus.SLOW_ZONE in zone_states:
             return FlagStatus.SLOW_ZONE.name.lower()
         hhs = self.protocol.session

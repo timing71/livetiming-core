@@ -19,7 +19,7 @@ def handler(*msg_types):
 
 
 def update_present_values(source, destination):
-    for key, val in source.iteritems():
+    for key, val in source.items():
         if val != -1:
             destination[key] = val
 
@@ -50,7 +50,7 @@ def create_protocol_factory(service, initial_state_file=None):
             if service:
                 service.log.info(*args, **kwargs)
             else:
-                print args, kwargs
+                print(args, kwargs)
 
         def connect(self, endpoint):
             self.log("Connecting to HH Timing at {endpoint}...", endpoint=endpoint)
@@ -235,7 +235,7 @@ def create_protocol_factory(service, initial_state_file=None):
                         protocol.messages = state['messages']
                 except Exception as e:
                     protocol.log('Failed to load existing state file')
-                    print 'bad', e
+                    print('bad', e)
                     pass
 
             return protocol
