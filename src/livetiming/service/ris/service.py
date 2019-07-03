@@ -150,7 +150,7 @@ class Service(lt_service):
             time_remain -= delta
 
         return {
-            "flagState": "green",
+            "flagState": self._data.get('flag').name.lower(),
             "timeElapsed": 0,
             'timeRemain': max(0, time_remain)
         }

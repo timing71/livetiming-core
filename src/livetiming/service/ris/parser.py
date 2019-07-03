@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
+from livetiming.racing import FlagStatus
 
 import re
+
+
+FLAG_MESSAGE_CLASSES = re.compile('MessageDC[2-4]')
 
 
 def parse_feed(fp):
@@ -21,16 +25,37 @@ def parse_feed(fp):
     )
 
     messages = map(
-        lambda td: unicode(td.string),
+        lambda td: unicode(td.string.strip()),
         soup.body.table.find_all(class_='MessageDC1')
     )
+
+    flag = FlagStatus.NONE
+
+    flag_messages = soup.body.table.find_all(class_=FLAG_MESSAGE_CLASSES)
+    if len(flag_messages) == 1:
+        flag_message = flag_messages[0]
+        clazz = flag_message['class'][0]
+        text = flag_message.string.strip()
+        if clazz == 'MessageDC2' and text == 'RED FLAG':
+            flag = FlagStatus.RED
+        elif clazz == 'MessageDC3':
+            if 'YELLOW FLAG' in text:
+                flag = FlagStatus.YELLOW
+                messages.append(text)
+            elif text == 'SAFETY CAR':
+                flag = FlagStatus.SC
+        elif clazz == 'MessageDC4' and text == 'GREEN FLAG':
+            flag = FlagStatus.GREEN
+        else:
+            print "Unknown flag/class combo {} {}".format(text, clazz)
 
     return {
         "series": series,
         "session": session,
         "timeRemain": time_remain,
         "cars": map_car_rows(all_rows[8:-1], column_spec),
-        'messages': messages
+        'messages': messages,
+        'flag': flag
     }
 
 
