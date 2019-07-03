@@ -1,7 +1,7 @@
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.racing import Stat
 from livetiming.service import Service as lt_service
-from livetiming.service.ris import Parser
+from livetiming.service.ris import CrappyDataException, Parser
 from livetiming.utils import uncache
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -195,6 +195,8 @@ class Service(lt_service):
                         self.analyser.reset()
 
                 self._updateAndPublishRaceState()
+            except CrappyDataException as e:
+                self.log.critical('This data has no data! {data}', data=feed)
             except Exception as e:
                 fail = txaio.create_failure()
                 self.log.critical(txaio.failure_format_traceback(fail))

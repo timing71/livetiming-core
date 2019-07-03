@@ -1,2 +1,2 @@
-from .parser import Parser
+from .parser import CrappyDataException, Parser
 from .service import Service

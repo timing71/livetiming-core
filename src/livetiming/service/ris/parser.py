@@ -8,6 +8,10 @@ import re
 FLAG_MESSAGE_CLASSES = re.compile('MessageDC[2-4]')
 
 
+class CrappyDataException(Exception):
+    pass
+
+
 class Parser(object):
 
     def __init__(self):
@@ -15,6 +19,10 @@ class Parser(object):
 
     def parse_feed(self, fp):
         soup = BeautifulSoup(fp, "lxml")
+
+        if not soup.body:
+            raise CrappyDataException()
+
         all_rows = soup.body.table.find_all('tr')
 
         headings_row = all_rows[2].find_all('td')
