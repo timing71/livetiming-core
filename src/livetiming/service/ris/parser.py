@@ -59,6 +59,10 @@ class Parser(object):
                 self.flag = FlagStatus.GREEN
             else:
                 print "Unknown flag/class combo {} {}".format(text, clazz)
+        elif self.flag != FlagStatus.GREEN and self.flag != FlagStatus.RED:
+            # Yellow has been withdrawn, they haven't bothered to put the green message up
+            # This assumes that the yellow messages will be left up for the duration!
+            self.flag = FlagStatus.GREEN
 
         return {
             "series": series,
