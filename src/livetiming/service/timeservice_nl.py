@@ -3,7 +3,7 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, connectWS
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import FlagStatus, Stat
-from livetiming.service import Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
+from livetiming.service import DuePublisher, Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
 from lzstring import LZString
 from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -219,11 +219,11 @@ def parse_extra_args(args):
 TID_REGEX = re.compile("^[0-9a-z]{32}$")
 
 
-class Service(lt_service):
+class Service(DuePublisher, lt_service):
     attribution = ['&copy; TimeService', 'http://www.timeservice.nl/']
 
     def __init__(self, args, extra_args):
-        lt_service.__init__(self, args, extra_args)
+        super(Service, self).__init__(args, extra_args)
 
         self.myArgs = parse_extra_args(extra_args)
 
@@ -336,6 +336,7 @@ class Service(lt_service):
                 if update[0] not in self.carState:
                     self.carState[update[0]] = {}
                 self.carState[update[0]][update[1]] = (update[2], None) if len(update) == 3 else (update[2], update[3])
+        self.set_due_publish()
 
     def r_d(self, idx):
         if idx == 0:
@@ -343,6 +344,7 @@ class Service(lt_service):
             self.analyser.reset()
         elif idx in self.carState:
             self.carState.pop(idx)
+        self.set_due_publish()
 
     def r_l(self, body):
         if body and 'h' in body:
@@ -364,6 +366,7 @@ class Service(lt_service):
             self.columnSpec = newColumnSpec
             self.publishManifest()
             self.carFieldMapping.append((availableColumns.index("POS"), lambda x: int(x[0])))
+            self.set_due_publish()
 
     def h_h(self, body):
         if "f" in body:
@@ -387,6 +390,7 @@ class Service(lt_service):
             self.publishManifest()
         if "c" in body:
             self.log.debug("Track length: {}".format(body["c"]))
+        self.set_due_publish()
 
     def h_i(self, body):
         self.h_h(body)
@@ -402,15 +406,18 @@ class Service(lt_service):
             self.messages.append(body['t'])
             if body['t'].startswith("Yellow flag"):
                 self.yellowFlags.append(body['Id'])
+            self.set_due_publish()
 
     def m_d(self, msgId):
         # delete message
         if msgId in self.yellowFlags:
             self.yellowFlags.remove(msgId)
+            self.set_due_publish()
 
     def s_t(self, serverTime):
         self.timeOffset = serverToRealTime(serverTime) - utcnow()
         self.log.info("Set time offset to {}".format(self.timeOffset))
+        self.set_due_publish()
 
     def t_p(self, body):
         # track position - ignore
