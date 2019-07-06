@@ -490,20 +490,24 @@ class Watchdog(object):
 
 class DuePublisher(object):
     auto_poll = False
+    max_publish_interval = 60
 
     def __init__(self, *args, **kwargs):
         super(DuePublisher, self).__init__(*args, **kwargs)
         self._due_publish = False
+        self._last_publish_time = time.time()
 
     def set_due_publish(self):
         self._due_publish = True
 
     def start(self):
         def maybePublish():
-            if self._due_publish:
+            now = time.time()
+            if self._due_publish or (now - self._last_publish_time) > self.max_publish_interval:
                 self.log.debug('Publishing race state update')
                 self._updateAndPublishRaceState()
                 self._due_publish = False
+                self._last_publish_time = time.time()
 
         self.log.info('Polling for publishable state updates.')
         LoopingCall(maybePublish).start(1)
