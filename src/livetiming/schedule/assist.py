@@ -54,9 +54,10 @@ _DEFAULT_ARGS = {
     'Blancpain GT': '--tz ?',
     'ELMS': '--hidden',
     'F1': '--hidden',
+    'GT4A': '--session ?',
     'Formula E': '--hidden',
     'Michelin Le Mans Cup': '--hidden',
-    'TCA': '--event ?',
+    'TCA': '--session ?',
     'W': '-e 31',
     'WEC': '--hidden --hh live-api.hhtiming.com:24688'
 }
