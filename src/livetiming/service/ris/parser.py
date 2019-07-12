@@ -57,6 +57,9 @@ class Parser(object):
             # This assumes that the yellow messages will be left up for the duration!
             self.flag = FlagStatus.GREEN
 
+        if 'CHEQUERED FLAG' in messages:
+            self.flag = FlagStatus.CHEQUERED
+
         return {
             "series": series,
             "session": session,
