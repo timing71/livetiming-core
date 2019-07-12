@@ -131,7 +131,7 @@ def run(service, args):
                     if not args.dry_run:
                         create_event(service, event_body)
                 except NoArgumentSupplied:
-                    print "Cannot create event, required argument was not supplied"
+                    print("Cannot create event, required argument was not supplied")
 
 
 MULTI_SPACE_REGEX = re.compile('\s+')
@@ -188,7 +188,7 @@ def _get_default_args(tag, my_args):
                 prompt = '  > Value required for \'{}\': '.format(default_template)
 
             if not my_args.non_interactive:
-                value = raw_input(prompt) or _ARG_TEMPLATE_CACHE.get(tag)
+                value = input(prompt) or _ARG_TEMPLATE_CACHE.get(tag)
 
                 if value:
                     _ARG_TEMPLATE_CACHE[tag] = value
