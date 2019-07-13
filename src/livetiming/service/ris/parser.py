@@ -6,6 +6,7 @@ import re
 
 
 FLAG_MESSAGE_CLASSES = re.compile('MessageDC[2-4]')
+OTHER_MESSAGE_CLASSES = re.compile('MessageDC[0156]')
 
 
 class CrappyDataException(Exception):
@@ -33,7 +34,7 @@ class Parser(object):
 
         column_spec = [t.string for t in soup.body.table.find_all('td', recursive=False)]
 
-        messages = [str(td.string.strip()) for td in soup.body.table.find_all(class_='MessageDC1')]
+        messages = [str(td.string.strip()) for td in soup.body.table.find_all(class_=OTHER_MESSAGE_CLASSES)]
 
         flag_messages = soup.body.table.find_all(class_=FLAG_MESSAGE_CLASSES)
         if len(flag_messages) == 1:
@@ -46,7 +47,7 @@ class Parser(object):
                 if 'YELLOW FLAG' in text:
                     self.flag = FlagStatus.YELLOW
                     messages.append(text)
-                elif text == 'SAFETY CAR':
+                elif text == 'SAFETY CAR DEPLOYED':
                     self.flag = FlagStatus.SC
             elif clazz == 'MessageDC4' and text == 'GREEN FLAG':
                 self.flag = FlagStatus.GREEN
