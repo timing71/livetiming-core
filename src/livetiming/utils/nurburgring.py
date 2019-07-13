@@ -296,7 +296,7 @@ class Nurburgring(object):
         zones = parsed_data.get('data', [])
 
         for zt, zone in zones:
-            post_num = self._marshal_posts.get(str(zone), '')
+            post_num = self._marshal_posts.get(str(zone), '').decode('utf-8')
             self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
         if self._verbose:
