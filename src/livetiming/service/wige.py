@@ -27,7 +27,8 @@ def create_ws_protocol(log, handler, eventID):
             self.factory.resetDelay()
             self._watchdog.start()
             message = simplejson.dumps({
-                "eventId": eventID
+                "eventId": eventID,
+                'eventPid': [0, 3, 4]
             })
             self.sendMessage(message.encode('utf-8'))
 
@@ -37,7 +38,7 @@ def create_ws_protocol(log, handler, eventID):
             handler(simplejson.loads(payload))
 
         def onClose(self, wasClean, code, reason):
-            log.info("Closed connection to uostream timing source")
+            log.info("Closed connection to upstream timing source")
             self._watchdog.stop()
 
     return ClientProtocol
@@ -474,7 +475,8 @@ class Service(DuePublisher, lt_service):
 
             if last[0] == best[0]:
                 car[last_lap_idx] = (last[0], 'pb')
-            if not fastest[0] or best[0] < fastest[0]:
+
+            if not fastest[0] or (isinstance(best[0], float) and best[0] < fastest[0]):
                 fastest = (best[0], race_num)
 
         for car in cars:
