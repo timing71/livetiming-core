@@ -160,28 +160,28 @@ class Service(lt_service):
     @inlineCallbacks
     def _get_raw_feed(self):
 
-        url_base = self._extra_args.url or os.path.join(
-            ROOT_URL,
-            self._extra_args.event,
-            self._extra_args.year,
-            'live.htm'
-        )
+        try:
+            url_base = self._extra_args.url or os.path.join(
+                ROOT_URL,
+                self._extra_args.event,
+                self._extra_args.year,
+                'live.htm'
+            )
 
-        url = uncache(url_base)()
+            url = uncache(url_base)()
 
-        self.log.debug('Getting {url}', url=url)
+            self.log.debug('Getting {url}', url=url)
 
-        response = yield self._agent.request(
-            b'GET',
-            bytes(url, 'utf-8')
-        )
+            response = yield self._agent.request(
+                b'GET',
+                bytes(url, 'utf-8')
+            )
 
-        prev_series = self._data.get('series')
-        prev_session = self._data.get('session')
+            prev_series = self._data.get('series')
+            prev_session = self._data.get('session')
 
-        if response.code == 200:
+            if response.code == 200:
 
-            try:
                 feed = yield readBody(response)
 
                 self._data = self.parser.parse_feed(feed)
@@ -195,8 +195,8 @@ class Service(lt_service):
                         self.analyser.reset()
 
                 self._updateAndPublishRaceState()
-            except Exception as e:
-                fail = txaio.create_failure()
-                self.log.critical(txaio.failure_format_traceback(fail))
-        else:
-            self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)
+            else:
+                self.log.warn("Received error {code} when fetching URL {url}", code=response.code, url=url)
+        except Exception as e:
+            fail = txaio.create_failure()
+            self.log.critical(txaio.failure_format_traceback(fail))
