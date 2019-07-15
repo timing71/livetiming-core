@@ -6,7 +6,7 @@ from livetiming.utils import uncache
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
-from twisted.web.client import Agent, readBody
+from twisted.web.client import Agent, HTTPConnectionPool, readBody
 
 import argparse
 import datetime
@@ -90,7 +90,7 @@ class Service(lt_service):
 
         self._last_modified = None
 
-        self._agent = Agent(reactor)
+        self._agent = Agent(reactor, HTTPConnectionPool(reactor))
 
         self.parser = Parser()
 
