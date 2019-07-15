@@ -1,5 +1,5 @@
 from livetiming.racing import FlagStatus, Stat
-from livetiming.analysis import FieldExtractor, per_car
+from livetiming.analysis import FieldExtractor
 
 import importlib
 
