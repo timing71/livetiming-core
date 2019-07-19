@@ -233,6 +233,7 @@ def create_protocol_factory(service, initial_state_file=None):
                         protocol.session = state['session']
                         protocol.track = state['track']
                         protocol.messages = state['messages']
+                        protocol.sector_states = state['sector_states']
                 except Exception as e:
                     protocol.log('Failed to load existing state file')
                     print('bad', e)

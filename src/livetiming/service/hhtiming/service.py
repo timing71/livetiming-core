@@ -26,7 +26,8 @@ FLAG_STATE_MAP = {
     0: FlagStatus.NONE,
     2: FlagStatus.RED,
     3: FlagStatus.CHEQUERED,
-    5: FlagStatus.GREEN
+    5: FlagStatus.GREEN,
+    7: FlagStatus.FCY
 }
 
 
@@ -351,7 +352,7 @@ class Service(lt_service):
 
                 bbc = best_by_class[clazz]
 
-                last_sector_data = {}
+                last_sector_idx = None
                 for s in self._sectors_list():
                     sector = s['EndTimeLine']
                     car_data.append(
@@ -386,8 +387,8 @@ class Service(lt_service):
 
                 if last_lap == best_lap and best_lap != '':
                     if best_lap_flag == 'sb':
-                        last_sector = car_data[-2]
-                        if last_sector[0] != '' and last_sector[1] != 'old' and last_sector_idx in car.get('current_sectors', {}):
+                        last_sector = car_data[last_sector_idx] if last_sector_idx else None
+                        if not last_sector or (last_sector[0] != '' and last_sector[1] != 'old' and last_sector_idx in car.get('current_sectors', {})):
                             last_lap_flag = 'sb-new'
                         else:
                             last_lap_flag = 'sb'
