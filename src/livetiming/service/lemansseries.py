@@ -11,7 +11,7 @@ import urllib
 
 
 def hackDataFromJSONP(data, var):
-    return simplejson.loads(re.search(r'(?:%s = )([^\;]+)(?:\;)' % var, data).group(1).replace("\\\'", "'"))
+    return simplejson.loads(re.search(r'(?:%s = )([^\;]+)(?:\;)' % var, data.decode('utf-8')).group(1).replace("\\\'", "'"))
 
 
 def mapFlagStates(rawState):
@@ -70,7 +70,7 @@ def parseTime(formattedTime):
                 return formattedTime
 
 
-SESSION_TIME_REGEX = re.compile(b"(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
+SESSION_TIME_REGEX = re.compile("(?P<hours>[0-9]{2}) : (?P<minutes>[0-9]{2}) : (?P<seconds>[0-9]{2})")
 
 
 def parseSessionTime(formattedTime):
@@ -157,7 +157,7 @@ class Service(lt_service):
         else:
             description = re.search(b"<h1 class=\"live_title\">Live on (?P<desc>[^<]+)<", raw)
             if description:
-                new_description = description.group("desc").replace("/", "-").decode('utf-8')
+                new_description = description.group("desc").decode('utf-8').replace("/", "-")
                 if self.description != new_description:
                     self.description = new_description
                     self.log.info("Setting description: {desc}", desc=self.description)
