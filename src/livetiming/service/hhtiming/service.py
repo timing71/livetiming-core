@@ -365,8 +365,11 @@ class Service(lt_service):
                     last_sector_idx = str(sector)
 
                     best_sec_time = car.get('PersonalBestSectors', {}).get(sector, '')
-                    if best_sec_time < 0:
-                        best_sec_time = '*'
+                    try:
+                        if best_sec_time < 0:
+                            best_sec_time = '*'
+                    except TypeError:
+                        pass
 
                     car_data.append(
                         (best_sec_time, 'sb' if sector in bbc and bbc[sector][1] == num else 'old')

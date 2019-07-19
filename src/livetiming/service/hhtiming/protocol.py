@@ -70,7 +70,7 @@ def create_protocol_factory(service, initial_state_file=None):
             }
 
         def dataReceived(self, data):
-            self._buffer += data
+            self._buffer += data.decode('utf-8')
             while END_OF_MESSAGE in self._buffer:
                 msg, _, rest = self._buffer.partition(END_OF_MESSAGE)
                 self.handleMessage(msg)
