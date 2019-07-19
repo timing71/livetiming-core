@@ -3,7 +3,7 @@ from collections import defaultdict
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
 from livetiming.service.hhtiming import create_protocol_factory, RaceControlMessage
-from livetiming.service.hhtiming.types import SectorStatus
+from livetiming.service.hhtiming.types import SectorStatus, MessageType
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
@@ -205,13 +205,13 @@ class Service(lt_service):
                     indent='  '
                 )
 
-        if msg_type == 'HTiming.Core.Definitions.Communication.Messages.WeatherTSMessage' and not self._has_weather:
+        if msg_type == MessageType.WEATHER and not self._has_weather:
             self._has_weather = True
             self.publishManifest()
         elif msg_type in [
-            'HTiming.Core.Definitions.Communication.Messages.AdvTrackInformationMessage',
-            'HTiming.Core.Definitions.Communication.Messages.EventMessage',
-            'HTiming.Core.Definitions.Communication.Messages.SessionInfoMessage'
+            MessageType.TRACK_INFO_ADV,
+            MessageType.EVENT,
+            MessageType.SESSION_INFO
         ]:
             # Any of those messages could change data encoded in our manifest
             self.publishManifest()
