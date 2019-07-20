@@ -239,12 +239,13 @@ class Service(lt_service):
             gap = 0 if car["4"] == '' else parseTime(car["4"])
 
             interval = 0
-            if gap > 0:
-                if isinstance(gap, float):
-                    if isinstance(prev_car_gap, float):
-                        interval = gap - prev_car_gap
-                    else:
-                        interval = gap
+            if isinstance(gap, float) and gap > 0:
+                if isinstance(prev_car_gap, float):
+                    interval = gap - prev_car_gap
+                else:
+                    interval = gap
+            else:
+                interval = gap
             if prev_car_gap == '':
                 interval = gap
 
@@ -262,8 +263,8 @@ class Service(lt_service):
                 "{} {}".format(marque, voiture["nom"]).strip(),
                 car["6"],
                 car["13"],
-                gap if gap > 0 else '',
-                interval if interval > 0 else '',
+                gap if isinstance(gap, str) or gap > 0 else '',
+                interval if isinstance(interval, str) or interval > 0 else '',
                 [lastLap, getFlags(classe, state, lastLap, bestLap)] if lastLap > 0 else ['', ''],
                 [bestLap, getFlags(classe, state, bestLap, -1)] if bestLap > 0 else ['', ''],
                 car["1"],  # ave speed
