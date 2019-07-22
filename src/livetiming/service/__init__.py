@@ -15,7 +15,7 @@ from treq.client import HTTPClient
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ReconnectingClientFactory
-from twisted.internet.task import LoopingCall
+from twisted.internet.task import LoopingCall, deferLater
 from twisted.internet.threads import deferToThread
 from twisted.logger import Logger
 from twisted.web import client
@@ -79,11 +79,31 @@ def create_service_session(service):
     return authenticatedService(ServiceSession)
 
 
-class Service(object):
+class ManifestPublisher(object):
+    def __init__(self):
+        super().__init__()
+        self._last_deferred = None
+
+    def publishManifest(self):
+        if not self._last_deferred or self._last_deferred.called:
+            self._last_deferred = deferLater(
+                reactor,
+                1,
+                self._publish_manifest_actual
+            )
+
+    def _publish_manifest_actual(self):
+        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
+        if self.recorder:
+            self.recorder.writeManifest(self._createServiceRegistration())
+
+
+class Service(ManifestPublisher):
     log = Logger()
     auto_poll = True
 
     def __init__(self, args, extra_args={}):
+        super().__init__()
         self.args = args
         self.uuid = os.path.splitext(os.path.basename(self.args.initial_state))[0] if self.args.initial_state is not None else uuid4().hex
         self.state = self._getInitialState()
@@ -367,11 +387,6 @@ class Service(object):
         if self.analyser:
             return self.analyser.get_current_state()
         return None
-
-    def publishManifest(self):
-        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
-        if self.recorder:
-            self.recorder.writeManifest(self._createServiceRegistration())
 
     def onControlMessage(self, message):
         msg = Message.parse(message)
