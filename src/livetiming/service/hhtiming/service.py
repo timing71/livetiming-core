@@ -157,7 +157,7 @@ def sort_car_in_race(args):
     elif prev_sector:
         latest_sector_crossing_time = prev_sector.get('TimelineCrossingTimeOfDay', 0)
     else:
-        latest_sector_crossing_time = None
+        latest_sector_crossing_time = 0  # 'shrug' - can't be None as has to be compared to ints
 
     return [
         -car.get('NumberOfLaps', 0),  # Highest first
