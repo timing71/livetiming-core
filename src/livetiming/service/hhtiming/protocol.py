@@ -244,7 +244,7 @@ def create_protocol_factory(service, initial_state_file=None):
                 try:
                     with open(initial_state_file, 'r') as statefile:
                         state = simplejson.load(statefile)
-                        protocol.cars = state['cars']
+                        protocol.cars.update(state['cars'])  # Maintain defaultdict
                         protocol.session = state['session']
                         protocol.track = state['track']
                         protocol.messages = state['messages']
