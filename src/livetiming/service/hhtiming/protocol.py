@@ -66,7 +66,8 @@ def create_protocol_factory(service, initial_state_file=None):
                 'track': self.track,
                 'session': self.session,
                 'sector_states': self.sector_states,
-                'messages': self.messages
+                'messages': self.messages,
+                'weather': self.weather
             }
 
         def dataReceived(self, data):
@@ -239,9 +240,9 @@ def create_protocol_factory(service, initial_state_file=None):
                         protocol.track = state['track']
                         protocol.messages = state['messages']
                         protocol.sector_states = state['sector_states']
+                        self.weather = state.get('weather', {})
                 except Exception as e:
                     protocol.log('Failed to load existing state file')
-                    print('bad', e)
                     pass
 
             return protocol
