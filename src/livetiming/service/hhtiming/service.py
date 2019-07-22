@@ -452,4 +452,8 @@ class Service(lt_service):
         if SectorStatus.SLOW_ZONE in zone_states:
             return FlagStatus.SLOW_ZONE.name.lower()
         hhs = self.protocol.session
+
+        if self._flag not in FLAG_STATE_MAP:
+            self.log.warn('Unknown flag state {flag}', flag=self._flag)
+
         return FLAG_STATE_MAP.get(self._flag, FlagStatus.NONE).name.lower()
