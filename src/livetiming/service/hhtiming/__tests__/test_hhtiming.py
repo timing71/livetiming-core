@@ -209,6 +209,57 @@ def test_race_gap():
     gap_2 = calculate_race_gap(car_22, car_25)
     assert gap_2 == pytest.approx(19.906, 0.001)
 
+    leader = {
+        "LastElapsedTime": 3902.73,
+        "LastLaptime": 100.792,
+        "NumberOfLaps": 38,
+        "current_sectors": {},
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 27.501,
+                "SessionTime": 3829.439,
+                "TimelineCrossingTimeOfDay": 3829.439
+            },
+            "2": {
+                "SectorTime": 39.09,
+                "SessionTime": 3868.529,
+                "TimelineCrossingTimeOfDay": 3868.529
+            },
+            "3": {
+                "SectorTime": 34.201,
+                "SessionTime": 3902.73,
+                "TimelineCrossingTimeOfDay": 3902.73
+            }
+        }
+    }
+
+    nearly_lap_down = {
+        "LastElapsedTime": 3881.792,
+        "LastLaptime": 99.833,
+        "NumberOfLaps": 37,
+        "current_sectors": {},
+        "previous_sectors": {
+            "1": {
+                "SectorTime": 27.853,
+                "SessionTime": 3809.812,
+                "TimelineCrossingTimeOfDay": 3809.812
+            },
+            "2": {
+                "SectorTime": 37.886,
+                "SessionTime": 3847.698,
+                "TimelineCrossingTimeOfDay": 3847.698
+            },
+            "3": {
+                "SectorTime": 34.094,
+                "SessionTime": 3881.792,
+                "TimelineCrossingTimeOfDay": 3881.792
+            }
+        }
+    }
+
+    gap_nearly_lap = calculate_race_gap(leader, nearly_lap_down)
+    assert gap_nearly_lap == pytest.approx(79.854, 0.001)
+
 
 @pytest.mark.skip(reason="Utility function that's occasionally useful")
 def test_dump_state(service, state):

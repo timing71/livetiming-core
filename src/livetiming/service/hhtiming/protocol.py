@@ -111,6 +111,11 @@ def create_protocol_factory(service, initial_state_file=None):
         @handler(MessageType.DRIVER_UPDATE)
         def driver_update(self, data):
             car = self.cars[data.pop('CarID')]
+
+            # fix random spaces disappearing
+            if data['LastName'] == car.get('driver', {}).get('LastName', '').replace(' ', '', 1):
+                data['LastName'] = car.get('driver', {}).get('LastName')
+
             car['driver'] = data
 
         @handler(MessageType.SECTOR_TIME_ADV)

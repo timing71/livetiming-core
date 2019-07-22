@@ -23,10 +23,11 @@ def _map_car_state(car):
 
 
 FLAG_STATE_MAP = {
-    0: FlagStatus.NONE,
+    0: FlagStatus.GREEN,
+    1: FlagStatus.SC,
     2: FlagStatus.RED,
     3: FlagStatus.CHEQUERED,
-    5: FlagStatus.GREEN,
+    # 5 - "no change from previous" I think...
     7: FlagStatus.FCY
 }
 
@@ -107,6 +108,8 @@ def calculate_race_gap(first, second):
             return pluralize(laps_gap, 'lap')
         if len(second_sectors) == 0 and len(second_prev) > 0 and len(first_prev) > 0:
             max_prev = max(second_prev.keys()) if len(second_prev) > 0 else None
+            if len(first_sectors) == 0:  # Within a sector of being lapped - use first's _previous_ s/f crossing time
+                return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first.get('LastElapsedTime', 0) + first.get('LastLaptime', 0)
             return second_prev[max_prev].get('TimelineCrossingTimeOfDay', 0) - first_prev[max_prev].get('TimelineCrossingTimeOfDay', 0)
         elif len(second_sectors) > 0:
             max_curr = max(second_sectors.keys())
@@ -184,6 +187,7 @@ class Service(lt_service):
         self._last_update = time.time()
 
         self._has_weather = False
+        self._flag = 0
 
     def _state_dump_file(self):
         return 'hhtiming_state_dump_{}.json'.format(self.uuid)
@@ -215,6 +219,13 @@ class Service(lt_service):
         ]:
             # Any of those messages could change data encoded in our manifest
             self.publishManifest()
+
+        if self.protocol:
+            curr_flag = self.protocol.session.get('TrackStatus', 0)
+
+            if curr_flag != 5 and curr_flag != self._flag:
+                self.log.debug('Flag change {} => {} (msg {})'.format(self._flag, curr_flag, msg_type))
+                self._flag = curr_flag
 
     def start(self):
         def maybePublish():
@@ -338,6 +349,9 @@ class Service(lt_service):
                 leader = sorted_cars[0][1] if len(sorted_cars) > 0 and len(cars) > 0 else None
                 prev_car = sorted_cars[len(cars) - 1][1] if len(cars) > 0 else None
 
+                gap = gap_func(leader, car)
+                interval = gap_func(prev_car, car)
+
                 car_data = [
                     num,
                     _map_car_state(car),
@@ -346,8 +360,8 @@ class Service(lt_service):
                     "{} {}".format(driver.get('FirstName', ''), driver.get('LastName', '')).strip(),
                     car.get('CarMake'),
                     car.get('NumberOfLaps'),
-                    gap_func(leader, car),
-                    gap_func(prev_car, car)
+                    gap if isinstance(gap, str) or gap > 0 else '',
+                    interval if isinstance(interval, str) or interval > 0 else ''
                 ]
 
                 bbc = best_by_class[clazz]
@@ -363,7 +377,7 @@ class Service(lt_service):
                             bbc
                         )
                     )
-                    last_sector_idx = str(sector)
+                    last_sector_idx = len(car_data) - 1
 
                     best_sec_time = car.get('PersonalBestSectors', {}).get(sector, '')
                     try:
@@ -388,7 +402,7 @@ class Service(lt_service):
                 if last_lap == best_lap and best_lap != '':
                     if best_lap_flag == 'sb':
                         last_sector = car_data[last_sector_idx] if last_sector_idx else None
-                        if not last_sector or (last_sector[0] != '' and last_sector[1] != 'old' and last_sector_idx in car.get('current_sectors', {})):
+                        if not last_sector or (last_sector[0] != '' and last_sector[1] != 'old' and str(last_sector_idx) in car.get('current_sectors', {})):
                             last_lap_flag = 'sb-new'
                         else:
                             last_lap_flag = 'sb'
@@ -438,4 +452,4 @@ class Service(lt_service):
         if SectorStatus.SLOW_ZONE in zone_states:
             return FlagStatus.SLOW_ZONE.name.lower()
         hhs = self.protocol.session
-        return FLAG_STATE_MAP.get(hhs.get('TrackStatus', 0), FlagStatus.NONE).name.lower()
+        return FLAG_STATE_MAP.get(self._flag, FlagStatus.NONE).name.lower()
