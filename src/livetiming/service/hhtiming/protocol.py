@@ -189,6 +189,7 @@ def create_protocol_factory(service, initial_state_file=None):
         @handler(MessageType.RACE_CONTROL_MESSAGE)
         def race_control_message(self, data):
             self.messages.append((data['MessageReceivedTime'], data['MessageString']))
+            self._derive_flag_from_message(self, data['MessageString'])
 
         @handler(
             MessageType.SPEED_TRAP,
@@ -225,6 +226,14 @@ def create_protocol_factory(service, initial_state_file=None):
                 if s['SectorName'] == sector_name:
                     return s['EndTimeLine']
             return None
+
+        def _derive_flag_from_message(self, message):
+            message = message.upper()
+            if message == 'GREEN FLAG':
+                self.session['TrackStatus'] = 0
+            elif 'YELLOW FLAG' in message or 'DOUBLE YELLOW' in message:
+                self.session['TrackStatus'] = 91
+            # Other flags _should_ be dealt with in Heartbeat message
 
     class HHProtocolFactory(ReconnectingClientFactory):
         def buildProtocol(self, addr):

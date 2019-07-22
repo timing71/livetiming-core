@@ -28,7 +28,9 @@ FLAG_STATE_MAP = {
     2: FlagStatus.RED,
     3: FlagStatus.CHEQUERED,
     # 5 - "no change from previous" I think...
-    7: FlagStatus.FCY
+    7: FlagStatus.FCY,
+    # The following are ones I made up myself.
+    91: FlagStatus.YELLOW
 }
 
 
