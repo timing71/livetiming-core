@@ -1,5 +1,5 @@
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
-from livetiming.racing import Stat
+from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service
 from livetiming.service.ris import CrappyDataException, Parser
 from livetiming.utils import uncache
@@ -152,7 +152,7 @@ class Service(lt_service):
             time_remain -= delta
 
         return {
-            "flagState": self._data.get('flag').name.lower(),
+            "flagState": self._data.get('flag', FlagStatus.NONE).name.lower(),
             "timeElapsed": 0,
             'timeRemain': max(0, time_remain)
         }
