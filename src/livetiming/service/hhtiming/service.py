@@ -307,13 +307,15 @@ class Service(lt_service):
         ]
 
     def _car_sort_function(self):
-        if self.protocol.session.get('SessionType') < 3 and self.protocol.session.get('SessionType') > 0:
+        session_type = self.protocol.session.get('SessionType', -1)
+        if 0 < session_type < 3:
             return lambda num_car: (num_car[1].get('BestLaptime', 999999), maybe_int(num_car[0]))
         else:
             return sort_car_in_race
 
     def _gap_function(self):
-        if self.protocol.session.get('SessionType') < 3 and self.protocol.session.get('SessionType') > 0:
+        session_type = self.protocol.session.get('SessionType', -1)
+        if 0 < session_type < 3:
             return calculate_practice_gap
         else:
             return calculate_race_gap
