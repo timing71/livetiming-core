@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import Stat, FlagStatus
@@ -241,6 +242,7 @@ class Service(DuePublisher, lt_service):
             Stat.NUM,
             Stat.STATE,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.DRIVER,
             Stat.CAR,
             Stat.TEAM,
@@ -290,6 +292,8 @@ class Service(DuePublisher, lt_service):
     def _compile_state(self):
         cars = []
 
+        classes_seen = defaultdict(int)
+
         for entry in sorted(list(self._timing_data['Results'].values()), key=lambda e: e.get('ListIndex', 9999)):
             if 'CompetitorId' in entry:
                 competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
@@ -300,12 +304,15 @@ class Service(DuePublisher, lt_service):
                     else:
                         clazz = ''
 
+                    classes_seen[clazz] = classes_seen[clazz] + 1
+
                     main_result = entry['MainResult']
 
                     cars.append([
                         competitor['Bib'],
                         map_car_state(main_result['Status'], competitor['InPitLane']),
                         clazz,
+                        classes_seen[clazz],
                         "{}, {}".format(driver['LastName'].upper(), driver['FirstName']) if driver else '',
                         competitor.get('CarTypeName', ''),
                         competitor['TeamShortName'] if 'TeamShortName' in competitor else competitor['TeamName'] if 'TeamName' in competitor else '',
