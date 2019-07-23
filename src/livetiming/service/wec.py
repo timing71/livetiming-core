@@ -416,7 +416,10 @@ class Service(DuePublisher, lt_service):
                                         if new_bs3 < existing_bs3 or existing_bs3 == 0:
                                             car['bs3'] = new_bs3
 
-                                car['best_lap'] = min(parseTime(car_data.get('best_lap')), car.get('best_lap', 9999999))
+                                new_best_lap = parseTime(car_data.get('best_lap'))
+                                old_best_lap = car.get('best_lap', 0)
+                                if old_best_lap == 0 or (new_best_lap > 0 and new_best_lap < old_best_lap):
+                                    car['best_lap'] = new_best_lap
 
                                 car['driver'] = car_data['current_pilot']
                                 car['tyre'] = car_data['current_tyres']
@@ -524,7 +527,10 @@ class Service(DuePublisher, lt_service):
                         maybe_record_best_sector(car, car_data, 2)
                         maybe_record_best_sector(car, car_data, 3)
 
-                        car['best_lap'] = min(parseTime(car_data['bestlap']), car.get('best_lap', 9999999))
+                        new_best_lap = parseTime(car_data.get('bestlap'))
+                        old_best_lap = car.get('best_lap', 0)
+                        if old_best_lap == 0 or (new_best_lap > 0 and new_best_lap < old_best_lap):
+                            car['best_lap'] = new_best_lap
 
                         car['driver'] = car_data['driver']
                         car['tyre'] = car_data['tyre']
