@@ -348,12 +348,13 @@ class Service(DuePublisher, lt_service):
 
         for idx, laptime in fast_laps_by_class.values():
             this_lap = cars[idx][-3][0]
-            if laptime == this_lap:
-                bl_flag = 'sb-new'
-                cars[idx][-3] = (cars[idx][-3][0], bl_flag)
+            if laptime == this_lap and cars[idx][-4][0] != '':
+                ll_flag = 'sb-new'
             else:
-                bl_flag = 'sb'
-            cars[idx][-2] = (cars[idx][-2][0], bl_flag)
+                ll_flag = 'sb'
+
+            cars[idx][-3] = (cars[idx][-3][0], ll_flag)
+            cars[idx][-2] = (cars[idx][-2][0], 'sb')
 
         unt = self._timing_data['UntInfo']
 
