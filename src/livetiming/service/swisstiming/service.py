@@ -293,8 +293,9 @@ class Service(DuePublisher, lt_service):
         cars = []
 
         classes_seen = defaultdict(int)
+        fast_laps_by_class = {}
 
-        for entry in sorted(list(self._timing_data['Results'].values()), key=lambda e: e.get('ListIndex', 9999)):
+        for idx, entry in enumerate(sorted(list(self._timing_data['Results'].values()), key=lambda e: e.get('ListIndex', 9999))):
             if 'CompetitorId' in entry:
                 competitor = self._session_data['Competitors'].get(entry['CompetitorId'])
                 if competitor:
@@ -307,6 +308,13 @@ class Service(DuePublisher, lt_service):
                     classes_seen[clazz] = classes_seen[clazz] + 1
 
                     main_result = entry['MainResult']
+
+                    if 'BestTime' in main_result:
+                        best_lap = parse_time_data(main_result['BestTime'])[0]
+                        if clazz not in fast_laps_by_class or fast_laps_by_class[clazz][1] > best_lap:
+                            fast_laps_by_class[clazz] = [idx, best_lap]
+                    else:
+                        best_lap = None
 
                     cars.append([
                         competitor['Bib'],
@@ -323,19 +331,29 @@ class Service(DuePublisher, lt_service):
                         parse_time_data(main_result['LastLap']['Intermediates'][1]) if 'LastLap' in main_result else ('', ''),
                         parse_time_data(main_result['LastLap']['Intermediates'][2]) if 'LastLap' in main_result else ('', ''),
                         parse_time_data(main_result['LastLap']) if 'LastLap' in main_result else ('', ''),
-                        parse_time_data(main_result['BestTime']) if 'BestTime' in main_result else ('', ''),
+                        (best_lap if best_lap else '', ''),
                         competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
                     ])
 
                     # Hack in previous lap before it disappears from the data feed
-                    if cars[-1][12][0] == '':
-                        cars[-1][12] = self._previous_laps.get(competitor['Bib'], ('', ''))
+                    if cars[-1][13][0] == '':
+                        cars[-1][13] = self._previous_laps.get(competitor['Bib'], ('', ''))
                     else:
-                        self._previous_laps[competitor['Bib']] = cars[-1][12]
+                        self._previous_laps[competitor['Bib']] = cars[-1][13]
+
                 else:
                     self.log.warn('Unknown competitor for entry {entry}', entry=entry)
             else:
                 self.log.warn('Unknown competitor for entry {entry}', entry=entry)
+
+        for idx, laptime in fast_laps_by_class.values():
+            this_lap = cars[idx][-3][0]
+            if laptime == this_lap:
+                bl_flag = 'sb-new'
+                cars[idx][-3] = (cars[idx][-3][0], bl_flag)
+            else:
+                bl_flag = 'sb'
+            cars[idx][-2] = (cars[idx][-2][0], bl_flag)
 
         unt = self._timing_data['UntInfo']
 
