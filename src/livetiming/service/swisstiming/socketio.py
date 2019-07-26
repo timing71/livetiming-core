@@ -54,9 +54,13 @@ class StrippedWSTransport(AbstractTransport):
             raise ConnectionError('recv disconnected (%s)' % e)
         if not isinstance(packet_text, six.binary_type):
             packet_text = packet_text.encode('utf-8')
-        engineIO_packet_type, engineIO_packet_data = parse_packet_text(
-            packet_text)
-        yield engineIO_packet_type, engineIO_packet_data
+        if len(packet_text) > 0:
+            engineIO_packet_type, engineIO_packet_data = parse_packet_text(
+                packet_text
+            )
+            yield engineIO_packet_type, engineIO_packet_data
+        else:
+            yield 6, None  # Pretend it's a no-op packet
 
     def send_packet(self, engineIO_packet_type, engineIO_packet_data=''):
         packet = format_packet_text(engineIO_packet_type, engineIO_packet_data)
