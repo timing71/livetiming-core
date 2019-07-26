@@ -91,16 +91,19 @@ class Analyser(object):
     def _publish_pending(self):
         now = time.time()
         for key, data in copy.copy(self._pending_publishes).items():
-            if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
-                self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
-                retain = key not in ['lap', 'stint']
-                self.publish(
-                    "livetiming.analysis/{}/{}".format(self.uuid, key),
-                    _make_data_message(data, retain),
-                    options=self.publish_options if retain else None
-                )
-                self._pending_publishes.pop(key)
-                self._last_published[key] = now
+            try:
+                if self._last_published.get(key, 0) + (self.interval or 1) < now and self.publish:
+                    self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
+                    retain = key not in ['lap', 'stint']
+                    self.publish(
+                        "livetiming.analysis/{}/{}".format(self.uuid, key),
+                        _make_data_message(data, retain),
+                        options=self.publish_options if retain else None
+                    )
+                    self._pending_publishes.pop(key)
+                    self._last_published[key] = now
+            except:
+                pass
 
     def _data_centre_file(self):
         return os.path.join(
