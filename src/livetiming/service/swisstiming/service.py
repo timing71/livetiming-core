@@ -335,11 +335,19 @@ class Service(DuePublisher, lt_service):
                         competitor['PitStopCount'] if 'PitStopCount' in competitor else 0
                     ])
 
+                    this_car = cars[-1]
+
                     # Hack in previous lap before it disappears from the data feed
-                    if cars[-1][13][0] == '':
-                        cars[-1][13] = self._previous_laps.get(competitor['Bib'], ('', ''))
+                    if this_car[13][0] == '':
+                        this_car[13] = self._previous_laps.get(competitor['Bib'], ('', ''))
                     else:
-                        self._previous_laps[competitor['Bib']] = cars[-1][13]
+                        self._previous_laps[competitor['Bib']] = this_car[13]
+
+                    if this_car[-6][1] == '' and this_car[-5][0] != '':
+                        this_car[-6] = (this_car[-6][0], 'old')
+
+                    if this_car[-5][1] == '' and this_car[-4][0] != '':
+                        this_car[-5] = (this_car[-5][0], 'old')
 
                 else:
                     self.log.warn('Unknown competitor for entry {entry}', entry=entry)
