@@ -348,10 +348,12 @@ class Service(DuePublisher, lt_service):
 
         for idx, laptime in fast_laps_by_class.values():
             this_lap = cars[idx][-3][0]
-            if laptime == this_lap and cars[idx][-4][0] != '':
-                ll_flag = 'sb-new'
-            else:
-                ll_flag = 'sb'
+            ll_flag = cars[idx][-3][1]
+            if laptime == this_lap:
+                if cars[idx][-4][0] != '':
+                    ll_flag = 'sb-new'
+                else:
+                    ll_flag = 'sb'
 
             cars[idx][-3] = (cars[idx][-3][0], ll_flag)
             cars[idx][-2] = (cars[idx][-2][0], 'sb')
