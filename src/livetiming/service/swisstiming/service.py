@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from livetiming.messages import RaceControlMessage
 from livetiming.racing import Stat, FlagStatus
 from livetiming.service import Service as lt_service, DuePublisher
@@ -228,7 +228,7 @@ class Service(DuePublisher, lt_service):
     def _handle_session(self, data):
         self._session_data = data
         for msg in data.get('Messages', []):
-            msg['ParsedTime'] = datetime.strptime(msg['Time'], '%d.%m.%Y %H:%M:%S')
+            msg['ParsedTime'] = datetime.strptime(msg['Time'], '%d.%m.%Y %H:%M:%S') - timedelta(minutes=self.extra_args.tz)
 
         rc_messages = [m for m in data.get('Messages', []) if m['ParsedTime'] > self._last_msg_time]
         for m in rc_messages:
