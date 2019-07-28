@@ -10,7 +10,7 @@ def receive_state_update(dc, race_num, position, old_car, new_car, f, flag, time
         return (
             'car_messages/{}'.format(race_num),
             {
-                race_num: [car.messages]
+                race_num: car.messages
             }
         )
     return []
