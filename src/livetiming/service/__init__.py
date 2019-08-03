@@ -377,7 +377,12 @@ class Service(ManifestPublisher):
         # Messages are of the form [time, category, text, messageType]
         messages = []
         for mg in self._getMessageGenerators() + self.getExtraMessageGenerators():
-            messages += mg.process(oldState, newState)
+            try:
+                messages += mg.process(oldState, newState)
+            except Exception as e:
+                self.log.failure("Exception while generating messages: {log_failure}")
+                sentry_sdk.capture_exception(e)
+
         return messages
 
     def _requestCurrentState(self):
