@@ -58,6 +58,7 @@ _DEFAULT_ARGS = {
     'Formula E': '--hidden',
     'Michelin Le Mans Cup': '--hidden',
     'TCA': '--session ?',
+    'VLN': '--tz 2',
     'W': '-e 31',
     'WEC': '--hidden --hh live-api.hhtiming.com:24688'
 }
