@@ -159,7 +159,7 @@ class SlowZoneMessage(TimingMessage):
 class RaceControlMessage(TimingMessage):
     def __init__(self, messages, tz_adjustment=1):
         self._messages = messages
-        self._mostRecentTime = 0  # time.time()
+        self._mostRecentTime = time.time()
         self._tz_adjustment = tz_adjustment
 
     def process(self, _, __):
