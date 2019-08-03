@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from autobahn.twisted.websocket import connectWS, WebSocketClientProtocol
-from datetime import datetime
+from datetime import datetime, timedelta
 from livetiming.messages import TimingMessage, CAR_NUMBER_REGEX
 from livetiming.utils.nurburgring import Nurburgring
 from livetiming.service import DuePublisher, Service as lt_service, ReconnectingWebSocketClientFactory, Watchdog
@@ -159,11 +159,13 @@ class SlowZoneMessage(TimingMessage):
 class RaceControlMessage(TimingMessage):
     def __init__(self, messages, tz_adjustment=1):
         self._messages = messages
-        self._mostRecentTime = time.time()
+        self._mostRecentTime = 0  # time.time()
         self._tz_adjustment = tz_adjustment
 
     def process(self, _, __):
         msgs = []
+
+        tzdelta = timedelta(hours=self._tz_adjustment)
 
         for msg in self._messages:
             hasCarNum = CAR_NUMBER_REGEX.search(msg['MESSAGE'])
@@ -173,15 +175,11 @@ class RaceControlMessage(TimingMessage):
             if msgTime:
                 parsed_msgtime = datetime.strptime(msgTime, "%H:%M:%S")
 
-                new_hour = parsed_msgtime.hour - self._tz_adjustment if parsed_msgtime.hour >= self._tz_adjustment else (24 - parsed_msgtime.hour - self._tz_adjustment)
-                new_day = parsed_msgtime.day - 1 if new_hour > this_msg_time.hour else parsed_msgtime.day
-
                 this_msg_time = this_msg_time.replace(
-                    day=new_day,
-                    hour=new_hour,
+                    hour=parsed_msgtime.hour,
                     minute=parsed_msgtime.minute,
                     second=parsed_msgtime.second
-                )
+                ) - tzdelta
 
             this_msg_timestamp = time.mktime(this_msg_time.timetuple())
 
@@ -193,7 +191,7 @@ class RaceControlMessage(TimingMessage):
                     msgs.append([this_msg_timestamp, "Race Control", msg['MESSAGE'].upper(), "raceControl"])
 
             if len(msgs) > 0:
-                self._mostRecentTime = max(max(self._mostRecentTime, [m[0] for m in msgs]))
+                self._mostRecentTime = max([self._mostRecentTime] + [m[0] for m in msgs])
         return sorted(msgs, key=lambda m: -m[0])
 
 
