@@ -449,7 +449,7 @@ class Service(DuePublisher, lt_service):
                 s3Idx = colSpec.index(Stat.S3) if Stat.S3 in colSpec else None
 
                 if len(result[lastIdx]) == 2 and result[lastIdx][1] == "sb" and result[lastIdx][0] == result[bestIdx][0]:
-                    if result[stateIdx] == "RUN" and (s3Idx is None or (result[s3Idx] != '' and result[s3Idx][0] > 0)):  # Not if in pits or have completed next lap S1
+                    if result[stateIdx] == "RUN" and (s3Idx is None or (result[s3Idx][0] != '' and result[s3Idx][0] > 0)):  # Not if in pits or have completed next lap S1
                         result[lastIdx] = (result[lastIdx][0], "sb-new")
 
         return result
