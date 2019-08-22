@@ -212,8 +212,9 @@ class Service(lt_service):
         if self.sprint:
             return [
                 Stat.NUM,
-                Stat.CLASS,
                 Stat.STATE,
+                Stat.CLASS,
+                Stat.POS_IN_CLASS,
                 Stat.DRIVER,
                 Stat.CAR,
                 Stat.LAPS,
@@ -224,9 +225,9 @@ class Service(lt_service):
             ]
         return [
             Stat.NUM,
+            Stat.STATE,
             Stat.CLASS,
             Stat.POS_IN_CLASS,
-            Stat.STATE,
             Stat.DRIVER,
             Stat.CAR,
             Stat.LAPS,
@@ -313,9 +314,9 @@ class Service(lt_service):
 
             cars.append([
                 car['StartNumber'],
+                car_state,
                 display_class,
                 car.get('PIC', ''),
-                car_state,
                 to_unicode(to_bytes(car['Name'])) or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
                 car['Laps'],
