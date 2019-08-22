@@ -6,6 +6,7 @@ from livetiming.service import Service as lt_service
 from requests.sessions import Session
 from signalr import Connection
 from threading import Thread
+from twisted.internet import reactor
 from kitchen.text.converters import to_bytes, to_unicode
 
 import argparse
@@ -147,10 +148,15 @@ RACE_CONTROL_PREFIX_REGEX = re.compile("^[0-9]{2}:[0-9]{2}:[0-9]{2}: (?P<text>.*
 
 SECTOR_STATS = [
     Stat.S1,
+    Stat.BS1,
     Stat.S2,
+    Stat.BS2,
     Stat.S3,
+    Stat.BS3,
     Stat.S4,
+    Stat.BS4,
     Stat.S5,
+    Stat.BS5,
 ]
 
 
@@ -219,13 +225,14 @@ class Service(lt_service):
         return [
             Stat.NUM,
             Stat.CLASS,
+            Stat.POS_IN_CLASS,
             Stat.STATE,
             Stat.DRIVER,
             Stat.CAR,
             Stat.LAPS,
             Stat.GAP,
             Stat.INT
-        ] + SECTOR_STATS[0:len(self.trackSectors)] + [
+        ] + SECTOR_STATS[0:len(self.trackSectors) * 2] + [
             Stat.LAST_LAP,
             Stat.BEST_LAP,
             Stat.PITS
@@ -268,7 +275,15 @@ class Service(lt_service):
         stuple = self.sectorTimes[car["ID"]][sector]
         if stuple[0] == self.bestSectorTimes.get(sector, -1) / 1e6:
             return (stuple[0], 'sb')
-        return stuple
+        return (stuple[0], stuple[1])
+
+    def bestSectorTimeFor(self, car, sector):
+        if car['ID'] not in self.sectorTimes:
+            return ("", "")
+        stuple = self.sectorTimes[car["ID"]][sector]
+        if stuple[2] == self.bestSectorTimes.get(sector, -1) / 1e6:
+            return (stuple[2] or '', 'sb')
+        return (stuple[2] or '', 'old')
 
     def getCars(self):
         cars = []
@@ -280,7 +295,11 @@ class Service(lt_service):
 
             lastTime = parseTime(car['LastLapTime'])
 
-            sector_times = [self.sectorTimeFor(car, i) for i in range(len(self.trackSectors))]
+            sector_times = []
+
+            for i in range(len(self.trackSectors)):
+                sector_times.append(self.sectorTimeFor(car, i))
+                sector_times.append(self.bestSectorTimeFor(car, i))
 
             s1_time = sector_times[0]
             final_sector_time = sector_times[-1]
@@ -295,6 +314,7 @@ class Service(lt_service):
             cars.append([
                 car['StartNumber'],
                 display_class,
+                car.get('PIC', ''),
                 car_state,
                 to_unicode(to_bytes(car['Name'])) or format_driver_name(self.sprint_drivers.get(car['ID'], '')),
                 car['Vehicle'],
@@ -452,16 +472,20 @@ class Service(lt_service):
                     self.messages.append(text)
 
     def on_sectortimes(self, data):
-        for d in data:
-            cid = d["CompetitorID"]
-            if cid not in self.sectorTimes:
-                self.sectorTimes[cid] = [("", ""), ("", ""), ("", ""), ("", ""), ("", "")]
-            sector = self.trackSectors.get(d["Id"], -1)
-            if sector >= 0 and d["Time"] > 0:
-                self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "")
-                if sector == 0:
-                    self.sectorTimes[cid][1] = (self.sectorTimes[cid][1][0], self.sectorTimes[cid][1][1] or 'old')
-                    self.sectorTimes[cid][2] = (self.sectorTimes[cid][2][0], self.sectorTimes[cid][2][1] or 'old')
+        if len(self.trackSectors) > 0:
+            for d in data:
+                cid = d["CompetitorID"]
+                if cid not in self.sectorTimes:
+                    self.sectorTimes[cid] = [("", "", None), ("", "", None), ("", "", None), ("", "", None), ("", "", None)]
+                sector = self.trackSectors.get(d["Id"], -1)
+                if sector >= 0 and d["Time"] > 0:
+                    self.sectorTimes[cid][sector] = (d["Time"] / 1e6, "pb" if d["Time"] == d["BestTime"] else "", d['BestTime'] / 1e6)
+                    if sector == 0:
+                        self.sectorTimes[cid][1] = (self.sectorTimes[cid][1][0], self.sectorTimes[cid][1][1] or 'old', self.sectorTimes[cid][1][2] or None)
+                        self.sectorTimes[cid][2] = (self.sectorTimes[cid][2][0], self.sectorTimes[cid][2][1] or 'old', self.sectorTimes[cid][2][2] or None)
+        else:
+            self.log.info('Deferring on_sectortimes as track sectors not yet populated')
+            reactor.callLater(0.5, self.on_sectortimes, data)
 
     def on_updatesector(self, data):
         for s in data:
