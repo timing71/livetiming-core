@@ -52,11 +52,9 @@ _MAPPED_TAGS = {
 # non-interactively.
 _DEFAULT_ARGS = {
     'Blancpain GT': '--tz ?',
-    'ELMS': '--hidden',
     'F1': '--hidden',
     'GT4A': '--session ?',
     'Formula E': '--hidden',
-    'Michelin Le Mans Cup': '--hidden',
     'TCA': '--session ?',
     'VLN': '--tz 2',
     'W': '-e 31',
