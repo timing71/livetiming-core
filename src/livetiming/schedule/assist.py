@@ -36,6 +36,7 @@ TAG_TO_SERVICE_CLASS = {
     'TCA': 'tsl',
     'VLN': 'vln',
     'W': 'wige',
+    'WC': 'tsl',
     'WEC': 'wec'
 }
 
@@ -43,6 +44,7 @@ _MAPPED_TAGS = {
     '24H': '24H Series',
     'GT4A': 'GT4 America',
     'TCA': 'TC America',
+    'WC': 'World Challenge USA',
     'W': 'W Series'
 }
 
@@ -58,6 +60,7 @@ _DEFAULT_ARGS = {
     'TCA': '--session ?',
     'VLN': '--tz 2',
     'W': '-e 31',
+    'WC': '--session ?',
     'WEC': '--hidden --hh live-api.hhtiming.com:24688'
 }
 
