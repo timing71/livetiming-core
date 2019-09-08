@@ -4,7 +4,7 @@ from livetiming.racing import FlagStatus
 import simplejson
 
 
-WEB_CONFIG_FILE = "app/config/config.json"
+WEB_CONFIG_FILE = "config.json"
 
 config = {}
 
