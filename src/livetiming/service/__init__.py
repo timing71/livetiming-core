@@ -98,7 +98,7 @@ class ManifestPublisher(object):
             self.recorder.writeManifest(self._createServiceRegistration())
 
 
-class Service(ManifestPublisher):
+class BaseService(ManifestPublisher):
     log = Logger()
     auto_poll = True
 
