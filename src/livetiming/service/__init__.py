@@ -564,7 +564,7 @@ def get_class(kls):
 def service_name_from(srv):
     if srv.startswith("livetiming."):
         return srv
-    return "livetiming.service.{}.Service".format(srv)
+    return "livetiming.service.plugins.{}.Service".format(srv)
 
 
 def main():
