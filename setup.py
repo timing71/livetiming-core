@@ -1,26 +1,13 @@
-import re
-import json
-import os
 from setuptools import setup, find_packages
 
 
-try:
-    with open('web/package.json', 'r') as package:
-        package_json = json.load(package)
-        verstr = package_json['version']
-except:
-    verstr = 'unknown'
-
-version_tag = os.environ.get('LIVETIMING_BUILD_TAG', '.dev0')
-
 setup(
     name='livetiming',
-    version="{}{}".format(verstr, version_tag),
     description='Live timing aggregator for motorsport timing feeds',
     author='James Muscat',
     author_email='jamesremuscat@gmail.com',
     url='https://github.com/jamesremuscat/livetiming',
-    packages=find_packages('src', exclude=["*.tests"]) + [''],
+    packages=find_packages('src', exclude=["*.tests"]),
     package_dir={'': 'src'},
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
@@ -49,7 +36,9 @@ setup(
     ],
     setup_requires=[
         'pytest-runner',
+        'setuptools_scm'
     ],
+    use_scm_version=True,
     tests_require=[
         'pytest'
     ],
