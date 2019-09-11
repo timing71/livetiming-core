@@ -1,4 +1,6 @@
 from livetiming import configure_sentry_twisted, load_env, sentry
+from pluginbase import PluginBase
+from setuptools import find_namespace_packages
 from twisted.logger import Logger
 
 from .fetchers import Fetcher, JSONFetcher, MultiLineFetcher
@@ -34,19 +36,18 @@ def parse_args(args=None):
     return parser.parse_known_args(args)
 
 
-def get_class(kls):
-    parts = kls.split('.')
-    module = ".".join(parts[:-1])
-    m = __import__(module)
-    for comp in parts[1:]:
-        m = getattr(m, comp)
-    return m
+def plugin_source_paths():
+    return [p for p in sys.path if find_namespace_packages(p, include=['livetiming.service.plugins'])]
 
 
-def service_name_from(srv):
-    if srv.startswith("livetiming."):
-        return srv
-    return "livetiming.service.plugins.{}.Service".format(srv)
+def get_plugin_source():
+    plugin_base = PluginBase(package='livetiming.service.plugins')
+    paths = list(map(lambda p: "{}/livetiming/service/plugins".format(p), plugin_source_paths()))
+    print(paths)
+    plugin_source = plugin_base.make_plugin_source(
+        searchpath=paths
+    )
+    return plugin_source
 
 
 def main():
@@ -57,7 +58,7 @@ def main():
     extra = vars(args)
     extra['extra_args'] = extra_args
 
-    service_class = get_class(service_name_from(args.service_class))
+    plugin_source = get_plugin_source()
 
     filepath = os.path.join(
         os.environ.get("LIVETIMING_LOG_DIR", os.getcwd()),
@@ -71,9 +72,13 @@ def main():
 
         logger = Logger()
         logger.info("Live Timing Aggregator version {version}", version=VERSION)
-        logger.info("Starting timing service {}...".format(service_class.__module__))
-        service = service_class(args, extra_args)
-        service.start()
+
+        with plugin_source:
+            module = plugin_source.load_plugin(args.service_class)
+            service = module.Service(args, extra_args)
+
+            logger.info("Starting timing service {}...".format(args.service_class))
+            service.start()
 
 
 if __name__ == '__main__':
