@@ -31,101 +31,127 @@ class AbstractService(ABC):
     '''
     All timing services must derive from this abstract base class.
 
-    You probably want to extend BaseService, which provides some default
-    implementations for some of the methods below, rather than extend this
-    class directly.
+    You probably want to extend BaseService, which provides some
+    default implementations for some of the methods below, rather than
+    extend this class directly.
+    '''
+
+    auto_poll = True
+    '''
+    If `auto_poll` is `True` then this service will have
+    _updateAndPublishRaceState called every getPollInterval() seconds.
+    If `False` it's expected that the service will call
+    _updateAndPublishRaceState itself when there is new data to be
+    published.
+    '''
+
+    attribution = None
+    '''
+
     '''
 
     @abstractmethod
     def getName(self):
         '''
-        Must be implemented by subclasses to return the string used as a
-        name for this service.
+        Must be implemented by subclasses to return the string used as
+        a name for this service.
+
         If the value returned by this function is not constant then the
-        service will probably want to call self.publishManifest() when the
-        value changes, or the change will not propagate to clients.
+        service will probably want to call self.publishManifest() when
+        the value changes, or the change will not propagate to clients.
         '''
         pass
 
     @abstractmethod
     def getDefaultDescription(self):
         '''
-        Must be implemented by subclasses to return the string used as a
-        description, unless one has been provided at runtime with -d.
+        Must be implemented by subclasses to return the string used as
+        a description, unless one has been provided at runtime with -d.
+
         If the value returned by this function is not constant then the
-        service will probably want to call self.publishManifest() when the
-        value changes, or the change will not propagate to clients.
+        service will probably want to call self.publishManifest() when
+        the value changes, or the change will not propagate to clients.
         '''
         pass
 
     @abstractmethod
     def getColumnSpec(self):
         '''
-        Must be implemented by subclasses to return a list of Stat objects
-        representing the list of available columns to display.
+        Must be implemented by subclasses to return a list of Stat
+        objects representing the list of available columns to display.
+
         If the value returned by this function is not constant then the
-        service will probably want to call self.publishManifest() when the
-        value changes, or the change will not propagate to clients.
+        service will probably want to call self.publishManifest() when
+        the value changes, or the change will not propagate to clients.
         '''
         pass
 
     @abstractmethod
     def getRaceState(self):
         '''
-        Must be implemented by subclasses to return an dict containing two keys:
+        Must be implemented by subclasses to return an dict containing
+        two keys:
+
         {
           'cars': [...list of car stat lists...],
           'state': { ... dict of state values ... }
         }
 
-        Each entry in 'cars' should be a list of values matching the column spec.
-        All times should be in decimal seconds - this includes sector and lap times.
+        Each entry in 'cars' should be a list of values matching the
+        column spec. All times should be in decimal seconds - this
+        includes sector and lap times.
 
         Keys in 'state' can include:
          - flagState (livetiming.racing.FlagState.<flag>.name.lower())
          - timeElapsed (in seconds)
          - timeRemain (in seconds)
          - lapsRemain (integer)
-         - trackData (list of formatted strings to display as track data)
+         - trackData (list of formatted strings to display as track
+           data)
 
-        No filtering is performed; all values herein will be sent to clients.
-        This means they need to be serializable e.g. plain Python types, not
-        objects.
+        No filtering is performed; all values herein will be sent to
+        clients. This means they need to be serializable e.g. plain
+        Python types, not objects.
         '''
         pass
 
     @abstractmethod
     def getTrackDataSpec(self):
         '''
-        Must be implemented by subclasses to provide a list of strings that are
-        the keys of the key/value pairs of track data to display.
+        Must be implemented by subclasses to provide a list of strings
+        that are the keys of the key/value pairs of track data to
+        display.
         '''
         pass
 
     @abstractmethod
     def getPollInterval(self):
         '''
-        Must be implemented by subclasses to specify the interval, in seconds, at
-        which self.getRaceState() will be called and the latest state published
-        to clients.
+        Must be implemented by subclasses to specify the interval, in
+        seconds, at which self.getRaceState() will be called and the
+        latest state published to clients.
         '''
         pass
 
     @abstractmethod
     def getExtraMessageGenerators(self):
         '''
-        Must be implemented by subclasses to provide a list of additional message
-        generators (subclasses of livetiming.messages.TimingMessage) to be used
-        when generating messages for this service.
+        Must be implemented by subclasses to provide a list of
+        additional message generators (subclasses of
+        `livetiming.messages.TimingMessage`) to be used when generating
+        messages for this service.
 
-        The default set of generators cannot be overridden; those generators
-        are written to be safe and silent in the event that their required data
-        is unavailable.
+        The default set of generators cannot be overridden; those
+        generators are written to be safe and silent in the event that
+        their required data is unavailable.
         '''
         pass
 
 
 class ManifestPublisher(object):
+    '''
+    Rate-limits calls to publishManifest to at most once per second.
+    '''
     def __init__(self):
         super().__init__()
         self._last_deferred = None
@@ -145,6 +171,11 @@ class ManifestPublisher(object):
 
 
 class DuePublisher(object):
+    '''
+    Disables auto_poll and instead will call _updateAndPublishRaceState
+    at most once per second and at least once every
+    max_publish_interval seconds.
+    '''
     auto_poll = False
     max_publish_interval = 60
 
@@ -154,6 +185,12 @@ class DuePublisher(object):
         self._last_publish_time = time.time()
 
     def set_due_publish(self):
+        '''
+        Set a flag indicating that new data is available to be published.
+
+        No matter how frequently this method is called, data will be
+        published according to the constraints set by this class.
+        '''
         self._due_publish = True
 
     def start(self):
@@ -172,8 +209,14 @@ class DuePublisher(object):
 
 
 class BaseService(AbstractService, ManifestPublisher):
+    '''
+    This class serves as the base class for all Service implementations.
+    It contains some sensible default implementations for some of the
+    AbstractService interface, as well as startup and state update
+    logic including message generation and calling the analysis
+    subsystem.
+    '''
     log = Logger()
-    auto_poll = True
 
     def __init__(self, args, extra_args={}):
         super().__init__()
@@ -202,6 +245,11 @@ class BaseService(AbstractService, ManifestPublisher):
         self.http_client = HTTPClient(client.Agent(reactor))
 
     def set_publish(self, func):
+        '''
+        Set the function used by this service to publish state.
+        This is called from ServiceSession when a connection is made
+        to the live timing network.
+        '''
         self._publish = func
 
     def publish(self, *args, **kwargs):
@@ -213,6 +261,15 @@ class BaseService(AbstractService, ManifestPublisher):
             return False
 
     def start(self):
+        '''
+        Creates an ServiceSession component for this service, connects
+        to the live timing network, and starts any looping calls
+        required to run the service.
+
+        This method calls autobahn.twisted.component#run and so will
+        block until the session terminates (usually as a result of an
+        interrupt or an error).
+        '''
         session_class = create_service_session(self)
 
         if self.auto_poll:
@@ -299,7 +356,7 @@ class BaseService(AbstractService, ManifestPublisher):
             "livetimingVersion": VERSION
         }
 
-        if hasattr(self, 'attribution'):
+        if self.attribution:
             manifest['source'] = self.attribution
         else:
             self.log.warn('No attribution specified for {service}', service=manifest['serviceClass'])
