@@ -9,6 +9,7 @@ from .version import VERSION
 import argparse
 import codecs
 import os
+import sys
 import txaio
 
 
@@ -16,7 +17,7 @@ configure_sentry_twisted()
 sentry()
 
 
-def parse_args():
+def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Run a Live Timing service.')
 
     parser.add_argument('service_class', help='Class name of service plugin to run; you may omit the prefix livetiming.service.plugins.')
@@ -30,7 +31,7 @@ def parse_args():
     parser.add_argument('-N', '--do-not-record', action='store_true', help='Tell the DVR not to keep the recording of this service')
     parser.add_argument('-m', '--masquerade', nargs='?', help='Masquerade as this service class')
 
-    return parser.parse_known_args()
+    return parser.parse_known_args(args)
 
 
 def get_class(kls):
