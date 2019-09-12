@@ -43,7 +43,6 @@ def plugin_source_paths():
 def get_plugin_source():
     plugin_base = PluginBase(package='livetiming.service.plugins')
     paths = list(map(lambda p: "{}/livetiming/service/plugins".format(p), plugin_source_paths()))
-    print(paths)
     plugin_source = plugin_base.make_plugin_source(
         searchpath=paths
     )
