@@ -12,14 +12,10 @@ setup(
     long_description="Live timing aggregator and web service for motorsport timing feeds.",
     install_requires=[
         "autobahn[serialization,twisted]>=17.6.2",
-        "beautifulsoup4",
         "dictdiffer",
         "google-api-python-client",
         "icalendar",
-        "kitchen",
-        "lxml",
         "lzstring==1.0.3",
-        "meteor-ejson",
         "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pluginbase",
         "pyopenssl",
@@ -28,9 +24,7 @@ setup(
         "python-twitter",
         "sentry-sdk",
         "service_identity",
-        "signalr-client",
         "simplejson",
-        "socketio-client",
         "subprocess32",
         "treq",
         "twisted"
