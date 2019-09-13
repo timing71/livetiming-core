@@ -70,12 +70,16 @@ def main():
             txaio.start_logging(out=logFile, level=level)
 
         logger = Logger()
-        logger.info("Live Timing Aggregator version {version}", version=VERSION)
 
         with plugin_source:
             module = plugin_source.load_plugin(args.service_class)
             service = module.Service(args, extra_args)
 
+            logger.info(
+                "Live Timing Aggregator version {core} (plugin version {plugin})",
+                core=VERSION,
+                plugin=service.getVersion()
+            )
             logger.info("Starting timing service {}...".format(args.service_class))
             service.start()
 

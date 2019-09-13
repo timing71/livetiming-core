@@ -147,6 +147,13 @@ class AbstractService(ABC):
         '''
         pass
 
+    @abstractmethod
+    def getVersion(self):
+        '''
+        Must be implemented by subclasses to provide a string version
+        number for the plugin.
+        '''
+
 
 class ManifestPublisher(object):
     '''
@@ -353,7 +360,10 @@ class BaseService(AbstractService, ManifestPublisher):
             "pollInterval": self.getPollInterval() or 1,
             "hasAnalysis": not self.args.disable_analysis,
             "hidden": self.args.hidden,
-            "livetimingVersion": VERSION
+            "version": {
+                'core': VERSION,
+                'plugin': self.getVersion()
+            }
         }
 
         if self.attribution:
