@@ -2,14 +2,19 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='livetiming',
-    description='Live timing aggregator for motorsport timing feeds',
+    name='livetiming-core',
+    description='Timing 71 live timing aggregator - core functionality',
     author='James Muscat',
     author_email='jamesremuscat@gmail.com',
     url='https://github.com/jamesremuscat/livetiming',
     packages=find_packages('src', exclude=["*.tests"]),
     package_dir={'': 'src'},
-    long_description="Live timing aggregator and web service for motorsport timing feeds.",
+    long_description='''
+    Core functionality for the Timing 71 live timing aggregator.
+
+    This is a framework for obtaining, processing, analysing and publishing
+    motorsport live timing data feeds from a variety of sources.
+    ''',
     install_requires=[
         "autobahn[serialization,twisted]>=17.6.2",
         "dictdiffer",
