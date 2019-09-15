@@ -172,9 +172,10 @@ class ManifestPublisher(object):
             )
 
     def _publish_manifest_actual(self):
-        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, self._createServiceRegistration()).serialise())
+        manifest = self._createServiceRegistration()
+        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, manifest).serialise())
         if self.recorder:
-            self.recorder.writeManifest(self._createServiceRegistration())
+            self.recorder.writeManifest(manifest)
 
 
 class DuePublisher(object):
@@ -380,9 +381,9 @@ class BaseService(AbstractService, ManifestPublisher):
         if self.args.masquerade:
             return self.args.masquerade
 
-        # Return the segment of the module path after livetiming.service.
-        # e.g. livetiming.service.[swisstiming].service
-        return self.__module__.split('.')[2]
+        # Return the final segment of the module path.
+        # e.g. pluginbase._internalspace._sp1bab772cdae6d12afa062a7e7632e890.timeservice_nl
+        return self.__module__.split('.')[-1]
 
     def _getDescription(self):
         if self.args.description is not None:
