@@ -3,6 +3,8 @@ from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 
+from .version import USER_AGENT
+
 import time
 
 
@@ -36,6 +38,11 @@ class Watchdog(object):
 class ReconnectingWebSocketClientFactory(WebSocketClientFactory, ReconnectingClientFactory):
     log = Logger()
     maxDelay = 30
+
+    def __init__(self, url, **kwargs):
+        if 'useragent' not in kwargs:
+            kwargs['useragent'] = USER_AGENT
+        super().__init__(url, **kwargs)
 
     def clientConnectionFailed(self, connector, reason):
         self.log.warn("Connection to upstream source failed! Reason: {reason}. Retrying...", reason=reason)
