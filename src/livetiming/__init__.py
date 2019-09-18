@@ -1,10 +1,10 @@
 from autobahn.twisted.component import Component
 from dotenv import load_dotenv, find_dotenv
 from livetiming.network import Realm
+from livetiming.version import VERSION, USER_AGENT
 from twisted.python import log
 
 import os
-import pkg_resources
 import sentry_sdk
 
 
@@ -24,7 +24,7 @@ def sentry():
     if not _sentry_configured:
         sentry_sdk.init(
             environment=os.getenv("LIVETIMING_ENVIRONMENT", "development"),
-            release=pkg_resources.get_distribution('livetiming').version,
+            release=VERSION,
         )
         _sentry_configured = True
 

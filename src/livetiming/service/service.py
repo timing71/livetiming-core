@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from autobahn.twisted.component import run
 from autobahn.wamp.types import PublishOptions
-from livetiming import make_component
+from livetiming import make_component, VERSION
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -18,7 +18,6 @@ from twisted.web import client
 from uuid import uuid4
 
 from .session import create_service_session
-from .version import VERSION
 
 import copy
 import os

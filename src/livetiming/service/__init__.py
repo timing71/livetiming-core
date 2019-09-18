@@ -1,4 +1,4 @@
-from livetiming import configure_sentry_twisted, load_env, sentry
+from livetiming import configure_sentry_twisted, load_env, sentry, VERSION
 from pluginbase import PluginBase
 from setuptools import find_namespace_packages
 from twisted.logger import Logger
@@ -6,7 +6,6 @@ from twisted.logger import Logger
 from .fetchers import Fetcher, JSONFetcher, MultiLineFetcher
 from .factories import Watchdog, ReconnectingWebSocketClientFactory
 from .service import AbstractService, BaseService, DuePublisher
-from .version import VERSION
 
 import argparse
 import codecs

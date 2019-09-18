@@ -1,9 +1,8 @@
 from autobahn.twisted.websocket import WebSocketClientFactory
+from livetiming import USER_AGENT
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
-
-from .version import USER_AGENT
 
 import time
 
