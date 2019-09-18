@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "definitions": {
+    "columnSpec": {
+      "type": "array",
+      "items": [
+        {
+          "title": "Column heading",
+          "examples": [
+            "Num",
+            "Class",
+            "Name"
+          ],
+          "type": "string"
+        },
+        {
+          "title": "Column type",
+          "examples": [
+            "text",
+            "numeric",
+            "delta",
+            "time"
+          ],
+          "type": "string"
+        },
+        {
+          "title": "Column description",
+          "examples": [
+            "Gap to leader",
+            "Push-to-pass remaining"
+          ],
+          "type": "string"
+        }
+      ],
+      "minItems": 2
+    }
+  },
+  "type": "object",
+  "title": "Common Timing Format: Service manifest",
+  "description": "Describes the type of session and available column data",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "colSpec": {
+      "title": "Column specification",
+      "description": "Specifies the meanings of per-car columnar data in state messages",
+      "type": "array",
+      "items": { "$ref": "#/definitions/columnSpec" }
+    },
+    "description": {
+      "title": "Service description",
+      "description": "Session or event name",
+      "examples": [
+        "SponsorDotNet Raceway 500",
+        "Free practice 1"
+      ],
+      "type": "string"
+    },
+    "name": {
+      "title": "Service name",
+      "description": "Name of the timing service or race series",
+      "examples": [
+        "Formula MinusOne",
+        "SuperExpensive Auto Bathurst 9000"
+      ],
+      "type": "string"
+    },
+    "trackDataSpec": {
+      "title": "Track data specification",
+      "description": "Headings for the track data supplied for this service",
+      "examples": [
+        "Track temp",
+        "Wind speed"
+      ],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "colSpec",
+    "description",
+    "name",
+    "trackDataSpec"
+  ]
+}
