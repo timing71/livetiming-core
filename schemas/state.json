@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "definitions": {
+    "carList": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/carStat"
+        },
+        "minItems": 1
+      }
+    },
+    "carStat": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "string"},
+        {"type": "number"},
+        {"$ref": "#/definitions/carStatTuple"}
+      ]
+    },
+    "carStatTuple": {
+      "type": "array",
+      "additionalItems": false,
+      "items": [
+        {
+          "title": "data",
+          "type": ["string", "number"]
+        },
+        {
+          "title": "meta",
+          "type": "string"
+        }
+      ]
+    },
+    "session": {
+      "title": "Session",
+      "description": "Data relating to the session as a whole, rather than any individual participant",
+      "type": "object",
+      "properties": {
+        "flagState": {
+          "title": "Flag state",
+          "type": "string"
+        },
+        "lapsRemain": {
+          "title": "Laps remaining",
+          "type": "number"
+        },
+        "timeElapsed": {
+          "title": "Time elapsed",
+          "type": "number"
+        },
+        "timeRemain": {
+          "title": "Time remaining",
+          "type": "number"
+        },
+        "trackData": {
+          "type": "array"
+        }
+      }
+    },
+    "message": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 5,
+      "items": [
+        {
+          "title": "timestamp",
+          "type": "number"
+        },
+        {
+          "title": "category",
+          "type": "string"
+        },
+        {
+          "title": "message",
+          "type": "string"
+        },
+        {
+          "title": "message",
+          "type": "string"
+        },
+        {
+          "title": "carNumber",
+          "$ref": "#/definitions/carNumber"
+        }
+      ]
+    },
+    "carNumber": {
+      "type": ["string", "number"]
+    }
+  },
+  "type": "object",
+  "title": "Common Timing Format: State message",
+  "description": "Message describing the current state of a session",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "cars": {
+      "$ref": "#/definitions/carList"
+    },
+    "session": {
+      "$ref": "#/definitions/session"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/message"
+      }
+    },
+    "highlight": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/carNumber"
+      }
+    }
+  },
+  "required": [
+    "cars",
+    "session",
+    "messages"
+  ]
+}
