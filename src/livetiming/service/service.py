@@ -361,7 +361,7 @@ class BaseService(AbstractService, ManifestPublisher):
             "pollInterval": self.getPollInterval() or 1,
             "hasAnalysis": not self.args.disable_analysis,
             "hidden": self.args.hidden,
-            "version": {
+            "livetimingVersion": {
                 'core': VERSION,
                 'plugin': self.getVersion()
             }
