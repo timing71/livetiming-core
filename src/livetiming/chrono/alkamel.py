@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from livetiming.chrono import DriverChangeEvent, LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
 from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
 from livetiming.racing import Stat
-from livetiming.service.wec import parseTime
 
 import calendar
 import csv
@@ -28,6 +27,27 @@ COLSPEC = [
     Stat.BEST_LAP,
     Stat.PITS
 ]
+
+
+def parseTime(formattedTime):
+    if formattedTime == "" or formattedTime is None:
+        return 0
+    try:
+        return float(formattedTime)
+    except ValueError:
+        try:
+            ttime = datetime.strptime(formattedTime, "%M:%S.%f")
+            return (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+        except ValueError:
+            try:
+                ttime = datetime.strptime(formattedTime, "%H:%M:%S.%f")
+                return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+            except ValueError:
+                try:
+                    ttime = datetime.strptime(formattedTime, "%M'%S.%f")
+                    return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
+                except:
+                    return formattedTime
 
 
 def _parseFlags(flag):
