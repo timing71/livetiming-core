@@ -2,9 +2,9 @@ import datetime
 import os
 import re
 
-from livetiming.schedule import create_event, get_events
-from livetiming.schedule.datetime_z import parse_datetime
-from livetiming.scheduler import EVT_SERVICE_REGEX
+from livetiming.orchestration.schedule import create_event, get_events
+from livetiming.orchestration.schedule.datetime_z import parse_datetime
+from livetiming.orchestration.scheduler import EVT_SERVICE_REGEX
 
 DEFAULT_CALENDAR_URL = os.environ.get(
     'CALENDAR_SOURCE_URL',

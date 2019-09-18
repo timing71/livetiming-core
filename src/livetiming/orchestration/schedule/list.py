@@ -1,4 +1,4 @@
-from livetiming.schedule import get_events
+from livetiming.orchestration.schedule import get_events
 
 
 def run(service, _):

@@ -2,7 +2,8 @@ from autobahn.twisted.component import run
 from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp.types import PublishOptions
 from collections import defaultdict
-from livetiming import servicemanager, load_env, sentry, make_component
+from livetiming import load_env, sentry, make_component
+from livetiming.orchestration import servicemanager
 from livetiming.network import Realm, RPC, Channel, Message, MessageClass, authenticatedService
 from threading import Lock
 from twisted.internet import reactor, task
@@ -14,7 +15,7 @@ import icalendar
 import re
 import os
 import pytz
-import urllib.request, urllib.error, urllib.parse
+import urllib
 import sentry_sdk
 import time
 import twitter

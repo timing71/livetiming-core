@@ -1,5 +1,5 @@
 from livetiming import load_env
-from livetiming.schedule import get_gcal_service
+from livetiming.orchestration.schedule import get_gcal_service
 
 import argparse
 import importlib
@@ -21,7 +21,7 @@ def main():
     subparsers = parser.add_subparsers()
 
     for cmd in COMMANDS:
-        mod = importlib.import_module('livetiming.schedule.{}'.format(cmd))
+        mod = importlib.import_module('livetiming.orchestration.schedule.{}'.format(cmd))
         if hasattr(mod, 'run') and callable(getattr(mod, 'run')):
             mod_parser = subparsers.add_parser(cmd)
             mod_parser.set_defaults(func=getattr(mod, 'run'))

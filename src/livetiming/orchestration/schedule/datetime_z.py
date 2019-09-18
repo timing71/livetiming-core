@@ -1,3 +1,34 @@
+# Taken from https://docs.djangoproject.com/en/2.2/_modules/django/utils/dateparse/
+# Subject to the following license:
+#
+# Copyright (c) Django Software Foundation and individual contributors.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#    2. Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#    3. Neither the name of Django nor the names of its contributors may be used
+#       to endorse or promote products derived from this software without
+#       specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """Functions to parse datetime objects."""
 
 # We're using regular expressions rather than time.strptime because:
@@ -163,12 +194,6 @@ def parse_datetime(value):
 
     Raise ValueError if the input is well formatted but not a valid datetime.
     Return None if the input isn't well formatted.
-
-    >>> from datetime_z import parse_datetime
-    >>> parse_datetime('2013-07-23T15:10:59.342107+01:00')
-    datetime.datetime(2013, 7, 23, 15, 10, 59, 342107, tzinfo=+0100)
-    >>> parse_datetime('2013-07-23T15:10:59.34210Z')
-    datetime.datetime(2013, 7, 23, 15, 10, 59, 342100, tzinfo=UTC)
     """
     match = datetime_re.match(value)
     if match:
@@ -212,8 +237,3 @@ def parse_duration(value):
             kw['microseconds'] = '-' + kw['microseconds']
         kw = {k: float(v) for k, v in list(kw.items()) if v is not None}
         return days + sign * datetime.timedelta(**kw)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
