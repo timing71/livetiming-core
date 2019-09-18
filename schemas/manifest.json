@@ -32,13 +32,41 @@
           "type": "string"
         }
       ],
-      "minItems": 2
+      "minItems": 2,
+      "additionalItems": false
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": [
+            {
+              "title": "Source name",
+              "description": "Name of original data source",
+              "examples": [
+                "TimeCamel Ltd"
+              ],
+              "type": "string"
+            },
+            {
+              "title": "Source URL",
+              "description": "URL to website of original data source",
+              "type": "string"
+            }
+          ],
+          "minItems": 2,
+          "additionalItems": false
+        }
+      ]
     }
   },
   "type": "object",
   "title": "Common Timing Format: Service manifest",
-  "description": "Describes the type of session and available column data",
-  "additionalProperties": false,
+  "description": "Describes the type of session and available column data, and may carry additional metadata as required by implementations.",
+  "additionalProperties": true,
   "properties": {
     "$schema": {
       "type": "string"
@@ -66,6 +94,9 @@
         "SuperExpensive Auto Bathurst 9000"
       ],
       "type": "string"
+    },
+    "source": {
+      "$ref": "#/definitions/source"
     },
     "trackDataSpec": {
       "title": "Track data specification",
