@@ -8,6 +8,9 @@ import os
 import sentry_sdk
 
 
+ENVIRONMENT = os.getenv("LIVETIMING_ENVIRONMENT", "development")
+
+
 def load_env():
     try:
         maybe_dotenv = find_dotenv("livetiming.env", raise_error_if_not_found=True, usecwd=True)
@@ -23,7 +26,7 @@ def sentry():
     global _sentry_configured
     if not _sentry_configured:
         sentry_sdk.init(
-            environment=os.getenv("LIVETIMING_ENVIRONMENT", "development"),
+            environment=ENVIRONMENT,
             release=VERSION,
         )
         _sentry_configured = True
