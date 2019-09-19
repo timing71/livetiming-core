@@ -19,9 +19,9 @@ setup(
     install_requires=[
         "autobahn[serialization,twisted]>=17.6.2",
         "dictdiffer",
-        "fastjsonschema",
         "google-api-python-client",
         "icalendar",
+        "jsonschema",
         "lzstring==1.0.3",
         "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pluginbase",

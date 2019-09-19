@@ -1,8 +1,9 @@
 from autobahn.wamp import auth
 from enum import Enum
+from jsonschema import ValidationError
+from jsonschema.validators import validator_for
 from twisted.logger import Logger
 
-import fastjsonschema
 import os
 import simplejson
 import time
@@ -59,7 +60,9 @@ def make_validator(schema_name):
     schema_file = os.path.join(VALIDATOR_PATH, schema_name)
     with open(schema_file, 'r') as sf:
         schema = simplejson.load(sf)
-        return fastjsonschema.compile(schema)
+        validator_class = validator_for(schema)
+        validator_class.check_schema(schema)
+        return validator_class(schema)
 
 
 VALIDATORS = {
@@ -90,9 +93,9 @@ class Message(object):
         validator = VALIDATORS.get(self.msgClass)
         if validator:
             try:
-                validator(simplejson.loads(simplejson.dumps(self.payload)))
+                validator.validate(simplejson.loads(simplejson.dumps(self.payload)))
                 _LOG.debug('Message type {msgtype} passed schema validation', msgtype=self.msgClass.name)
-            except fastjsonschema.JsonSchemaException as e:
+            except ValidationError as e:
                 _LOG.error('Message type {msgtype} failed validation: {e}', msgtype=self.msgClass.name, e=e)
                 raise e
 
