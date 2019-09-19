@@ -15,9 +15,11 @@ setup(
     This is a framework for obtaining, processing, analysing and publishing
     motorsport live timing data feeds from a variety of sources.
     ''',
+    include_package_data=True,
     install_requires=[
         "autobahn[serialization,twisted]>=17.6.2",
         "dictdiffer",
+        "fastjsonschema",
         "google-api-python-client",
         "icalendar",
         "lzstring==1.0.3",

@@ -1,8 +1,14 @@
 from autobahn.wamp import auth
 from enum import Enum
+from twisted.logger import Logger
 
+import fastjsonschema
 import os
+import simplejson
 import time
+
+
+_LOG = Logger()
 
 
 class Realm:
@@ -46,6 +52,22 @@ class MessageClass(Enum):
     RECORDING_LISTING = 10
 
 
+VALIDATOR_PATH = os.path.join(os.path.relpath(os.path.dirname(__file__)), 'schemas/')
+
+
+def make_validator(schema_name):
+    schema_file = os.path.join(VALIDATOR_PATH, schema_name)
+    with open(schema_file, 'r') as sf:
+        schema = simplejson.load(sf)
+        return fastjsonschema.compile(schema)
+
+
+VALIDATORS = {
+    MessageClass.SERVICE_DATA: make_validator('state.json'),
+    MessageClass.SERVICE_REGISTRATION: make_validator('manifest.json')
+}
+
+
 class Message(object):
 
     def __init__(self, msgClass, payload=None, date=None, retain=False):
@@ -63,6 +85,16 @@ class Message(object):
         if self.retain:
             msg['retain'] = True
         return msg
+
+    def validate(self):
+        validator = VALIDATORS.get(self.msgClass)
+        if validator:
+            try:
+                validator(simplejson.loads(simplejson.dumps(self.payload)))
+                _LOG.debug('Message type {msgtype} passed schema validation', msgtype=self.msgClass.name)
+            except fastjsonschema.JsonSchemaException as e:
+                _LOG.error('Message type {msgtype} failed validation: {e}', msgtype=self.msgClass.name, e=e)
+                raise e
 
     @staticmethod
     def parse(rawMsg):

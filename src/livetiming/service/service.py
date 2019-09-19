@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from autobahn.twisted.component import run
 from autobahn.wamp.types import PublishOptions
-from livetiming import make_component, VERSION
+from livetiming import make_component, VERSION, ENVIRONMENT
 from livetiming.analysis import Analyser
 from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
@@ -172,7 +172,10 @@ class ManifestPublisher(object):
 
     def _publish_manifest_actual(self):
         manifest = self._createServiceRegistration()
-        self.publish(Channel.CONTROL, Message(MessageClass.SERVICE_REGISTRATION, manifest).serialise())
+        msg = Message(MessageClass.SERVICE_REGISTRATION, manifest)
+        if ENVIRONMENT == 'development':
+            msg.validate()
+        self.publish(Channel.CONTROL, msg.serialise())
         if self.recorder:
             self.recorder.writeManifest(manifest)
 
@@ -414,11 +417,20 @@ class BaseService(AbstractService, ManifestPublisher):
     def _updateAndPublishRaceState(self):
         self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
         self._updateRaceState()
+
+        state_string = simplejson.dumps(self.state)
+        if ENVIRONMENT == 'development':
+            dummy_message = Message(
+                MessageClass.SERVICE_DATA,
+                simplejson.loads(state_string)
+            )
+            dummy_message.validate()
+
         self.publish(
             RPC.STATE_PUBLISH.format(self.uuid),
             Message(
                 MessageClass.SERVICE_DATA_COMPRESSED,
-                LZString().compressToUTF16(simplejson.dumps(self.state)),
+                LZString().compressToUTF16(state_string),
                 retain=True
             ).serialise(),
             options=PublishOptions(retain=True)
