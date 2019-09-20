@@ -97,6 +97,7 @@ class Message(object):
                 _LOG.debug('Message type {msgtype} passed schema validation', msgtype=self.msgClass.name)
             except ValidationError as e:
                 _LOG.error('Message type {msgtype} failed validation: {e}', msgtype=self.msgClass.name, e=e)
+                print(self.payload)
                 raise e
 
     @staticmethod
