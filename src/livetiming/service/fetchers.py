@@ -66,7 +66,7 @@ def JSONFetcher(url, callback, interval):
         try:
             parsed_data = simplejson.loads(data)
             callback(parsed_data)
-        except simplejson.dumpJSONDecodeError:
+        except simplejson.JSONDecodeError:
             Logger().failure("Error parsing JSON from source {url}: {log_failure}. Full source was {source}", url=url, source=data)
     return Fetcher(url, parse_then_callback, interval)
 
