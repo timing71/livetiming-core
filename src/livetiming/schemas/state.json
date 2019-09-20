@@ -77,8 +77,11 @@
           "type": "string"
         },
         {
-          "title": "message",
-          "type": "string"
+          "title": "displayClass",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         {
           "title": "carNumber",
