@@ -235,7 +235,7 @@ class Scheduler(object):
                     self._start_service(job.uid, job.service, job.serviceArgs)
                     self._tweeter.tweet_event_starting(job)
                     hasChanged = True
-                except Exception:
+                except Exception as e:
                     self.log.failure("Exception while starting job: {log_failure}")
                     sentry_sdk.capture_exception(e)
 
