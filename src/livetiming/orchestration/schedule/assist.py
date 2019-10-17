@@ -2,7 +2,7 @@ import datetime
 import os
 import re
 
-from livetiming.orchestration.schedule import create_event, get_events
+from livetiming.orchestration.schedule import create_event, get_events, update_event
 from livetiming.orchestration.schedule.datetime_z import parse_datetime
 from livetiming.orchestration.scheduler import EVT_SERVICE_REGEX
 
@@ -87,12 +87,40 @@ def run(service, args):
     def already_scheduled(event):
         for scheduled_event in scheduled:
             if event['id'] == scheduled_event['correlationId']:
-                return True
+                return scheduled_event
             if event['service'] == scheduled_event['service']:
                 if event['start'] == scheduled_event['start']:
                     if event['end'] == scheduled_event['end']:
-                        return True
+                        return scheduled_event
         return False
+
+    def maybe_update_event(event, scheduled):
+        if event['updated'] > scheduled['updated']:
+            if not args.dry_run:
+                update_event(
+                    service,
+                    {
+                        'id': scheduled['id'],
+                        'start': {
+                            'dateTime': event['start'].strftime("%Y-%m-%dT%H:%M:%S%z")
+                        },
+                        'end': {
+                            'dateTime': event['end'].strftime("%Y-%m-%dT%H:%M:%S%z")
+                        },
+                        'summary': scheduled['summary'],
+                        'description': 'Automatically updated by livetiming-schedule assist',
+                        'extendedProperties': {
+                            'private': {
+                                'correlationId': scheduled['correlationId']
+                            }
+                        }
+                    }
+                )
+                print('Updated: {}'.format(event['summary']))
+            else:
+                print('Needs update: {}'.format(event['summary']))
+        else:
+            print("Already scheduled: {}".format(event['summary']))
 
     for e in upcoming:
         if 'dateTime' not in e['start']:
@@ -100,12 +128,14 @@ def run(service, args):
         else:
             event = _parse_event(e)
 
+            already_scheduled_event = already_scheduled(event)
+
             if not event['service']:
                 print("Skipping event with no associated service: {}".format(e['summary']))
             elif event['summary'].endswith('Event'):
                 print("Skipping event without session time: {}".format(e['summary']))
-            elif already_scheduled(event):
-                print("Already scheduled: {}".format(e['summary']))
+            elif already_scheduled_event:
+                maybe_update_event(event, already_scheduled_event)
             else:
                 print("New event: {} ({} - {})".format(event['summary'], event['start'], event['end']))
 
@@ -150,19 +180,22 @@ def _parse_event(event):
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),
         'id': event['id'],
-        'tag': tag
+        'tag': tag,
+        'updated': parse_datetime(event['updated'])
     }
 
 
 def _parse_scheduled_event(event):
-    parsed = EVT_SERVICE_REGEX.match(event['summary'])
+    parsed = EVT_SERVICE_REGEX.match(event.get('summary', ''))
 
     return {
+        'id': event['id'],
         'summary': parsed.group('name'),
         'service': parsed.group('service'),
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),
-        'correlationId': event.get('extendedProperties', {}).get('private', {}).get('correlationId')
+        'correlationId': event.get('extendedProperties', {}).get('private', {}).get('correlationId'),
+        'updated': parse_datetime(event['updated'])
     }
 
 

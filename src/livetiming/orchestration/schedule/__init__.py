@@ -65,3 +65,11 @@ def create_event(service, event_body):
         calendarId=os.environ['LIVETIMING_CALENDAR_ID'],
         body=event_body
     ).execute()
+
+
+def update_event(service, event_body):
+    service.events().update(
+        calendarId=os.environ['LIVETIMING_CALENDAR_ID'],
+        eventId=event_body['id'],
+        body=event_body
+    ).execute()
