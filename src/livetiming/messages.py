@@ -127,19 +127,24 @@ class CarPitMessage(PerCarMessage):
         driver = self.getValue(newCar, Stat.DRIVER)
         clazz = self.getValue(newCar, Stat.CLASS, "Pits")
 
+        if driver:
+            car_num_and_driver = "#{} ({})".format(carNum, driver)
+        else:
+            car_num_and_driver = "#{}".format(carNum)
+
         if oldStatus != newStatus and carNum is not None:
             if (oldStatus != 'RUN' and newStatus == "OUT") or (newStatus == "RUN" and oldStatus == "PIT"):
-                return [clazz, "#{} ({}) has left the pits".format(carNum, driver), "out"]
+                return [clazz, "{} has left the pits".format(car_num_and_driver), "out"]
             elif newStatus == "PIT":
-                return [clazz, "#{} ({}) has entered the pits".format(carNum, driver), "pit"]
+                return [clazz, "{} has entered the pits".format(car_num_and_driver), "pit"]
             elif newStatus == "FUEL":
-                return [clazz, "#{} ({}) has entered the fuelling area".format(carNum, driver), "pit"]
+                return [clazz, "{} has entered the fuelling area".format(car_num_and_driver), "pit"]
             elif newStatus == "RET":
-                return [clazz, "#{} ({}) has retired".format(carNum, driver), ""]
+                return [clazz, "{} has retired".format(car_num_and_driver), ""]
             elif newStatus == 'STOP':
-                return [clazz, "#{} ({}) is running slowly or stopped".format(carNum, driver), ""]
+                return [clazz, "{} is running slowly or stopped".format(car_num_and_driver), ""]
             elif oldStatus == 'STOP' and newStatus == 'RUN':
-                return [clazz, "#{} ({}) has resumed".format(carNum, driver), ""]
+                return [clazz, "{} has resumed".format(car_num_and_driver), ""]
 
 
 # Emits a message if the driver of a car changes.
@@ -150,10 +155,12 @@ class DriverChangeMessage(PerCarMessage):
         newDriver = self.getValue(newCar, Stat.DRIVER)
         carNum = self.getValue(newCar, Stat.NUM)
         if oldDriver != newDriver and carNum is not None:
-            if oldDriver == "":
+            if not oldDriver:
                 return [self.getValue(newCar, Stat.CLASS, "Pits"), "#{} Driver change (to {})".format(carNum, newDriver), None]
-            elif newDriver != "":
+            elif newDriver:
                 return [self.getValue(newCar, Stat.CLASS, "Pits"), "#{} Driver change ({} to {})".format(carNum, oldDriver, newDriver), None]
+            else:
+                return [self.getValue(newCar, Stat.CLASS, "Pits"), "#{} Driver change (from {} to nobody)".format(carNum, oldDriver), None]
 
 
 # Emits a message if a car sets a personal or overall best.
@@ -170,11 +177,15 @@ class FastLapMessage(PerCarMessage):
             newFlags = newTime[1]
 
             if (newTime[0] or 0) > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
+                if driver:
+                    car_num_and_driver = "#{} ({})".format(carNum, driver)
+                else:
+                    car_num_and_driver = "#{}".format(carNum)
                 try:
                     if newFlags == "pb" and (oldFlags == "" or newTime[0] < oldTime[0]):
-                        return [clazz, "#{} ({}) set a new personal best: {}".format(carNum, driver, formatTime(newTime[0])), "pb"]
+                        return [clazz, "{} set a new personal best: {}".format(car_num_and_driver, formatTime(newTime[0])), "pb"]
                     elif newFlags == "sb-new":
-                        return [clazz, "#{} ({}) set a new overall best: {}".format(carNum, driver, formatTime(newTime[0])), "sb"]
+                        return [clazz, "{} set a new overall best: {}".format(car_num_and_driver, formatTime(newTime[0])), "sb"]
                 except TypeError:
                     return None
 
