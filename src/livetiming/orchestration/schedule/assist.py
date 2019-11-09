@@ -140,7 +140,7 @@ def run(service, args):
                 print("New event: {} ({} - {})".format(event['summary'], event['start'], event['end']))
 
                 try:
-                    default_args = _get_default_args(event['tag'], args)
+                    default_args = _get_default_args(event, args)
 
                     event_body = {
                         'summary': "{} [{}{}]".format(
@@ -210,7 +210,8 @@ class NoArgumentSupplied(Exception):
 _ARG_TEMPLATE_CACHE = {}
 
 
-def _get_default_args(tag, my_args):
+def _get_default_args(event, my_args):
+    tag = event['tag']
     if tag in _DEFAULT_ARGS:
         default_template = _DEFAULT_ARGS[tag]
 
@@ -232,6 +233,9 @@ def _get_default_args(tag, my_args):
                     return default_template.replace('?', value)
 
             raise NoArgumentSupplied()
+
+        if tag == 'WEC' and 'Qualifying' in event['summary']:
+            return "{} --qualifying".format(default_template)
 
         return default_template
     return ''
