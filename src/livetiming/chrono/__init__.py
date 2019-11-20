@@ -46,8 +46,8 @@ class LaptimeEvent(Event):
         if self._get_field(car, Stat.STATE) in ['N/S', 'OUT']:
             self._set_field(car, Stat.STATE, 'RUN')
 
-        if not prev_best or not prev_best[0] or self._lap_time < prev_best[0]:
-            self._set_field(car, Stat.BEST_LAP, (self._lap_time, 'old'))
+        if not prev_best or isinstance(prev_best[0], str) or self._lap_time < prev_best[0]:
+            self._set_field(car, Stat.BEST_LAP, (self._lap_time, 'pb'))
             self._set_field(car, Stat.LAST_LAP, (self._lap_time, 'pb'))
 
         car[-1][0] = self.timestamp

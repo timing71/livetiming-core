@@ -1,5 +1,4 @@
-from livetiming.chrono import alkamel
-from livetiming.chrono import DriverChangeEvent
+from livetiming.chrono import alkamel, tsl
 from livetiming_orchestration.dvr import DirectoryTimingRecorder
 from livetiming.racing import Stat
 
@@ -8,7 +7,8 @@ import sys
 import uuid
 
 _FORMATS = {
-    'alkamel': alkamel
+    'alkamel': alkamel,
+    'tsl': tsl
 }
 
 
@@ -51,7 +51,7 @@ def main():
         'cars': args.sort_cars(args, list(car_state.values())),
         'session': {
             'timeElapsed': 0,
-            'timeRemain': args.duration or None,
+            'timeRemain': args.duration if hasattr(args, 'duration') else None,
             'flagState': 'green'
         },
         'messages': []
@@ -90,7 +90,7 @@ def main():
             'cars': args.sort_cars(args, list(car_state.values())),
             'session': {
                 'timeElapsed': elapsed,
-                'timeRemain': int(args.duration) - elapsed,
+                'timeRemain': int(args.duration) - elapsed if hasattr(args, 'duration') else None,
                 'flagState': 'green'
             },
             'messages': state['messages']
@@ -106,7 +106,8 @@ def main():
         state = new_state
 
     print('')
-    recorder.writeState(state, int(events[-1].timestamp))
+    if events:
+        recorder.writeState(state, int(events[-1].timestamp))
     of = recorder.finalise()
     print("Created {} (UUID {})".format(of, my_uuid))
 
