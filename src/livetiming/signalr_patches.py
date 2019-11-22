@@ -14,9 +14,9 @@ def patch_hub_add_invoke_then():
         def then(func):
             def onServerResponse(**kwargs):
                 if 'I' in kwargs and int(kwargs['I']) == send_counter:
-                        if 'R' in kwargs:
-                            func(kwargs['R'])
-                        return False
+                    if 'R' in kwargs:
+                        func(kwargs['R'])
+                    return False
             self._HubServer__connection.received += onServerResponse
 
             self._HubServer__connection.send({
