@@ -4,16 +4,36 @@ import copy
 
 
 class Event(object):
-    def __init__(self, timestamp, colspec, race_num):
+    def __init__(self, timestamp):
         self.timestamp = timestamp
+
+    def __call__(self, state):
+        '''
+        Extension point: subclasses should implement this method to return
+        a new state object with the relevant changes applied.
+        '''
+        pass
+
+
+class FlagEvent(Event):
+    def __init__(self, timestamp, flagState):
+        super().__init__(timestamp)
+        self.flagState = flagState
+
+    def __call__(self, state):
+        new_state = copy.deepcopy(state)
+        new_state['session']['flagState'] = self.flagState
+        return new_state
+
+
+class CarEvent(Event):
+    def __init__(self, timestamp, colspec, race_num):
+        super().__init__(timestamp)
         self._colspec = colspec
         self._race_num = race_num
 
-    def __call__(self, state):
-        pass
-
     def _get_car(self, state):
-        return copy.copy(state[self._race_num])
+        return copy.copy(state['cars'][self._race_num])
 
     def _get_field(self, car, field):
         if field in self._colspec:
@@ -26,11 +46,11 @@ class Event(object):
 
     def _updated_state(self, state, car):
         new_state = copy.deepcopy(state)
-        new_state.update({self._race_num: car})
+        new_state['cars'].update({self._race_num: car})
         return new_state
 
 
-class LaptimeEvent(Event):
+class LaptimeEvent(CarEvent):
     def __init__(self, timestamp, colspec, race_num, lap_time, flags):
         super(LaptimeEvent, self).__init__(timestamp, colspec, race_num)
         self._lap_time = lap_time
@@ -63,7 +83,7 @@ _sector_by_num = {
 }
 
 
-class SectorEvent(Event):
+class SectorEvent(CarEvent):
     def __init__(self, timestamp, colspec, race_num, sector_num, sector_time, flag):
         super(SectorEvent, self).__init__(timestamp, colspec, race_num)
         self._sector_num = sector_num
@@ -103,7 +123,7 @@ class SectorEvent(Event):
         return self._updated_state(state, car)
 
 
-class PitInEvent(Event):
+class PitInEvent(CarEvent):
     def __call__(self, state):
         car = self._get_car(state)
         self._set_field(car, Stat.STATE, "PIT")
@@ -115,7 +135,7 @@ class PitInEvent(Event):
         return self._updated_state(state, car)
 
 
-class PitOutEvent(Event):
+class PitOutEvent(CarEvent):
     def __call__(self, state):
         car = self._get_car(state)
         self._set_field(car, Stat.STATE, "OUT")
@@ -123,7 +143,7 @@ class PitOutEvent(Event):
         return self._updated_state(state, car)
 
 
-class DriverChangeEvent(Event):
+class DriverChangeEvent(CarEvent):
     def __init__(self, timestamp, colspec, race_num, driver):
         super(DriverChangeEvent, self).__init__(timestamp, colspec, race_num)
         self.driver = driver

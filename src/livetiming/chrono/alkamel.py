@@ -171,13 +171,18 @@ def create_events(args):
 
 
 def create_initial_state(args, extra):
-    state = {}
-    with open(args.chronological_analysis, 'r') as csvfile:
+    state = {
+        'cars': {},
+        'session': {
+            'flagState': 'none'
+        }
+    }
+    with open(args.chronological_analysis, 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
-            race_num = row['\ufeffNUMBER']
-            if race_num not in state:
-                state[race_num] = [
+            race_num = row['\xef\xbb\xbfNUMBER']
+            if race_num not in state['cars']:
+                state['cars'][race_num] = [
                     race_num,
                     'N/S',
                     row.get('CLASS', ''),

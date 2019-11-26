@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from livetiming.chrono import DriverChangeEvent, LaptimeEvent, PitInEvent, PitOutEvent
-from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
-from livetiming.racing import Stat
+from livetiming.chrono import DriverChangeEvent, FlagEvent, LaptimeEvent, PitInEvent, PitOutEvent
+from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage, FlagChangeMessage
+from livetiming.racing import Stat, FlagStatus
 
 import calendar
 import csv
@@ -57,6 +57,7 @@ def _parse_time(formattedTime):
 def generate_parser_args(parser):
     parser.add_argument('--input', '-i', help='Input CSV file', required=True)
     parser.add_argument('--start-date', '-s', help='Date at start of session', required=True)
+    parser.add_argument('--flags', help='CSV file with flag state changes')
 
 
 def get_start_time(args):
@@ -87,13 +88,18 @@ def get_duration(args):
 
 
 def create_initial_state(args, extras):
-    state = {}
+    state = {
+        'cars': {},
+        'session': {
+            'flagState': 'none'
+        }
+    }
     with open(args.input, 'r', newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         for row in reader:
             race_num = row['nr']
-            if race_num not in state:
-                state[race_num] = [
+            if race_num not in state['cars']:
+                state['cars'][race_num] = [
                     race_num,
                     'N/S',
                     row['class'],
@@ -167,7 +173,7 @@ def create_events(args):
 
                 if prev_race_num == race_num:
                     old_driver = prev_row['driver_name']
-                    new_driver = prev_row['driver_name']
+                    new_driver = row['driver_name']
                     if new_driver != old_driver:
                         events.append(
                             DriverChangeEvent(
@@ -181,16 +187,39 @@ def create_events(args):
             prev_race_num = race_num
             prev_row = row
 
+    if args.flags:
+        with open(args.flags, 'r', newline='', encoding='utf-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',')
+            for row in reader:
+                events.append(
+                    FlagEvent(
+                        make_datestamp(_parse_clock_time(row['TIME OF DAY'])),
+                        _FLAG_MAP.get(row['TYPE'], FlagStatus.NONE).name.lower()
+                    )
+                )
+
     return events
 
 
+_FLAG_MAP = {
+    'GREEN': FlagStatus.GREEN,
+    'SAFETY': FlagStatus.SC,
+    'FINISH': FlagStatus.CHEQUERED
+}
+
+
 def sort_cars(args, cars):
-    return cars
+    return sorted(
+        cars,
+        key=lambda c: [c[5], c[-1][0]],
+        reverse=True
+    )
 
 
 def message_generators():
     return [
         FastLapMessage(COLSPEC),
         CarPitMessage(COLSPEC),
-        DriverChangeMessage(COLSPEC)
+        DriverChangeMessage(COLSPEC),
+        FlagChangeMessage()
     ]

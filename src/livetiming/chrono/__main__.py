@@ -32,6 +32,9 @@ def _parse_args():
     parser.add_argument('--description', '-d', help='Session description', default='Converted chrono dump')
     parser.add_argument('--name', '-n', help='Session name', default='Converted')
 
+    parser.add_argument('--name', help='Service name', default='Conversion')
+    parser.add_argument('--description', help='Event description', default='Converted chrono dump')
+
     return parser.parse_args()
 
 
@@ -46,16 +49,12 @@ def main():
 
     message_generators = args.message_generators()
 
-    car_state = initial_state
-    state = {
-        'cars': args.sort_cars(args, list(car_state.values())),
-        'session': {
-            'timeElapsed': 0,
-            'timeRemain': args.duration if hasattr(args, 'duration') else None,
-            'flagState': 'green'
-        },
-        'messages': []
-    }
+    working_state = initial_state
+
+    state = derive_state_from_working(args, working_state, {})
+
+    if hasattr(args, 'duration'):
+        state['session']['timeRemain'] = args.duration
 
     recorder = DirectoryTimingRecorder(args.output)
     my_uuid = uuid.uuid4().hex
@@ -82,19 +81,14 @@ def main():
         sys.stdout.flush()
 
         evt_time = evt.timestamp
-        car_state = evt(car_state)
+        working_state = evt(working_state)
 
         elapsed = evt_time - session_start_time
 
-        new_state = {
-            'cars': args.sort_cars(args, list(car_state.values())),
-            'session': {
-                'timeElapsed': elapsed,
-                'timeRemain': int(args.duration) - elapsed if hasattr(args, 'duration') else None,
-                'flagState': 'green'
-            },
-            'messages': state['messages']
-        }
+        new_state = derive_state_from_working(args, working_state, state)
+
+        if hasattr(args, 'duration'):
+            new_state['session']['timeRemain'] = int(args.duration) - elapsed
 
         new_state['messages'] = _generate_messages(message_generators, evt_time, state, new_state)
 
@@ -112,10 +106,20 @@ def main():
     print("Created {} (UUID {})".format(of, my_uuid))
 
 
+def derive_state_from_working(args, working_state, prev_state):
+    return {
+        'cars': args.sort_cars(args, list(working_state['cars'].values())),
+        'session': working_state['session'],
+        'messages': prev_state.get('messages', [])
+    }
+
+
 def if_positive(val, otherwise=''):
     try:
         if val >= 0:
             return val
+        else:
+            return otherwise
     except TypeError:
         if val != '':
             return val
@@ -158,8 +162,10 @@ def _gap_between(first, first_laps, second, second_laps):
         first_cur_sector = first_passing[-1]
         second_cur_sector = second_passing[-1]
 
-        if laps_diff == 0 or first_cur_sector < second_cur_sector:
+        if first_cur_sector < second_cur_sector:
             return second_passing[second_cur_sector] - first_passing[second_cur_sector]
+        elif laps_diff == 0:
+            return first_passing[0] - second_passing[0]
         else:
             return '1 lap'
 
