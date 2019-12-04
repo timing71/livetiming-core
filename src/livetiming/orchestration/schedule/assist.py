@@ -107,7 +107,7 @@ def run(service, args):
                         'end': {
                             'dateTime': event['end'].strftime("%Y-%m-%dT%H:%M:%S%z")
                         },
-                        'summary': scheduled['summary'],
+                        'summary': scheduled['originalSummary'],
                         'description': 'Automatically updated by livetiming-schedule assist',
                         'extendedProperties': {
                             'private': {
@@ -195,7 +195,8 @@ def _parse_scheduled_event(event):
         'start': parse_datetime(event['start']['dateTime']),
         'end': parse_datetime(event['end']['dateTime']),
         'correlationId': event.get('extendedProperties', {}).get('private', {}).get('correlationId'),
-        'updated': parse_datetime(event['updated'])
+        'updated': parse_datetime(event['updated']),
+        'originalSummary': event['summary']
     }
 
 
