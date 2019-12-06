@@ -18,6 +18,7 @@ from twisted.web import client
 from uuid import uuid4
 
 from .session import create_service_session
+from .standalone import create_standalone_session
 
 import copy
 import os
@@ -277,7 +278,6 @@ class BaseService(AbstractService, ManifestPublisher):
         block until the session terminates (usually as a result of an
         interrupt or an error).
         '''
-        session_class = create_service_session(self)
 
         if self.auto_poll:
             updater = LoopingCall(self._updateAndPublishRaceState)
@@ -292,8 +292,13 @@ class BaseService(AbstractService, ManifestPublisher):
             LoopingCall(self.analyser._publish_pending).start(60)
             self.analyser.publish_all()
 
-        component = make_component(session_class)
-        run(component, log_level='debug' if self.args.debug else 'info')
+        if self.args.standalone:
+            session = create_standalone_session(self)
+            session.run()
+        else:
+            session_class = create_service_session(self)
+            component = make_component(session_class)
+            run(component, log_level='debug' if self.args.debug else 'info')
 
         self.log.info("Service terminated.")
 

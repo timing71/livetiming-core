@@ -31,6 +31,7 @@ def parse_args(args=None):
     parser.add_argument('-H', '--hidden', action='store_true', help='Hide this service from the UI except by UUID access')
     parser.add_argument('-N', '--do-not-record', action='store_true', help='Tell the DVR not to keep the recording of this service')
     parser.add_argument('-m', '--masquerade', nargs='?', help='Masquerade as this service class')
+    parser.add_argument('--standalone', action='store_true', help='Run service in standalone configuration')
 
     return parser.parse_known_args(args)
 
