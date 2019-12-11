@@ -24,6 +24,7 @@ import copy
 import os
 import sentry_sdk
 import simplejson
+import sys
 import time
 
 
@@ -293,7 +294,12 @@ class BaseService(AbstractService, ManifestPublisher):
             self.analyser.publish_all()
 
         if self.args.standalone:
-            session = create_standalone_session(self)
+            def report_port(port):
+                print(
+                    'Standalone server for uuid:{} listening on port:{}'.format(self.uuid, port),
+                    file=sys.stderr
+                )
+            session = create_standalone_session(self, report_port)
             session.run()
         else:
             session_class = create_service_session(self)

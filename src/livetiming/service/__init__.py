@@ -66,7 +66,7 @@ def main():
 
     with codecs.open(filepath, mode='a', encoding='utf-8') as logFile:
         level = "debug" if args.debug else "info"
-        if not args.verbose:  # log to file, not stdout
+        if not args.verbose and not args.standalone:  # log to file, not stdout
             txaio.start_logging(out=logFile, level=level)
 
         logger = Logger()
