@@ -47,6 +47,7 @@ setup(
             'livetiming-analysis = livetiming.generate_analysis:main',
             'livetiming-directory = livetiming.orchestration.directory:main',
             'livetiming-dvr = livetiming.orchestration.dvr:main',
+            'livetiming-plugins = livetiming.service.plugins.__main__:main',
             'livetiming-recordings = livetiming.recording:main',
             'livetiming-recordings-index = livetiming.recording:update_recordings_index',
             'livetiming-rectool = livetiming.orchestration.rectool:main',
