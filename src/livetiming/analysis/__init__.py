@@ -113,6 +113,9 @@ class Analyser(object):
 
     @with_dc_lock
     def save_data_centre(self):
+        analysis_dir = os.environ.get("LIVETIMING_ANALYSIS_DIR", os.getcwd())
+        if not os.path.exists(analysis_dir):
+            os.mkdir(analysis_dir)
         start = time.time()
         with open(self._data_centre_file(), "wb") as data_dump_file:
             pickle.dump(self.data_centre, data_dump_file, pickle.HIGHEST_PROTOCOL)

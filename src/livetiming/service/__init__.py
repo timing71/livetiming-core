@@ -59,8 +59,13 @@ def main():
 
     plugin_source = get_plugin_source()
 
+    log_dir = os.environ.get("LIVETIMING_LOG_DIR", os.getcwd())
+
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+
     filepath = os.path.join(
-        os.environ.get("LIVETIMING_LOG_DIR", os.getcwd()),
+        log_dir,
         "{}.log".format(args.service_class)
     )
 

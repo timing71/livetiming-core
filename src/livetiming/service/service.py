@@ -345,8 +345,12 @@ class BaseService(AbstractService, ManifestPublisher):
     def _saveState(self):
         self.log.debug("Saving state of {}".format(self.uuid))
 
+        state_dir = os.environ.get("LIVETIMING_STATE_DIR", os.getcwd())
+        if not os.path.exists(state_dir):
+            os.mkdir(state_dir)
+
         filepath = os.path.join(
-            os.environ.get("LIVETIMING_STATE_DIR", os.getcwd()),
+            state_dir,
             "{}.json".format(self.uuid)
         )
 
