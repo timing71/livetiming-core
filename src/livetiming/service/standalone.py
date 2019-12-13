@@ -27,6 +27,7 @@ def create_standalone_session(service, port_callback=None):
 
         def onConnect(self, request):
             service.set_publish(self.publish)
+            service.publishManifest()
 
         def onClose(self, wasClean, code, reason):
             service.set_publish(None)
