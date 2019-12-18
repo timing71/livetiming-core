@@ -285,7 +285,7 @@ class BaseService(AbstractService, ManifestPublisher):
             updater.start(self.getPollInterval(), False)
             self.log.info("Race state updates started")
 
-        if self.analyser:
+        if self.analyser and not self.args.no_write_state:
             def saveAsync():
                 self.log.debug("Saving data centre state")
                 return deferToThread(self.analyser.save_data_centre)
@@ -343,25 +343,26 @@ class BaseService(AbstractService, ManifestPublisher):
         }
 
     def _saveState(self):
-        self.log.debug("Saving state of {}".format(self.uuid))
+        if not self.args.no_write_state:
+            self.log.debug("Saving state of {}".format(self.uuid))
 
-        state_dir = os.environ.get("LIVETIMING_STATE_DIR", os.getcwd())
-        if not os.path.exists(state_dir):
-            os.mkdir(state_dir)
+            state_dir = os.environ.get("LIVETIMING_STATE_DIR", os.getcwd())
+            if not os.path.exists(state_dir):
+                os.mkdir(state_dir)
 
-        filepath = os.path.join(
-            state_dir,
-            "{}.json".format(self.uuid)
-        )
+            filepath = os.path.join(
+                state_dir,
+                "{}.json".format(self.uuid)
+            )
 
-        with open(filepath, 'w') as stateFile:
-            try:
-                simplejson.dump(self.state, stateFile)
-            except Exception as e:
-                self.log.failure("Exception while saving state: {log_failure}")
-                sentry_sdk.capture_exception(e)
-        if self.recorder:
-            self.recorder.writeState(self.state)
+            with open(filepath, 'w') as stateFile:
+                try:
+                    simplejson.dump(self.state, stateFile)
+                except Exception as e:
+                    self.log.failure("Exception while saving state: {log_failure}")
+                    sentry_sdk.capture_exception(e)
+            if self.recorder:
+                self.recorder.writeState(self.state)
 
     def _createServiceRegistration(self):
         colspec = [s.value if isinstance(s, Stat) else s for s in self.getColumnSpec()]

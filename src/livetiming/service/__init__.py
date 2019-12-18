@@ -32,6 +32,7 @@ def parse_args(args=None):
     parser.add_argument('-N', '--do-not-record', action='store_true', help='Tell the DVR not to keep the recording of this service')
     parser.add_argument('-m', '--masquerade', nargs='?', help='Masquerade as this service class')
     parser.add_argument('--standalone', action='store_true', help='Run service in standalone configuration')
+    parser.add_argument('--no-write-state', action='store_true', help='Don\'t write state files to disk')
 
     return parser.parse_known_args(args)
 
@@ -59,23 +60,9 @@ def main():
 
     plugin_source = get_plugin_source()
 
-    log_dir = os.environ.get("LIVETIMING_LOG_DIR", os.getcwd())
+    logger = Logger()
 
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-
-    filepath = os.path.join(
-        log_dir,
-        "{}.log".format(args.service_class)
-    )
-
-    with codecs.open(filepath, mode='a', encoding='utf-8') as logFile:
-        level = "debug" if args.debug else "info"
-        if not args.verbose and not args.standalone:  # log to file, not stdout
-            txaio.start_logging(out=logFile, level=level)
-
-        logger = Logger()
-
+    def do_start():
         with plugin_source:
             try:
                 module = plugin_source.load_plugin(args.service_class)
@@ -97,6 +84,26 @@ def main():
                     clazz=args.service_class
                 )
                 sys.exit(2)
+
+    if not args.no_write_state:
+        log_dir = os.environ.get("LIVETIMING_LOG_DIR", os.getcwd())
+
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+
+        filepath = os.path.join(
+            log_dir,
+            "{}.log".format(args.service_class)
+        )
+
+        with codecs.open(filepath, mode='a', encoding='utf-8') as logFile:
+            level = "debug" if args.debug else "info"
+            if not args.verbose and not args.standalone:  # log to file, not stdout
+                txaio.start_logging(out=logFile, level=level)
+
+            do_start()
+    else:
+        do_start()
 
 
 if __name__ == '__main__':
