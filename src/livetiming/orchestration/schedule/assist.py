@@ -16,6 +16,7 @@ TAG_TO_SERVICE_CLASS = {
     '24H Series': '24h_series',
     '24H TCES': '24h_series',
     '24H': '24h_series',
+    'ALMS': 'aslms',
     'Blancpain GT': 'blancpain',
     'CTSC': 'imsa',
     'European Le Mans': 'elms',
@@ -42,6 +43,7 @@ TAG_TO_SERVICE_CLASS = {
 
 _MAPPED_TAGS = {
     '24H': '24H Series',
+    'ALMS': 'Asian Le Mans Series',
     'GT4A': 'GT4 America',
     'TCA': 'TC America',
     'WC': 'World Challenge USA',
