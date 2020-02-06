@@ -1,6 +1,6 @@
 from livetiming.analysis import PROCESSING_MODULES as ANALYSIS_MODULES
 from livetiming.network import MessageClass, RPC, Realm, Channel
-from livetiming.racing import FlagStatus
+from livetiming.racing import FlagStatus, Stat
 import simplejson
 
 
@@ -25,6 +25,8 @@ document_class(Realm)
 document_class(Channel)
 
 document_class(FlagStatus)
+
+document_class(Stat, lambda x: x.value)
 
 config['ANALYSIS_MODULES'] = ANALYSIS_MODULES
 
