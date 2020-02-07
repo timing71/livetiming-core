@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='livetiming-core',
-    description='Timing 71 live timing aggregator - core functionality',
+    description='Timing71 live timing aggregator - core functionality',
     author='James Muscat',
     author_email='jamesremuscat@gmail.com',
     url='https://github.com/jamesremuscat/livetiming',

@@ -75,7 +75,7 @@ def main():
             service = module.Service(args, extra_args)
 
             logger.info(
-                "Live Timing Aggregator version {core} (plugin version {plugin})",
+                "Timing71 version {core} (plugin version {plugin})",
                 core=VERSION,
                 plugin=service.getVersion()
             )
