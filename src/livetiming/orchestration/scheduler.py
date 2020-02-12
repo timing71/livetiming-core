@@ -118,7 +118,7 @@ class Tweeter(object):
             service_name = event.service
         return template.format(
             name=event.name,
-            link="https://timing.71wytham.org.uk/s/{}".format(service_name)
+            link="https://www.timing71.org/s/{}".format(service_name)
         )
 
     def tweet(self, text):
