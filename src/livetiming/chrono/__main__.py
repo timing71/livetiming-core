@@ -1,7 +1,7 @@
 from livetiming.chrono import alkamel
-from livetiming.racing import Stat
-from livetiming.dvr import DirectoryTimingRecorder
 from livetiming.chrono import DriverChangeEvent
+from livetiming.orchestration.dvr import DirectoryTimingRecorder
+from livetiming.racing import Stat
 
 import argparse
 import sys
@@ -29,6 +29,8 @@ def _parse_args():
         subparser.set_defaults(colspec=format_module.COLSPEC)
 
     parser.add_argument('--output', '-o', help='Output filename (\'.zip\' will be appended)', default='output')
+    parser.add_argument('--description', '-d', help='Session description', default='Converted chrono dump')
+    parser.add_argument('--name', '-n', help='Session name', default='Converted')
 
     return parser.parse_args()
 
@@ -49,7 +51,8 @@ def main():
         'cars': args.sort_cars(args, list(car_state.values())),
         'session': {
             'timeElapsed': 0,
-            'timeRemain': args.duration or None
+            'timeRemain': args.duration or None,
+            'flagState': 'green'
         },
         'messages': []
     }
@@ -57,8 +60,8 @@ def main():
     recorder = DirectoryTimingRecorder(args.output)
     my_uuid = uuid.uuid4().hex
     recorder.writeManifest({
-        'description': 'Converted chrono dump',
-        'name': 'converted',
+        'description': args.description,
+        'name': args.name,
         'uuid': my_uuid,
         'colSpec': [s.value if isinstance(s, Stat) else s for s in args.colspec]
     })
@@ -69,7 +72,7 @@ def main():
 
     for idx, evt in enumerate(events):
         sys.stdout.write(
-            "\rProcessing event {} / {} {}%".format(
+            "\rProcessing event {} / {} {:.2f}%".format(
                 idx + 1,
                 evt_count,
                 100 * (idx + 1) / evt_count
@@ -86,7 +89,8 @@ def main():
             'cars': args.sort_cars(args, list(car_state.values())),
             'session': {
                 'timeElapsed': elapsed,
-                'timeRemain': int(args.duration) - elapsed
+                'timeRemain': int(args.duration) - elapsed,
+                'flagState': 'green'
             },
             'messages': state['messages']
         }
@@ -107,8 +111,12 @@ def main():
 
 
 def if_positive(val, otherwise=''):
-    if val >= 0:
-        return val
+    try:
+        if val >= 0:
+            return val
+    except TypeError:
+        if val != '':
+            return val
     return otherwise
 
 

@@ -46,7 +46,7 @@ def parseTime(formattedTime):
                 try:
                     ttime = datetime.strptime(formattedTime, "%M'%S.%f")
                     return (60 * 60 * ttime.hour) + (60 * ttime.minute) + ttime.second + (ttime.microsecond / 1000000.0)
-                except:
+                except Exception:
                     return formattedTime
 
 
@@ -82,12 +82,12 @@ def create_events(args):
 
     start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
 
-    with open(args.chronological_analysis, 'rb') as csvfile:
+    with open(args.chronological_analysis, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         prev_row = None
         prev_race_num = None
         for row in reader:
-            race_num = row['\xef\xbb\xbfNUMBER']
+            race_num = row['\ufeffNUMBER']
             clock_time = _parse_clock_time(row[' HOUR'])
 
             ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second, microsecond=clock_time.microsecond)
@@ -99,7 +99,7 @@ def create_events(args):
             if not prev_row or prev_row[' CROSSING_FINISH_LINE_IN_PIT'] == 'B':
                 events.append(PitOutEvent(datestamp - lap_time + time_in_pit, COLSPEC, race_num))
             if not prev_row or prev_row['DRIVER_NAME'] != row['DRIVER_NAME']:
-                events.append(DriverChangeEvent(datestamp - lap_time + time_in_pit - 1, COLSPEC, race_num, row['DRIVER_NAME'].decode('utf-8')))
+                events.append(DriverChangeEvent(datestamp - lap_time + time_in_pit - 1, COLSPEC, race_num, row['DRIVER_NAME']))
 
             s1_time = parseTime(row[' S1'])
             s2_time = parseTime(row[' S2'])
@@ -131,17 +131,17 @@ def create_events(args):
 
 def create_initial_state(args, extra):
     state = {}
-    with open(args.chronological_analysis, 'rb') as csvfile:
+    with open(args.chronological_analysis, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
-            race_num = row['\xef\xbb\xbfNUMBER']
+            race_num = row['\ufeffNUMBER']
             if race_num not in state:
                 state[race_num] = [
                     race_num,
                     'N/S',
-                    row['CLASS'].decode('utf-8'),
-                    row['DRIVER_NAME'].decode('utf-8'),
-                    row['TEAM'].decode('utf-8'),
+                    row['CLASS'],
+                    row['DRIVER_NAME'],
+                    row['TEAM'],
                     0,
                     '',
                     '',
@@ -163,7 +163,7 @@ def create_initial_state(args, extra):
 def get_start_time(args):
     start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
 
-    with open(args.chronological_analysis, 'rb') as csvfile:
+    with open(args.chronological_analysis, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         row = next(reader)
 
