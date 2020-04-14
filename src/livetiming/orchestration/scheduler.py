@@ -67,7 +67,7 @@ class Event(object):
                 uid,
                 match.group("name"),
                 match.group("service"),
-                match.group("args").split(" ") if match.group("args") else [],
+                re.split("(?<!\\\) ", match.group(args)) if match.group("args") else [],
                 startDate,
                 endDate
             )
