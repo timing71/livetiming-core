@@ -17,6 +17,7 @@ class Channel:
 
 
 class RPC:
+    ANALYSIS_PUBLISH = "livetiming.analysis/{}/{}"
     DIRECTORY_LISTING = "livetiming.directory.listServices"
     RECORDING_LISTING = "livetiming.directory.listRecordings"
     SCHEDULE_LISTING = "livetiming.schedule.list"

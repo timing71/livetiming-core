@@ -1,7 +1,7 @@
 from autobahn.wamp.types import PublishOptions
 from collections import OrderedDict
 from livetiming.analysis.data import DataCentre
-from livetiming.network import Message, MessageClass
+from livetiming.network import Message, MessageClass, RPC
 from livetiming.racing import FlagStatus, Stat
 from twisted.internet.defer import DeferredLock, inlineCallbacks
 from twisted.internet.task import LoopingCall
@@ -96,7 +96,7 @@ class Analyser(object):
                     self.log.debug("Publishing queued data for livetiming.analysis/{uuid}/{key}", uuid=self.uuid, key=key)
                     retain = key not in ['lap', 'stint']
                     self.publish(
-                        "livetiming.analysis/{}/{}".format(self.uuid, key),
+                        RPC.ANALYSIS_PUBLISH.format(self.uuid, key),
                         _make_data_message(data, retain),
                         options=self.publish_options if retain else None
                     )
