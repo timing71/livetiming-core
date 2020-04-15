@@ -80,8 +80,8 @@ class Analyser(object):
         self.data_centre.latest_timestamp = timestamp
 
     def publish_all(self):
-            for key, module in self._modules.items():
-                self._publish_data(key, module.get_data(self.data_centre))
+        for key, module in self._modules.items():
+            self._publish_data(key, module.get_data(self.data_centre))
 
     def _publish_data(self, key, data):
         self.log.debug("Queueing publish of data '{key}'", key=key, data=data)
@@ -102,7 +102,7 @@ class Analyser(object):
                     )
                     self._pending_publishes.pop(key)
                     self._last_published[key] = now
-            except:
+            except Exception:
                 pass
 
     def _data_centre_file(self):

@@ -21,7 +21,7 @@ import time
 import twitter
 
 
-EVT_SERVICE_REGEX = re.compile("(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, ?(?P<args>[^\]]+))?\]")
+EVT_SERVICE_REGEX = re.compile(r"(?P<name>[^\[]+[^ ]) ?\[(?P<service>[^*,\]]+)(, ?(?P<args>[^\]]+))?\]")
 
 EVENT_START_BUFFER = datetime.timedelta(minutes=5)  # Start this many minutes early
 EVENT_END_BUFFER = datetime.timedelta(minutes=10)  # Overrun by this much
@@ -67,7 +67,7 @@ class Event(object):
                 uid,
                 match.group("name"),
                 match.group("service"),
-                re.split("(?<!\\\) ", match.group(args)) if match.group("args") else [],
+                re.split(r"(?<!\\\) ", match.group(args)) if match.group("args") else [],
                 startDate,
                 endDate
             )

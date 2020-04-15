@@ -53,7 +53,8 @@ def _apply_car_lap(dc, race_num, car, new_car, new_lap, position, f, timestamp, 
 def get_data(dc):
     return {car.race_num: [map_stint_with(car, dc.latest_timestamp)(car.current_stint), car.last_pass] for car in list(dc._cars.values())}
 
-TSNL_LAP_HACK_REGEX = re.compile("\(([0-9]+) laps?")
+
+TSNL_LAP_HACK_REGEX = re.compile(r"\(([0-9]+) laps?")
 
 
 def _get_lap_count(car, new_car, f, cars):

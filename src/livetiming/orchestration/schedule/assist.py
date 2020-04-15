@@ -169,7 +169,7 @@ def run(service, args):
                     print("Cannot create event, required argument was not supplied")
 
 
-MULTI_SPACE_REGEX = re.compile('\s+')
+MULTI_SPACE_REGEX = re.compile(r'\s+')
 
 
 def _parse_event(event):

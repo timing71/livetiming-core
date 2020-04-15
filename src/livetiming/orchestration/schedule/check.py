@@ -46,5 +46,5 @@ def _check_event(summary, plugin_source):
             mod = plugin_source.load_plugin(service)
             if not hasattr(mod, 'Service'):
                 raise BadEventException('Event service class does not exist')
-    except:
+    except Exception:
         raise BadEventException('Event service module does not exist')

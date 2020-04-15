@@ -53,7 +53,7 @@ class PerCarMessage(TimingMessage):
                 if len(oldCars) == 1:
                     oldCar = oldCars[0]
                 elif len(oldCars) > 0:
-                    self.log.warn('Found {l} cars with race number {num} that are indistinguishable!', l=len(oldCars), num=newCar[0])
+                    self.log.warn('Found {count} cars with race number {num} that are indistinguishable!', count=len(oldCars), num=newCar[0])
 
                 if oldCar:
                     msg = self._consider(oldCar, newCar)

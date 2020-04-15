@@ -189,7 +189,7 @@ class DirectoryBackedRecording(object):
         try:
             with open(os.path.join(self.directory, 'manifest.json'), 'r') as man_file:
                 self.manifest = simplejson.load(man_file)
-        except:
+        except FileNotFoundError:
             raise RecordingException("Directory contains no manifest.json, this is not a usable recording.")
 
         if "version" not in self.manifest and not force_compat:
