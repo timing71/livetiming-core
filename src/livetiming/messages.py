@@ -176,18 +176,19 @@ class FastLapMessage(PerCarMessage):
             oldFlags = oldTime[1]
             newFlags = newTime[1]
 
-            if (newTime[0] or 0) > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
-                if driver:
-                    car_num_and_driver = "#{} ({})".format(carNum, driver)
-                else:
-                    car_num_and_driver = "#{}".format(carNum)
-                try:
-                    if newFlags == "pb" and (oldFlags == "" or newTime[0] < oldTime[0]):
-                        return [clazz, "{} set a new personal best: {}".format(car_num_and_driver, formatTime(newTime[0])), "pb"]
-                    elif newFlags == "sb-new":
-                        return [clazz, "{} set a new overall best: {}".format(car_num_and_driver, formatTime(newTime[0])), "sb"]
-                except TypeError:
-                    return None
+            if isinstance(oldTime[0], float) and isinstance(newTime[0], float):
+                if (newTime[0] or 0) > 0 and (oldFlags != newFlags or oldTime[0] != newTime[0]):
+                    if driver:
+                        car_num_and_driver = "#{} ({})".format(carNum, driver)
+                    else:
+                        car_num_and_driver = "#{}".format(carNum)
+                    try:
+                        if newFlags == "pb" and (oldFlags == "" or newTime[0] < oldTime[0]):
+                            return [clazz, "{} set a new personal best: {}".format(car_num_and_driver, formatTime(newTime[0])), "pb"]
+                        elif newFlags == "sb-new":
+                            return [clazz, "{} set a new overall best: {}".format(car_num_and_driver, formatTime(newTime[0])), "sb"]
+                    except TypeError:
+                        return None
 
 
 CAR_NUMBER_REGEX = re.compile("car #? ?(?P<race_num>[0-9]+)", re.IGNORECASE)
