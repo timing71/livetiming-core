@@ -63,11 +63,22 @@ class Event(object):
 
         match = EVT_SERVICE_REGEX.match(summary)
         if match:
+
+            if match.group('args'):
+                processed_args = list(
+                    map(
+                        lambda a: a.replace(r'\ ', ' '),
+                        re.split(r"(?<!\\) ", match.group('args'))
+                    )
+                )
+            else:
+                processed_args = []
+
             return Event(
                 uid,
                 match.group("name"),
                 match.group("service"),
-                re.split(r"(?<!\\\) ", match.group('args')) if match.group("args") else [],
+                processed_args,
                 startDate,
                 endDate
             )
