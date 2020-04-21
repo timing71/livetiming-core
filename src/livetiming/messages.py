@@ -99,6 +99,8 @@ class FlagChangeMessage(TimingMessage):
                 return ["Track", "Virtual safety car deployed", "yellow"]
             elif newFlag == FlagStatus.CAUTION:
                 return ["Track", "Full course caution", "yellow"]
+            elif newFlag == FlagStatus.WHITE:
+                return ["Track", "White flag - final lap", "white"]
 
 
 class SlowZoneMessage(TimingMessage):
