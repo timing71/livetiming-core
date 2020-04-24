@@ -92,6 +92,7 @@ class Event(object):
         return {
             "id": self.uid,
             "name": self.name,
+            "service": self.service,
             "startTime": time.mktime(self.startDate.utctimetuple()),
             "hidden": self.is_hidden()
         }
