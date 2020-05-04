@@ -60,16 +60,19 @@ def make_component(session_class):
     router = str(os.environ["LIVETIMING_ROUTER"])
 
     if router[0:2] == 'ws':
-        _, host, port, resource, path, params = parse_ws_url(router)
+        is_secure, host, port, resource, path, params = parse_ws_url(router)
 
         endpoint = {
             'type': 'tcp',
             'host': host,
-            'port': port
+            'port': port,
+            'tls': is_secure
         }
+        type = 'websocket'
 
     elif router[0:2] == 'rs':
         _, host, path = parse_rs_url(router)
+        type = 'rawsocket'
         if host == 'unix':
             endpoint = {
                 'type': 'unix',
@@ -92,6 +95,7 @@ def make_component(session_class):
         transports=[
             {
                 'url': router,
+                'type': type,
                 'options': {
                     'autoFragmentSize': 1024 * 128
                 },
