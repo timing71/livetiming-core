@@ -71,16 +71,26 @@ def main():
         logger = Logger()
 
         with plugin_source:
-            module = plugin_source.load_plugin(args.service_class)
-            service = module.Service(args, extra_args)
+            try:
+                module = plugin_source.load_plugin(args.service_class)
+                service = module.Service(args, extra_args)
 
-            logger.info(
-                "Timing71 version {core} (plugin version {plugin})",
-                core=VERSION,
-                plugin=service.getVersion()
-            )
-            logger.info("Starting timing service {}...".format(args.service_class))
-            service.start()
+                logger.info(
+                    "Timing71 version {core} (plugin version {plugin})",
+                    core=VERSION,
+                    plugin=service.getVersion()
+                )
+                logger.info(
+                    "Starting timing service {clazz}...",
+                    clazz=args.service_class
+                )
+                service.start()
+            except ModuleNotFoundError:
+                logger.critical(
+                    'Unable to find timing service plugin "{clazz}".',
+                    clazz=args.service_class
+                )
+                sys.exit(2)
 
 
 if __name__ == '__main__':
