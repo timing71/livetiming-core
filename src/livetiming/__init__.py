@@ -1,11 +1,15 @@
 from autobahn.twisted.component import Component
+from autobahn.rawsocket.util import parse_url as parse_rs_url
+from autobahn.websocket.util import parse_url as parse_ws_url
 from dotenv import load_dotenv, find_dotenv
 from livetiming.network import Realm
 from livetiming.version import VERSION, USER_AGENT
+from twisted.internet.ssl import CertificateOptions
 from twisted.python import log
 
 import os
 import sentry_sdk
+import ssl
 
 
 ENVIRONMENT = os.getenv("LIVETIMING_ENVIRONMENT", "development")
@@ -54,6 +58,34 @@ def configure_sentry_twisted():
 
 def make_component(session_class):
     router = str(os.environ["LIVETIMING_ROUTER"])
+
+    if router[0:2] == 'ws':
+        _, host, port, resource, path, params = parse_ws_url(router)
+
+        endpoint = {
+            'type': 'tcp',
+            'host': host,
+            'port': port
+        }
+
+    elif router[0:2] == 'rs':
+        _, host, path = parse_rs_url(router)
+        if host == 'unix':
+            endpoint = {
+                'type': 'unix',
+                'path': path
+            }
+        else:
+            endpoint = {
+                'type': 'tcp',
+                'host': host,
+                'port': path
+            }
+
+    if endpoint['type'] == 'tcp' and os.name == 'nt':
+        # Disable SSL verification on Windows because Windows
+        endpoint['tls'] = CertificateOptions(verify=False)
+
     return Component(
         realm=Realm.TIMING,
         session_factory=session_class,
@@ -62,7 +94,8 @@ def make_component(session_class):
                 'url': router,
                 'options': {
                     'autoFragmentSize': 1024 * 128
-                }
+                },
+                'endpoint': endpoint
             }
         ]
     )
