@@ -48,10 +48,10 @@ def get_plugin_source():
     return plugin_source
 
 
-def main():
+def main(argv=None):
     load_env()
 
-    args, extra_args = parse_args()
+    args, extra_args = parse_args(argv)
 
     extra = vars(args)
     extra['extra_args'] = extra_args
