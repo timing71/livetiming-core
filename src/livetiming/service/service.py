@@ -293,6 +293,10 @@ class BaseService(AbstractService, ManifestPublisher):
             LoopingCall(self.analyser._publish_pending).start(60)
             self.analyser.publish_all()
 
+        if 'LIVETIMING_ROUTER' not in os.environ:
+            self.log.info('LIVETIMING_ROUTER not set, forcing standalone mode.')
+            self.args.standalone = True
+
         if self.args.standalone:
             def report_port(port):
                 print(
