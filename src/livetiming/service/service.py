@@ -18,11 +18,13 @@ from twisted.web import client
 from uuid import uuid4
 
 from .session import create_service_session
+from .standalone import create_standalone_session
 
 import copy
 import os
 import sentry_sdk
 import simplejson
+import sys
 import time
 
 
@@ -277,14 +279,13 @@ class BaseService(AbstractService, ManifestPublisher):
         block until the session terminates (usually as a result of an
         interrupt or an error).
         '''
-        session_class = create_service_session(self)
 
         if self.auto_poll:
             updater = LoopingCall(self._updateAndPublishRaceState)
             updater.start(self.getPollInterval(), False)
             self.log.info("Race state updates started")
 
-        if self.analyser:
+        if self.analyser and not self.args.no_write_state:
             def saveAsync():
                 self.log.debug("Saving data centre state")
                 return deferToThread(self.analyser.save_data_centre)
@@ -292,8 +293,22 @@ class BaseService(AbstractService, ManifestPublisher):
             LoopingCall(self.analyser._publish_pending).start(60)
             self.analyser.publish_all()
 
-        component = make_component(session_class)
-        run(component, log_level='debug' if self.args.debug else 'info')
+        if 'LIVETIMING_ROUTER' not in os.environ:
+            self.log.info('LIVETIMING_ROUTER not set, forcing standalone mode.')
+            self.args.standalone = True
+
+        if self.args.standalone:
+            def report_port(port):
+                print(
+                    'Standalone server for uuid:{} listening on port:{}'.format(self.uuid, port),
+                    file=sys.stderr
+                )
+            session = create_standalone_session(self, report_port)
+            session.run()
+        else:
+            session_class = create_service_session(self)
+            component = make_component(session_class)
+            run(component, log_level='debug' if self.args.debug else 'info')
 
         self.log.info("Service terminated.")
 
@@ -332,21 +347,26 @@ class BaseService(AbstractService, ManifestPublisher):
         }
 
     def _saveState(self):
-        self.log.debug("Saving state of {}".format(self.uuid))
+        if not self.args.no_write_state:
+            self.log.debug("Saving state of {}".format(self.uuid))
 
-        filepath = os.path.join(
-            os.environ.get("LIVETIMING_STATE_DIR", os.getcwd()),
-            "{}.json".format(self.uuid)
-        )
+            state_dir = os.environ.get("LIVETIMING_STATE_DIR", os.getcwd())
+            if not os.path.exists(state_dir):
+                os.mkdir(state_dir)
 
-        with open(filepath, 'w') as stateFile:
-            try:
-                simplejson.dump(self.state, stateFile)
-            except Exception as e:
-                self.log.failure("Exception while saving state: {log_failure}")
-                sentry_sdk.capture_exception(e)
-        if self.recorder:
-            self.recorder.writeState(self.state)
+            filepath = os.path.join(
+                state_dir,
+                "{}.json".format(self.uuid)
+            )
+
+            with open(filepath, 'w') as stateFile:
+                try:
+                    simplejson.dump(self.state, stateFile)
+                except Exception as e:
+                    self.log.failure("Exception while saving state: {log_failure}")
+                    sentry_sdk.capture_exception(e)
+            if self.recorder:
+                self.recorder.writeState(self.state)
 
     def _createServiceRegistration(self):
         colspec = [s.value if isinstance(s, Stat) else s for s in self.getColumnSpec()]
