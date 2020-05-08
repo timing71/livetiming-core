@@ -18,19 +18,13 @@ setup(
     install_requires=[
         "autobahn[serialization,twisted]>=17.6.2",
         "dictdiffer",
-        "google-api-python-client",
-        "icalendar",
         "lzstring==1.0.3",
-        "oauth2client",  # Not included in google-api-python-client despite what Google say
         "pluginbase",
         "pyopenssl",
         "python-dateutil",
         "python-dotenv",
-        "python-twitter",
         "sentry-sdk",
-        "service_identity",
         "simplejson",
-        "subprocess32",
         "treq",
         "twisted"
     ],
@@ -45,16 +39,10 @@ setup(
     entry_points={
         'console_scripts': [
             'livetiming-analysis = livetiming.generate_analysis:main',
-            'livetiming-directory = livetiming.orchestration.directory:main',
-            'livetiming-dvr = livetiming.orchestration.dvr:main',
             'livetiming-plugins = livetiming.service.plugins.__main__:main',
             'livetiming-recordings = livetiming.recording:main',
             'livetiming-recordings-index = livetiming.recording:update_recordings_index',
-            'livetiming-rectool = livetiming.orchestration.rectool:main',
-            'livetiming-schedule = livetiming.orchestration.schedule.__main__:main',
-            'livetiming-scheduler = livetiming.orchestration.scheduler:main',
             'livetiming-service = livetiming.service:main',
-            'livetiming-service-manager = livetiming.orchestration.servicemanager:main',
         ],
     }
 )

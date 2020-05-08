@@ -1,4 +1,0 @@
-FROM crossbario/crossbar
-
-COPY crossbar /node/.crossbar
-COPY crossbar/authenticator.py /node/

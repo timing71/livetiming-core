@@ -28,13 +28,8 @@ The components involved in the Aggregator are:
   source, convert it to the universal format and broadcast it across the
   network via the master router
 - **Master router** - Crossbar WAMP router
-- **livetiming-directory** - keeps a list of running timing services
-- **livetiming-dvr** - records all running timing services and publishes
-  completed recordings to the configured recordings directory
 - **livetiming-recordings** - manages the recordings catalogue from a
   directory on the local filesystem
-- **livetiming-scheduler** - starts and stops timing services based on a
-  schedule from Google Calendar
 
 Some additional commandline tools are also provided:
 
@@ -42,9 +37,6 @@ Some additional commandline tools are also provided:
   recording ZIP file
 - **livetiming-recordings-index** generates a recording catalogue JSON file
 - **livetiming-rectool** inspects and manipulates recording files
-- **livetiming-schedule** can both check and generate (via `assist`) a GCal-
-  based schedule
-- **livetiming-service-manager** starts and stops services
 - **livetiming-service** runs a service instance
 
 ## Configuration
@@ -65,15 +57,6 @@ from a `livetiming.env` file at startup if present.
 - `LIVETIMING_ANALYSIS_DIR` - directory to store analysis data stores
 - `LIVETIMING_STATE_DIR` - directory to store saved service state
 - `LIVETIMING_LOG_DIR` - directory to store service logs
-
-### Scheduler variables
-
-- `LIVETIMING_CALENDAR_URL` - URL of a Google calendar to use for service scheduling
-- `TWITTER_CONSUMER_KEY` - Twitter credentials used to tweet at start of
-  services
-- `TWITTER_CONSUMER_SECRET`
-- `TWITTER_ACCESS_TOKEN`
-- `TWITTER_ACCESS_SECRET`
 
 ### Recording variables
 
@@ -111,20 +94,14 @@ Note the _lack_ of `__init__.py` files through most of the tree; that's necessar
 Simple plugins may just require a `myplugin.py` in the `plugins/` directory.
 
 In either case, your plugin **must** export a class `Service` that can be
-referenced as `livetiming.service.plugins.myplugin.Service`.
+referenced as e.g. `livetiming.service.plugins.myplugin.Service`.
 
 ### Running manually
 
-Services can be started and stopped with `livetiming-service-manager`:
+Service plugins can be run with:
 
 ```bash
-livetiming-service-manager [start|stop|restart] <service_class> [<options>]
-```
-
-Or on their own:
-
-```bash
-livetiming-service <service_class> [<options>]
+livetiming-service <plugin_name> [<options>]
 ```
 
 ### Service options
@@ -143,18 +120,3 @@ Global service options include:
   default).
 
 Most service plugins will define additional options.
-
-### Scheduling via Google Calendar
-
-The easiest way to schedule services is via Google Calendar and the
-`livetiming-scheduler` component. To mark an event as a service, it should have
-certain parameters in [square brackets] folllowing the event title, defining
-the service class and any options required.
-
-For example:
-
-`My racing series - free practice 18 [awesome_race, --option foobar]`
-
-This defines an event called `My racing series - free practice 18` that will
-use the `awesome_race` timing service, which will be run with the option
-`--option foobar`.
