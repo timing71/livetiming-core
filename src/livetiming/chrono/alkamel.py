@@ -71,6 +71,36 @@ def _parse_clock_time(clock):
             return None
 
 
+def _parse_clock_with_elapsed(start_date, hour, elapsed):
+    elapsed_time = _parse_clock_time(elapsed)
+    hour_num = int(hour[0:2])
+
+    delta = timedelta(hours=hour_num, minutes=elapsed_time.minute, seconds=elapsed_time.second, microseconds=elapsed_time.microsecond)
+    return start_date + delta
+
+
+def _parse_clock_from_elapsed(start_time, elapsed):
+
+    add_day = False
+    if len(elapsed) > 9 and elapsed.startswith('24:'):
+        add_day = True
+        elapsed = elapsed[3:]
+
+    elapsed_time = _parse_clock_time(elapsed)
+
+    delta = timedelta(
+        days=1 if add_day else 0,
+        hours=elapsed_time.hour,
+        minutes=elapsed_time.minute,
+        seconds=elapsed_time.second,
+        microseconds=elapsed_time.microsecond
+    )
+
+    munged = start_time + delta
+    print(munged)
+    return munged
+
+
 def generate_parser_args(parser):
     parser.add_argument('--chronological-analysis', '-c', help='Chronological analysis CSV file', required=True)
     parser.add_argument('--start-date', '-s', help='Date at start of session', required=True)
@@ -81,6 +111,7 @@ def create_events(args):
     events = []
 
     start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
+    start_time = get_start_time(args, False)
 
     with open(args.chronological_analysis, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
@@ -88,10 +119,20 @@ def create_events(args):
         prev_race_num = None
         for row in reader:
             race_num = row['\ufeffNUMBER']
+
             clock_time = _parse_clock_time(row[' HOUR'])
 
-            ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second, microsecond=clock_time.microsecond)
-            datestamp = float(calendar.timegm(ts.timetuple())) + (clock_time.microsecond / 1000000.0)
+            if clock_time:
+                ts = start_date.replace(
+                    hour=clock_time.hour,
+                    minute=clock_time.minute,
+                    second=clock_time.second,
+                    microsecond=clock_time.microsecond
+                )
+                datestamp = float(calendar.timegm(ts.timetuple())) + (clock_time.microsecond / 1000000.0)
+            else:
+                ts = _parse_clock_from_elapsed(start_time, row[' ELAPSED'])
+                datestamp = float(calendar.timegm(ts.timetuple())) + (ts.microsecond / 1000000.0)
 
             lap_time = parseTime(row[' LAP_TIME'])
             time_in_pit = parseTime(row['PIT_TIME'])
@@ -160,7 +201,7 @@ def create_initial_state(args, extra):
     return state
 
 
-def get_start_time(args):
+def get_start_time(args, as_timestamp=True):
     start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
 
     with open(args.chronological_analysis, 'r') as csvfile:
@@ -168,8 +209,10 @@ def get_start_time(args):
         row = next(reader)
 
         clock_time = _parse_clock_time(row[' HOUR'])
-
-        ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
+        if clock_time:
+            ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
+        else:
+            ts = _parse_clock_with_elapsed(start_date, row[' HOUR'], row[' ELAPSED'])
 
         elapsed_raw = row[' ELAPSED']
         elapsed = re.match(r"((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+\.[0-9]+)", elapsed_raw)
@@ -179,7 +222,10 @@ def get_start_time(args):
             milliseconds=float(elapsed.group('seconds')) * 1000
         )
 
-        return calendar.timegm((ts - delta).timetuple()) + 1
+        if as_timestamp:
+            return calendar.timegm((ts - delta).timetuple()) + 1
+        else:
+            return ts - delta
 
 
 def get_duration(args):

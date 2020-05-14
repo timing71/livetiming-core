@@ -63,7 +63,8 @@ def main():
         'description': args.description,
         'name': args.name,
         'uuid': my_uuid,
-        'colSpec': [s.value if isinstance(s, Stat) else s for s in args.colspec]
+        'colSpec': [s.value if isinstance(s, Stat) else s for s in args.colspec],
+        'hidden': True
     })
     next_frame_threshold = 0
 
