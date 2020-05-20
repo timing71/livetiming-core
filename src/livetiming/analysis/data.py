@@ -65,11 +65,11 @@ class Stint(object):
 
     @property
     def yellow_laps(self):
-        return len([l for l in self.laps if l.flag >= FlagStatus.YELLOW])
+        return len([lap for lap in self.laps if lap.flag >= FlagStatus.YELLOW])
 
     @property
     def best_lap_time(self):
-        return min([l.laptime for l in self.laps]) if len(self.laps) > 0 else None
+        return min([lap.laptime for lap in self.laps]) if len(self.laps) > 0 else None
 
     @property
     def average_lap_time(self):
@@ -77,12 +77,12 @@ class Stint(object):
             return None
         if self.in_progress:
             # Exclude first lap (out lap)
-            return sum([l.laptime for l in self.laps[1:]]) / (len(self.laps) - 1)
+            return sum([lap.laptime for lap in self.laps[1:]]) / (len(self.laps) - 1)
         else:
             # Exclude first (out) and last (in) laps
             if len(self.laps) == 2:
                 return None
-            return sum([l.laptime for l in self.laps[1:-1]]) / (len(self.laps) - 2)
+            return sum([lap.laptime for lap in self.laps[1:-1]]) / (len(self.laps) - 2)
 
     def __repr__(self, *args, **kwargs):
         return "<Stint: {} laps {}-{} time {}-{} yellows {} in progress? {} >".format(
