@@ -65,9 +65,11 @@ from a `livetiming.env` file at startup if present.
 
 - `LIVETIMING_ROUTER` - URL of the master router to connect to; if unspecified,
   services will start in standalone mode.
-- `LIVETIMING_SHARED_SECRET` - a shared secret for authenticating internal
-  components with the master router. Only authenticated components may publish
-  data or register RPC endpoints on the Timing71 network.
+- `LIVETIMING_AUTH_ID` - Auth ID (username) for authenticating with the Timing71
+  master router.
+- `LIVETIMING_SHARED_SECRET` - a shared secret for authenticating with the
+  master router. Only authenticated components may publish data or register RPC
+  endpoints on the Timing71 network. Paired with the auth ID above.
 - `SENTRY_DSN` - DSN to use for [Sentry](https://sentry.io/) error reporting
   service. If not set, then Sentry is not used.
 
