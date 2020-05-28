@@ -73,20 +73,18 @@ class Message(object):
         return "<Message class={0} payload={1}>".format(self.msgClass, self.payload)
 
 
-WAMP_AUTHID = os.environ.get('LIVETIMING_AUTH_ID', 'services')
-
-
 def authenticatedService(clazz):
     '''
     Decorator for ApplicationSessions that require authentication using LIVETIMING_SHARED_SECRET.
     '''
     def onConnect(self):
+        wamp_auth_id = os.environ.get('LIVETIMING_AUTH_ID', 'services')
         self.log.info(
-            "Client session connected. Starting WAMP-CRA authentication on realm '{realm}' with role '{role}' ..",
+            "Client session connected. Starting WAMP-CRA authentication on realm '{realm}' with authid '{authid}' ..",
             realm=self.config.realm,
-            role=WAMP_AUTHID
+            authid=wamp_auth_id
         )
-        self.join(self.config.realm, ["wampcra", "anonymous"], WAMP_AUTHID)
+        self.join(self.config.realm, ["wampcra", "anonymous"], wamp_auth_id)
 
     def onChallenge(self, challenge):
         user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
