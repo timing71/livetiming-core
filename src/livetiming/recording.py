@@ -397,6 +397,9 @@ def update_recordings_index(index_filename):
                 if manifest.get('hidden'):
                     index[uuid]['hidden'] = True
 
+                if manifest.get('external'):
+                    index[uuid]['external'] = manifest['external']
+
                 log.info("Added {filename} (UUID {uuid}) to index", filename=rec_file, uuid=manifest['uuid'])
             except RecordingException:
                 log.warn("Not a valid recording file: {filename}", filename=rec_file)
