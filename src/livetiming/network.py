@@ -1,5 +1,6 @@
 from autobahn.wamp import auth
 from enum import Enum
+from sentry_sdk import configure_scope
 
 import os
 import time
@@ -79,6 +80,10 @@ def authenticatedService(clazz):
     '''
     def onConnect(self):
         wamp_auth_id = os.environ.get('LIVETIMING_AUTH_ID', 'services')
+
+        with configure_scope() as scope:
+            scope.user = {"username": wamp_auth_id}
+
         self.log.info(
             "Client session connected. Starting WAMP-CRA authentication on realm '{realm}' with authid '{authid}' ..",
             realm=self.config.realm,
