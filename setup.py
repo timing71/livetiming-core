@@ -39,7 +39,7 @@ setup(
     entry_points={
         'console_scripts': [
             'livetiming-analysis = livetiming.generate_analysis:main',
-            'livetiming-plugins = livetiming.service.plugins.__main__:main',
+            'livetiming-plugins = livetiming.service.list_plugins:main',
             'livetiming-recordings = livetiming.recording:main',
             'livetiming-recordings-index = livetiming.recording:update_recordings_index',
             'livetiming-service = livetiming.service:main',
