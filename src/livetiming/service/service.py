@@ -7,7 +7,6 @@ from livetiming.messages import FlagChangeMessage, CarPitMessage,\
     DriverChangeMessage, FastLapMessage
 from livetiming.network import Channel, Message, MessageClass, RPC
 from livetiming.racing import Stat
-from livetiming.recording import TimingRecorder
 from lzstring import LZString
 from treq.client import HTTPClient
 from twisted.internet import reactor
@@ -26,6 +25,11 @@ import sentry_sdk
 import simplejson
 import sys
 import time
+
+try:
+    from livetiming_orchestration.dvr import DirectoryTimingRecorder as TimingRecorder
+except ModuleNotFoundError:
+    from livetiming.recording import TimingRecorder
 
 
 class AbstractService(ABC):
@@ -309,6 +313,10 @@ class BaseService(AbstractService, ManifestPublisher):
             session_class = create_service_session(self)
             component = make_component(session_class)
             run(component, log_level='debug' if self.args.debug else 'info')
+
+        if self.recorder and hasattr(self.recorder, 'finalise'):
+            zip_name = self.recorder.finalise()
+            self.log.info('Finalised recording {zipname}', zipname=zip_name)
 
         self.log.info("Service terminated.")
 

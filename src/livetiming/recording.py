@@ -56,8 +56,11 @@ def updateZip(zipname, filename, data, new_filename=None, new_zipname=None):
 
 
 class TimingRecorder(object):
-    def __init__(self, recordFile):
-        self.recordFile = recordFile
+    def __init__(self, recordFile, add_extension=True):
+        if recordFile[-4:] == '.zip' or not add_extension:
+            self.recordFile = recordFile
+        else:
+            self.recordFile = '{}.zip'.format(recordFile)
         self.log = Logger()
         self.frames = 0
         self.prevState = {'cars': [], 'session': {}, 'messages': []}
