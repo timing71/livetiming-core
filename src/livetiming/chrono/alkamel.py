@@ -180,9 +180,9 @@ def create_initial_state(args, extra):
                 state[race_num] = [
                     race_num,
                     'N/S',
-                    row['CLASS'],
+                    row.get('CLASS', ''),
                     row['DRIVER_NAME'],
-                    row['TEAM'],
+                    row.get('TEAM', ''),
                     0,
                     '',
                     '',
