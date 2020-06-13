@@ -5,14 +5,67 @@ import simplejson
 import txaio
 
 
+class BroadcastServerFactory(WebSocketServerFactory):
+    def __init__(self):
+        WebSocketServerFactory.__init__(self)
+        self.clients = []
+
+    def register(self, client):
+        if client not in self.clients:
+            self.clients.append(client)
+
+    def unregister(self, client):
+        if client in self.clients:
+            self.clients.remove(client)
+
+    def publish(self, channel, message, *args, **kwargs):
+        payload = simplejson.dumps([
+            channel,
+            message
+        ]).encode('utf-8')
+
+        preparedMsg = self.prepareMessage(payload)
+        for c in self.clients:
+            c.sendPreparedMessage(preparedMsg)
+
+
+def make_protocol(service):
+    class StandaloneServiceProtocol(WebSocketServerProtocol):
+
+        def onOpen(self):
+            self.factory.register(self)
+            service.log.info(
+                'Client {peer} connected (total={total})',
+                peer=self.peer,
+                total=len(self.factory.clients)
+            )
+
+        def onConnect(self, request):
+            service.publishManifest()
+            service._publishRaceState()
+
+        def connectionLost(self, reason):
+            WebSocketServerProtocol.connectionLost(self, reason)
+            self.factory.unregister(self)
+            service.log.info(
+                'Client {peer} disconnected (remaining={remaining})',
+                peer=self.peer,
+                remaining=len(self.factory.clients)
+            )
+
+    return StandaloneServiceProtocol
+
+
 class StandaloneSession(object):
-    def __init__(self, protocol, port_callback=None):
-        self._protocol = protocol
+    def __init__(self, service, port_callback=None):
+        self._protocol = make_protocol(service)
         self._port_callback = port_callback
+        self.service = service
 
     def run(self):
-        factory = WebSocketServerFactory()
+        factory = BroadcastServerFactory()
         factory.protocol = self._protocol
+        self.service.publish = factory.publish
 
         listening_port = reactor.listenTCP(0, factory)
         if self._port_callback:
@@ -20,23 +73,3 @@ class StandaloneSession(object):
 
         txaio.start_logging()
         reactor.run()
-
-
-def create_standalone_session(service, port_callback=None):
-    class StandaloneServiceProtocol(WebSocketServerProtocol):
-
-        def onConnect(self, request):
-            service.set_publish(self.publish)
-            service.publishManifest()
-
-        def onClose(self, wasClean, code, reason):
-            service.set_publish(None)
-
-        def publish(self, channel, message, *args, **kwargs):
-            payload = simplejson.dumps([
-                channel,
-                message
-            ])
-            self.sendMessage(payload.encode('utf-8'), False)
-
-    return StandaloneSession(StandaloneServiceProtocol, port_callback)

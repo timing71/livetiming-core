@@ -18,7 +18,7 @@ from twisted.web import client
 from uuid import uuid4
 
 from .session import create_service_session
-from .standalone import create_standalone_session
+from .standalone import StandaloneSession
 
 import copy
 import os
@@ -303,7 +303,7 @@ class BaseService(AbstractService, ManifestPublisher):
                     'Standalone server for uuid:{} listening on port:{}'.format(self.uuid, port),
                     file=sys.stderr
                 )
-            session = create_standalone_session(self, report_port)
+            session = StandaloneSession(self, report_port)
             session.run()
         else:
             session_class = create_service_session(self)
@@ -431,9 +431,7 @@ class BaseService(AbstractService, ManifestPublisher):
             self.log.failure("Exception while updating race state: {log_failure}")
             sentry_sdk.capture_exception(e)
 
-    def _updateAndPublishRaceState(self):
-        self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
-        self._updateRaceState()
+    def _publishRaceState(self):
         self.publish(
             RPC.STATE_PUBLISH.format(self.uuid),
             Message(
@@ -443,6 +441,11 @@ class BaseService(AbstractService, ManifestPublisher):
             ).serialise(),
             options=PublishOptions(retain=True)
         )
+
+    def _updateAndPublishRaceState(self):
+        self.log.debug("Updating and publishing timing data for {}".format(self.uuid))
+        self._updateRaceState()
+        self._publishRaceState()
 
     def _getMessageGenerators(self):
         return [
