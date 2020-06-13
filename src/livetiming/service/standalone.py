@@ -1,6 +1,7 @@
 from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.internet import reactor
 
+import os
 import simplejson
 import txaio
 
@@ -67,7 +68,9 @@ class StandaloneSession(object):
         factory.protocol = self._protocol
         self.service.publish = factory.publish
 
-        listening_port = reactor.listenTCP(0, factory)
+        port = int(os.environ.get('LIVETIMING_STANDALONE_PORT', 0))
+
+        listening_port = reactor.listenTCP(port, factory)
         if self._port_callback:
             self._port_callback(listening_port.getHost().port)
 
