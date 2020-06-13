@@ -40,10 +40,10 @@ def make_protocol(service):
                 peer=self.peer,
                 total=len(self.factory.clients)
             )
-
-        def onConnect(self, request):
             service.publishManifest()
             service._publishRaceState()
+            if service.analyser:
+                service.analyser.publish_all()
 
         def connectionLost(self, reason):
             WebSocketServerProtocol.connectionLost(self, reason)
