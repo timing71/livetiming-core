@@ -66,7 +66,7 @@ class StandaloneSession(object):
     def run(self):
         factory = BroadcastServerFactory()
         factory.protocol = self._protocol
-        self.service.publish = factory.publish
+        self.service.set_publish(factory.publish)
 
         port = int(os.environ.get('LIVETIMING_STANDALONE_PORT', 0))
 
