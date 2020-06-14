@@ -28,6 +28,9 @@ setup(
         "treq",
         "twisted"
     ],
+    extras_require={
+        'upnp': ['miniupnpc']
+    },
     setup_requires=[
         'pytest-runner',
         'setuptools_scm'

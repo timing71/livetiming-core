@@ -307,7 +307,7 @@ class BaseService(AbstractService, ManifestPublisher):
                     'Standalone server for uuid:{} listening on port:{}'.format(self.uuid, port),
                     file=sys.stderr
                 )
-            session = StandaloneSession(self, report_port)
+            session = StandaloneSession(self, report_port, self.args.upnp)
             session.run()
         else:
             session_class = create_service_session(self)

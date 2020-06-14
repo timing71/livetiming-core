@@ -1,6 +1,11 @@
 from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.internet import reactor
 
+try:
+    import miniupnpc
+except ModuleNotFoundError:
+    miniupnpc = None
+
 import os
 import simplejson
 import txaio
@@ -58,10 +63,11 @@ def make_protocol(service):
 
 
 class StandaloneSession(object):
-    def __init__(self, service, port_callback=None):
+    def __init__(self, service, port_callback=None, use_upnp=False):
         self._protocol = make_protocol(service)
         self._port_callback = port_callback
         self.service = service
+        self.use_upnp = use_upnp
 
     def run(self):
         factory = BroadcastServerFactory()
@@ -71,8 +77,67 @@ class StandaloneSession(object):
         port = int(os.environ.get('LIVETIMING_STANDALONE_PORT', 0))
 
         listening_port = reactor.listenTCP(port, factory)
+        actual_port = listening_port.getHost().port
+
+        upnp_forwarded_port, upnp = None, None
+
         if self._port_callback:
-            self._port_callback(listening_port.getHost().port)
+            self._port_callback(actual_port)
+            if self.use_upnp and miniupnpc:
+                try:
+                    upnp_forwarded_port, upnp = self.upnp_forward_port(actual_port)
+                except Exception:
+                    self.service.log.failure(
+                        'UPnP forwarding failed! Manually forward port {port} on'
+                        ' your router to make the data externally accessible.',
+                        port=actual_port
+                    )
+            elif self.use_upnp:
+                self.service.log.warn(
+                    'UPnP port forwarding requested but miniupnpc is not'
+                    ' available. Please manually configure port forwarding.'
+                )
 
         txaio.start_logging()
         reactor.run()
+
+        if upnp_forwarded_port and upnp:
+            upnp.deleteportmapping(upnp_forwarded_port, 'TCP')
+            self.service.log.info('Removed UPnP port forward for port {port}', port=upnp_forwarded_port)
+
+    def upnp_forward_port(self, port):
+        u = miniupnpc.UPnP()
+        num_devices = u.discover()
+
+        if num_devices > 0:
+            igd = u.selectigd()
+            external_port = find_nearest_free_port(port, u)
+
+            b = u.addportmapping(
+                external_port,
+                'TCP',
+                u.lanaddr,
+                port,
+                'Timing71 standalone service port forward',
+                ''
+            )
+            if b:
+                self.service.log.info(
+                    '*** This service is accessible at {host} port {port} ***',
+                    host=u.externalipaddress(),
+                    port=external_port
+                )
+
+            return external_port, u
+
+        else:
+            self.service.log.warn('UPnP forwarding requested but no UPnP router found!')
+
+
+def find_nearest_free_port(port, upnp):
+    eport = port
+    r = upnp.getspecificportmapping(eport, 'TCP')
+    while r is not None and eport < 65536:
+        eport = eport + 1
+        r = u.getspecificportmapping(eport, 'TCP')
+    return eport

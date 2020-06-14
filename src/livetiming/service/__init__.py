@@ -33,6 +33,7 @@ def parse_args(args=None):
     parser.add_argument('-m', '--masquerade', nargs='?', help='Masquerade as this service class')
     parser.add_argument('--standalone', action='store_true', help='Run service in standalone configuration')
     parser.add_argument('--no-write-state', action='store_true', help='Don\'t write state files to disk')
+    parser.add_argument('--upnp', action='store_true', help='Use UPnP to make this service accessible from the Internet (standalone mode only)')
 
     return parser.parse_known_args(args)
 
