@@ -247,7 +247,7 @@ class BaseService(AbstractService, ManifestPublisher):
             self.analyser = Analyser(
                 self.uuid,
                 self.publish,
-                interval=self.getPollInterval()
+                interval=1 if self.args.standalone else self.getPollInterval()
             )
         self._publish = None
 
@@ -294,7 +294,7 @@ class BaseService(AbstractService, ManifestPublisher):
                 self.log.debug("Saving data centre state")
                 return deferToThread(self.analyser.save_data_centre)
             LoopingCall(saveAsync).start(60)
-            LoopingCall(self.analyser._publish_pending).start(60)
+            LoopingCall(self.analyser._publish_pending).start(1)
             self.analyser.publish_all()
 
         if 'LIVETIMING_ROUTER' not in os.environ:
