@@ -80,8 +80,8 @@ class Analyser(object):
         self.data_centre.latest_timestamp = timestamp
 
     def publish_all(self):
-        for key, module in self._modules.items():
-            self._publish_data(key, module.get_data(self.data_centre))
+        for key, data in self.get_current_state().items():
+            self._publish_data(key, data)
 
     def _publish_data(self, key, data):
         self.log.debug("Queueing publish of data '{key}'", key=key, data=data)
