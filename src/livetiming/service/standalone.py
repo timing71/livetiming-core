@@ -83,7 +83,10 @@ class StandaloneSession(object):
 
         if self._port_callback:
             self._port_callback(actual_port)
-            if self.use_upnp and miniupnpc:
+
+            should_use_upnp = self.use_upnp or os.environ.get('LIVETIMING_USE_UPNP', False)
+
+            if should_use_upnp and miniupnpc:
                 try:
                     upnp_forwarded_port, upnp = self.upnp_forward_port(actual_port)
                 except Exception:
@@ -92,7 +95,7 @@ class StandaloneSession(object):
                         ' your router to make the data externally accessible.',
                         port=actual_port
                     )
-            elif self.use_upnp:
+            elif should_use_upnp:
                 self.service.log.warn(
                     'UPnP port forwarding requested but miniupnpc is not'
                     ' available. Please manually configure port forwarding.'
