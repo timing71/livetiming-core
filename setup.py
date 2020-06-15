@@ -29,7 +29,7 @@ setup(
         "twisted"
     ],
     extras_require={
-        'upnp': ['miniupnpc']
+        'upnp': ['upnpy']
     },
     setup_requires=[
         'pytest-runner',

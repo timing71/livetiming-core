@@ -2,12 +2,13 @@ from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerF
 from twisted.internet import reactor
 
 try:
-    import miniupnpc
+    import upnpy
 except ModuleNotFoundError:
-    miniupnpc = None
+    upnpy = None
 
 import os
 import simplejson
+import socket
 import txaio
 
 
@@ -86,9 +87,9 @@ class StandaloneSession(object):
 
             should_use_upnp = self.use_upnp or os.environ.get('LIVETIMING_USE_UPNP', False)
 
-            if should_use_upnp and miniupnpc:
+            if should_use_upnp and upnpy:
                 try:
-                    upnp_forwarded_port, upnp = self.upnp_forward_port(actual_port)
+                    upnp_forwarded_port, uservice = self.upnp_forward_port(actual_port)
                 except Exception:
                     self.service.log.failure(
                         'UPnP forwarding failed! Manually forward port {port} on'
@@ -97,50 +98,82 @@ class StandaloneSession(object):
                     )
             elif should_use_upnp:
                 self.service.log.warn(
-                    'UPnP port forwarding requested but miniupnpc is not'
+                    'UPnP port forwarding requested but upnpy is not'
                     ' available. Please manually configure port forwarding.'
                 )
 
         txaio.start_logging()
         reactor.run()
 
-        if upnp_forwarded_port and upnp:
-            upnp.deleteportmapping(upnp_forwarded_port, 'TCP')
+        if upnp_forwarded_port and uservice:
+            uservice.DeletePortMapping(
+                NewRemoteHost='',
+                NewProtocol='TCP',
+                NewExternalPort=upnp_forwarded_port
+            )
             self.service.log.info('Removed UPnP port forward for port {port}', port=upnp_forwarded_port)
 
     def upnp_forward_port(self, port):
-        u = miniupnpc.UPnP()
-        num_devices = u.discover()
+        u = upnpy.UPnP()
+        devices = u.discover()
 
-        if num_devices > 0:
-            igd = u.selectigd()
-            external_port = find_nearest_free_port(port, u)
+        if len(devices) > 0:
+            igd = u.get_igd()
 
-            b = u.addportmapping(
-                external_port,
-                'TCP',
-                u.lanaddr,
-                port,
-                'Timing71 standalone service port forward',
-                ''
-            )
-            if b:
-                self.service.log.info(
-                    '*** This service is accessible at {host} port {port} ***',
-                    host=u.externalipaddress(),
-                    port=external_port
-                )
+            for uservice in igd.get_services():
+                if uservice.type_ == 'WANIPConnection':
+                    external_port = find_nearest_free_port(port, uservice)
 
-            return external_port, u
+                    uservice.AddPortMapping(
+                        NewRemoteHost='',
+                        NewExternalPort=external_port,
+                        NewProtocol='TCP',
+                        NewInternalPort=port,
+                        NewInternalClient=get_local_ip(),
+                        NewEnabled=1,
+                        NewPortMappingDescription='Timing71 standalone service port forward',
+                        NewLeaseDuration=0
+                    )
+
+                    ext_ip = uservice.GetExternalIPAddress()['NewExternalIPAddress']
+
+                    self.service.log.info(
+                        '*** This service is accessible at {host} port {port} ***',
+                        host=ext_ip,
+                        port=external_port
+                    )
+
+                    return external_port, uservice
+            raise Exception('Unable to find a UPnP service to configure port forwarding')
 
         else:
             self.service.log.warn('UPnP forwarding requested but no UPnP router found!')
 
 
-def find_nearest_free_port(port, upnp):
+def find_nearest_free_port(port, uservice):
     eport = port
-    r = upnp.getspecificportmapping(eport, 'TCP')
+
+    r = get_tcp_mapping_for_port(eport, uservice)
     while r is not None and eport < 65536:
         eport = eport + 1
-        r = u.getspecificportmapping(eport, 'TCP')
+        r = get_tcp_mapping_for_port(eport, uservice)
     return eport
+
+
+def get_tcp_mapping_for_port(port, uservice):
+    try:
+        return uservice.GetSpecificPortMappingEntry(
+            NewProtocol='TCP',
+            NewRemoteHost='',
+            NewExternalPort=port
+        )
+    except Exception:
+        return None
+
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    my_ip = s.getsockname()[0]
+    s.close()
+    return my_ip
