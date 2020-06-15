@@ -122,20 +122,23 @@ class StandaloneSession(object):
 
             for uservice in igd.get_services():
                 if uservice.type_ == 'WANIPConnection':
-                    external_port = find_nearest_free_port(port, uservice)
-
-                    uservice.AddPortMapping(
-                        NewRemoteHost='',
-                        NewExternalPort=external_port,
-                        NewProtocol='TCP',
-                        NewInternalPort=port,
-                        NewInternalClient=get_local_ip(),
-                        NewEnabled=1,
-                        NewPortMappingDescription='Timing71 standalone service port forward',
-                        NewLeaseDuration=0
-                    )
-
                     ext_ip = uservice.GetExternalIPAddress()['NewExternalIPAddress']
+                    int_ip = get_local_ip()
+                    external_port, needs_creating = find_nearest_free_port(port, uservice, int_ip)
+
+                    if needs_creating:
+                        uservice.AddPortMapping(
+                            NewRemoteHost='',
+                            NewExternalPort=external_port,
+                            NewProtocol='TCP',
+                            NewInternalPort=port,
+                            NewInternalClient=int_ip,
+                            NewEnabled=1,
+                            NewPortMappingDescription='Timing71 standalone service port forward',
+                            NewLeaseDuration=0
+                        )
+                    else:
+                        self.service.log.info('Reusing exising UPnP port forwarding')
 
                     self.service.log.info(
                         '*** This service is accessible at {host} port {port} ***',
@@ -150,14 +153,20 @@ class StandaloneSession(object):
             self.service.log.warn('UPnP forwarding requested but no UPnP router found!')
 
 
-def find_nearest_free_port(port, uservice):
+def find_nearest_free_port(port, uservice, int_ip):
     eport = port
+    needs_creating = True
 
     r = get_tcp_mapping_for_port(eport, uservice)
     while r is not None and eport < 65536:
+        if r['NewInternalClient'] == int_ip:
+            # We've discovered a stale UPnP forward from a previous incarnation
+            # Let's reuse it
+            needs_creating = False
+            break
         eport = eport + 1
         r = get_tcp_mapping_for_port(eport, uservice)
-    return eport
+    return eport, needs_creating
 
 
 def get_tcp_mapping_for_port(port, uservice):
