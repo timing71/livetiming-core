@@ -310,5 +310,5 @@ class Nurburgring(object):
 
 
 if __name__ == '__main__':
-    n = Nurburgring(True)
+    n = Nurburgring(verbose=True)
     reactor.run()
