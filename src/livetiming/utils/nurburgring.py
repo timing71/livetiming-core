@@ -259,10 +259,11 @@ def _parse_objects(data):
 class Nurburgring(object):
     log = Logger()
 
-    def __init__(self, app=OVER_IP_APP, verbose=False):
+    def __init__(self, app=OVER_IP_APP, verbose=False, ignore_zones=[]):
         self._zones = {}
         self._verbose = verbose
         self.app = app
+        self.ignore_zones = ignore_zones
         client.getPage(bytes(MARSHAL_POST_ADDRESS_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_addresses, self._handle_errback)
 
     def _parse_addresses(self, data):
@@ -297,7 +298,8 @@ class Nurburgring(object):
 
         for zt, zone in zones:
             post_num = self._marshal_posts.get(str(zone), '').decode('utf-8')
-            self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
+            if post_num not in self.ignore_zones:
+                self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
         if self._verbose:
             print(self._zones)
