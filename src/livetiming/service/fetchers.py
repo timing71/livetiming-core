@@ -1,11 +1,12 @@
 from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.logger import Logger
-from twisted.web import client
+from twisted.web.client import Agent, readBody, _HTTP11ClientFactory
 
 import simplejson
 
-client.HTTPClientFactory.noisy = False
-client._HTTP11ClientFactory.noisy = False
+
+_HTTP11ClientFactory.noisy = False
 
 
 class Fetcher(object):
@@ -16,6 +17,8 @@ class Fetcher(object):
         self.callback = callback
         self.interval = interval
 
+        self._agent = Agent(reactor)
+
         self.backoff = 0
         self.running = False
 
@@ -23,35 +26,29 @@ class Fetcher(object):
         if self.running:
             reactor.callLater(delay, self._run)
 
-    def _defer(self):
-        if callable(self.url):
-            url = self.url()
-        else:
-            url = self.url
-
-        try:
-            return client.getPage(url)
-        except Exception as e:
-            self.log.failure("URL {url} returned error: {msg}", url=url, msg=str(e))
-            raise
-
+    @inlineCallbacks
     def _run(self):
         if self.running:
-            def cb(data):
+            try:
+                if callable(self.url):
+                    url = self.url()
+                else:
+                    url = self.url
+
+                response = yield self._agent.request(
+                    b'GET',
+                    url
+                )
+                body = yield readBody(response)
                 self.backoff = 0
                 if self.running:
-                    self.callback(data)
+                    self.callback(body)
                     self._schedule(self.interval)
-
-            def eb(fail):
+            except Exception as fail:
                 if self.running:
                     self.backoff = max(1, self.backoff * 2)
                     self.log.warn("Fetcher failed: {fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.backoff)
                     self._schedule(self.backoff)
-
-            deferred = self._defer()
-            deferred.addCallback(cb)
-            deferred.addErrback(eb)
 
     def start(self):
         self.running = True
