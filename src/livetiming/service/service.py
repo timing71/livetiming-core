@@ -410,7 +410,10 @@ class BaseService(AbstractService, ManifestPublisher):
 
         # Return the final segment of the module path.
         # e.g. pluginbase._internalspace._sp1bab772cdae6d12afa062a7e7632e890.timeservice_nl
-        return self.__module__.split('.')[-1]
+        module_parts = self.__module__.split('.')
+        if module_parts[-1] == 'service' and len(module_parts) > 1:
+            return module_parts[-2]
+        return module_parts[-1]
 
     def _getDescription(self):
         if self.args.description is not None:
