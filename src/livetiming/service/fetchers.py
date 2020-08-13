@@ -35,11 +35,8 @@ class Fetcher(object):
                 else:
                     url = self.url
 
-                response = yield self._agent.request(
-                    b'GET',
-                    url
-                )
-                body = yield readBody(response)
+                body = yield self._get(url)
+
                 self.backoff = 0
                 if self.running:
                     self.callback(body)
@@ -49,6 +46,15 @@ class Fetcher(object):
                     self.backoff = max(1, self.backoff * 2)
                     self.log.warn("Fetcher failed: {fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.backoff)
                     self._schedule(self.backoff)
+
+    @inlineCallbacks
+    def _get(self, url):
+        response = yield self._agent.request(
+            b'GET',
+            url
+        )
+        body = yield readBody(response)
+        returnValue(body)
 
     def start(self):
         self.running = True
