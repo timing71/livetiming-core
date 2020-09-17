@@ -234,7 +234,14 @@ class BaseService(AbstractService, ManifestPublisher):
     def __init__(self, args, extra_args={}):
         super().__init__()
         self.args = args
-        self.uuid = os.path.splitext(os.path.basename(self.args.initial_state))[0] if self.args.initial_state is not None else uuid4().hex
+
+        if self.args.initial_state is not None:
+            self.uuid = os.path.splitext(os.path.basename(self.args.initial_state))[0]
+        elif self.args.uuid is not None:
+            self.uuid = self.args.uuid
+        else:
+            self.uuid = uuid4().hex
+
         self.state = self._getInitialState()
         if self.args.recording_file is not None:
             self.recorder = TimingRecorder(self.args.recording_file)
