@@ -3,12 +3,17 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 from twisted.web import client
+from twisted.web.client import HTTPClientFactory
 from twisted.web.http_headers import Headers
 
 import base64
 import copy
 import re
 import simplejson
+
+
+HTTPClientFactory.noisy = False
+
 
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
 MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'
