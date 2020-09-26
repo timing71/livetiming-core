@@ -304,7 +304,9 @@ class Nurburgring(object):
         zones = parsed_data.get('data', [])
 
         for zt, zone in zones:
-            post_num = self._marshal_posts.get(str(zone), '').decode('utf-8')
+            post_num = self._marshal_posts.get(str(zone), b'')
+            if hasattr(post_num, 'decode'):
+                post_num = post_num.decode('utf-8')
             if post_num not in self.ignore_zones:
                 self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
