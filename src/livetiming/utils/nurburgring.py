@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
 from twisted.web import client
-from twisted.web.client import HTTPClientFactory
+from twisted.web.client import Agent, BrowserLikePolicyForHTTPS, readBody
 from twisted.web.http_headers import Headers
+from twisted.web.iweb import IPolicyForHTTPS
+from zope.interface import implementer
 
 import base64
 import copy
@@ -12,7 +15,27 @@ import re
 import simplejson
 
 
-HTTPClientFactory.noisy = False
+# Work around SSL certificate misconfiguration at GPSauge's end:
+@implementer(IPolicyForHTTPS)
+class OneHostnameWorkaroundPolicy(object):
+    def __init__(self):
+        self._normalPolicy = BrowserLikePolicyForHTTPS()
+
+    def creatorForNetloc(self, hostname, port):
+        if hostname == b"dev.apioverip.com":
+            hostname = b"gpsoverip.com"
+        return self._normalPolicy.creatorForNetloc(hostname, port)
+
+
+agent = Agent(reactor, OneHostnameWorkaroundPolicy())
+
+
+@inlineCallbacks
+def getPage(url):
+    resp = yield agent.request(b'GET', url)
+    body = yield readBody(resp)
+
+    returnValue(body)
 
 
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
@@ -271,7 +294,7 @@ class Nurburgring(object):
         self._verbose = verbose
         self.app = app
         self.ignore_zones = ignore_zones
-        client.getPage(bytes(MARSHAL_POST_ADDRESS_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_addresses, self._handle_errback)
+        getPage(bytes(MARSHAL_POST_ADDRESS_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_addresses, self._handle_errback)
 
     def _parse_addresses(self, data):
         addresses = _parse_objects(data)
@@ -279,7 +302,7 @@ class Nurburgring(object):
         for obj in list(addresses.values()):
             if "geoobjectid" in obj:
                 self._names[obj['geoobjectid']] = base64.b64decode(obj.get('name')).lower()
-        client.getPage(bytes(MARSHAL_POST_ID_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_marshal_posts, self._handle_errback)
+        getPage(bytes(MARSHAL_POST_ID_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_marshal_posts, self._handle_errback)
 
     def _parse_marshal_posts(self, data):
         objs = _parse_objects(data)
@@ -295,7 +318,7 @@ class Nurburgring(object):
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
-        client.getPage(bytes(ACTIVE_ZONES_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_zones, self._handle_errback)
+        getPage(bytes(ACTIVE_ZONES_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_zones, self._handle_errback)
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
