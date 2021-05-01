@@ -22,8 +22,8 @@ class OneHostnameWorkaroundPolicy(object):
         self._normalPolicy = BrowserLikePolicyForHTTPS()
 
     def creatorForNetloc(self, hostname, port):
-        if hostname == b"dev.apioverip.com":
-            hostname = b"gpsoverip.com"
+        if hostname == b"dev.apioverip.de":
+            hostname = b"gpsoverip.de"
         return self._normalPolicy.creatorForNetloc(hostname, port)
 
 
