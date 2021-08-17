@@ -12,7 +12,7 @@ def create_service_session(service):
 
         @inlineCallbacks
         def onJoin(self, details):
-            service.log.info("Session ready for service {}".format(service.uuid))
+            service.log.info("Session ready for service {uuid}", uuid=service.uuid)
             service.set_publish(self.publish)
 
             register_opts = RegisterOptions(force_reregister=True)

@@ -94,7 +94,7 @@ def authenticatedService(clazz):
     def onChallenge(self, challenge):
         user_secret = os.environ.get('LIVETIMING_SHARED_SECRET', None)
         if challenge.method == "wampcra":
-            self.log.debug("WAMP-CRA challenge received: {}".format(challenge))
+            self.log.debug("WAMP-CRA challenge received: {challenge}", challenge=challenge)
 
             if 'salt' in challenge.extra:
                 # salted secret
