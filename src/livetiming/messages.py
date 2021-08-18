@@ -44,9 +44,9 @@ class PerCarMessage(TimingMessage):
                 wanted_car = self.getValue(newCar, Stat.CAR)
                 wanted_clazz = self.getValue(newCar, Stat.CLASS)
                 oldCars = [
-                    c for c in oldState["cars"] if self.getValue(c, Stat.NUM) == wanted_num and
-                    self.getValue(c, Stat.CAR) == wanted_car and
-                    self.getValue(c, Stat.CLASS) == wanted_clazz
+                    c for c in oldState["cars"] if self.getValue(c, Stat.NUM) == wanted_num
+                    and self.getValue(c, Stat.CAR) == wanted_car
+                    and self.getValue(c, Stat.CLASS) == wanted_clazz
                 ]
                 oldCar = None
 
@@ -134,7 +134,7 @@ class CarPitMessage(PerCarMessage):
         else:
             car_num_and_driver = "#{}".format(carNum)
 
-        if oldStatus != newStatus and carNum is not None:
+        if oldStatus != newStatus and carNum is not None and oldStatus != 'N/S':
             if (oldStatus != 'RUN' and newStatus == "OUT") or (newStatus == "RUN" and oldStatus == "PIT"):
                 return [clazz, "{} has left the pits".format(car_num_and_driver), "out"]
             elif newStatus == "PIT":
