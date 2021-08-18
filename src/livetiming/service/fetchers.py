@@ -44,7 +44,7 @@ class Fetcher(object):
             except Exception as fail:
                 if self.running:
                     self.backoff = max(1, self.backoff * 2)
-                    self.log.warn("Fetcher failed: {fail}. Trying again in {backoff} seconds", fail=fail, backoff=self.backoff)
+                    self.log.warn("Fetcher failed for {url}: {fail}. Trying again in {backoff} seconds", url=url, fail=fail, backoff=self.backoff)
                     self._schedule(self.backoff)
 
     @inlineCallbacks
