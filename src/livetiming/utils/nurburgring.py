@@ -13,21 +13,10 @@ import base64
 import copy
 import re
 import simplejson
+import time
 
 
-# Work around SSL certificate misconfiguration at GPSauge's end:
-@implementer(IPolicyForHTTPS)
-class OneHostnameWorkaroundPolicy(object):
-    def __init__(self):
-        self._normalPolicy = BrowserLikePolicyForHTTPS()
-
-    def creatorForNetloc(self, hostname, port):
-        if hostname == b"dev.apioverip.de":
-            hostname = b"gpsoverip.de"
-        return self._normalPolicy.creatorForNetloc(hostname, port)
-
-
-agent = Agent(reactor, OneHostnameWorkaroundPolicy())
+agent = Agent(reactor)
 
 
 @inlineCallbacks
@@ -39,9 +28,9 @@ def getPage(url):
 
 
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
-MARSHAL_POST_ADDRESS_URL = 'https://www.apioverip.de/?action=list&module=geoobject&nozlib=1&overipapp={}&type=address'
-MARSHAL_POST_ID_URL = 'https://www.apioverip.de/?action=list&module=rule&nozlib=1&overipapp={}'
-ACTIVE_ZONES_URL = 'https://dev.apioverip.de/racing/rules/active?overipapp={}'
+MARSHAL_POST_ADDRESS_URL = 'https://racingios.apioverip.de/?action=list&gps_system=iOS_Racing&gps_version=2.60&module=geoobject&nozlib=1&overipapp={}&type=address'
+MARSHAL_POST_ID_URL = 'https://racingios.apioverip.de/?action=list&gps_system=iOS_Racing&gps_version=2.60&module=rule&nozlib=1&overipapp={}'
+ACTIVE_ZONES_URL = 'https://api-racingios.gpsoverip.de/racing/rules/active?overipapp={}&ts={}'
 # TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
@@ -311,14 +300,14 @@ class Nurburgring(object):
         for obj in list(objs.values()):
             self._marshal_posts[obj['ruleid']] = self._names.get(obj['refid'], obj['refid'])
 
-            if self._verbose:
-                print(self._marshal_posts)
+        if self._verbose:
+            print('Posts: ', self._marshal_posts)
 
         self.log.info('Starting poll for GPSauge NBR data...')
         LoopingCall(self._update_zones).start(10)
 
     def _update_zones(self):
-        getPage(bytes(ACTIVE_ZONES_URL.format(self.app), 'utf-8')).addCallbacks(self._parse_zones, self._handle_errback)
+        getPage(bytes(ACTIVE_ZONES_URL.format(self.app, time.time()), 'utf-8')).addCallbacks(self._parse_zones, self._handle_errback)
 
     def _parse_zones(self, data):
         parsed_data = simplejson.loads(data)
@@ -334,7 +323,7 @@ class Nurburgring(object):
                 self._zones[zone] = (zt, post_num, MARSHAL_POST_LOCATIONS.get(post_num, ''))
 
         if self._verbose:
-            print(self._zones)
+            print('Zones: ', self._zones)
 
     def _handle_errback(self, err):
         self.log.error("Encountered an error: {err}", err=err)
