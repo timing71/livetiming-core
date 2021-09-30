@@ -3,11 +3,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from twisted.logger import Logger
-from twisted.web import client
-from twisted.web.client import Agent, BrowserLikePolicyForHTTPS, readBody
-from twisted.web.http_headers import Headers
-from twisted.web.iweb import IPolicyForHTTPS
-from zope.interface import implementer
+from twisted.web.client import Agent, readBody
 
 import base64
 import copy
