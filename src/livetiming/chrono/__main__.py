@@ -47,6 +47,10 @@ def main():
 
     print("Generated {} events".format(evt_count))
 
+    # with open('events.txt', 'w') as events_log:
+    #     for event in events:
+    #         events_log.write(f"{event.timestamp}, {event.__class__.__name__}\n")
+
     message_generators = args.message_generators()
 
     working_state = initial_state
