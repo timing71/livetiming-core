@@ -155,14 +155,14 @@ def create_events(args):
             if row['in_lap']:
                 events.append(
                     PitInEvent(
-                        make_datestamp(_parse_clock_time(row['time_in_lap'])),
+                        make_datestamp(_parse_clock_time(row['time_in_lap'] or row['time_of_day'])),
                         COLSPEC,
                         race_num
                     )
                 )
 
             if row['out_lap']:
-                out_time = make_datestamp(_parse_clock_time(row['time_out_lap']))
+                out_time = make_datestamp(_parse_clock_time(row['time_out_lap'] or row['time_of_day']))
                 events.append(
                     PitOutEvent(
                         out_time,
