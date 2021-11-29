@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from livetiming.racing import Stat
 
 import copy
@@ -14,6 +15,9 @@ class Event(object):
         '''
         pass
 
+    def __str__(self):
+        return f"{self.timestamp} ({datetime.fromtimestamp(self.timestamp).strftime('%H:%M:%S.%f')}): {self.__class__.__name__}"
+
 
 class FlagEvent(Event):
     def __init__(self, timestamp, flagState):
@@ -24,6 +28,9 @@ class FlagEvent(Event):
         new_state = copy.deepcopy(state)
         new_state['session']['flagState'] = self.flagState
         return new_state
+
+    def __str__(self):
+        return f"{super().__str__()} => {self.flagState}"
 
 
 class CarEvent(Event):
@@ -48,6 +55,9 @@ class CarEvent(Event):
         new_state = copy.deepcopy(state)
         new_state['cars'].update({self._race_num: car})
         return new_state
+
+    def __str__(self):
+        return f"{super().__str__()} => {self._race_num}"
 
 
 class LaptimeEvent(CarEvent):
@@ -74,6 +84,9 @@ class LaptimeEvent(CarEvent):
         car[-1][4] = 0
 
         return self._updated_state(state, car)
+
+    def __str__(self):
+        return f"{super().__str__()}: {self._lap_time}"
 
 
 _sector_by_num = {
@@ -124,13 +137,18 @@ class SectorEvent(CarEvent):
 
 
 class PitInEvent(CarEvent):
+    def __init__(self, timestamp, colspec, race_num, increment_laps=True):
+        super().__init__(timestamp, colspec, race_num)
+        self._increment_laps = increment_laps
+
     def __call__(self, state):
         car = self._get_car(state)
         self._set_field(car, Stat.STATE, "PIT")
         current_pits = self._get_field(car, Stat.PITS) or 0
         current_laps = self._get_field(car, Stat.LAPS) or 0
         self._set_field(car, Stat.PITS, current_pits + 1)
-        self._set_field(car, Stat.LAPS, current_laps + 1)
+        if self._increment_laps:
+            self._set_field(car, Stat.LAPS, current_laps + 1)
 
         return self._updated_state(state, car)
 

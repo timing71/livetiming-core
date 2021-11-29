@@ -157,7 +157,8 @@ def create_events(args):
                     PitInEvent(
                         make_datestamp(_parse_clock_time(row['time_in_lap'] or row['time_of_day'])),
                         COLSPEC,
-                        race_num
+                        race_num,
+                        False
                     )
                 )
 
@@ -211,7 +212,7 @@ _FLAG_MAP = {
 def sort_cars(args, cars):
     return sorted(
         cars,
-        key=lambda c: [c[5], c[-1][0]],
+        key=lambda c: [c[5], -1 * c[-1][0]],
         reverse=True
     )
 

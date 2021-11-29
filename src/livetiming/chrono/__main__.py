@@ -31,9 +31,7 @@ def _parse_args():
     parser.add_argument('--output', '-o', help='Output filename (\'.zip\' will be appended)', default='output')
     parser.add_argument('--description', '-d', help='Session description', default='Converted chrono dump')
     parser.add_argument('--name', '-n', help='Session name', default='Converted')
-
-    parser.add_argument('--name', help='Service name', default='Conversion')
-    parser.add_argument('--description', help='Event description', default='Converted chrono dump')
+    parser.add_argument('--debug', help='Create debugging files', action='store_true')
 
     return parser.parse_args()
 
@@ -47,9 +45,10 @@ def main():
 
     print("Generated {} events".format(evt_count))
 
-    # with open('events.txt', 'w') as events_log:
-    #     for event in events:
-    #         events_log.write(f"{event.timestamp}, {event.__class__.__name__}\n")
+    if args.debug:
+        with open('events.txt', 'w') as events_log:
+            for event in events:
+                events_log.write(f"{event}\n")
 
     message_generators = args.message_generators()
 
@@ -169,11 +168,9 @@ def _gap_between(first, first_laps, second, second_laps):
         if first_cur_sector < second_cur_sector:
             return second_passing[second_cur_sector] - first_passing[second_cur_sector]
         elif laps_diff == 0:
-            return first_passing[0] - second_passing[0]
+            return second_passing[0] - first_passing[0]
         else:
             return '1 lap'
-
-    return ''
 
 
 def _generate_messages(generators, timestamp, old_state, new_state):
