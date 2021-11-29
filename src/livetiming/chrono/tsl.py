@@ -91,7 +91,7 @@ def create_initial_state(args, extras):
     state = {
         'cars': {},
         'session': {
-            'flagState': 'none'
+            'flagState': 'none' if args.flags else 'green'
         }
     }
     with open(args.input, 'r', newline='', encoding='utf-8-sig') as csvfile:
