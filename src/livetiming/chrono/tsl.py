@@ -73,7 +73,7 @@ def get_start_time(args):
         ts = start_date.replace(hour=clock_time.hour, minute=clock_time.minute, second=clock_time.second)
 
         elapsed_raw = row['session_time']
-        elapsed = re.match("((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+\.[0-9]+)", elapsed_raw)
+        elapsed = re.match(r"((?P<hours>[0-9]+):)?(?P<minutes>[0-9]+):(?P<seconds>[0-9]+\.[0-9]+)", elapsed_raw)
         delta = timedelta(
             hours=int(elapsed.group('hours') or 0),
             minutes=int(elapsed.group('minutes')),
