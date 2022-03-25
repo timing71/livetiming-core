@@ -26,7 +26,7 @@ def getPage(url):
 OVER_IP_APP = 'IPHNGR24'  # or IPHADAC24H
 MARSHAL_POST_ADDRESS_URL = 'https://racingios.apioverip.de/?action=list&gps_system=iOS_Racing&gps_version=2.60&module=geoobject&nozlib=1&overipapp={}&type=address'
 MARSHAL_POST_ID_URL = 'https://racingios.apioverip.de/?action=list&gps_system=iOS_Racing&gps_version=2.60&module=rule&nozlib=1&overipapp={}'
-ACTIVE_ZONES_URL = 'https://api-racingios.gpsoverip.de/racing/rules/active?overipapp={}&ts={}'
+ACTIVE_ZONES_URL = 'https://api-racingios.gpsoverip.de/v1/racing/rules/active?overipapp={}&ts={}'
 # TRACK_STATE_URL = 'https://www.apioverip.de/?action=getconfig&mode=single&module=racing&nozlib=1&overipapp={}&param=track_state'
 
 TOKEN_SPLIT_REGEX = re.compile('^(?P<field>[a-z]+([0-9]+_)?)((?P<idx>[0-9]+)):=(?P<value>.*)?$')
