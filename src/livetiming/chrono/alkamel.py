@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from livetiming.chrono import DriverChangeEvent, LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
-from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage
+from livetiming.chrono import DriverChangeEvent, FlagEvent, LaptimeEvent, PitInEvent, PitOutEvent, SectorEvent
+from livetiming.messages import CarPitMessage, DriverChangeMessage, FastLapMessage, FlagChangeMessage
 from livetiming.racing import Stat
 
 import calendar
@@ -27,6 +27,13 @@ COLSPEC = [
     Stat.BEST_LAP,
     Stat.PITS
 ]
+
+FLAG_MAP = {
+    'GF': 'green',
+    'SF': 'sc',
+    'FCY': 'fcy',
+    'FF': 'chequered'
+}
 
 
 def parseTime(formattedTime):
@@ -117,6 +124,9 @@ def create_events(args):
         reader = csv.DictReader(csvfile, delimiter=';')
         prev_row = None
         prev_race_num = None
+
+        flag_records = []
+
         for row in reader:
             race_num = row['\ufeffNUMBER']
 
@@ -133,6 +143,9 @@ def create_events(args):
             else:
                 ts = _parse_clock_from_elapsed(start_time, row[' ELAPSED'])
                 datestamp = float(calendar.timegm(ts.timetuple())) + (ts.microsecond / 1000000.0)
+
+            if 'FLAG_AT_FL' in row:
+                flag_records.append([datestamp, row['FLAG_AT_FL']])
 
             lap_time = parseTime(row[' LAP_TIME'])
             time_in_pit = parseTime(row['PIT_TIME'])
@@ -167,6 +180,18 @@ def create_events(args):
                 prev_row = row
             else:
                 prev_row = None
+
+        sorted_flag_records = sorted(flag_records, key=lambda r: r[0])
+
+        prev_flag = None
+
+        for time, flag in sorted_flag_records:
+            if flag != prev_flag:
+                events.append(
+                    FlagEvent(time, FLAG_MAP.get(flag))
+                )
+                prev_flag = flag
+
     return events
 
 
@@ -174,13 +199,13 @@ def create_initial_state(args, extra):
     state = {
         'cars': {},
         'session': {
-            'flagState': 'none'
+            'flagState': 'green'
         }
     }
-    with open(args.chronological_analysis, 'rb') as csvfile:
+    with open(args.chronological_analysis, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
-            race_num = row['\xef\xbb\xbfNUMBER']
+            race_num = row['\ufeffNUMBER']
             if race_num not in state['cars']:
                 state['cars'][race_num] = [
                     race_num,
@@ -261,5 +286,6 @@ def message_generators():
     return [
         FastLapMessage(COLSPEC),
         CarPitMessage(COLSPEC),
-        DriverChangeMessage(COLSPEC)
+        DriverChangeMessage(COLSPEC),
+        FlagChangeMessage()
     ]
